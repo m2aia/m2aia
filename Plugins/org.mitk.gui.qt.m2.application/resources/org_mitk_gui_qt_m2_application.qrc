@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/org.mitk.gui.qt.m2.application">
+        <file>icon.ico</file>
+        <file>icon.png</file>
+    </qresource>
+</RCC>

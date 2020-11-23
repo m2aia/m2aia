@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+
+  <extension point="org.blueberry.ui.views">
+    <view id="org.mitk.views.m2.Position"
+          name="Position"
+          class="m2Position"
+          icon="resources/noun_arrows_647047.svg" 
+          category="MS imaging"
+          />
+  </extension>
+
+
+</plugin>

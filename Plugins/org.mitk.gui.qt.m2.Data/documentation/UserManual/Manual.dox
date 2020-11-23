@@ -1,0 +1,53 @@
+/**
+\page org_mitk_views_m2_Data The M2aia Data View
+
+\imageMacro{icon_data.svg, "Icon of the M2aia Data View", 3}
+
+
+\tableofcontents
+
+\section m2_DATA_Introduction Introduction
+This view offers the possibility to interact with Mass Spectrometry Imaging (MSI) data and is the starting point for all MSI related data interactions.\n
+
+\section m2_DATA_Usage Usage
+\imageMacro{m2Data_initialization.png, "Example screenshot showing the main elements of the view used to start MSI processing.", 14}
+
+Before loading any kind of MSI data, make sure that this view is initialized (once opend in a new M2aia session).\n\n
+
+The typical workflow has following steps/sections:\n\n
+(1) <b>MS image selection</b>: Required in multiple MS image interaction. This can be ignored for single MS image interaction,  (see (3)).\n\n
+
+(2) <b>Initialization - Pre-Initialization settings</b>:\n
+You can define an upper and lower bound on the m/z axis (if known). This will reduce the data loading time.\n
+If the imzML data is in centroid spectrum data format, peak binning tolerance can be set.\n\n
+
+(3) <b>Initializtion - Behaviour for interaction with multiple MS images</b>:\n
+If multiple MS images with overlapping m/z axes are present, an ion image grab will automatically be applied to all data nodes matching the offered options.\n
+<i>Only visible:</i> Interaction is restricted to nodes makred visible in the data manager.\n
+<i>Only selection:</i> Interaction is restricted to nodes provided by the selection box.\n\n
+
+(4) <b>Initializtion - Signal processing</b>:\n
+\remark Due to M2aia's lazy loading strategie (load MSI data only on demand) signal processing may take place in different situations:\n
+(a) During initialization of an MS image to calculate overview spectra and normalization maps.\n
+(b) During an ion image generation (grab).\n
+
+
+You can choose between normalization strategies:\n
+<i>No normalization:</i> no normalization is applied\n
+<i>TIC normalization:</i> Total ion count normalization (respects differents step widths on the m/z axis)\n
+<i>Sum normalization:</i> Sum of intensities along the m/z axis\n
+<i>In-file normalization:</i> Normalization based on the normalization constants defined in the imzML file.\n\n
+
+\remark The chosen normalization strategie will produce a normalization map (grayscale image of normalization constants for each pixel).\n
+Currently, only a single normalization strategy can be chosen on initialization (see (a)).\n
+During an ion image grab, the normalization strategy can be turned off choosing the 'no normalization' option.\n\n
+
+
+You can enable Savitzky-Golay signal smoothing. Parameter defines the half window size that is used for processing.\n
+You can enable TopHat baseline correction. Parameter defines the half window size that is used for processing.\n\n
+
+
+
+
+
+*/

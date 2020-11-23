@@ -1,0 +1,7 @@
+<statemachine>
+    <state name="steady" startstate="true">
+        <transition event_class="InteractionPositionEvent" event_variant="AddPointClick" target="steady">
+             <action name="addpoint"/>
+        </transition>
+    </state>
+</statemachine>

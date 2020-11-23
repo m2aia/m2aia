@@ -1,0 +1,10 @@
+/*
+  M2AIATestingConfig.h
+  this file is generated. Do not change!
+*/
+#ifndef M2AIATESTINGCONFIG_H
+#define M2AIATESTINGCONFIG_H
+
+#define M2AIA_DATA_DIR "@M2AIA_DATA_DIR@"
+
+#endif // M2AIATESTINGCONFIG_H
