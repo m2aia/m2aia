@@ -1,0 +1,4 @@
+#ifndef M2AIA_CONFIGURE
+#define M2AIA_CONFIGURE
+
+#endif // M2AIA_CONFIGURE

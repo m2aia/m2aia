@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg"
+    xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" viewBox="0 0 64 64" style="enable-background:new 0 0 64 64;" xml:space="preserve">
+      <style type="text/css">.st1{fill:#00ff00;} .st2{fill:#ff00ff;}</style>
+    <g>
+        <path class='st1' d="M57,46h-7V11h-2v35h-2.586l-2.707-2.707C42.52,43.105,42.265,43,42,43h-9c-0.552,0-1,0.448-1,1v11H8V13h9   c0.552,0,1-0.448,1-1V3h26v40h2V2c0-0.552-0.448-1-1-1H17c-0.276,0-0.526,0.112-0.707,0.293l-9.999,9.999   C6.112,11.474,6,11.724,6,12v44c0,0.552,0.448,1,1,1h25v2H14v2h18v1c0,0.552,0.448,1,1,1h24c0.552,0,1-0.448,1-1V47   C58,46.448,57.552,46,57,46z M9.414,11L16,4.414V11H9.414z M41.586,45l2.707,2.707C44.48,47.895,44.735,48,45,48h11v2H37   c-0.42,0-0.796,0.263-0.94,0.658L34,56.323V45H41.586z M34.428,61l3.272-9H56v9H34.428z"/>
+        <rect class='st2' x="10" y="15" width="2" height="2"/>
+        <rect class='st2' x="14" y="15" width="2" height="2"/>
+        <rect class='st2' x="18" y="15" width="24" height="2"/>
+        <rect class='st2' x="40" y="19" width="2" height="2"/>
+        <rect class='st2' x="36" y="19" width="2" height="2"/>
+        <rect class='st2' x="10" y="19" width="24" height="2"/>
+        <rect class='st2' x="10" y="23" width="2" height="2"/>
+        <rect class='st2' x="14" y="23" width="2" height="2"/>
+        <rect class='st2' x="18" y="23" width="24" height="2"/>
+        <rect class='st2' x="40" y="27" width="2" height="2"/>
+        <rect class='st2' x="36" y="27" width="2" height="2"/>
+        <rect class='st2' x="10" y="27" width="24" height="2"/>
+        <rect class='st2' x="10" y="31" width="2" height="2"/>
+        <rect class='st2' x="14" y="31" width="2" height="2"/>
+        <rect class='st2' x="18" y="31" width="24" height="2"/>
+        <rect class='st2' x="40" y="35" width="2" height="2"/>
+        <rect class='st2' x="36" y="35" width="2" height="2"/>
+        <rect class='st2' x="10" y="35" width="24" height="2"/>
+    </g>
+    <!-- <text x="0" y="79" fill="#000000" font-size="5px" font-weight="bold" font-family="'Helvetica Neue', Helvetica, Arial-Unicode, Arial, Sans-serif">Created by Template</text> -->
+    <!-- <text x="0" y="84" fill="#000000" font-size="5px" font-weight="bold" font-family="'Helvetica Neue', Helvetica, Arial-Unicode, Arial, Sans-serif">from the Noun Project</text> -->
+</svg>

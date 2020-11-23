@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+
+  <extension point="org.blueberry.ui.views">
+    <view id="org.mitk.views.m2.Spectrum" name="Spectrum" category="MS imaging" class="m2Spectrum" icon="resources/noun_full_spectrum_2852801.svg" />
+  </extension>
+
+  <extension point="org.blueberry.ui.keywords">
+    <keyword id="org.mitk.views.m2.Spectrum.ViewKeyword" label="Mass" />
+    <keyword id="org.mitk.views.m2.Spectrum.ViewKeyword" label="Spectrometry" />
+    <keyword id="org.mitk.views.m2.Spectrum.ViewKeyword" label="Spectrum" />
+    <keyword id="org.mitk.views.m2.Spectrum.ViewKeyword" label="Ion image" />
+  </extension>
+
+
+
+</plugin>

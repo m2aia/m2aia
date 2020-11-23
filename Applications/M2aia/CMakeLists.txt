@@ -1,0 +1,91 @@
+project(Workbench)
+
+set(M2AIAAPP_NAME MitkM2aia)
+
+# Create a cache entry for the provisioning file which is used to export
+# the file name in the MITKConfig.cmake file. This will keep external projects
+# which rely on this file happy.
+set(M2AIAAPP_PROVISIONING_FILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${M2AIAAPP_NAME}.provisioning" CACHE INTERNAL "${M2AIAAPP_NAME} provisioning file" FORCE)
+
+# remember to set plugins which should be automatically toggled in target_libraries.cmake
+set(_plugins
+  org.commontk.configadmin
+  org.commontk.eventadmin
+  org.blueberry.core.runtime
+  org.blueberry.core.expressions
+  org.blueberry.core.commands
+  org.blueberry.ui.qt
+  org.blueberry.ui.qt.log
+  org.blueberry.ui.qt.help
+  org.mitk.core.services
+  org.mitk.gui.common
+  org.mitk.planarfigure
+  org.mitk.core.ext
+  org.mitk.gui.qt.application
+  org.mitk.gui.qt.ext
+  org.mitk.gui.qt.common
+  org.mitk.gui.qt.stdmultiwidgeteditor
+  org.mitk.gui.qt.datamanager
+  org.mitk.gui.qt.measurementtoolbox
+  org.mitk.gui.qt.segmentation
+  org.mitk.gui_qt.multilabelsegmentation
+  org.mitk.gui.qt.volumevisualization
+#  org.mitk.gui.qt.matchpoint.algorithm.browser
+#  org.mitk.gui.qt.matchpoint.algorithm.control
+#  org.mitk.gui.qt.matchpoint.mapper
+#  org.mitk.gui.qt.matchpoint.manipulator
+  org.mitk.gui.qt.imagenavigator
+  org.mitk.gui.qt.moviemaker
+  org.mitk.gui.qt.basicimageprocessing
+  org.mitk.gui.qt.properties
+  org.mitk.gui.qt.viewnavigator
+  org.mitk.gui.qt.renderwindowmanager
+  org.mitk.gui.qt.m2.application
+  org.mitk.gui.qt.m2.Data
+  org.mitk.gui.qt.m2.Ions
+  org.mitk.gui.qt.m2.CombineImages
+  org.mitk.gui.qt.m2.Spectrum
+  org.mitk.gui.qt.m2.PeakPicking
+  org.mitk.gui.qt.m2.ImzMLExport
+  org.mitk.gui.qt.m2.Reconstruction3D
+  org.mitk.gui.qt.m2.Position
+  org.mitk.gui.qt.m2.Manipulator
+  org.mitk.m2.core.helper
+)
+
+
+
+# Plug-ins listed below will not be
+#  - added as a build-time dependency to the executable
+#  - listed in the provisioning file for the executable
+#  - installed if they are external plug-ins
+
+set(_exclude_plugins
+  org.blueberry.test
+  org.blueberry.uitest
+  org.mitk.gui.qt.coreapplication
+  org.mitk.gui.qt.extapplication
+)
+
+set(_src_files
+  MitkM2aia.cpp
+)
+
+mitkFunctionCreateBlueBerryApplication(
+  NAME ${M2AIAAPP_NAME}
+  DESCRIPTION "M2aia"
+  PLUGINS ${_plugins}
+  EXCLUDE_PLUGINS ${_exclude_plugins}
+  SOURCES ${_src_files}
+)
+
+# Add meta dependencies (e.g. on auto-load modules from depending modules)
+if(TARGET ${CMAKE_PROJECT_NAME}-autoload)
+  add_dependencies(${M2AIAAPP_NAME} ${CMAKE_PROJECT_NAME}-autoload)
+endif()
+
+# Add a build time dependency to legacy BlueBerry bundles.
+if(MITK_MODULES_ENABLED_PLUGINS)
+  add_dependencies(${M2AIAAPP_NAME} ${MITK_MODULES_ENABLED_PLUGINS})
+endif()
+
