@@ -1,6 +1,5 @@
 set(H_FILES 
   include/m2Process.hpp
-  include/m2Spectrum.h
   include/m2MassValue.h
 
   include/m2NoiseEstimators.hpp
@@ -48,7 +47,6 @@ set(CPP_FILES
   m2CoreObjectFactory.cpp
 
   m2ImzMLEngine.cpp
-  m2Spectrum.cpp
   m2MassValue.cpp
   mitkTransformixMSDataObjectStack.cpp
 
