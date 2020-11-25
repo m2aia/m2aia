@@ -15,6 +15,7 @@ Configure MITK-Superbuild (https://docs.mitk.org/nightly/DeveloperManualPortal.h
 MITK-Superbuild cmake configuration
 - MITK_USE_Boost_LIBRARIES add 'filesystem'
 - MITK_EXTENSION_DIRS add '<M2aia_Directory_Path>'
+- enable MITK_USE_MatchPoint
 - enable MITK_BUILD_APP_M2aia 
 
 M<sup>2</sup>aia in app preferences
