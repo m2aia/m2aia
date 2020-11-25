@@ -2,11 +2,11 @@
 <plugin>
 
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.opticalimageregistration"
+    <view id="org.mitk.views.m2.opticalimageregistration"
           name="Optical image registration"
           class="OpticalImageRegistration"
           category="MS imaging"
-          icon="resources/icon.xpm" />
+          icon="resources/noun_opticalillusion_1262005.svg" />
   </extension>
 
 </plugin>
