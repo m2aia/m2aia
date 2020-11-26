@@ -19,7 +19,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <usModuleActivator.h>
 #include <usModuleContext.h>
 
-#include <mitkIACoviseImageIO.h>
 #include <m2ImzMLImageIO.h>
 
 #include <m2CoreObjectFactory.h>

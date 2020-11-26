@@ -1,0 +1,1859 @@
+--- a/Modules/Annotation/include/mitkColorBarAnnotation.h
++++ b/Modules/Annotation/include/mitkColorBarAnnotation.h
+@@ -46,7 +46,7 @@ namespace mitk
+     itkFactorylessNewMacro(Self);
+     itkCloneMacro(Self);
+ 
+-      void SetDrawAnnotations(bool annotations);
++    void SetDrawAnnotations(bool annotations);
+     bool GetDrawAnnotations() const;
+ 
+     void SetOrientationToHorizontal();
+@@ -69,6 +69,14 @@ namespace mitk
+     void SetAnnotationTextScaling(bool scale);
+     bool GetAnnotationTextScaling() const;
+ 
++    void SetFontSize(int s);
++    int GetFontSize() const;
++
++    int GetWidth() const;
++    void SetWidth(int s);
++
++    void SetLength(int s);
++    int GetLenght() const;
+   protected:
+     /** \brief The LocalStorageHandler holds all LocalStorages for the render windows. */
+     mutable mitk::LocalStorageHandler<LocalStorage> m_LSH;
+@@ -79,6 +87,8 @@ namespace mitk
+     /** \brief explicit constructor which disallows implicit conversions */
+     explicit ColorBarAnnotation();
+ 
++    void Update(mitk::BaseRenderer *renderer) override;
++
+     /** \brief virtual destructor in order to derive from this class */
+     ~ColorBarAnnotation() override;
+ 
+diff --git a/Modules/Annotation/src/mitkColorBarAnnotation.cpp b/Modules/Annotation/src/mitkColorBarAnnotation.cpp
+index 31ee59f04b..40e9aa33da 100644
+--- a/Modules/Annotation/src/mitkColorBarAnnotation.cpp
++++ b/Modules/Annotation/src/mitkColorBarAnnotation.cpp
+@@ -14,19 +14,24 @@ found in the LICENSE file.
+ #include "mitkLookupTable.h"
+ #include "mitkLookupTableProperty.h"
+ #include <vtkScalarBarActor.h>
++#include <vtkTextProperty.h>
++#include <vtkProperty2D.h>
+ 
+ mitk::ColorBarAnnotation::ColorBarAnnotation()
+ {
+   SetDrawAnnotations(true);
+-
+   SetDrawTickLabels(true);
+ 
+   SetOrientationToVertical();
+-
+   SetMaxNumberOfColors(100);
+   SetNumberOfLabels(4);
+ 
+   SetAnnotationTextScaling(false);
++  SetFontSize(8);
++  SetLength(200);
++
++  SetWidth(50);
++  SetColor(0.0, 0.0, 0.0);
+ 
+   SetLookupTable(nullptr);
+ }
+@@ -42,13 +47,61 @@ mitk::ColorBarAnnotation::~ColorBarAnnotation()
+   }
+ }
+ 
+-mitk::ColorBarAnnotation::LocalStorage::~LocalStorage()
++mitk::ColorBarAnnotation::LocalStorage::~LocalStorage() {}
++
++void mitk::ColorBarAnnotation::SetFontSize(int s)
++{
++  SetIntProperty("ColorBarAnnotation.Fontsize", s);
++}
++
++int mitk::ColorBarAnnotation::GetFontSize() const
++{
++  int val;
++  GetIntProperty("ColorBarAnnotation.Fontsize", val);
++  return val;
++}
++
++void mitk::ColorBarAnnotation::SetWidth(int s)
++{
++  SetIntProperty("ColorBarAnnotation.Width", s);
++}
++
++int mitk::ColorBarAnnotation::GetWidth() const
+ {
++  int val;
++  GetIntProperty("ColorBarAnnotation.Width", val);
++  return val;
++}
++
++void mitk::ColorBarAnnotation::SetLength(int s)
++{
++  SetIntProperty("ColorBarAnnotation.Length", s);
++}
++
++int mitk::ColorBarAnnotation::GetLenght() const
++{
++  int val;
++  GetIntProperty("ColorBarAnnotation.Length", val);
++  return val;
+ }
+ 
+ mitk::ColorBarAnnotation::LocalStorage::LocalStorage()
+ {
+   m_ScalarBarActor = vtkSmartPointer<vtkScalarBarActor>::New();
++  m_ScalarBarActor->SetUnconstrainedFontSize(true);
++  m_ScalarBarActor->GetLabelTextProperty()->SetItalic(0);
++  m_ScalarBarActor->GetLabelTextProperty()->SetShadow(0);
++  m_ScalarBarActor->GetLabelTextProperty()->SetBold(0);
++  double v[3] = {1.0, 1.0, 1.0};
++  m_ScalarBarActor->GetLabelTextProperty()->SetBackgroundColor(v);
++  m_ScalarBarActor->GetLabelTextProperty()->SetBackgroundOpacity(1);
++  m_ScalarBarActor->SetNumberOfLabels(0);
++  // m_ScalarBarActor->SetNumberOf
++}
++
++void mitk::ColorBarAnnotation::Update(mitk::BaseRenderer *renderer)
++{
++  mitk::VtkAnnotation::Update(renderer);
+ }
+ 
+ void mitk::ColorBarAnnotation::UpdateVtkAnnotation(mitk::BaseRenderer *renderer)
+@@ -64,18 +117,32 @@ void mitk::ColorBarAnnotation::UpdateVtkAnnotation(mitk::BaseRenderer *renderer)
+     ls->m_ScalarBarActor->SetMaximumNumberOfColors(this->GetMaxNumberOfColors());
+     ls->m_ScalarBarActor->SetNumberOfLabels(this->GetNumberOfLabels());
+     ls->m_ScalarBarActor->SetAnnotationTextScaling(this->GetAnnotationTextScaling());
++
++    // ls->m_ScalarBarActor->GetAnnotationTextProperty()->SetFontSize(this->GetFontSize());
++    // ls->m_ScalarBarActor->GetTitleTextProperty()->SetFontSize(this->GetFontSize());
++    ls->m_ScalarBarActor->GetLabelTextProperty()->SetFontSize(this->GetFontSize());
++
++    float color[3];
++    double colord[3];
++    this->GetColor(color);
++    std::copy(color, color + 3, colord);
++    ls->m_ScalarBarActor->GetLabelTextProperty()->SetColor(colord);
++    // ls->m_ScalarBarActor->GetTitleTextProperty()->SetColor(colord);
++    // ls->m_ScalarBarActor->GetAnnotationTextProperty()->SetColor(colord);
++
+     // manually set position so there is no overlap with mitk logo in 3d renderwindow
++    auto size = renderer->GetViewportSize();
+     if (this->GetOrientation() == 1)
+     {
+-      ls->m_ScalarBarActor->SetPosition(0.80, 0.15);
+-      ls->m_ScalarBarActor->SetWidth(0.15);
+-      ls->m_ScalarBarActor->SetHeight(0.85);
++      ls->m_ScalarBarActor->SetPosition(0.05, (1.0 - this->GetLenght() / float(size[1])) * 0.5);
++      ls->m_ScalarBarActor->SetWidth(this->GetWidth() / float(size[0]));
++      ls->m_ScalarBarActor->SetHeight(this->GetLenght() / float(size[1]));
+     }
+     else
+     {
+-      ls->m_ScalarBarActor->SetPosition(0.03, 0.03);
+-      ls->m_ScalarBarActor->SetWidth(0.8);
+-      ls->m_ScalarBarActor->SetHeight(0.15);
++      ls->m_ScalarBarActor->SetPosition((1.0 - this->GetLenght() / float(size[0])) * 0.5, 0.05);
++      ls->m_ScalarBarActor->SetWidth(this->GetLenght() / float(size[0]));
++      ls->m_ScalarBarActor->SetHeight(this->GetWidth() / float(size[1]));
+     }
+   }
+ }
+diff --git a/Modules/Annotation/src/mitkScaleLegendAnnotation.cpp b/Modules/Annotation/src/mitkScaleLegendAnnotation.cpp
+index d07d3dfb93..b07760c899 100644
+--- a/Modules/Annotation/src/mitkScaleLegendAnnotation.cpp
++++ b/Modules/Annotation/src/mitkScaleLegendAnnotation.cpp
+@@ -70,6 +70,7 @@ void mitk::ScaleLegendAnnotation::UpdateVtkAnnotation(mitk::BaseRenderer *render
+     ls->m_legendScaleActor->GetRightAxis()->SetFontFactor(this->GetFontFactor());
+     ls->m_legendScaleActor->GetTopAxis()->SetFontFactor(this->GetFontFactor());
+     ls->m_legendScaleActor->GetBottomAxis()->SetFontFactor(this->GetFontFactor());
++    ls->m_legendScaleActor->SetLabelModeToDistance();
+   }
+ }
+ 
+diff --git a/Modules/Annotation/src/mitkTextAnnotation2D.cpp b/Modules/Annotation/src/mitkTextAnnotation2D.cpp
+index 24fab05733..546607b5b5 100644
+--- a/Modules/Annotation/src/mitkTextAnnotation2D.cpp
++++ b/Modules/Annotation/src/mitkTextAnnotation2D.cpp
+@@ -29,6 +29,7 @@ mitk::TextAnnotation2D::TextAnnotation2D()
+   this->SetBoolProperty("font.bold", false);
+   this->SetBoolProperty("font.italic", false);
+   this->SetBoolProperty("drawShadow", false);
++  
+ }
+ 
+ mitk::TextAnnotation2D::~TextAnnotation2D()
+@@ -96,12 +97,17 @@ void mitk::TextAnnotation2D::UpdateVtkAnnotation2D(mitk::BaseRenderer *renderer)
+     float opacity = 1.0;
+     GetColor(color);
+     GetOpacity(opacity);
+-    ls->m_TextProp->SetColor(color[0], color[1], color[2]);
+     ls->m_STextProp->SetColor(0, 0, 0);
+-    ls->m_TextProp->SetFontSize(GetFontSize());
+-    ls->m_TextProp->SetOpacity(opacity);
++    //ls->m_STextProp->SetBackgroundColor(1.0, 1.0, 1.0);
++    //ls->m_STextProp->SetBackgroundOpacity(1.0);
+     ls->m_STextProp->SetFontSize(GetFontSize());
+     ls->m_STextProp->SetOpacity(opacity);
++    
++	ls->m_TextProp->SetColor(color[0], color[1], color[2]);
++    ls->m_TextProp->SetFontSize(GetFontSize());
++    ls->m_TextProp->SetOpacity(opacity);
++    //ls->m_TextProp->SetBackgroundColor(1.0, 1.0, 1.0);
++    //ls->m_TextProp->SetBackgroundOpacity(1.0);
+ 
+     std::string fontFamilyAsString;
+     if (GetStringProperty("font.family", fontFamilyAsString) == false)
+diff --git a/Modules/AppUtil/src/mitkBaseApplication.cpp b/Modules/AppUtil/src/mitkBaseApplication.cpp
+index b13e425ccb..052492e5aa 100644
+--- a/Modules/AppUtil/src/mitkBaseApplication.cpp
++++ b/Modules/AppUtil/src/mitkBaseApplication.cpp
+@@ -647,6 +647,7 @@ namespace mitk
+ #endif
+ 
+       QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
++      QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+ 
+       d->m_QApp = this->getSingleMode()
+         ? static_cast<QCoreApplication*>(new QmitkSingleApplication(d->m_Argc, d->m_Argv, this->getSafeMode()))
+diff --git a/Modules/Core/TestingHelper/include/mitkTestFixture.h b/Modules/Core/TestingHelper/include/mitkTestFixture.h
+index f0c881fae8..5bd9c5910a 100644
+--- a/Modules/Core/TestingHelper/include/mitkTestFixture.h
++++ b/Modules/Core/TestingHelper/include/mitkTestFixture.h
+@@ -111,6 +111,21 @@ namespace mitk
+       return std::string(MITK_DATA_DIR) + "/" + testData;
+     }
+ 
++
++    /**
++     * \brief Get the absolute path for project specific test data.
++     *
++     * \param testData The realative path in the project specific test data repository.
++     *
++     * \return The absolute path for the project specific test data.
++     */
++    static std::string GetTestDataFilePath(const std::string &testData, const std::string &project )
++    {
++      if (itksys::SystemTools::FileIsFullPath(testData.c_str()))
++        return testData;
++      return project + "/" + testData;
++    }
++
+   private:
+     template <class P>
+     friend class TestCaller;
+diff --git a/Modules/Core/include/mitkDataStorage.h b/Modules/Core/include/mitkDataStorage.h
+index a860959317..7ef6fb8c73 100644
+--- a/Modules/Core/include/mitkDataStorage.h
++++ b/Modules/Core/include/mitkDataStorage.h
+@@ -66,7 +66,7 @@ namespace mitk
+     //##Documentation
+     //## @brief Convenience method to add a node that has one parent
+     //##
+-    void Add(DataNode *node, DataNode *parent);
++    void Add(DataNode *node, const DataNode *parent);
+ 
+     //##Documentation
+     //## @brief Removes node from the DataStorage
+diff --git a/Modules/Core/include/mitkLookupTable.h b/Modules/Core/include/mitkLookupTable.h
+index 5ab7de7dba..d2c1ec2560 100644
+--- a/Modules/Core/include/mitkLookupTable.h
++++ b/Modules/Core/include/mitkLookupTable.h
+@@ -210,7 +210,10 @@ namespace mitk
+       LEGACY_RAINBOW_COLOR,
+       MULTILABEL,
+       PET_COLOR,
+-      PET_20
++      PET_20,
++      GRAYSCALE_TRANSPARENT,
++      HOT_IRON_TRANSPARENT,
++      VIRIDIS_TRANSPARENT
+     };
+ 
+     static std::vector<std::string> typenameList;
+@@ -244,14 +247,14 @@ namespace mitk
+ 
+     LookupTable(const LookupTable &other);
+ 
+-    virtual void BuildGrayScaleLookupTable();
++    virtual void BuildGrayScaleLookupTable(bool transparent = false);
+     virtual void BuildLegacyBinaryLookupTable();
+     virtual void BuildLegacyRainbowColorLookupTable();
+     virtual void BuildInverseGrayScaleLookupTable();
+-    virtual void BuildHotIronLookupTable();
+-	  virtual void BuildPlasmaLookupTable();
+-	  virtual void BuildInfernoLookupTable();
+-	  virtual void BuildViridisLookupTable();
++    virtual void BuildHotIronLookupTable(bool transparent = false);
++    virtual void BuildPlasmaLookupTable();
++	virtual void BuildInfernoLookupTable();
++    virtual void BuildViridisLookupTable(bool transparent = false);
+     virtual void BuildMagmaLookupTable();
+     virtual void BuildJetLookupTable(bool transparent = false);
+     virtual void BuildPETColorLookupTable();
+diff --git a/Modules/Core/src/DataManagement/.Rhistory b/Modules/Core/src/DataManagement/.Rhistory
+new file mode 100644
+index 0000000000..e69de29bb2
+diff --git a/Modules/Core/src/DataManagement/mitkDataStorage.cpp b/Modules/Core/src/DataManagement/mitkDataStorage.cpp
+index 890128e9f7..e69ff8efd9 100644
+--- a/Modules/Core/src/DataManagement/mitkDataStorage.cpp
++++ b/Modules/Core/src/DataManagement/mitkDataStorage.cpp
+@@ -36,11 +36,11 @@ mitk::DataStorage::~DataStorage()
+   // m_NodeDeleteObserverTags.clear();
+ }
+ 
+-void mitk::DataStorage::Add(DataNode *node, DataNode *parent)
++void mitk::DataStorage::Add(DataNode *node, const DataNode *parent)
+ {
+   DataStorage::SetOfObjects::Pointer parents = DataStorage::SetOfObjects::New();
+   if (parent != nullptr) //< Return empty set if parent is null
+-    parents->InsertElement(0, parent);
++    parents->InsertElement(0, const_cast<DataNode *>(parent));
+   this->Add(node, parents);
+ }
+ 
+diff --git a/Modules/Core/src/DataManagement/mitkImage.cpp b/Modules/Core/src/DataManagement/mitkImage.cpp
+index 4ed855b751..381bd0aebe 100644
+--- a/Modules/Core/src/DataManagement/mitkImage.cpp
++++ b/Modules/Core/src/DataManagement/mitkImage.cpp
+@@ -939,7 +939,7 @@ void mitk::Image::Initialize(const mitk::PixelType &type,
+   dimensions[4] = 0;
+ 
+   unsigned int dimension = 2;
+-  if (dimensions[2] > 1)
++  if (dimensions[2] >= 1)
+     dimension = 3;
+   if (dimensions[3] > 1)
+     dimension = 4;
+diff --git a/Modules/Core/src/DataManagement/mitkLevelWindowManager.cpp b/Modules/Core/src/DataManagement/mitkLevelWindowManager.cpp
+index c0b04c6570..f8ac8f7d8d 100644
+--- a/Modules/Core/src/DataManagement/mitkLevelWindowManager.cpp
++++ b/Modules/Core/src/DataManagement/mitkLevelWindowManager.cpp
+@@ -555,7 +555,8 @@ mitk::DataStorage::SetOfObjects::ConstPointer mitk::LevelWindowManager::GetRelev
+   NodePredicateProperty::Pointer notBinary = NodePredicateProperty::New("binary", BoolProperty::New(false));
+   NodePredicateProperty::Pointer hasLevelWindow = NodePredicateProperty::New("levelwindow", nullptr);
+ 
+-  NodePredicateDataType::Pointer isImage = NodePredicateDataType::New("Image");
++  //NodePredicateDataType::Pointer isImage = NodePredicateDataType::New("Image");
++  auto isImage = TNodePredicateDataType<mitk::Image>::New();
+   NodePredicateDataType::Pointer isDImage = NodePredicateDataType::New("DiffusionImage");
+   NodePredicateDataType::Pointer isTImage = NodePredicateDataType::New("TensorImage");
+   NodePredicateDataType::Pointer isOdfImage = NodePredicateDataType::New("OdfImage");
+diff --git a/Modules/Core/src/DataManagement/mitkLookupTable.cpp b/Modules/Core/src/DataManagement/mitkLookupTable.cpp
+index 3022e09869..613c2f7249 100644
+--- a/Modules/Core/src/DataManagement/mitkLookupTable.cpp
++++ b/Modules/Core/src/DataManagement/mitkLookupTable.cpp
+@@ -17,57 +17,56 @@ found in the LICENSE file.
+ #include <vtkPiecewiseFunction.h>
+ 
+ #include <Colortables/HotIron.h>
+-#include <Colortables/Jet.h>
+ #include <Colortables/Inferno.h>
+-#include <Colortables/Viridis.h>
+-#include <Colortables/Plasma.h>
++#include <Colortables/Jet.h>
+ #include <Colortables/Magma.h>
+ #include <Colortables/Multilabel.h>
+ #include <Colortables/PET20.h>
+ #include <Colortables/PETColor.h>
++#include <Colortables/Plasma.h>
++#include <Colortables/Viridis.h>
+ #include <mitkLookupTableProperty.h>
+ 
+-std::vector<std::string> mitk::LookupTable::typenameList = {
+-  "Grayscale",
+-  "Inverse Grayscale",
+-  "Hot Iron",
+-  "Jet",
+-  "Jet Transparent",
+-  "Plasma",
+-  "Inferno",
+-  "Viridis",
+-  "Magma",
+-  "Legacy Binary",
+-  "Legacy Rainbow Color",
+-  "Multilabel",
+-  "PET Color",
+-  "PET 20"
+-};
++std::vector<std::string> mitk::LookupTable::typenameList = {"Grayscale",
++                                                            "Inverse Grayscale",
++                                                            "Hot Iron",
++                                                            "Jet",
++                                                            "Jet Transparent",
++                                                            "Plasma",
++                                                            "Inferno",
++                                                            "Viridis",
++                                                            "Magma",
++                                                            "Legacy Binary",
++                                                            "Legacy Rainbow Color",
++                                                            "Multilabel",
++                                                            "PET Color",
++                                                            "PET 20",
++                                                            "Grayscale Transparent",
++                                                            "Hot Iron Transparent",
++                                                            "Viridis Transparent"};
+ 
+ mitk::LookupTable::LookupTable()
+-  : m_LookupTable(vtkSmartPointer<vtkLookupTable>::New())
+-  , m_Window(0.0)
+-  , m_Level(0.0)
+-  , m_Opacity(1.0)
+-  , m_Type(mitk::LookupTable::GRAYSCALE)
++  : m_LookupTable(vtkSmartPointer<vtkLookupTable>::New()),
++    m_Window(0.0),
++    m_Level(0.0),
++    m_Opacity(1.0),
++    m_Type(mitk::LookupTable::GRAYSCALE)
+ {
+   this->BuildGrayScaleLookupTable();
+ }
+ 
+ mitk::LookupTable::LookupTable(const LookupTable &other)
+-  : itk::DataObject()
+-  , m_LookupTable(vtkSmartPointer<vtkLookupTable>::New())
+-  , m_Window(other.m_Window)
+-  , m_Level(other.m_Level)
+-  , m_Opacity(other.m_Opacity)
+-  , m_Type(other.m_Type)
++  : itk::DataObject(),
++    m_LookupTable(vtkSmartPointer<vtkLookupTable>::New()),
++    m_Window(other.m_Window),
++    m_Level(other.m_Level),
++    m_Opacity(other.m_Opacity),
++    m_Type(other.m_Type)
+ {
+   m_LookupTable->DeepCopy(other.m_LookupTable);
+ }
+ 
+-mitk::LookupTable::~LookupTable()
+-{
+-}
++mitk::LookupTable::~LookupTable() {}
+ 
+ void mitk::LookupTable::SetVtkLookupTable(vtkSmartPointer<vtkLookupTable> lut)
+ {
+@@ -87,6 +86,9 @@ void mitk::LookupTable::SetType(const mitk::LookupTable::LookupTableType type)
+ 
+   switch (type)
+   {
++    case (mitk::LookupTable::GRAYSCALE_TRANSPARENT):
++      this->BuildGrayScaleLookupTable(true);
++      break;
+     case (mitk::LookupTable::GRAYSCALE):
+       this->BuildGrayScaleLookupTable();
+       break;
+@@ -96,6 +98,9 @@ void mitk::LookupTable::SetType(const mitk::LookupTable::LookupTableType type)
+     case (mitk::LookupTable::HOT_IRON):
+       this->BuildHotIronLookupTable();
+       break;
++    case (mitk::LookupTable::HOT_IRON_TRANSPARENT):
++      this->BuildHotIronLookupTable(true);
++      break;
+     case (mitk::LookupTable::JET):
+       this->BuildJetLookupTable();
+       break;
+@@ -103,14 +108,17 @@ void mitk::LookupTable::SetType(const mitk::LookupTable::LookupTableType type)
+       this->BuildJetLookupTable(true);
+       break;
+     case (mitk::LookupTable::PLASMA):
+-	    this->BuildPlasmaLookupTable();
+-	    break;
+-	  case (mitk::LookupTable::INFERNO):
+-	    this->BuildInfernoLookupTable();
++      this->BuildPlasmaLookupTable();
++      break;
++    case (mitk::LookupTable::INFERNO):
++      this->BuildInfernoLookupTable();
++      break;
++    case (mitk::LookupTable::VIRIDIS):
++      this->BuildViridisLookupTable();
++      break;
++    case (mitk::LookupTable::VIRIDIS_TRANSPARENT):
++      this->BuildViridisLookupTable(true);
+       break;
+-	  case (mitk::LookupTable::VIRIDIS):
+-	    this->BuildViridisLookupTable();
+-	    break;
+     case (mitk::LookupTable::MAGMA):
+       this->BuildMagmaLookupTable();
+       break;
+@@ -285,9 +293,7 @@ void mitk::LookupTable::UpdateOutputInformation()
+   }
+ }
+ 
+-void mitk::LookupTable::SetRequestedRegionToLargestPossibleRegion()
+-{
+-}
++void mitk::LookupTable::SetRequestedRegionToLargestPossibleRegion() {}
+ 
+ bool mitk::LookupTable::RequestedRegionIsOutsideOfTheBufferedRegion()
+ {
+@@ -411,7 +417,7 @@ itk::LightObject::Pointer mitk::LookupTable::InternalClone() const
+   return result;
+ }
+ 
+-void mitk::LookupTable::BuildGrayScaleLookupTable()
++void mitk::LookupTable::BuildGrayScaleLookupTable(bool transparent)
+ {
+   vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+   lut->SetRampToLinear();
+@@ -420,6 +426,11 @@ void mitk::LookupTable::BuildGrayScaleLookupTable()
+   lut->SetValueRange(0.0, 1.0);
+   lut->Build();
+ 
++  if (transparent)
++  {
++    lut->SetTableValue(0, 0.0, 0.0, 0.0, 0.0);
++  }
++
+   m_LookupTable = lut;
+   this->Modified();
+ }
+@@ -452,13 +463,22 @@ void mitk::LookupTable::BuildInverseGrayScaleLookupTable()
+   this->Modified();
+ }
+ 
+-void mitk::LookupTable::BuildHotIronLookupTable()
++void mitk::LookupTable::BuildHotIronLookupTable(bool transparent)
+ {
+   vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+   lut->SetNumberOfTableValues(256);
+   lut->Build();
++  int i = 0;
+ 
+-  for (int i = 0; i < 256; i++)
++  if (transparent)
++  {
++    // Lowest intensity is transparent
++    lut->SetTableValue(
++      0, (double)HotIron[0][0] / 255.0, (double)HotIron[0][1] / 255.0, (double)HotIron[0][2] / 255.0, 0.0);
++    i = 1;
++  }
++
++  for (; i < 256; i++)
+   {
+     lut->SetTableValue(
+       i, (double)HotIron[i][0] / 255.0, (double)HotIron[i][1] / 255.0, (double)HotIron[i][2] / 255.0, 1.0);
+@@ -535,7 +555,7 @@ void mitk::LookupTable::BuildMultiLabelLookupTable()
+ 
+   for (int i = 0; i < 25; i++)
+   {
+-    lut->SetTableValue(i+1, Multilabel[i][0], Multilabel[i][1], Multilabel[i][2], 0.4);
++    lut->SetTableValue(i + 1, Multilabel[i][0], Multilabel[i][1], Multilabel[i][2], 0.4);
+   }
+ 
+   for (int i = 26; i < 65536; i++)
+@@ -584,50 +604,59 @@ void mitk::LookupTable::BuildLegacyRainbowColorLookupTable()
+ 
+ void mitk::LookupTable::BuildPlasmaLookupTable()
+ {
+-	vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+-	lut->SetNumberOfTableValues(256);
+-	lut->Build();
++  vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
++  lut->SetNumberOfTableValues(256);
++  lut->Build();
+ 
+-	for (int i = 0; i < 256; i++)
+-	{
+-		lut->SetTableValue(
+-			i, (double)Plasma[i][0] / 255.0, (double)Plasma[i][1] / 255.0, (double)Plasma[i][2] / 255.0, 1.0);
+-	}
++  for (int i = 0; i < 256; i++)
++  {
++    lut->SetTableValue(
++      i, (double)Plasma[i][0] / 255.0, (double)Plasma[i][1] / 255.0, (double)Plasma[i][2] / 255.0, 1.0);
++  }
+ 
+-	m_LookupTable = lut;
+-	this->Modified();
++  m_LookupTable = lut;
++  this->Modified();
+ }
+ 
+ void mitk::LookupTable::BuildInfernoLookupTable()
+ {
+-	vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+-	lut->SetNumberOfTableValues(256);
+-	lut->Build();
++  vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
++  lut->SetNumberOfTableValues(256);
++  lut->Build();
+ 
+-	for (int i = 0; i < 256; i++)
+-	{
+-		lut->SetTableValue(
+-			i, (double)Inferno[i][0] / 255.0, (double)Inferno[i][1] / 255.0, (double)Inferno[i][2] / 255.0, 1.0);
+-	}
++  for (int i = 0; i < 256; i++)
++  {
++    lut->SetTableValue(
++      i, (double)Inferno[i][0] / 255.0, (double)Inferno[i][1] / 255.0, (double)Inferno[i][2] / 255.0, 1.0);
++  }
+ 
+-	m_LookupTable = lut;
+-	this->Modified();
++  m_LookupTable = lut;
++  this->Modified();
+ }
+ 
+-void mitk::LookupTable::BuildViridisLookupTable()
++void mitk::LookupTable::BuildViridisLookupTable(bool transparent)
+ {
+-	vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
+-	lut->SetNumberOfTableValues(256);
+-	lut->Build();
++  vtkSmartPointer<vtkLookupTable> lut = vtkSmartPointer<vtkLookupTable>::New();
++  lut->SetNumberOfTableValues(256);
++  lut->Build();
++
++  int i = 0;
++  if (transparent)
++  {
++    // Lowest intensity is transparent
++    lut->SetTableValue(
++      0, (double)Viridis[0][0] / 255.0, (double)Viridis[0][1] / 255.0, (double)Viridis[0][2] / 255.0, 0.0);
++    i = 1;
++  }
+ 
+-	for (int i = 0; i < 256; i++)
+-	{
+-		lut->SetTableValue(
+-			i, (double)Viridis[i][0] / 255.0, (double)Viridis[i][1] / 255.0, (double)Viridis[i][2] / 255.0, 1.0);
+-	}
++  for (; i < 256; i++)
++  {
++    lut->SetTableValue(
++      i, (double)Viridis[i][0] / 255.0, (double)Viridis[i][1] / 255.0, (double)Viridis[i][2] / 255.0, 1.0);
++  }
+ 
+-	m_LookupTable = lut;
+-	this->Modified();
++  m_LookupTable = lut;
++  this->Modified();
+ }
+ 
+ void mitk::LookupTable::BuildMagmaLookupTable()
+@@ -638,8 +667,7 @@ void mitk::LookupTable::BuildMagmaLookupTable()
+ 
+   for (int i = 0; i < 256; i++)
+   {
+-    lut->SetTableValue(
+-      i, (double)Magma[i][0] / 255.0, (double)Magma[i][1] / 255.0, (double)Magma[i][2] / 255.0, 1.0);
++    lut->SetTableValue(i, (double)Magma[i][0] / 255.0, (double)Magma[i][1] / 255.0, (double)Magma[i][2] / 255.0, 1.0);
+   }
+ 
+   m_LookupTable = lut;
+diff --git a/Modules/Core/src/Interactions/mitkPointSetDataInteractor.cpp b/Modules/Core/src/Interactions/mitkPointSetDataInteractor.cpp
+index ac2d921e9a..3f892e84f8 100644
+--- a/Modules/Core/src/Interactions/mitkPointSetDataInteractor.cpp
++++ b/Modules/Core/src/Interactions/mitkPointSetDataInteractor.cpp
+@@ -147,7 +147,7 @@ void mitk::PointSetDataInteractor::SelectPoint(StateMachineAction *, Interaction
+   }
+ }
+ 
+-mitk::PointSetDataInteractor::PointSetDataInteractor() : m_MaxNumberOfPoints(0), m_SelectionAccuracy(3.5)
++mitk::PointSetDataInteractor::PointSetDataInteractor() : m_MaxNumberOfPoints(0), m_SelectionAccuracy(0.025)
+ {
+ }
+ 
+diff --git a/Modules/Core/src/Rendering/mitkImageVtkMapper2D.cpp b/Modules/Core/src/Rendering/mitkImageVtkMapper2D.cpp
+index 3a4462b53a..7b3f85190e 100644
+--- a/Modules/Core/src/Rendering/mitkImageVtkMapper2D.cpp
++++ b/Modules/Core/src/Rendering/mitkImageVtkMapper2D.cpp
+@@ -580,6 +580,14 @@ void mitk::ImageVtkMapper2D::ApplyLookuptable(mitk::BaseRenderer *renderer)
+ {
+   LocalStorage *localStorage = m_LSH.GetLocalStorage(renderer);
+   vtkLookupTable *usedLookupTable = localStorage->m_ColorLookupTable;
++  
++ /* auto lookuptable_updatelater = this->GetDataNode()->GetProperty("LookupTable_updatelater", renderer);
++  if (lookuptable_updatelater)
++  {
++    auto lutProp = dynamic_cast<mitk::LookupTableProperty *>(lookuptable_updatelater);
++    this->GetDataNode()->SetProperty("LookupTable", lutProp);
++    this->GetDataNode()->RemoveProperty("LookupTable_updatelater");
++  }*/
+ 
+   // If lookup table or transferfunction use is requested...
+   mitk::LookupTableProperty::Pointer lookupTableProp =
+diff --git a/Modules/Core/src/Rendering/vtkMitkLevelWindowFilter.cpp b/Modules/Core/src/Rendering/vtkMitkLevelWindowFilter.cpp
+index 5bbc93108e..e167f19dcf 100644
+--- a/Modules/Core/src/Rendering/vtkMitkLevelWindowFilter.cpp
++++ b/Modules/Core/src/Rendering/vtkMitkLevelWindowFilter.cpp
+@@ -47,13 +47,13 @@ vtkMitkLevelWindowFilter::~vtkMitkLevelWindowFilter()
+ vtkMTimeType vtkMitkLevelWindowFilter::GetMTime()
+ {
+   vtkMTimeType mTime = this->vtkObject::GetMTime();
+-  vtkMTimeType time;
++  //vtkMTimeType time;
+ 
+-  if (this->m_LookupTable != nullptr)
+-  {
+-    time = this->m_LookupTable->GetMTime();
+-    mTime = (time > mTime ? time : mTime);
+-  }
++  //if (this->m_LookupTable != nullptr)
++  //{
++  //  time = this->m_LookupTable->GetMTime();
++  //  mTime = (time > mTime ? time : mTime);
++  //}
+ 
+   return mTime;
+ }
+diff --git a/Modules/ImageStatistics/mitkImageStatisticsPredicateHelper.cpp b/Modules/ImageStatistics/mitkImageStatisticsPredicateHelper.cpp
+index 623924f0b3..f549e3610a 100644
+--- a/Modules/ImageStatistics/mitkImageStatisticsPredicateHelper.cpp
++++ b/Modules/ImageStatistics/mitkImageStatisticsPredicateHelper.cpp
+@@ -17,6 +17,7 @@ found in the LICENSE file.
+ #include <mitkNodePredicateDataType.h>
+ #include <mitkNodePredicateProperty.h>
+ #include <mitkNodePredicateNot.h>
++#include <mitkImage.h>
+ 
+ namespace mitk
+ {
+@@ -30,7 +31,7 @@ namespace mitk
+ 
+   mitk::NodePredicateBase::Pointer GetImageStatisticsImagePredicate()
+   {
+-    auto isImage = mitk::NodePredicateDataType::New("Image");
++    auto isImage = mitk::TNodePredicateDataType<mitk::Image>::New();
+     auto hasBinaryProperty = mitk::NodePredicateProperty::New("binary", mitk::BoolProperty::New(true));
+     auto isNotBinary = mitk::NodePredicateNot::New(hasBinaryProperty);
+     auto isNotBinaryImage = mitk::NodePredicateAnd::New(isImage, isNotBinary);
+diff --git a/Modules/MapperExt/src/vtkMitkGPUVolumeRayCastMapper.cpp b/Modules/MapperExt/src/vtkMitkGPUVolumeRayCastMapper.cpp
+index 7858b5a49d..1aaf77ba59 100644
+--- a/Modules/MapperExt/src/vtkMitkGPUVolumeRayCastMapper.cpp
++++ b/Modules/MapperExt/src/vtkMitkGPUVolumeRayCastMapper.cpp
+@@ -50,8 +50,8 @@ vtkMitkGPUVolumeRayCastMapper::vtkMitkGPUVolumeRayCastMapper()
+ {
+   this->AutoAdjustSampleDistances = 1;
+   this->ImageSampleDistance = 1.0;
+-  this->MinimumImageSampleDistance = 1.0;
+-  this->MaximumImageSampleDistance = 10.0;
++  this->MinimumImageSampleDistance = 0.0;
++  this->MaximumImageSampleDistance = 100.0;
+   this->SampleDistance = 1.0;
+   this->SmallVolumeRender = 0;
+   this->BigTimeToDraw = 0.0;
+diff --git a/Modules/ModelFit/CMakeLists.txt b/Modules/ModelFit/CMakeLists.txt
+index 6ddd33235a..0eef5a922e 100644
+--- a/Modules/ModelFit/CMakeLists.txt
++++ b/Modules/ModelFit/CMakeLists.txt
+@@ -3,7 +3,7 @@ MITK_CREATE_MODULE(ModelFit
+     PUBLIC ${MITK_BINARY_DIR}
+     PRIVATE src/Common src/Functors src/Models src/TestingHelper
+   DEPENDS
+-    PUBLIC MitkCore MitkSceneSerializationBase
++    PUBLIC MitkCore MitkSceneSerializationBase MitkDICOMQI
+     PRIVATE	MitkMultilabel
+   PACKAGE_DEPENDS
+     PUBLIC ITK|ITKOptimizers
+diff --git a/Modules/Multilabel/CMakeLists.txt b/Modules/Multilabel/CMakeLists.txt
+index 24ed1c1596..518a7d6342 100644
+--- a/Modules/Multilabel/CMakeLists.txt
++++ b/Modules/Multilabel/CMakeLists.txt
+@@ -1,10 +1,10 @@
+ MITK_CREATE_MODULE(
+-  DEPENDS MitkCore MitkAlgorithmsExt MitkSceneSerializationBase MitkDICOMQI
++  DEPENDS MitkCore MitkAlgorithmsExt MitkSceneSerializationBase
+   PACKAGE_DEPENDS PRIVATE ITK|ITKQuadEdgeMesh+ITKAntiAlias+ITKIONRRD
+ )
+ 
+ add_subdirectory(autoload/IO)
+-add_subdirectory(autoload/DICOMSegIO)
++
+ if(BUILD_TESTING)
+  add_subdirectory(Testing)
+ endif()
+diff --git a/Modules/Multilabel/files.cmake b/Modules/Multilabel/files.cmake
+index bde04e5e6f..5ab0713010 100644
+--- a/Modules/Multilabel/files.cmake
++++ b/Modules/Multilabel/files.cmake
+@@ -10,8 +10,8 @@ set(CPP_FILES
+   mitkLabelSetImageVtkMapper2D.cpp
+   mitkMultilabelObjectFactory.cpp
+   mitkLabelSetIOHelper.cpp
+-  mitkDICOMSegmentationPropertyHelper.cpp
+-  mitkDICOMSegmentationConstants.cpp
++#  mitkDICOMSegmentationPropertyHelper.cpp
++#  mitkDICOMSegmentationConstants.cpp
+ )
+ 
+ set(RESOURCE_FILES
+diff --git a/Modules/Multilabel/mitkDICOMSegmentationConstants.cpp b/Modules/Multilabel/mitkDICOMSegmentationConstants.cpp
+deleted file mode 100644
+index bbc3eb3b71..0000000000
+--- a/Modules/Multilabel/mitkDICOMSegmentationConstants.cpp
++++ /dev/null
+@@ -1,116 +0,0 @@
+-/*============================================================================
+-
+-The Medical Imaging Interaction Toolkit (MITK)
+-
+-Copyright (c) German Cancer Research Center (DKFZ)
+-All rights reserved.
+-
+-Use of this source code is governed by a 3-clause BSD license that can be
+-found in the LICENSE file.
+-
+-============================================================================*/
+-
+-#include "mitkDICOMSegmentationConstants.h"
+-
+-namespace mitk
+-{
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_SEQUENCE_PATH()
+-  {
+-    return DICOMTagPath().AddElement(0x0062, 0x0002);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_NUMBER_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENT_SEQUENCE_PATH().AddElement(0x0062, 0x0004);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_LABEL_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENT_SEQUENCE_PATH().AddElement(0x0062, 0x0005);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_ALGORITHM_TYPE_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENT_SEQUENCE_PATH().AddElement(0x0062, 0x0008);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::ANATOMIC_REGION_SEQUENCE_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENT_SEQUENCE_PATH().AddElement(0x0008, 0x2218);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::ANATOMIC_REGION_CODE_VALUE_PATH()
+-  {
+-    return DICOMSegmentationConstants::ANATOMIC_REGION_SEQUENCE_PATH().AddElement(0x008, 0x0100);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::ANATOMIC_REGION_CODE_SCHEME_PATH()
+-  {
+-    return DICOMSegmentationConstants::ANATOMIC_REGION_SEQUENCE_PATH().AddElement(0x008, 0x0102);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::ANATOMIC_REGION_CODE_MEANING_PATH()
+-  {
+-    return DICOMSegmentationConstants::ANATOMIC_REGION_SEQUENCE_PATH().AddElement(0x008, 0x0104);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENTED_PROPERTY_CATEGORY_SEQUENCE_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENT_SEQUENCE_PATH().AddElement(0x0062, 0x0003);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_CATEGORY_CODE_VALUE_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENTED_PROPERTY_CATEGORY_SEQUENCE_PATH().AddElement(0x008, 0x0100);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_CATEGORY_CODE_SCHEME_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENTED_PROPERTY_CATEGORY_SEQUENCE_PATH().AddElement(0x008, 0x0102);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_CATEGORY_CODE_MEANING_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENTED_PROPERTY_CATEGORY_SEQUENCE_PATH().AddElement(0x008, 0x0104);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENTED_PROPERTY_TYPE_SEQUENCE_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENT_SEQUENCE_PATH().AddElement(0x0062, 0x000F);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_TYPE_CODE_VALUE_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENTED_PROPERTY_TYPE_SEQUENCE_PATH().AddElement(0x008, 0x0100);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_TYPE_CODE_SCHEME_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENTED_PROPERTY_TYPE_SEQUENCE_PATH().AddElement(0x008, 0x0102);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_TYPE_CODE_MEANING_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENTED_PROPERTY_TYPE_SEQUENCE_PATH().AddElement(0x008, 0x0104);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENTED_PROPERTY_MODIFIER_SEQUENCE_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENTED_PROPERTY_TYPE_SEQUENCE_PATH().AddElement(0x0062, 0x0011);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_MODIFIER_CODE_VALUE_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENTED_PROPERTY_MODIFIER_SEQUENCE_PATH().AddElement(0x008, 0x0100);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_MODIFIER_CODE_SCHEME_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENTED_PROPERTY_MODIFIER_SEQUENCE_PATH().AddElement(0x008, 0x0102);
+-  }
+-
+-  DICOMTagPath DICOMSegmentationConstants::SEGMENT_MODIFIER_CODE_MEANING_PATH()
+-  {
+-    return DICOMSegmentationConstants::SEGMENTED_PROPERTY_MODIFIER_SEQUENCE_PATH().AddElement(0x008, 0x0104);
+-  }
+-}
+diff --git a/Modules/Multilabel/mitkDICOMSegmentationConstants.h b/Modules/Multilabel/mitkDICOMSegmentationConstants.h
+deleted file mode 100644
+index a0ea2ef998..0000000000
+--- a/Modules/Multilabel/mitkDICOMSegmentationConstants.h
++++ /dev/null
+@@ -1,54 +0,0 @@
+-/*============================================================================
+-
+-The Medical Imaging Interaction Toolkit (MITK)
+-
+-Copyright (c) German Cancer Research Center (DKFZ)
+-All rights reserved.
+-
+-Use of this source code is governed by a 3-clause BSD license that can be
+-found in the LICENSE file.
+-
+-============================================================================*/
+-
+-#ifndef MITKDICOMSEGMENTATIONCONSTANTS_H_
+-#define MITKDICOMSEGMENTATIONCONSTANTS_H_
+-
+-#include <mitkDICOMTagPath.h>
+-
+-#include <MitkMultilabelExports.h>
+-
+-
+-namespace mitk
+-{
+-  struct MITKMULTILABEL_EXPORT DICOMSegmentationConstants
+-  {
+-    static DICOMTagPath SEGMENT_SEQUENCE_PATH();
+-    static DICOMTagPath SEGMENT_NUMBER_PATH();
+-    static DICOMTagPath SEGMENT_LABEL_PATH();
+-    static DICOMTagPath SEGMENT_ALGORITHM_TYPE_PATH();
+-
+-    static DICOMTagPath ANATOMIC_REGION_SEQUENCE_PATH();
+-    static DICOMTagPath ANATOMIC_REGION_CODE_VALUE_PATH();
+-    static DICOMTagPath ANATOMIC_REGION_CODE_SCHEME_PATH();
+-    static DICOMTagPath ANATOMIC_REGION_CODE_MEANING_PATH();
+-
+-    static DICOMTagPath SEGMENTED_PROPERTY_CATEGORY_SEQUENCE_PATH();
+-    static DICOMTagPath SEGMENT_CATEGORY_CODE_VALUE_PATH();
+-    static DICOMTagPath SEGMENT_CATEGORY_CODE_SCHEME_PATH();
+-    static DICOMTagPath SEGMENT_CATEGORY_CODE_MEANING_PATH();
+-
+-    static DICOMTagPath SEGMENTED_PROPERTY_TYPE_SEQUENCE_PATH();
+-    static DICOMTagPath SEGMENT_TYPE_CODE_VALUE_PATH();
+-    static DICOMTagPath SEGMENT_TYPE_CODE_SCHEME_PATH();
+-    static DICOMTagPath SEGMENT_TYPE_CODE_MEANING_PATH();
+-
+-    static DICOMTagPath SEGMENTED_PROPERTY_MODIFIER_SEQUENCE_PATH();
+-    static DICOMTagPath SEGMENT_MODIFIER_CODE_VALUE_PATH();
+-    static DICOMTagPath SEGMENT_MODIFIER_CODE_SCHEME_PATH();
+-    static DICOMTagPath SEGMENT_MODIFIER_CODE_MEANING_PATH();
+-
+-
+-  };
+-}
+-
+-#endif // MITKDICOMSEGMENTATIONCONSTANTS_H_
+diff --git a/Modules/Multilabel/mitkDICOMSegmentationPropertyHelper.cpp b/Modules/Multilabel/mitkDICOMSegmentationPropertyHelper.cpp
+deleted file mode 100644
+index 59e6e61d4a..0000000000
+--- a/Modules/Multilabel/mitkDICOMSegmentationPropertyHelper.cpp
++++ /dev/null
+@@ -1,173 +0,0 @@
+-/*============================================================================
+-
+-The Medical Imaging Interaction Toolkit (MITK)
+-
+-Copyright (c) German Cancer Research Center (DKFZ)
+-All rights reserved.
+-
+-Use of this source code is governed by a 3-clause BSD license that can be
+-found in the LICENSE file.
+-
+-============================================================================*/
+-
+-#include <mitkAnatomicalStructureColorPresets.h>
+-#include <mitkDICOMSegmentationConstants.h>
+-#include <mitkIDICOMTagsOfInterest.h>
+-#include <mitkPropertyNameHelper.h>
+-#include <mitkTemporoSpatialStringProperty.h>
+-#include <mitkPropertyList.h>
+-
+-#include "mitkDICOMSegmentationPropertyHelper.h"
+-
+-#include <vtkSmartPointer.h>
+-
+-#include <vtkSmartPointer.h>
+-
+-namespace mitk
+-{
+-  void DICOMSegmentationPropertyHelper::DeriveDICOMSegmentationProperties(LabelSetImage* dicomSegImage)
+-  {
+-    PropertyList::Pointer propertyList = dicomSegImage->GetPropertyList();
+-
+-    // Add DICOM Tag (0008, 0060) Modality "SEG"
+-    propertyList->SetProperty(GeneratePropertyNameForDICOMTag(0x0008, 0x0060).c_str(),
+-      TemporoSpatialStringProperty::New("SEG"));
+-    // Add DICOM Tag (0008,103E) Series Description
+-    propertyList->SetProperty(GeneratePropertyNameForDICOMTag(0x0008, 0x103E).c_str(),
+-      TemporoSpatialStringProperty::New("MITK Segmentation"));
+-    // Add DICOM Tag (0070,0084) Content Creator Name
+-    propertyList->SetProperty(GeneratePropertyNameForDICOMTag(0x0070, 0x0084).c_str(),
+-      TemporoSpatialStringProperty::New("MITK"));
+-    // Add DICOM Tag (0012, 0071) Clinical Trial Series ID
+-    propertyList->SetProperty(GeneratePropertyNameForDICOMTag(0x0012, 0x0071).c_str(),
+-      TemporoSpatialStringProperty::New("Session 1"));
+-    // Add DICOM Tag (0012,0050) Clinical Trial Time Point ID
+-    propertyList->SetProperty(GeneratePropertyNameForDICOMTag(0x0012, 0x0050).c_str(),
+-      TemporoSpatialStringProperty::New("0"));
+-    // Add DICOM Tag (0012, 0060) Clinical Trial Coordinating Center Name
+-    propertyList->SetProperty(GeneratePropertyNameForDICOMTag(0x0012, 0x0060).c_str(),
+-      TemporoSpatialStringProperty::New("Unknown"));
+-
+-    // Set DICOM properties for each label
+-    // Iterate over all layers
+-    for (unsigned int layer = 0; layer < dicomSegImage->GetNumberOfLayers(); ++layer)
+-    {
+-      // Iterate over all labels
+-      const LabelSet *labelSet = dicomSegImage->GetLabelSet(layer);
+-      auto labelIter = labelSet->IteratorConstBegin();
+-      // Ignore background label
+-      ++labelIter;
+-
+-      for (; labelIter != labelSet->IteratorConstEnd(); ++labelIter)
+-      {
+-        Label::Pointer label = labelIter->second;
+-        SetDICOMSegmentProperties(label);
+-      }
+-    }
+-  }
+-
+-  void DICOMSegmentationPropertyHelper::SetDICOMSegmentProperties(Label *label)
+-  {
+-    PropertyList::Pointer propertyList = PropertyList::New();
+-
+-    AnatomicalStructureColorPresets::Category category;
+-    AnatomicalStructureColorPresets::Type type;
+-    auto presets = vtkSmartPointer<AnatomicalStructureColorPresets>::New();
+-    presets->LoadPreset();
+-
+-    for (const auto &preset : presets->GetCategoryPresets())
+-    {
+-      auto presetOrganName = preset.first;
+-      if (label->GetName().compare(presetOrganName) == 0)
+-      {
+-        category = preset.second;
+-        break;
+-      }
+-    }
+-
+-    for (const auto &preset : presets->GetTypePresets())
+-    {
+-      auto presetOrganName = preset.first;
+-      if (label->GetName().compare(presetOrganName) == 0)
+-      {
+-        type = preset.second;
+-        break;
+-      }
+-    }
+-
+-    //------------------------------------------------------------
+-    // Add Segment Sequence tags (0062, 0002)
+-    // Segment Number:Identification number of the segment.The value of Segment Number(0062, 0004) shall be unique
+-    // within the Segmentation instance in which it is created
+-    label->SetProperty(DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_NUMBER_PATH()).c_str(),
+-      TemporoSpatialStringProperty::New(std::to_string(label->GetValue())));
+-
+-    // Segment Label: User-defined label identifying this segment.
+-    label->SetProperty(DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_LABEL_PATH()).c_str(),
+-      TemporoSpatialStringProperty::New(label->GetName()));
+-
+-    // Segment Algorithm Type: Type of algorithm used to generate the segment. AUTOMATIC SEMIAUTOMATIC MANUAL
+-    label->SetProperty(DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_ALGORITHM_TYPE_PATH()).c_str(),
+-      TemporoSpatialStringProperty::New("SEMIAUTOMATIC"));
+-    //------------------------------------------------------------
+-    // Add Segmented Property Category Code Sequence tags (0062, 0003): Sequence defining the general category of this
+-    // segment.
+-    // (0008,0100) Code Value
+-    if (!category.codeValue.empty())
+-      label->SetProperty(
+-        DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_CATEGORY_CODE_VALUE_PATH()).c_str(),
+-        TemporoSpatialStringProperty::New(category.codeValue));
+-
+-    // (0008,0102) Coding Scheme Designator
+-    if (!category.codeScheme.empty())
+-      label->SetProperty(
+-        DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_CATEGORY_CODE_SCHEME_PATH()).c_str(),
+-        TemporoSpatialStringProperty::New(category.codeScheme));
+-
+-    // (0008,0104) Code Meaning
+-    if (!category.codeName.empty())
+-      label->SetProperty(
+-        DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_CATEGORY_CODE_MEANING_PATH()).c_str(),
+-        TemporoSpatialStringProperty::New(category.codeName));
+-    //------------------------------------------------------------
+-    // Add Segmented Property Type Code Sequence (0062, 000F): Sequence defining the specific property type of this
+-    // segment.
+-    // (0008,0100) Code Value
+-    if (!type.codeValue.empty())
+-      label->SetProperty(
+-        DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_TYPE_CODE_VALUE_PATH()).c_str(),
+-        TemporoSpatialStringProperty::New(type.codeValue));
+-
+-    // (0008,0102) Coding Scheme Designator
+-    if (!type.codeScheme.empty())
+-      label->SetProperty(
+-        DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_TYPE_CODE_SCHEME_PATH()).c_str(),
+-        TemporoSpatialStringProperty::New(type.codeScheme));
+-
+-    // (0008,0104) Code Meaning
+-    if (!type.codeName.empty())
+-      label->SetProperty(
+-        DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_TYPE_CODE_MEANING_PATH()).c_str(),
+-        TemporoSpatialStringProperty::New(type.codeName));
+-    //------------------------------------------------------------
+-    // Add Segmented Property Type Modifier Code Sequence (0062,0011): Sequence defining the modifier of the property
+-    // type of this segment.
+-    // (0008,0100) Code Value
+-    if (!type.modifier.codeValue.empty())
+-      label->SetProperty(
+-        DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_MODIFIER_CODE_VALUE_PATH()).c_str(),
+-        TemporoSpatialStringProperty::New(type.modifier.codeValue));
+-
+-    // (0008,0102) Coding Scheme Designator
+-    if (!type.modifier.codeScheme.empty())
+-      label->SetProperty(
+-        DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_MODIFIER_CODE_SCHEME_PATH()).c_str(),
+-        TemporoSpatialStringProperty::New(type.modifier.codeScheme));
+-
+-    // (0008,0104) Code Meaning
+-    if (!type.modifier.codeName.empty())
+-      label->SetProperty(
+-        DICOMTagPathToPropertyName(DICOMSegmentationConstants::SEGMENT_MODIFIER_CODE_MEANING_PATH()).c_str(),
+-        TemporoSpatialStringProperty::New(type.modifier.codeName));
+-  }
+-}
+diff --git a/Modules/Multilabel/mitkDICOMSegmentationPropertyHelper.h b/Modules/Multilabel/mitkDICOMSegmentationPropertyHelper.h
+deleted file mode 100644
+index e4d08f0e30..0000000000
+--- a/Modules/Multilabel/mitkDICOMSegmentationPropertyHelper.h
++++ /dev/null
+@@ -1,31 +0,0 @@
+-/*============================================================================
+-
+-The Medical Imaging Interaction Toolkit (MITK)
+-
+-Copyright (c) German Cancer Research Center (DKFZ)
+-All rights reserved.
+-
+-Use of this source code is governed by a 3-clause BSD license that can be
+-found in the LICENSE file.
+-
+-============================================================================*/
+-
+-#ifndef DICOMPMPROPERTYHELPER_H_
+-#define DICOMPMPROPERTYHELPER_H_
+-
+-#include <mitkDICOMTag.h>
+-#include <mitkLabel.h>
+-#include <mitkLabelSetImage.h>
+-
+-#include <MitkMultilabelExports.h>
+-
+-namespace mitk
+-{
+-  class MITKMULTILABEL_EXPORT DICOMSegmentationPropertyHelper
+-  {
+-  public:
+-    static void DeriveDICOMSegmentationProperties(LabelSetImage* dicomSegImage);
+-    static void SetDICOMSegmentProperties(Label *label);
+-  };
+-}
+-#endif
+diff --git a/Modules/Multilabel/mitkLabel.cpp b/Modules/Multilabel/mitkLabel.cpp
+index b7952a6ef9..5456d2e3fa 100644
+--- a/Modules/Multilabel/mitkLabel.cpp
++++ b/Modules/Multilabel/mitkLabel.cpp
+@@ -16,7 +16,6 @@ found in the LICENSE file.
+ #include "tinyxml.h"
+ #include <itkCommand.h>
+ #include <mitkProperties.h>
+-#include <mitkDICOMSegmentationPropertyHelper.h>
+ #include <mitkStringProperty.h>
+ 
+ const mitk::Label::PixelType mitk::Label::MAX_LABEL_VALUE = std::numeric_limits<mitk::Label::PixelType>::max();
+@@ -58,7 +57,7 @@ mitk::Label::Label() : PropertyList()
+   if (GetProperty("layer") == nullptr)
+     SetLayer(0);
+ 
+-  DICOMSegmentationPropertyHelper::SetDICOMSegmentProperties(this);
++  //DICOMSegmentationPropertyHelper::SetDICOMSegmentProperties(this);
+ }
+ 
+ mitk::Label::Label(const Label &other) : PropertyList(other)
+diff --git a/Modules/Multilabel/mitkLabelSet.cpp b/Modules/Multilabel/mitkLabelSet.cpp
+index 3452a9a90b..59e09023b3 100644
+--- a/Modules/Multilabel/mitkLabelSet.cpp
++++ b/Modules/Multilabel/mitkLabelSet.cpp
+@@ -11,7 +11,7 @@ found in the LICENSE file.
+ ============================================================================*/
+ 
+ #include "mitkLabelSet.h"
+-#include "mitkDICOMSegmentationPropertyHelper.h"
++//#include "mitkDICOMSegmentationPropertyHelper.h"
+ 
+ #include <itkCommand.h>
+ 
+@@ -130,7 +130,7 @@ void mitk::LabelSet::AddLabel(mitk::Label *label)
+   UpdateLookupTable(pixelValue);
+ 
+   // add DICOM information of the label
+-  DICOMSegmentationPropertyHelper::SetDICOMSegmentProperties(newLabel);
++  //DICOMSegmentationPropertyHelper::SetDICOMSegmentProperties(newLabel);
+ 
+   itk::SimpleMemberCommand<LabelSet>::Pointer command = itk::SimpleMemberCommand<LabelSet>::New();
+   command->SetCallbackFunction(this, &LabelSet::OnLabelModified);
+@@ -160,7 +160,7 @@ void mitk::LabelSet::RenameLabel(PixelType pixelValue, const std::string &name,
+   label->SetColor(color);
+ 
+   // change DICOM information of the label
+-  DICOMSegmentationPropertyHelper::SetDICOMSegmentProperties(label);
++  //DICOMSegmentationPropertyHelper::SetDICOMSegmentProperties(label);
+ }
+ 
+ void mitk::LabelSet::SetLookupTable(mitk::LookupTable *lut)
+diff --git a/Modules/Multilabel/mitkLabelSetImage.cpp b/Modules/Multilabel/mitkLabelSetImage.cpp
+index 71a099210e..fe85268f1d 100644
+--- a/Modules/Multilabel/mitkLabelSetImage.cpp
++++ b/Modules/Multilabel/mitkLabelSetImage.cpp
+@@ -20,8 +20,6 @@ found in the LICENSE file.
+ #include "mitkLookupTableProperty.h"
+ #include "mitkPadImageFilter.h"
+ #include "mitkRenderingManager.h"
+-#include "mitkDICOMSegmentationPropertyHelper.h"
+-#include "mitkDICOMQIPropertyHelper.h"
+ 
+ #include <vtkCell.h>
+ #include <vtkTransform.h>
+@@ -74,7 +72,7 @@ mitk::LabelSetImage::LabelSetImage()
+   m_ExteriorLabel->SetValue(0);
+ 
+   // Add some DICOM Tags as properties to segmentation image
+-  DICOMSegmentationPropertyHelper::DeriveDICOMSegmentationProperties(this);
++  //DICOMSegmentationPropertyHelper::DeriveDICOMSegmentationProperties(this);
+ }
+ 
+ mitk::LabelSetImage::LabelSetImage(const mitk::LabelSetImage &other)
+@@ -99,7 +97,7 @@ mitk::LabelSetImage::LabelSetImage(const mitk::LabelSetImage &other)
+   }
+ 
+   // Add some DICOM Tags as properties to segmentation image
+-  DICOMSegmentationPropertyHelper::DeriveDICOMSegmentationProperties(this);
++  //DICOMSegmentationPropertyHelper::DeriveDICOMSegmentationProperties(this);
+ }
+ 
+ void mitk::LabelSetImage::OnLabelSetModified()
+@@ -149,7 +147,7 @@ void mitk::LabelSetImage::Initialize(const mitk::Image *other)
+   }
+ 
+   // Transfer some general DICOM properties from the source image to derived image (e.g. Patient information,...)
+-  DICOMQIPropertyHelper::DeriveDICOMSourceProperties(other, this);
++  //DICOMQIPropertyHelper::DeriveDICOMSourceProperties(other, this);
+ 
+   // Add a inital LabelSet ans corresponding image data to the stack
+   AddLayer();
+diff --git a/Modules/QtWidgets/src/QmitkDataStorageComboBoxWithSelectNone.cpp b/Modules/QtWidgets/src/QmitkDataStorageComboBoxWithSelectNone.cpp
+index dacc7ea0d3..d7203263e5 100644
+--- a/Modules/QtWidgets/src/QmitkDataStorageComboBoxWithSelectNone.cpp
++++ b/Modules/QtWidgets/src/QmitkDataStorageComboBoxWithSelectNone.cpp
+@@ -19,6 +19,7 @@ QmitkDataStorageComboBoxWithSelectNone::QmitkDataStorageComboBoxWithSelectNone(Q
+   : QmitkDataStorageComboBox(parent, autoSelectNewNodes)
+   , m_CurrentPath("")
+ {
++  Reset();
+ }
+ 
+ QmitkDataStorageComboBoxWithSelectNone::QmitkDataStorageComboBoxWithSelectNone(mitk::DataStorage* dataStorage,
+@@ -27,6 +28,7 @@ QmitkDataStorageComboBoxWithSelectNone::QmitkDataStorageComboBoxWithSelectNone(m
+                                                                                bool autoSelectNewNodes)
+   : QmitkDataStorageComboBox(dataStorage, predicate, parent, autoSelectNewNodes)
+ {
++  Reset();
+ }
+ 
+ QmitkDataStorageComboBoxWithSelectNone::~QmitkDataStorageComboBoxWithSelectNone()
+diff --git a/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp b/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp
+index 46a8600375..2f4cf06ef2 100644
+--- a/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp
++++ b/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp
+@@ -13,10 +13,12 @@ found in the LICENSE file.
+ #include "QmitkNodeDescriptorManager.h"
+ #include <memory>
+ #include <mitkNodePredicateAnd.h>
++#include <mitkNodePredicateOr.h>
+ #include <mitkNodePredicateDataType.h>
+ #include <mitkNodePredicateNot.h>
+ #include <mitkNodePredicateProperty.h>
+ #include <mitkProperties.h>
++#include <mitkImage.h>
+ 
+ #include <QList>
+ #include <QSet>
+@@ -35,6 +37,15 @@ void QmitkNodeDescriptorManager::Initialize()
+   auto isMultiComponentImage = mitk::NodePredicateAnd::New(isImage, mitk::NodePredicateProperty::New("Image.Displayed Component"));
+   AddDescriptor(new QmitkNodeDescriptor(tr("MultiComponentImage"), QString(": / Qmitk / Images_48.png"), isMultiComponentImage, this));
+ 
++  auto a = mitk::NodePredicateDataType::New("MassSpecImageBase");
++  auto b = mitk::NodePredicateDataType::New("ImzMLMassSpecImage");
++  auto c = mitk::NodePredicateOr::New(a, b);
++  auto d = mitk::NodePredicateDataType::New("TransformixMSDataObjectStack");
++  auto e = mitk::NodePredicateOr::New(c, d);
++  auto f = mitk::TNodePredicateDataType<mitk::Image>::New();
++  auto g = mitk::NodePredicateAnd::New(e, f);
++  AddDescriptor( new QmitkNodeDescriptor(tr("MassSpecImage"), QString(":/Qmitk/LabelSetImage_48.png"), g, this));
++
+   auto isBinary = mitk::NodePredicateProperty::New("binary", mitk::BoolProperty::New(true));
+   auto isBinaryImage = mitk::NodePredicateAnd::New(isBinary, isImage);
+   AddDescriptor(new QmitkNodeDescriptor(tr("ImageMask"), QString(":/Qmitk/Binaerbilder_48.png"), isBinaryImage, this));
+diff --git a/Modules/Segmentation/Interactions/mitkTool.cpp b/Modules/Segmentation/Interactions/mitkTool.cpp
+index 2c2f32e1e5..5bc03e780f 100644
+--- a/Modules/Segmentation/Interactions/mitkTool.cpp
++++ b/Modules/Segmentation/Interactions/mitkTool.cpp
+@@ -21,7 +21,6 @@ found in the LICENSE file.
+ #include "mitkLookupTableProperty.h"
+ #include "mitkProperties.h"
+ #include "mitkVtkResliceInterpolationProperty.h"
+-#include <mitkDICOMSegmentationPropertyHelper.cpp>
+ 
+ // us
+ #include <usGetModuleContext.h>
+diff --git a/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeColorMapAction.cpp b/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeColorMapAction.cpp
+index 076eb3d29b..13695dd625 100644
+--- a/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeColorMapAction.cpp
++++ b/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeColorMapAction.cpp
+@@ -151,6 +151,7 @@ void QmitkDataNodeColorMapAction::UseWholePixelRange(mitk::DataNode* node)
+   auto image = dynamic_cast<mitk::Image*>(node->GetData());
+   if (nullptr != image)
+   {
++    MITK_INFO << "Node lookuptable updated " << node->GetName();
+     mitk::LevelWindow levelWindow;
+     levelWindow.SetToImageRange(image);
+     node->SetLevelWindow(levelWindow);
+diff --git a/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeContextMenu.cpp b/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeContextMenu.cpp
+index de2ccb87e7..d677a5929e 100644
+--- a/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeContextMenu.cpp
++++ b/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeContextMenu.cpp
+@@ -11,7 +11,16 @@ found in the LICENSE file.
+ ============================================================================*/
+ 
+ #include <QmitkDataNodeContextMenu.h>
++#include "QmitkDataNodeContextMenu.h"
+ 
++// mitk gui qt application plugin
++#include "QmitkFileSaveAction.h"
++#include "mitkIContextMenuAction.h"
++
++// mitk gui common plugin
++#include <mitkDataNodeSelection.h>
++
++// qt widgets module
+ #include <QmitkCustomVariants.h>
+ #include <QmitkFileSaveAction.h>
+ #include <QmitkNodeDescriptorManager.h>
+@@ -41,7 +50,7 @@ QmitkDataNodeContextMenu::~QmitkDataNodeContextMenu()
+     descriptorActionPair.first->RemoveAction(descriptorActionPair.second);
+ }
+ 
+-void QmitkDataNodeContextMenu::SetDataStorage(mitk::DataStorage* dataStorage)
++void QmitkDataNodeContextMenu::SetDataStorage(mitk::DataStorage *dataStorage)
+ {
+   m_DataStorage = dataStorage;
+ 
+@@ -54,7 +63,7 @@ void QmitkDataNodeContextMenu::SetDataStorage(mitk::DataStorage* dataStorage)
+   }  
+ }
+ 
+-void QmitkDataNodeContextMenu::SetBaseRenderer(mitk::BaseRenderer* baseRenderer)
++void QmitkDataNodeContextMenu::SetBaseRenderer(mitk::BaseRenderer *baseRenderer)
+ {
+   m_BaseRenderer = baseRenderer;
+ 
+@@ -72,13 +81,14 @@ void QmitkDataNodeContextMenu::SetSurfaceDecimation(bool surfaceDecimation)
+   m_SurfaceDecimation = surfaceDecimation;
+ }
+ 
+-void QmitkDataNodeContextMenu::SetSelectedNodes(const QList<mitk::DataNode::Pointer>& selectedNodes)
++void QmitkDataNodeContextMenu::SetSelectedNodes(const QList<mitk::DataNode::Pointer> &selectedNodes)
+ {
+   m_SelectedNodes = selectedNodes;
+ }
+ 
+ void QmitkDataNodeContextMenu::InitNodeDescriptors()
+ {
++
+   auto nodeDescriptorManager = QmitkNodeDescriptorManager::GetInstance();
+ 
+   m_UnknownDataNodeDescriptor = nodeDescriptorManager->GetUnknownDataNodeDescriptor();
+@@ -101,6 +111,8 @@ void QmitkDataNodeContextMenu::InitNodeDescriptors()
+   m_PlanarDoubleEllipseNodeDescriptor = nodeDescriptorManager->GetDescriptor("PlanarDoubleEllipse");
+   m_PlanarBezierCurveNodeDescriptor = nodeDescriptorManager->GetDescriptor("PlanarBezierCurve");
+   m_PlanarSubdivisionPolygonNodeDescriptor = nodeDescriptorManager->GetDescriptor("PlanarSubdivisionPolygon");
++  m_ImzMLMassSpecImageNodeDescriptor = nodeDescriptorManager->GetDescriptor("MassSpecImage");
++
+ }
+ 
+ void QmitkDataNodeContextMenu::InitDefaultActions()
+@@ -118,6 +130,7 @@ void QmitkDataNodeContextMenu::InitDefaultActions()
+   m_DescriptorActionList.push_back(std::make_pair(m_UnknownDataNodeDescriptor, m_ReinitAction));
+ 
+   QAction* saveAction = new QmitkFileSaveAction(QIcon(":/org.mitk.gui.qt.datamanager/Save_48.png"), workbenchPartSite->GetWorkbenchWindow());
++
+   m_UnknownDataNodeDescriptor->AddAction(saveAction, true);
+   m_DescriptorActionList.push_back(std::make_pair(m_UnknownDataNodeDescriptor, saveAction));
+ 
+@@ -145,48 +158,49 @@ void QmitkDataNodeContextMenu::InitDefaultActions()
+   m_UnknownDataNodeDescriptor->AddAction(m_OpacityAction, false);
+   m_DescriptorActionList.push_back(std::make_pair(m_UnknownDataNodeDescriptor, m_OpacityAction));
+ 
+-  m_ColorAction = new QmitkDataNodeColorAction(m_Parent, workbenchPartSite);
+-  this->AddColorAction(m_ColorAction);
+-
+-  m_ColormapAction = new QmitkDataNodeColorMapAction(m_Parent, workbenchPartSite);
+-  m_ImageDataNodeDescriptor->AddAction(m_ColormapAction);
+-  m_DescriptorActionList.push_back(std::make_pair(m_ImageDataNodeDescriptor, m_ColormapAction));
+-
+-  if (nullptr != m_DiffusionImageDataNodeDescriptor)
+-  {
+-    m_DiffusionImageDataNodeDescriptor->AddAction(m_ColormapAction, false);
+-    m_DescriptorActionList.push_back(std::make_pair(m_DiffusionImageDataNodeDescriptor, m_ColormapAction));
+-  }
+-
+-  m_ComponentAction = new QmitkDataNodeComponentAction(m_Parent, workbenchPartSite);
+-  m_MultiComponentImageDataNodeDescriptor->AddAction(m_ComponentAction, false);
+-  m_DescriptorActionList.push_back(std::make_pair(m_MultiComponentImageDataNodeDescriptor, m_ComponentAction));
++  auto all = {m_ImageDataNodeDescriptor,
++              m_ImzMLMassSpecImageNodeDescriptor,
++              m_MultiComponentImageDataNodeDescriptor,
++              m_DiffusionImageDataNodeDescriptor,
++              m_FiberBundleDataNodeDescriptor,
++              m_PeakImageDataNodeDescriptor,
++              m_SegmentDataNodeDescriptor,
++              m_SurfaceDataNodeDescriptor,
++              m_PointSetNodeDescriptor,
++              m_PlanarLineNodeDescriptor,
++              m_PlanarCircleNodeDescriptor,
++              m_PlanarEllipseNodeDescriptor,
++              m_PlanarAngleNodeDescriptor,
++              m_PlanarFourPointAngleNodeDescriptor,
++              m_PlanarRectangleNodeDescriptor,
++              m_PlanarPolygonNodeDescriptor,
++              m_PlanarPathNodeDescriptor,
++              m_PlanarDoubleEllipseNodeDescriptor,
++              m_PlanarBezierCurveNodeDescriptor,
++              m_PlanarSubdivisionPolygonNodeDescriptor};
++
++  m_ColorAction = new QmitkDataNodeColorAction(m_Parent, m_WorkbenchPartSite.Lock());
++  AddAction(m_ColorAction, all, true);
++
++  m_ColormapAction = new QmitkDataNodeColorMapAction(m_Parent, m_WorkbenchPartSite.Lock());
++  AddAction(m_ColormapAction,
++            {m_ImageDataNodeDescriptor, m_DiffusionImageDataNodeDescriptor, m_ImzMLMassSpecImageNodeDescriptor},
++            true);
++
++  m_ComponentAction = new QmitkDataNodeComponentAction(m_Parent, m_WorkbenchPartSite.Lock());
++  AddAction(m_ComponentAction, {m_MultiComponentImageDataNodeDescriptor, m_DiffusionImageDataNodeDescriptor}, false);
++
++  m_TextureInterpolationAction = new QmitkDataNodeTextureInterpolationAction(m_Parent, m_WorkbenchPartSite.Lock());
++  AddAction(m_TextureInterpolationAction,
++            {m_ImageDataNodeDescriptor,
++             m_DiffusionImageDataNodeDescriptor,
++             m_ImzMLMassSpecImageNodeDescriptor,
++             m_SegmentDataNodeDescriptor},
++            false);
++
++  m_SurfaceRepresentationAction = new QmitkDataNodeSurfaceRepresentationAction(m_Parent, m_WorkbenchPartSite.Lock());
++  AddAction(m_SurfaceRepresentationAction, {m_SurfaceDataNodeDescriptor}, false);
+ 
+-  if (nullptr != m_DiffusionImageDataNodeDescriptor)
+-  {
+-    m_DiffusionImageDataNodeDescriptor->AddAction(m_ComponentAction, false);
+-    m_DescriptorActionList.push_back(std::make_pair(m_DiffusionImageDataNodeDescriptor, m_ComponentAction));
+-  }
+-
+-  m_TextureInterpolationAction = new QmitkDataNodeTextureInterpolationAction(m_Parent, workbenchPartSite);
+-  m_ImageDataNodeDescriptor->AddAction(m_TextureInterpolationAction, false);
+-  m_DescriptorActionList.push_back(std::make_pair(m_ImageDataNodeDescriptor, m_TextureInterpolationAction));
+-
+-  if (nullptr != m_DiffusionImageDataNodeDescriptor)
+-  {
+-    m_DiffusionImageDataNodeDescriptor->AddAction(m_TextureInterpolationAction, false);
+-    m_DescriptorActionList.push_back(std::make_pair(m_DiffusionImageDataNodeDescriptor, m_TextureInterpolationAction));
+-  }
+-
+-  if (nullptr != m_SegmentDataNodeDescriptor)
+-  {
+-    m_SegmentDataNodeDescriptor->AddAction(m_TextureInterpolationAction, false);
+-    m_DescriptorActionList.push_back(std::make_pair(m_SegmentDataNodeDescriptor, m_TextureInterpolationAction));
+-  }
+-
+-  m_SurfaceRepresentationAction = new QmitkDataNodeSurfaceRepresentationAction(m_Parent, workbenchPartSite);
+-  m_SurfaceDataNodeDescriptor->AddAction(m_SurfaceRepresentationAction, false);
+-  m_DescriptorActionList.push_back(std::make_pair(m_SurfaceDataNodeDescriptor, m_SurfaceRepresentationAction));
+ }
+ 
+ void QmitkDataNodeContextMenu::InitExtensionPointActions()
+@@ -194,7 +208,9 @@ void QmitkDataNodeContextMenu::InitExtensionPointActions()
+   auto extensionPointService = berry::Platform::GetExtensionRegistry();
+   auto customMenuConfigs = extensionPointService->GetConfigurationElementsFor("org.mitk.gui.qt.datamanager.contextMenuActions");
+ 
++
+   DescriptorActionListType descriptorActionList;
++
+   m_ConfigElements.clear();
+ 
+   for (const auto& customMenuConfig : customMenuConfigs)
+@@ -247,11 +263,9 @@ void QmitkDataNodeContextMenu::InitExtensionPointActions()
+   this->AddDescriptorActionList(descriptorActionList);
+ }
+ 
+-void QmitkDataNodeContextMenu::InitServiceActions()
+-{
+-}
++void QmitkDataNodeContextMenu::InitServiceActions() {}
+ 
+-void QmitkDataNodeContextMenu::OnContextMenuRequested(const QPoint& /*pos*/)
++void QmitkDataNodeContextMenu::OnContextMenuRequested(const QPoint & /*pos*/)
+ {
+   if (m_WorkbenchPartSite.Expired())
+     return;
+@@ -266,6 +280,7 @@ void QmitkDataNodeContextMenu::OnContextMenuRequested(const QPoint& /*pos*/)
+ 
+   if (!m_SelectedNodes.isEmpty())
+   {
++
+     this->clear();
+ 
+     auto actions = m_SelectedNodes.size() == 1
+@@ -287,6 +302,7 @@ void QmitkDataNodeContextMenu::OnContextMenuRequested(const QPoint& /*pos*/)
+ 
+ void QmitkDataNodeContextMenu::OnExtensionPointActionTriggered(QAction* action)
+ {
++
+   auto configElementIter = m_ConfigElements.find(action);
+ 
+   if (m_ConfigElements.end() == configElementIter)
+@@ -295,6 +311,7 @@ void QmitkDataNodeContextMenu::OnExtensionPointActionTriggered(QAction* action)
+     return;
+   }
+ 
++
+   auto configElement = configElementIter->second;
+   auto contextMenuAction = configElement->CreateExecutableExtension<mitk::IContextMenuAction>("class");
+ 
+@@ -310,125 +327,22 @@ void QmitkDataNodeContextMenu::OnExtensionPointActionTriggered(QAction* action)
+   contextMenuAction->Run(m_SelectedNodes);
+ }
+ 
+-void QmitkDataNodeContextMenu::AddColorAction(QWidgetAction* colorAction)
++void QmitkDataNodeContextMenu::AddAction(QAction *action, std::vector<QmitkNodeDescriptor *> list, bool canBatch)
+ {
+-  if (nullptr != m_ImageDataNodeDescriptor)
+-  {
+-    m_ImageDataNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_ImageDataNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_MultiComponentImageDataNodeDescriptor)
+-  {
+-    m_MultiComponentImageDataNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_MultiComponentImageDataNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_DiffusionImageDataNodeDescriptor)
+-  {
+-    m_DiffusionImageDataNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_DiffusionImageDataNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_FiberBundleDataNodeDescriptor)
+-  {
+-    m_FiberBundleDataNodeDescriptor->AddAction(colorAction, false);
+-    m_DescriptorActionList.push_back(std::make_pair(m_FiberBundleDataNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PeakImageDataNodeDescriptor)
+-  {
+-    m_PeakImageDataNodeDescriptor->AddAction(colorAction, false);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PeakImageDataNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_SegmentDataNodeDescriptor)
+-  {
+-    m_SegmentDataNodeDescriptor->AddAction(colorAction, false);
+-    m_DescriptorActionList.push_back(std::make_pair(m_SegmentDataNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_SurfaceDataNodeDescriptor)
+-  {
+-    m_SurfaceDataNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_SurfaceDataNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PointSetNodeDescriptor)
+-  {
+-    m_PointSetNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PointSetNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PlanarLineNodeDescriptor)
+-  {
+-    m_PlanarLineNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarLineNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PlanarCircleNodeDescriptor)
+-  {
+-    m_PlanarCircleNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarCircleNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PlanarEllipseNodeDescriptor)
+-  {
+-    m_PlanarEllipseNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarEllipseNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PlanarAngleNodeDescriptor)
+-  {
+-    m_PlanarAngleNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarAngleNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PlanarFourPointAngleNodeDescriptor)
+-  {
+-    m_PlanarFourPointAngleNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarFourPointAngleNodeDescriptor, colorAction));
+-  }
+ 
+-  if (nullptr != m_PlanarRectangleNodeDescriptor)
++  for (auto *descriptor : list)
+   {
+-    m_PlanarRectangleNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarRectangleNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PlanarPolygonNodeDescriptor)
+-  {
+-    m_PlanarPolygonNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarPolygonNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PlanarPathNodeDescriptor)
+-  {
+-    m_PlanarPathNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarPathNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PlanarDoubleEllipseNodeDescriptor)
+-  {
+-    m_PlanarDoubleEllipseNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarDoubleEllipseNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PlanarBezierCurveNodeDescriptor)
+-  {
+-    m_PlanarBezierCurveNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarBezierCurveNodeDescriptor, colorAction));
+-  }
+-
+-  if (nullptr != m_PlanarSubdivisionPolygonNodeDescriptor)
+-  {
+-    m_PlanarSubdivisionPolygonNodeDescriptor->AddAction(colorAction, true);
+-    m_DescriptorActionList.push_back(std::make_pair(m_PlanarSubdivisionPolygonNodeDescriptor, colorAction));
++    if (nullptr != descriptor)
++    {
++      descriptor->AddAction(action, canBatch);
++      m_DescriptorActionList.push_back(std::make_pair(descriptor, action));
++    }
+   }
+ }
+ 
+-void QmitkDataNodeContextMenu::AddDescriptorActionList(DescriptorActionListType& descriptorActionList)
++void QmitkDataNodeContextMenu::AddDescriptorActionList(DescriptorActionListType &descriptorActionList)
+ {
++
+   using ListItem = std::pair<QmitkNodeDescriptor*, QAction*>;
+ 
+   std::sort(descriptorActionList.begin(), descriptorActionList.end(), [](const ListItem& left, const ListItem& right) -> bool
+@@ -443,8 +357,9 @@ void QmitkDataNodeContextMenu::AddDescriptorActionList(DescriptorActionListType&
+   }
+ }
+ 
+-QList<QAction*> QmitkDataNodeContextMenu::GetActions(const mitk::DataNode* node)
++QList<QAction *> QmitkDataNodeContextMenu::GetActions(const mitk::DataNode *node)
+ {
++
+   QList<QAction*> actions;
+ 
+   for(const auto& descriptorActionPair : m_DescriptorActionList)
+@@ -456,14 +371,16 @@ QList<QAction*> QmitkDataNodeContextMenu::GetActions(const mitk::DataNode* node)
+   return actions;
+ }
+ 
+-QList<QAction*> QmitkDataNodeContextMenu::GetActions(const QList<mitk::DataNode::Pointer>& nodes)
++QList<QAction *> QmitkDataNodeContextMenu::GetActions(const QList<mitk::DataNode::Pointer> &nodes)
+ {
+-  QList<QAction*> actions;
++  QList<QAction *> actions;
++
+ 
+   for (const auto& descriptorActionPair : m_DescriptorActionList)
+   {
+-    for (const auto& node : nodes)
++    for (const auto &node : nodes)
+     {
++
+       if (descriptorActionPair.first->CheckNode(node) || "Unknown" == descriptorActionPair.first->GetNameOfClass())
+       {
+         auto batchActions = descriptorActionPair.first->GetBatchActions();
+diff --git a/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeContextMenu.h b/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeContextMenu.h
+index 2dcf8ba901..3428e42c02 100644
+--- a/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeContextMenu.h
++++ b/Plugins/org.mitk.gui.qt.application/src/QmitkDataNodeContextMenu.h
+@@ -74,7 +74,7 @@ private:
+   void InitExtensionPointActions();
+   void InitServiceActions();
+ 
+-  void AddColorAction(QWidgetAction* colorAction);
++  void AddAction(QAction *colorAction, std::vector<QmitkNodeDescriptor *> list, bool canBatch = false);
+   void AddDescriptorActionList(DescriptorActionListType& descriptorActionList);
+ 
+   QList<QAction*> GetActions(const mitk::DataNode* node);
+@@ -113,6 +113,7 @@ private:
+   QmitkNodeDescriptor* m_PlanarDoubleEllipseNodeDescriptor;
+   QmitkNodeDescriptor* m_PlanarBezierCurveNodeDescriptor;
+   QmitkNodeDescriptor* m_PlanarSubdivisionPolygonNodeDescriptor;
++  QmitkNodeDescriptor* m_ImzMLMassSpecImageNodeDescriptor;
+ 
+   //////////////////////////////////////////////////////////////////////////
+   // default actions
+diff --git a/Plugins/org.mitk.gui.qt.common/src/QmitkMultiWidgetDecorationManager.cpp b/Plugins/org.mitk.gui.qt.common/src/QmitkMultiWidgetDecorationManager.cpp
+index d301680b15..61665c7e4f 100644
+--- a/Plugins/org.mitk.gui.qt.common/src/QmitkMultiWidgetDecorationManager.cpp
++++ b/Plugins/org.mitk.gui.qt.common/src/QmitkMultiWidgetDecorationManager.cpp
+@@ -159,7 +159,7 @@ void QmitkMultiWidgetDecorationManager::SetupLogo(const char* path)
+   mitk::Point2D offset;
+   offset.Fill(0.03);
+   m_LogoAnnotation->SetOffsetVector(offset);
+-  m_LogoAnnotation->SetRelativeSize(0.25);
++  m_LogoAnnotation->SetRelativeSize(0.15);
+   m_LogoAnnotation->SetCornerPosition(1);
+   vtkSmartPointer<vtkImageData> vtkLogo = GetVtkLogo(path);
+ 
+diff --git a/Plugins/org.mitk.gui.qt.datamanager/src/QmitkDataManagerView.cpp b/Plugins/org.mitk.gui.qt.datamanager/src/QmitkDataManagerView.cpp
+index d1ac5f23f5..a43543cbbc 100644
+--- a/Plugins/org.mitk.gui.qt.datamanager/src/QmitkDataManagerView.cpp
++++ b/Plugins/org.mitk.gui.qt.datamanager/src/QmitkDataManagerView.cpp
+@@ -175,7 +175,7 @@ void QmitkDataManagerView::SetFocus()
+ void QmitkDataManagerView::NodeTreeViewRowsInserted(const QModelIndex& parent, int /*start*/, int /*end*/)
+ {
+   QModelIndex viewIndex = m_FilterModel->mapFromSource(parent);
+-  m_NodeTreeView->setExpanded(viewIndex, true);
++  m_NodeTreeView->setExpanded(viewIndex, false);
+ 
+   // a new row was inserted
+   if (m_CurrentRowCount == 0 && m_NodeTreeModel->rowCount() == 1)
+diff --git a/Plugins/org.mitk.gui.qt.ext/src/internal/QmitkExternalProgramsPreferencePage.cpp b/Plugins/org.mitk.gui.qt.ext/src/internal/QmitkExternalProgramsPreferencePage.cpp
+index 6f2257760f..a2f12d5e08 100644
+--- a/Plugins/org.mitk.gui.qt.ext/src/internal/QmitkExternalProgramsPreferencePage.cpp
++++ b/Plugins/org.mitk.gui.qt.ext/src/internal/QmitkExternalProgramsPreferencePage.cpp
+@@ -68,15 +68,15 @@ void QmitkExternalProgramsPreferencePage::CreateQtControl(QWidget* parent)
+ 
+ void QmitkExternalProgramsPreferencePage::OnFFmpegButtonClicked()
+ {
+-  QString filter = "ffmpeg executable ";
++  QString filter = "ffmpeg/avconv executable ";
+ 
+ #if defined(WIN32)
+-  filter += "(ffmpeg.exe)";
++  filter += "(ffmpeg.exe avconv.exe)";
+ #else
+-  filter += "(ffmpeg)";
++  filter += "(ffmpeg avconv)";
+ #endif
+ 
+-  QString ffmpegPath = QFileDialog::getOpenFileName(m_Control, "FFmpeg", "", filter);
++  QString ffmpegPath = QFileDialog::getOpenFileName(m_Control, "FFmpeg/Libav", "", filter);
+ 
+   if (!ffmpegPath.isEmpty())
+   {
+@@ -97,7 +97,7 @@ void QmitkExternalProgramsPreferencePage::OnFFmpegProcessFinished(int exitCode,
+   {
+     QString output = QTextCodec::codecForName("UTF-8")->toUnicode(m_FFmpegProcess->readAllStandardOutput());
+ 
+-    if (output.startsWith("ffmpeg"))
++    if (output.startsWith("ffmpeg") || output.startsWith("avconv"))
+     {
+       m_Ui->ffmpegLineEdit->setText(m_FFmpegPath);
+       return;
+--- a/Plugins/org.mitk.gui.qt.pointsetinteraction/src/internal/QmitkPointSetInteractionView.cpp
++++ b/Plugins/org.mitk.gui.qt.pointsetinteraction/src/internal/QmitkPointSetInteractionView.cpp
+@@ -45,7 +45,7 @@ void QmitkPointSetInteractionView::CreateQtPartControl(QWidget *parent)
+     mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+ 
+   m_Controls->selectedPointSetWidget->SetSelectionIsOptional(true);
+-  m_Controls->selectedPointSetWidget->SetAutoSelectNewNodes(true);
++  m_Controls->selectedPointSetWidget->SetAutoSelectNewNodes(false);
+   m_Controls->selectedPointSetWidget->SetEmptyInfo(QString("Please select a point set"));
+   m_Controls->selectedPointSetWidget->SetPopUpTitel(QString("Select point set"));
+ 
+@@ -64,6 +64,7 @@ void QmitkPointSetInteractionView::CreateQtPartControl(QWidget *parent)
+ void QmitkPointSetInteractionView::SetFocus()
+ {
+   m_Controls->addPointSetPushButton->setFocus();
++
+ }
+ 
+ void QmitkPointSetInteractionView::OnCurrentSelectionChanged(QList<mitk::DataNode::Pointer> nodes)
+--- a/SuperBuild.cmake
++++ b/SuperBuild.cmake
+@@ -215,6 +215,22 @@ set(mitk_depends )
+ 
+ # Include external projects
+ include(CMakeExternals/MITKData.cmake)
++
++
++foreach(MITK_EXTENSION_DIR ${MITK_EXTENSION_DIRS})
++  set(MITK_CMAKE_EXTERNALS_EXTENSION_DIR ${MITK_EXTENSION_DIR}/CMakeExternals)
++  get_filename_component(MITK_CMAKE_EXTERNALS_EXTENSION_DIR ${MITK_CMAKE_EXTERNALS_EXTENSION_DIR} ABSOLUTE)
++  FILE(GLOB MITK_CMAKE_EXTERNALS_EXTENSION_TESTDATA_FILES ${MITK_CMAKE_EXTERNALS_EXTENSION_DIR}/*Data.cmake)
++  foreach(MITK_CMAKE_EXTERNALS_EXTENSION_TESTDATA_FILE ${MITK_CMAKE_EXTERNALS_EXTENSION_TESTDATA_FILES})
++    if(EXISTS ${MITK_CMAKE_EXTERNALS_EXTENSION_TESTDATA_FILE})
++        include(${MITK_CMAKE_EXTERNALS_EXTENSION_TESTDATA_FILE})
++    endif()
++  endforeach()
++endforeach()
++
++
++
++
+ foreach(p ${external_projects})
+   set(p_hash "")
+ 
