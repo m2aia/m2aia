@@ -11,15 +11,25 @@ Setup for development (Windows)
 -----------
 System requirments: https://docs.mitk.org/nightly/SupportedPlatformsPage.html
 
+```
+
 git clone https://github.com/jtfcordes/m2aia.git
+
 git clone https://github.com/mitk/mitk.git
+
 cd mitk
+
 git checkout snapshot/2020-11-19
+
 git apply ../m2aia/Patch/patchMitk.diff
+
 mkdir ../MITK-superbuild
+
 cd ../MITK-superbuild
 
-Now run CMake and follow the Build Instructions: https://docs.mitk.org/nightly/BuildInstructionsPage.html
+```
+
+Now run CMake and follow the build Instructions: https://docs.mitk.org/nightly/BuildInstructionsPage.html
 
 Additional changes to the CMake configuration of the MITK-Superbuild:
 - MITK_USE_Boost_LIBRARIES add 'filesystem'
