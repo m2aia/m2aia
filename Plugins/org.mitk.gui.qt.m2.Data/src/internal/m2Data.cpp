@@ -288,7 +288,7 @@ void m2Data::OnResetTiling()
 {
 	
 	auto all = AllNodes();
-	unsigned int maxWidth = 0, maxHeight = 0;
+//	unsigned int maxWidth = 0, maxHeight = 0;
 	if (all->Size() == 0)
 		return;
 
@@ -297,7 +297,9 @@ void m2Data::OnResetTiling()
 	
 	for (auto &e : *all)
 	{
-		mitk::Point3D origin, prevOrigin;
+	    double initP[] = {0,0,0};
+	    mitk::Point3D origin(initP);
+	    mitk::Point3D prevOrigin(initP);
 		if (auto *image = dynamic_cast<m2::MSImageBase *>(e->GetData()))
 		{
 			prevOrigin = image->GetGeometry()->GetOrigin();

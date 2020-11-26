@@ -8,6 +8,7 @@ set(H_FILES
   include/m2Morphology.hpp
   include/m2Calibration.hpp
 
+
   include/m2ImzMLEngine.h
   include/m2ImzMLTemplate.h
   

@@ -15,7 +15,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 
-#include "org_mitk_gui_qt_m2_opticalImageRegistration_Activator.h"
+#include "org_mitk_gui_qt_m2_OpticalImageRegistration_Activator.h"
 #include "OpticalImageRegistration.h"
 
 namespace mitk

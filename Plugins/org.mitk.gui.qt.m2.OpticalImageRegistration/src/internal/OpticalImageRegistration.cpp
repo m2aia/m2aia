@@ -133,7 +133,7 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
   });
 }
 
-void OpticalImageRegistration::OnSelectionChanged(berry::IWorkbenchPart::Pointer part,
+void OpticalImageRegistration::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
                                                   const QList<mitk::DataNode::Pointer> &nodes)
 {
   if (m_Controls.chkBxReinitOnSelectionChanged->isChecked())
