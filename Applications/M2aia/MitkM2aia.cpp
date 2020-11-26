@@ -43,9 +43,7 @@ int main(int argc, char **argv)
     app.setPreloadLibraries(QStringList() << library);
   #endif
 	
-  //app.setProperty(mitk::BaseApplication::PROP_APPLICATION, "org.mitk.qt.diffusionimagingapp");
   app.setProperty(mitk::BaseApplication::PROP_PRODUCT, "org.mitk.gui.qt.m2.application.workbench");
 
-  // Run the workbench.
   return app.run();
 }

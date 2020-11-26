@@ -50,7 +50,7 @@ void m2::PcaImageFilter::initMatrix()
                               
                                 for (auto index : this->m_ValidIndices)
                                 {
-                                  auto v = input->GetPixel(index);
+                                 // auto v = input->GetPixel(index);
                                   
                                   this->m_DataMatrix(row, column) = input->GetPixel(index);
                                   ++row;

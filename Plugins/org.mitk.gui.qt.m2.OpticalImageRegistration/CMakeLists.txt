@@ -1,4 +1,4 @@
-project(org_mitk_gui_qt_m2_opticalImageRegistration)
+project(org_mitk_gui_qt_m2_OpticalImageRegistration)
 
 mitk_create_plugin(
   EXPORT_DIRECTIVE M2OPTICALIMAGEREGISTRATION_EXPORT
