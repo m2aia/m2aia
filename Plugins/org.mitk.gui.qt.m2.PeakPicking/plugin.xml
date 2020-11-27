@@ -2,7 +2,7 @@
 <plugin>
 
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.peakpickingview"
+    <view id="org.mitk.views.m2.peakpicking"
           name="Peak Picking"
           class="m2PeakPickingView"
           category="MS imaging"
