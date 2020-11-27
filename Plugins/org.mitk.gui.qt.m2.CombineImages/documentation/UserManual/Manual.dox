@@ -1,0 +1,17 @@
+/**
+\page org_mitk_views_m2_combineimages The M2aia Combine Images view
+
+\imageMacro{icon.png,"Icon of CombineImages",2.00}
+
+\tableofcontents
+
+\section org_mitk_qui_qt_m2_combineImagesOverview Overview
+Describe the features of your awesome plugin here
+<ul>
+<li>Increases productivity
+<li>Creates beautiful images
+<li>Generates PhD thesis
+<li>Brings world peace
+</ul>
+
+*/
