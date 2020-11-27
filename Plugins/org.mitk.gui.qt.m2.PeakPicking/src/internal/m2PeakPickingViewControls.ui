@@ -61,12 +61,15 @@
       </widget>
      </item>
      <item>
-      <widget class="QSpinBox" name="sbSNR">
+      <widget class="QDoubleSpinBox" name="sbSNR">
        <property name="locale">
         <locale language="English" country="UnitedKingdom"/>
        </property>
+       <property name="singleStep">
+        <double>1.000000000000000</double>
+       </property>
        <property name="value">
-        <number>5</number>
+        <double>5.000000000000000</double>
        </property>
       </widget>
      </item>
