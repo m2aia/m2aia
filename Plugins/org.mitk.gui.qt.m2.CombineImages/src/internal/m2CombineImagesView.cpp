@@ -36,7 +36,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 // m2
 #include <m2ImzMLMassSpecImage.h>
 
-const std::string m2CombineImagesView::VIEW_ID = "org.mitk.views.m2.combineimagesview";
+const std::string m2CombineImagesView::VIEW_ID = "org.mitk.views.m2.combineimages";
 
 void m2CombineImagesView::SetFocus()
 {
