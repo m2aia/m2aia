@@ -2,7 +2,7 @@
 <plugin>
 
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.combineimagesview"
+    <view id="org.mitk.views.m2.combineimages"
           name="Combine Images"
           class="m2CombineImagesView"
           category="MS imaging"

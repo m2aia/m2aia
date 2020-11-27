@@ -215,8 +215,8 @@ berry::WorkbenchWindowAdvisor *QmitkM2aiaAppWorkbenchAdvisor::CreateWorkbenchWin
   advisor->SetProductName("M2aia");
   advisor->SetWindowIcon(":/org.mitk.gui.qt.m2.application/MitkM2aia.ico");
 
-  std::cout << "MITK M2aia git commit hash: " << MITKM2AIA_REVISION << std::endl;
-  std::cout << "MITK M2aia branch name: " << MITKM2AIA_REVISION_NAME << std::endl;
+  std::cout << "M2aia git commit hash: " << MITKM2AIA_REVISION << std::endl;
+  std::cout << "M2aia branch name: " << MITKM2AIA_REVISION_NAME << std::endl;
   std::cout << "MITK git commit hash: " << MITK_REVISION << std::endl;
   std::cout << "MITK branch name: " << MITK_REVISION_NAME << std::endl;
 

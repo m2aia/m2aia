@@ -1,0 +1,17 @@
+/**
+\page org_mitk_views_m2_combineimages The M2aia Combine Images View
+
+\imageMacro{noun_Blockchain_3404536.svg, "Icon of Combine Images view",3.00}
+
+\tableofcontents
+
+\section org_mitk_qui_qt_m2_combineImagesOverview Overview
+Combining several MS images into a single instance can be helpful for further image processing in external tools. 
+Select multiple MSI images that were measured with identical mass axis. The order of selection is important. Define the combination axis in the drop-down menu. 
+
+\remark
+After a combined image object is created, MSI access is initialized, resulting in a recalculation of the overview spectra (with signal processing applied to each spectrum). This can lead to an computational effort. It may be helpful to disable all signal processing options if those are not urgently required. The signal processing strategy is defined in the data view of M2aia. The normalization map of the combined image is copy initialized by the normalization maps of the source image.
+
+
+Peak lists of the images selected for combination are going to be merged and sorted. Duplicates are eliminated. No binning is applied.
+*/
