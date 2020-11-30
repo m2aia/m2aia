@@ -1,6 +1,5 @@
 set(MITK_PLUGINS
 org.mitk.m2.core.helper:ON
-org.mitk.gui.qt.m2.navigator3d:ON
 org.mitk.gui.qt.m2.application:ON
 org.mitk.gui.qt.m2.Position:ON
 org.mitk.gui.qt.m2.PeakPicking:ON
