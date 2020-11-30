@@ -24,7 +24,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QPoint>
 #include <QRect>
 #include <QmitkExtWorkbenchWindowAdvisor.h>
+#include <QmitkM2aiaAboutDialog.h>
 #include <QmitkM2aiaViewAction.h>
+#include <berryIBerryPreferencesService.h>
 #include <berryIPreferences.h>
 #include <berryIPreferencesService.h>
 #include <berryIWorkbenchWindow.h>
@@ -32,14 +34,15 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryQtPreferences.h>
 #include <berryWorkbenchPlugin.h>
 #include <berryWorkbenchPreferenceConstants.h>
-#include <mitkM2aiaVersion.h>
+#include <mitkBaseRenderer.h>
+#include <mitkCameraController.h>
 #include <mitkImage.h>
+#include <mitkM2aiaVersion.h>
 #include <mitkVersion.h>
 #include <qaction.h>
 #include <qevent.h>
 #include <qtoolbar.h>
 #include <qtoolbutton.h>
-#include <QmitkM2aiaAboutDialog.h>
 
 const QString QmitkM2aiaAppWorkbenchAdvisor::WELCOME_PERSPECTIVE_ID = "org.mitk.m2.application.perspectives.welcome";
 
@@ -63,8 +66,17 @@ public:
     QMainWindow *mainWindow = qobject_cast<QMainWindow *>(window->GetShell()->GetControl());
     mainWindow->setContextMenuPolicy(Qt::PreventContextMenu);
 
-    // ==== Application menu ============================
+    // ==== RenderwindowViewNames ======================
 
+    berry::IPreferencesService *prefService = berry::Platform::GetPreferencesService();
+    Q_ASSERT(prefService);
+    auto m_Preferences = prefService->GetSystemPreferences()->Node("org.mitk.editors.stdmultiwidget");
+    m_Preferences->Put("stdmulti.widget0 corner annotation", "Top");
+    m_Preferences->Put("stdmulti.widget1 corner annotation", "Left");
+    m_Preferences->Put("stdmulti.widget2 corner annotation", "Front");
+    m_Preferences->Put("stdmulti.widget3 corner annotation", "3D");
+
+    // ==== Application menu ============================
     QMenuBar *menuBar = mainWindow->menuBar();
     menuBar->setContextMenuPolicy(Qt::PreventContextMenu);
     auto actions = menuBar->actions();
@@ -73,16 +85,56 @@ public:
       MITK_INFO << a->text().toStdString();
       if (a->text() == "&Help")
       {
-
         auto helpMenu = a->menu();
-		helpMenu->addAction("&About M2aia", this, []() {QmitkM2aiaAboutDialog().exec(); });
-		for (auto b : helpMenu->actions()) {
-			if (b->text() == "&About") {
-				b->setText("&About MITK");
-			}
-		}
+        helpMenu->addAction("&About M2aia", this, []() { QmitkM2aiaAboutDialog().exec(); });
+        for (auto b : helpMenu->actions())
+        {
+          if (b->text() == "&About")
+          {
+            b->setText("&About MITK");
+          }
+        }
       }
     }
+
+    // create GUI widgets from the Qt Designer's .ui file
+    auto view = new QMenu("View (3D)", menuBar);
+    view->addAction("Top", []() {
+      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+          controller->SetViewToCaudal();
+    });
+    view->addAction("Bottom", []() {
+      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+          controller->SetViewToCranial();
+    });
+
+    view->addAction("Front", []() {
+      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+          controller->SetViewToPosterior();
+    });
+
+    view->addAction("Back", []() {
+      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+          controller->SetViewToAnterior();
+    });
+
+    view->addAction("Left", []() {
+      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+          controller->SetViewToSinister();
+    });
+
+    view->addAction("Right", []() {
+      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+          controller->SetViewToDexter();
+    });
+
+    menuBar->addMenu(view);
 
     // berry::IWorkbenchWindow::Pointer window =
     // this->GetWindowConfigurer()->GetWindow();
@@ -108,7 +160,7 @@ public:
       berry::IViewRegistry *viewRegistry = berry::PlatformUI::GetWorkbench()->GetViewRegistry();
       const QList<berry::IViewDescriptor::Pointer> viewDescriptors = viewRegistry->GetViews();
 
-      //bool skip = false;
+      // bool skip = false;
       for (iter = viewDescriptors.begin(); iter != viewDescriptors.end(); ++iter)
       {
         if ((*iter)->GetId() == "org.blueberry.ui.internal.introview")
