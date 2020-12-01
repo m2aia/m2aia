@@ -15,6 +15,7 @@ Features
   <li> Image registration: 3D reconstruction and multi-modal image fusion
     
 ![](https://github.com/jtfcordes/m2aia-supporting-materials/raw/master/recon3d.gif) 
+<br/>
 Manual pre-alignment and 3D reconstruction
 <br/><br/><br/>
     
