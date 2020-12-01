@@ -13,6 +13,11 @@ Features
   <li> Images: imzML, NRRD, DICOM
   <li> Signal processing: Normalization, baseline correction, smoothing and peak picking
   <li> Image registration: 3D reconstruction and multi-modal image fusion
+    
+![](https://github.com/jtfcordes/m2aia-supporting-materials/raw/master/recon3d.gif) 
+Manual pre-alignment and 3D reconstruction
+<br/><br/><br/>
+    
   <li> Semi-automatic segmentation
   <li> Image interaction and visualization in 2D and 3D
 </ul>
