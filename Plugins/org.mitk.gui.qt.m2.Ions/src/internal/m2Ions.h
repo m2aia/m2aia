@@ -21,18 +21,20 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <mitkImage.h>
 
-#include <QmitkAbstractView.h>
 #include <QMenu>
+#include <QmitkAbstractView.h>
 #include <qaction.h>
 #include <qwidgetaction.h>
 
 #include "ui_m2Ions.h"
 #include <QColorDialog>
+#include <QLabel>
 
 #include <QmitkDataStorageComboBox.h>
-#include <m2MultiSliceFilter.h>
-#include <m2MSImageBase.h>
+#include <ctkRangeWidget.h>
 #include <m2CommunicationService.h>
+#include <m2MSImageBase.h>
+#include <m2MultiSliceFilter.h>
 
 /**
   \brief m2Ions
@@ -65,30 +67,35 @@ protected:
 
   Ui::m2IonsControls m_Controls;
 
-  QMenu * m_Menu;
-  QWidgetAction * m_Include;
-  QAction * m_PromoteToAllNodes;
-
+  QMenu *m_Menu;
+  QWidgetAction *m_Include;
+  QAction *m_PromoteToAllNodes;
 
 private:
   using ColorType = float;
   using RBGAColorType = std::array<ColorType, 4>;
 
   void InitializeFilter(m2::MultiSliceFilter::Pointer);
+  void PerformPCA(std::set<m2::IonImageReference *, m2::IonImageReference::Comp>);
+  void PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference::Comp>);
+  int SetM2FilterImages(m2::MassSpecVisualizationFilter::Pointer, std::set<m2::IonImageReference *, m2::IonImageReference::Comp>);
 
   m2::MSImageBase::Pointer MSImageBase;
   std::vector<std::array<ColorType, 4>> m_SelectedColors;
-  
-  //std::list<int> m_ValidVectorIndices;
-  //std::vector<double> m_SelectedMzValues;
-  //std::vector<mitk::Image::Pointer> m_SelectedIonImages;
-  //mitk::DataNode::Pointer m_SelectedNode;
 
-  
+
+  // std::list<int> m_ValidVectorIndices;
+  // std::vector<double> m_SelectedMzValues;
+  // std::vector<mitk::Image::Pointer> m_SelectedIonImages;
+  // mitk::DataNode::Pointer m_SelectedNode;
+
   std::map<const mitk::DataNode *, std::map<m2::IonImageReference::Pointer, mitk::Image::Pointer>> m_ContainerMap;
+  unsigned int m_NumberOfComponents = 3;
+  unsigned int m_Perplexity = 5;
+  unsigned int m_Iterations = 250;
 
 protected slots:
-	void OnProcessingNodesReceived(const QString &, m2::CommunicationService::NodesVectorType::Pointer nodes);
+  void OnProcessingNodesReceived(const QString &, m2::CommunicationService::NodesVectorType::Pointer nodes);
 };
 
 #endif // m2Ions_h
