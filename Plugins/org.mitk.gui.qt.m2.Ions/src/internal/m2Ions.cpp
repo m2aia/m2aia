@@ -24,24 +24,22 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QPushButton>
 #include <QSlider>
 #include <QSpinBox>
-#include <qlabel.h>
-
 #include <berryISelectionService.h>
 #include <berryIWorkbenchWindow.h>
 #include <ctkDoubleSpinBox.h>
 #include <ctkRangeWidget.h>
-
 #include <m2MSImageBase.h>
 #include <m2MultiSliceFilter.h>
 #include <m2PcaImageFilter.h>
 #include <m2TSNEImageFilter.h>
-
 #include <mitkColorProperty.h>
 #include <mitkImage.h>
 #include <mitkImageCast.h>
 #include <mitkLookupTable.h>
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateProperty.h>
+#include <qlabel.h>
+#include <QtConcurrent>
 
 const std::string m2Ions::VIEW_ID = "org.mitk.views.m2.Ions";
 
@@ -136,8 +134,6 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
           ionImages[ref] = ionImage;
         }
       }
-
-
     }
 
     auto rangeWidget = new ctkRangeWidget(table);
@@ -271,14 +267,14 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
       pcaSubMenu.addAction(actionLabel);
       pcaSubMenu.addAction(sliderAction);
 
-      std::string pcaMenuTitle = "Pca";
+      std::string pcaMenuTitle = "PCA";
       pcaSubMenu.setTitle(pcaMenuTitle.c_str());
       pcaSubMenu.setMinimumWidth(subMenuMinWidth);
 
       menu.addMenu(&pcaSubMenu);
 
       QMenu tsneMenu;
-      tsneMenu.setTitle("T-sne");
+      tsneMenu.setTitle("T-SNE");
 
       auto tsneItSlider = new QSlider(Qt::Horizontal);
       tsneItSlider->setMinimum(255);
@@ -323,7 +319,7 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
       tsnePerplexityAction->setDefaultWidget(tsnePerplexityInput);
 
       auto tsneAction = new QWidgetAction(&tsneMenu);
-      tsneAction->setText("Perform t-sne");
+      tsneAction->setText("Perform t-SNE");
 
       connect(tsneAction, &QAction::triggered, this, [tableRefs, this]() { PerformTsne(tableRefs); });
 
@@ -373,8 +369,9 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
   CalculateVisualization(nodes);
 }
 
-int m2Ions::SetM2FilterImages(m2::MassSpecVisualizationFilter::Pointer imageFilter,
-                              std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs)
+int m2Ions::InitialzieDimensionalityReductionFilter(
+  m2::MassSpecVisualizationFilter::Pointer imageFilter,
+  std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs)
 {
   auto select = m_Controls.itemsTable->selectionModel();
   std::vector<m2::IonImageReference *> selectedReferences;
@@ -382,18 +379,21 @@ int m2Ions::SetM2FilterImages(m2::MassSpecVisualizationFilter::Pointer imageFilt
 
   const auto selectedRows = select->selectedRows();
 
-  if (selectedRows.size() < 3)
-  {
-    QMessageBox::warning(NULL, "Too few images", "Pick at least three images for the calculation of the pca");
-    return 0;
-  }
-
   for (const auto &selectedRow : selectedRows)
   {
     auto reference = *std::next(it, selectedRow.row());
     MITK_INFO << reference->mz << " " << selectedRow.row();
-    selectedReferences.push_back(reference);
+	if(reference->isActive) // check if it is an active reference
+		selectedReferences.push_back(reference);
   }
+
+  if (selectedReferences.size() < 3)
+  {
+    QMessageBox::warning(
+      NULL, "Too few images", "Pick at least three images for the calculation of the chosen DR method");
+    return 0;
+  }
+
 
   int key = 0;
   mitk::Image::Pointer maskImage;
@@ -421,24 +421,40 @@ int m2Ions::SetM2FilterImages(m2::MassSpecVisualizationFilter::Pointer imageFilt
   return 1;
 }
 
-void m2Ions::PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs) {
-  m2::TSNEImageFilter::Pointer tsneFilter = m2::TSNEImageFilter::New();
-  tsneFilter->SetIterations(m_Iterations);
-  tsneFilter->SetPerplexity(m_Perplexity);
-
-  if (!this->SetM2FilterImages(dynamic_cast<m2::MassSpecVisualizationFilter *>(tsneFilter.GetPointer()), tableRefs))
+void m2Ions::PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs)
+{
+  auto res =
+    QMessageBox::question(nullptr,
+                          "Are you sure you want to perform a t-SNE?",
+                          "This operation may take some time.\n The status can be tracked in the console window.");
+  if (QMessageBox::StandardButton::Yes == res)
   {
-    return;
+    m2::TSNEImageFilter::Pointer tsneFilter = m2::TSNEImageFilter::New();
+    tsneFilter->SetIterations(m_Iterations);
+    tsneFilter->SetPerplexity(m_Perplexity);
+
+    if (!this->InitialzieDimensionalityReductionFilter(
+          dynamic_cast<m2::MassSpecVisualizationFilter *>(tsneFilter.GetPointer()), tableRefs))
+    {
+      return;
+    }
+
+	QFutureWatcher<void> watcher;
+	watcher.setFuture(QtConcurrent::run([tsneFilter] {  tsneFilter->Update(); }));
+
+	connect(&watcher, &QFutureWatcher<void>::finished, [tsneFilter, this] {
+		auto outputImage = tsneFilter->GetOutput();
+		auto outputNode = mitk::DataNode::New();
+		outputNode->SetData(outputImage);
+		outputNode->SetName("T-SNE");
+		this->GetDataStorage()->Add(outputNode);
+	});
+
+
+
+
+    
   }
-
-  tsneFilter->Update();
-
-  auto outputImage = tsneFilter->GetOutput();
-  auto outputNode = mitk::DataNode::New();
-  outputNode->SetData(outputImage);
-  outputNode->SetName("T-sne");
-  this->GetDataStorage()->Add(outputNode);
-
 }
 
 void m2Ions::PerformPCA(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs)
@@ -447,7 +463,8 @@ void m2Ions::PerformPCA(std::set<m2::IonImageReference *, m2::IonImageReference:
   m2::PcaImageFilter::Pointer pcaFilter = m2::PcaImageFilter::New();
   pcaFilter->SetNumberOfComponents(m_NumberOfComponents);
 
-  if (!this->SetM2FilterImages(dynamic_cast<m2::MassSpecVisualizationFilter *>(pcaFilter.GetPointer()), tableRefs))
+  if (!this->InitialzieDimensionalityReductionFilter(
+        dynamic_cast<m2::MassSpecVisualizationFilter *>(pcaFilter.GetPointer()), tableRefs))
   {
     return;
   }
