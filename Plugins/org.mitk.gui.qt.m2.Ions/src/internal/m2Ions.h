@@ -75,10 +75,10 @@ private:
   using ColorType = float;
   using RBGAColorType = std::array<ColorType, 4>;
 
-  void InitializeFilter(m2::MultiSliceFilter::Pointer);
+  //void InitializeFilter(m2::MultiSliceFilter::Pointer);
   void PerformPCA(std::set<m2::IonImageReference *, m2::IonImageReference::Comp>);
   void PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference::Comp>);
-  int SetM2FilterImages(m2::MassSpecVisualizationFilter::Pointer, std::set<m2::IonImageReference *, m2::IonImageReference::Comp>);
+  int InitialzieDimensionalityReductionFilter(m2::MassSpecVisualizationFilter::Pointer, std::set<m2::IonImageReference *, m2::IonImageReference::Comp>);
 
   m2::MSImageBase::Pointer MSImageBase;
   std::vector<std::array<ColorType, 4>> m_SelectedColors;
