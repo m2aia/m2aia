@@ -298,9 +298,6 @@ index 5ab7de7dba..d2c1ec2560 100644
      virtual void BuildMagmaLookupTable();
      virtual void BuildJetLookupTable(bool transparent = false);
      virtual void BuildPETColorLookupTable();
-diff --git a/Modules/Core/src/DataManagement/.Rhistory b/Modules/Core/src/DataManagement/.Rhistory
-new file mode 100644
-index 0000000000..e69de29bb2
 diff --git a/Modules/Core/src/DataManagement/mitkDataStorage.cpp b/Modules/Core/src/DataManagement/mitkDataStorage.cpp
 index 890128e9f7..e69ff8efd9 100644
 --- a/Modules/Core/src/DataManagement/mitkDataStorage.cpp
