@@ -31,7 +31,7 @@ git clone https://github.com/mitk/mitk.git
 
 cd mitk
 
-git checkout snapshot/2020-11-19
+git checkout snapshots/2020-11-19
 
 git apply ../m2aia/Patch/patchMitk.diff
 
