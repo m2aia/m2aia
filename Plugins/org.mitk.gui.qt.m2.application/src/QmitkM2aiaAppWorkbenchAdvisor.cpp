@@ -26,6 +26,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkExtWorkbenchWindowAdvisor.h>
 #include <QmitkM2aiaAboutDialog.h>
 #include <QmitkM2aiaViewAction.h>
+#include <berryIBerryPreferences.h>
 #include <berryIBerryPreferencesService.h>
 #include <berryIPreferences.h>
 #include <berryIPreferencesService.h>
@@ -230,6 +231,11 @@ public:
           }
         }
       }
+    }
+
+    {
+      auto m_Preferences = prefService->GetSystemPreferences()->Node("org.mitk.editors.stdmultiwidget");
+      m_Preferences->Put("DepartmentLogo", ":/org.mitk.gui.qt.m2.application/defaultWatermark.png");
     }
   }
 };
