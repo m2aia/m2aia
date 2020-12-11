@@ -21,41 +21,16 @@ Features
 
 Setup for development
 -----------
-System requirments: https://docs.mitk.org/nightly/SupportedPlatformsPage.html
-
-```
-
-git clone https://github.com/jtfcordes/m2aia.git
-
-git clone https://github.com/mitk/mitk.git
-
-cd mitk
-
-git checkout snapshots/2020-11-19
-
-git apply ../m2aia/Patch/patchMitk.diff
-
-mkdir ../MITK-superbuild
-
-cd ../MITK-superbuild
-
-```
-
-Now run CMake and follow the build Instructions: https://docs.mitk.org/nightly/BuildInstructionsPage.html
-
-Additional changes to the CMake configuration of the MITK-Superbuild:
-- MITK_USE_Boost_LIBRARIES add 'filesystem'
-- MITK_EXTENSION_DIRS add '<M2aia_Directory_Path>'
-- enable MITK_USE_MatchPoint
-
-Once the MITK-superbuild was build successfully:
-CMake MITK-build 
-- enable MITK_BUILD_APP_M2aia 
-
-Set MitkM2aia as the startup project.
+M<sup>2</sup>aia Windows build instructions
+- https://github.com/jtfcordes/m2aia/wiki/Windows-build-instructions
 
 M<sup>2</sup>aia in app preferences
 - add path to local installation of elastix and transformix executabels (https://github.com/SuperElastix/elastix/releases)
+
+More details for MITK:
+- System requirments: https://docs.mitk.org/nightly/SupportedPlatformsPage.html
+- MITK build Instructions: https://docs.mitk.org/nightly/BuildInstructionsPage.html
+
 
 Projects that use M<sup>2</sup>aia:
 -----------------------------------
