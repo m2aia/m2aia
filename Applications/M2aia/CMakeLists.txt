@@ -30,6 +30,7 @@ set(_plugins
   org.mitk.gui.qt.segmentation
   org.mitk.gui_qt.multilabelsegmentation
   org.mitk.gui.qt.volumevisualization
+  org.mitk.gui.qt.pointsetinteraction
 #  org.mitk.gui.qt.matchpoint.algorithm.browser
 #  org.mitk.gui.qt.matchpoint.algorithm.control
 #  org.mitk.gui.qt.matchpoint.mapper
