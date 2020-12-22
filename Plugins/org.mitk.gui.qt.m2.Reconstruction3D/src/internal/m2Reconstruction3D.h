@@ -26,7 +26,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QPointF>
 #include <QmitkAbstractView.h>
 #include <berryISelectionListener.h>
-#include <boost/filesystem.hpp>
 #include <m2ImzMLMassSpecImage.h>
 #include <m2MSImageBase.h>
 #include <mitkImage.h>
@@ -84,7 +83,7 @@ protected:
                                                     bool useInvertIntensities = false,
                                                     bool omitDeformable = false);
   static void ExportSlice(mitk::Image *input,
-                          const boost::filesystem::path &directory,
+                          const std::string &directory,
                           const std::string &name,
                           bool useNormalization,
                           bool useInvertIntensities);

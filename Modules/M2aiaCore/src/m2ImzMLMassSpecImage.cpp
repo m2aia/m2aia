@@ -15,7 +15,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 
 #include <boost/range/combine.hpp>
-#include <eigen3/Eigen/SVD>
+
 #include <forward_list>
 #include <future>
 #include <itkImageDuplicator.h>

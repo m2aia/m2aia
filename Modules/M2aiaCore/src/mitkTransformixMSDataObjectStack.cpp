@@ -14,10 +14,9 @@ See LICENSE.txt for details.
 ===================================================================*/
 
 #include <array>
-#include <boost/filesystem.hpp>
-#include <boost/filesystem/path.hpp>
 #include <cstdlib>
 #include <itkSignedMaurerDistanceMapImageFilter.h>
+#include <itksys/SystemTools.hxx>
 #include <m2ImzMLMassSpecImage.h>
 #include <mitkExtractSliceFilter.h>
 #include <mitkIOUtil.h>
@@ -33,6 +32,7 @@ namespace m2
                                                                const std::vector<std::string> &transformations,
                                                                std::function<void(std::string &)> adaptor) const
   {
+    using itksys::SystemTools;
     if (transformations.empty())
       return const_cast<mitk::Image *>(ionImage);
 
@@ -40,8 +40,7 @@ namespace m2
     mitk::PointSet::Pointer pointset;
 
     const auto workdir = mitk::IOUtil::CreateTemporaryDirectory();
-    auto workdirPath = boost::filesystem::path(workdir);
-    workdirPath = workdirPath.lexically_normal();
+    std::string workdirPath = SystemTools::ConvertToOutputPath(workdir);
 
     if (ionImage)
     {
@@ -49,7 +48,7 @@ namespace m2
         auto filter = mitk::Image3DSliceToImage2DFilter::New();
         filter->SetInput(ionImage);
         filter->Update();
-        mitk::IOUtil::Save(filter->GetOutput(), (workdirPath / "moving.nrrd").string());
+        mitk::IOUtil::Save(filter->GetOutput(), SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "moving.nrrd"})));
       }
 
       for (std::string trafo : transformations)
@@ -57,7 +56,7 @@ namespace m2
         // apply the transformation file changes e.g. pixel type output, interpolation mode etc..
         adaptor(trafo);
 
-        auto p = workdirPath / ("Transform.txt");
+        auto p = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "Transform.txt"}));
         std::ofstream f(p.c_str());
         f << trafo;
         f.close();
@@ -65,20 +64,24 @@ namespace m2
         std::stringstream ss;
         std::vector<std::string> cmd{m_Transformix,
                                      "-in",
-                                     (workdirPath / "moving.nrrd").string(),
+          SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "moving.nrrd"})),
                                      "-out",
-                                     workdirPath.string(),
+                                     workdirPath,
                                      "-tp",
-                                     (workdirPath / ("Transform.txt")).string()};
+          SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "Transform.txt"}))};
         for (auto s : cmd)
           ss << s << " ";
         auto res = std::system(ss.str().c_str());
         if (res != 0)
           MITK_WARN << "Some error on system call of transformix";
-        boost::filesystem::rename(workdirPath / "result.nrrd", workdirPath / "moving.nrrd");
+
+        SystemTools::CopyFileAlways(
+          SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "result.nrrd"})),
+          SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "moving.nrrd"})));
       }
 
-      auto res = mitk::IOUtil::Load((workdirPath / ("moving.nrrd")).string());
+      auto res =
+        mitk::IOUtil::Load(SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "moving.nrrd"})));
       image = dynamic_cast<mitk::Image *>(res[0].GetPointer());
 
       {
@@ -89,7 +92,7 @@ namespace m2
       }
     }
 
-    boost::filesystem::remove_all(workdirPath);
+    SystemTools::RemoveADirectory(workdirPath);
     return image;
   }
 
@@ -273,7 +276,7 @@ namespace m2
       distanceImage->SetOrigin(refImage->GetGeometry()->GetOrigin());
     }
 
-    //if (auto lmImage = dynamic_cast<mitk::Image *>(GetImageArtifacts()["landmarks"].GetPointer()))
+    // if (auto lmImage = dynamic_cast<mitk::Image *>(GetImageArtifacts()["landmarks"].GetPointer()))
     //{
     //  lmImage->Initialize(mitk::MakeScalarPixelType<m2::IndexImagePixelType>(), 3, dims);
     //  lmImage->SetSpacing(spacing);
@@ -293,14 +296,14 @@ namespace m2
       CopyWarpedImageToStack(warpedIndex, GetIndexImage(), i);
       CopyWarpedImageToStack(warpedMask, GetMaskImage(), i);
 
-     /* if (msImage->GetImageArtifacts().find("landmarks") != msImage->GetImageArtifacts().end())
-      {
-        auto lmImageSource = dynamic_cast<mitk::Image *>(msImage->GetImageArtifacts()["landmarks"].GetPointer());
-        auto lmImageTarget = dynamic_cast<mitk::Image *>(GetImageArtifacts()["landmarks"].GetPointer());
+      /* if (msImage->GetImageArtifacts().find("landmarks") != msImage->GetImageArtifacts().end())
+       {
+         auto lmImageSource = dynamic_cast<mitk::Image *>(msImage->GetImageArtifacts()["landmarks"].GetPointer());
+         auto lmImageTarget = dynamic_cast<mitk::Image *>(GetImageArtifacts()["landmarks"].GetPointer());
 
-        auto warpedLmImage = Transform(lmImageSource, transformations, outputNearestNeighborIndex);
-        CopyWarpedImageToStack(warpedLmImage, lmImageTarget, i);
-      }*/
+         auto warpedLmImage = Transform(lmImageSource, transformations, outputNearestNeighborIndex);
+         CopyWarpedImageToStack(warpedLmImage, lmImageTarget, i);
+       }*/
 
       mitk::Image::Pointer distanceImage;
       AccessByItk(warpedMask, ([this, i, &distanceImage](auto itkImage) {
