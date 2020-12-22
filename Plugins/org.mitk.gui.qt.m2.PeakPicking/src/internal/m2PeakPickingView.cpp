@@ -82,48 +82,55 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
   for (auto node : *m_ReceivedNodes)
     if (auto imageBase = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
     {
-      std::vector<double> s, m;
-      if (m_Controls.cbOverviewSpectra->currentIndex() == 0) // skyline
-        s = imageBase->SkylineSpectrum();
-      if (m_Controls.cbOverviewSpectra->currentIndex() == 1) // mean
-        s = imageBase->MeanSpectrum();
-      if (m_Controls.cbOverviewSpectra->currentIndex() == 2) // sum
-        s = imageBase->SumSpectrum();
-
-      m = imageBase->MassAxis();
-
-      auto mad = m2::Noise::mad(s);
-      std::vector<m2::MassValue> peaks;
-      m2::Peaks::localMaxima(std::begin(s),
-                             std::end(s),
-                             std::begin(m),
-                             std::back_inserter(peaks),
-                             m_Controls.sbHalfWindowSize->value(),
-                             mad * m_Controls.sbSNR->value());
-      if (m_Controls.ckbMonoisotopic->isChecked())
+      if (imageBase->GetSourceList().front().ImportMode != m2::ImzMLFormatType::ContinuousProfile)
       {
-        peaks = m2::Peaks::monoisotopic(peaks,
-                                        {3, 4, 5, 6, 7, 8, 9, 10},
-                                        m_Controls.sbMinCor->value(),
-                                        m_Controls.sbTolerance->value(),
-                                        m_Controls.sbDistance->value());
+        QMessageBox::warning(nullptr, "Warning", "Centroid data are not supported for peak picking operations!");
       }
-
-      auto &outputvec = imageBase->PeakIndicators();
-      outputvec.clear();
-      outputvec.resize(imageBase->MassAxis().size(), 0.0);
-
-      auto &maskIndices = imageBase->GetPeaks();
-	  maskIndices.clear();
-
-      for (auto &p : peaks)
+      else
       {
-        outputvec[p.massAxisIndex] = 0.0005;
-        maskIndices.push_back(p);
-      }
+        std::vector<double> s, m;
+        if (m_Controls.cbOverviewSpectra->currentIndex() == 0) // skyline
+          s = imageBase->SkylineSpectrum();
+        if (m_Controls.cbOverviewSpectra->currentIndex() == 1) // mean
+          s = imageBase->MeanSpectrum();
+        if (m_Controls.cbOverviewSpectra->currentIndex() == 2) // sum
+          s = imageBase->SumSpectrum();
 
-      emit m2::CommunicationService::Instance()->OverviewSpectrumChanged(node.GetPointer(),
-                                                                         m2::OverviewSpectrumType::PeakIndicators);
+        m = imageBase->MassAxis();
+
+        auto mad = m2::Noise::mad(s);
+        std::vector<m2::MassValue> peaks;
+        m2::Peaks::localMaxima(std::begin(s),
+                               std::end(s),
+                               std::begin(m),
+                               std::back_inserter(peaks),
+                               m_Controls.sbHalfWindowSize->value(),
+                               mad * m_Controls.sbSNR->value());
+        if (m_Controls.ckbMonoisotopic->isChecked())
+        {
+          peaks = m2::Peaks::monoisotopic(peaks,
+                                          {3, 4, 5, 6, 7, 8, 9, 10},
+                                          m_Controls.sbMinCor->value(),
+                                          m_Controls.sbTolerance->value(),
+                                          m_Controls.sbDistance->value());
+        }
+
+        auto &outputvec = imageBase->PeakIndicators();
+        outputvec.clear();
+        outputvec.resize(imageBase->MassAxis().size(), 0.0);
+
+        auto &maskIndices = imageBase->GetPeaks();
+        maskIndices.clear();
+
+        for (auto &p : peaks)
+        {
+          outputvec[p.massAxisIndex] = 0.0005;
+          maskIndices.push_back(p);
+        }
+
+        emit m2::CommunicationService::Instance()->OverviewSpectrumChanged(node.GetPointer(),
+                                                                           m2::OverviewSpectrumType::PeakIndicators);
+      }
     }
 }
 
