@@ -16,7 +16,7 @@ See LICENSE.txt for details.
 #pragma once
 
 #include <MitkM2aiaCoreExports.h>
-#include <eigen3/Eigen/Dense>
+//#include <Eigen/Dense>
 #include <itkBarrier.h>
 #include <m2MassSpecVisualizationFilter.h>
 #include <m2ImzMLMassSpecImage.h>
@@ -36,14 +36,14 @@ namespace m2
     void initMatrix();
 
   protected:
-    using MatrixXd = Eigen::Matrix<PixelType, Eigen::Dynamic, Eigen::Dynamic>;
-    MatrixXd m_DataMatrix;
+    //using MatrixXd = Eigen::Matrix<PixelType, Eigen::Dynamic, Eigen::Dynamic>;
+    //MatrixXd m_DataMatrix;
     PcaImageFilter() = default;
     void GenerateData() override;
 
     /*This method is used to equalize the directions of the principal components. This allows the visualization of
      * m2PcaImageFilter, m2PcaVnlSvdImageFilter and m2PcaEigenImageFilter to be the same for all*/
-    void EqualizePcAxesEigen(MatrixXd *);
+    //void EqualizePcAxesEigen(MatrixXd *);
     //    ~m2PcaImageFilter() override;
   private:
 
