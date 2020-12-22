@@ -17,7 +17,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <Poco/SHA1Engine.h>
 #include <algorithm>
 #include <boost/algorithm/hex.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/progress.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -579,17 +578,18 @@ namespace m2
     std::string mzGroupId, intGroupId;
     auto object = m2::ImzMLMassSpecImage::New();
 
-    boost::filesystem::path p(this->GetInputLocation());
+    auto p(this->GetInputLocation());
 
-    if (!boost::filesystem::exists(p))
+    if (!itksys::SystemTools::FileExists(p))
     {
       MITK_ERROR << "No such file " << p;
       return {nullptr};
     }
 
-    boost::filesystem::path pIbd(this->GetInputLocation());
-    pIbd.replace_extension("ibd");
-    if (!boost::filesystem::exists(pIbd))
+    auto pIbd(this->GetInputLocation());
+    itksys::SystemTools::ReplaceString(pIbd, ".imzML", ".ibd");
+    
+    if (!itksys::SystemTools::FileExists(pIbd))
     {
       mitkThrow() << "No such file " << pIbd;
     }
@@ -597,7 +597,7 @@ namespace m2
     {
       mitk::Timer t("Initialize ImzML");
 	  m2::ImzMLMassSpecImage::Source source;
-	  source._BinaryDataPath = pIbd.string();
+	  source._BinaryDataPath = pIbd;
 	  source._ImzMLDataPath = GetInputLocation();
 	  source.ImportMode = m2::ImzMLFormatType::NotSet;
 

@@ -39,8 +39,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkNodePredicateProperty.h>
 #include <mitkPointSet.h>
 
-// boost
-#include <boost/filesystem.hpp>
+// itk
+#include <itksys/SystemTools.hxx>
 
 const std::string OpticalImageRegistration::VIEW_ID = "org.mitk.views.opticalimageregistration";
 
@@ -208,59 +208,59 @@ void OpticalImageRegistration::DoImageProcessing()
     return;
   }
 
-  using namespace boost;
+  using itksys::SystemTools;
 
-  auto path = filesystem::path(m_Controls.workingDirectory->text().toStdString());
+  auto path = m_Controls.workingDirectory->text().toStdString();
   QStringList cmd;
 
-  auto rigidPath = path / "rigid.txt";
+  auto rigidPath = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "rigid.txt"}));
   {
-    std::ofstream o(rigidPath.string());
+    std::ofstream o(rigidPath);
     o << m_Controls.rigidText->toPlainText().toStdString();
     o.close();
   }
 
-  auto deformablePath = path / "deformable.txt";
+  auto deformablePath = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "deformable.txt"}));
   {
-    std::ofstream o(deformablePath.string());
+    std::ofstream o(deformablePath);
     o << m_Controls.deformableText->toPlainText().toStdString();
     o.close();
   }
 
   cmd << elastix;
-  cmd << "-out" << path.string().c_str();
-  cmd << "-p" << rigidPath.string().c_str();
-  cmd << "-p" << deformablePath.string().c_str();
+  cmd << "-out" << path.c_str();
+  cmd << "-p" << rigidPath.c_str();
+  cmd << "-p" << deformablePath.c_str();
 
   if (auto image = dynamic_cast<mitk::Image *>(fixedNode->GetData()))
   {
-    auto fixedPath = path / "fixed.nrrd";
+    auto fixedPath = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "fixed.nrrd"}));
     auto filter = mitk::Image3DSliceToImage2DFilter::New();
     filter->SetInput(image);
     filter->Update();
-    mitk::IOUtil::Save(filter->GetOutput(), fixedPath.string());
-    cmd << "-f" << (fixedPath.string().c_str());
+    mitk::IOUtil::Save(filter->GetOutput(), fixedPath);
+    cmd << "-f" << (fixedPath.c_str());
   }
 
   if (auto image = dynamic_cast<mitk::Image *>(movingNode->GetData()))
   {
-    auto movingPath = path / "moving.nrrd";
+    auto movingPath = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "moving.nrrd"}));
     auto filter = mitk::Image3DSliceToImage2DFilter::New();
     filter->SetInput(image);
     filter->Update();
 
-    mitk::IOUtil::Save(filter->GetOutput(), movingPath.string());
-    cmd << "-m" << QString(movingPath.string().c_str());
+    mitk::IOUtil::Save(filter->GetOutput(), movingPath);
+    cmd << "-m" << QString(movingPath.c_str());
   }
 
   if (auto pntsNode = m_FixedPointSetSingleNodeSelection->GetSelectedNode())
   {
     if (auto pnts = dynamic_cast<mitk::PointSet *>(pntsNode->GetData()))
     {
-      mitk::IOUtil::Save(pnts, (path / "fixed.mps").string());
-      auto pntsPath = path / "fixed.txt";
-      Save(pnts, pntsPath.string());
-      cmd << "-fp" << QString(pntsPath.string().c_str());
+      mitk::IOUtil::Save(pnts, SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "fixed.mps"})));
+      auto pntsPath = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "fixed.txt"}));
+      Save(pnts, pntsPath);
+      cmd << "-fp" << QString(pntsPath.c_str());
     }
   }
 
@@ -268,20 +268,21 @@ void OpticalImageRegistration::DoImageProcessing()
   {
     if (auto pnts = dynamic_cast<mitk::PointSet *>(pntsNode->GetData()))
     {
-      mitk::IOUtil::Save(pnts, (path / "moving.mps").string());
-      auto pntsPath = path / "moving.txt";
-      Save(pnts, pntsPath.string());
-      cmd << "-mp" << QString(pntsPath.string().c_str());
+      mitk::IOUtil::Save(pnts, SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "moving.mps"})));
+      auto pntsPath = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "moving.txt"}));
+      Save(pnts, pntsPath);
+      cmd << "-mp" << QString(pntsPath.c_str());
     }
   }
 
   QProcess call;
   call.execute(cmd.join(" "));
 
-  auto resultPath = path / "result.nrrd";
-  if (boost::filesystem::exists(resultPath))
+  auto resultPath = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "result.1.nrrd"}));
+  MITK_INFO << "Result image path: " << resultPath;
+  if (SystemTools::FileExists(resultPath))
   {
-    auto vData = mitk::IOUtil::Load(resultPath.string());
+    auto vData = mitk::IOUtil::Load(resultPath);
     mitk::Image::Pointer image = dynamic_cast<mitk::Image *>(vData.back().GetPointer());
     auto node = mitk::DataNode::New();
     node->SetName(movingNode->GetName() + "_result");

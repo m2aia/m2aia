@@ -31,8 +31,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <itkFlatStructuringElement.h>
 #include <itkGrayscaleDilateImageFilter.h>
 #include <itkGrayscaleErodeImageFilter.h>
-#include <itkMedianImageFilter.h>
 #include <itkInvertIntensityImageFilter.h>
+#include <itkMedianImageFilter.h>
 #include <itkNormalizeImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itksys/SystemTools.hxx>
@@ -110,10 +110,8 @@ void m2Reconstruction3D::WarpPoints(mitk::Image *ionImage,
 
   const auto baseDir = mitk::IOUtil::CreateTemporaryDirectory();
 
-  auto baseDirPath = boost::filesystem::path(baseDir);
-  baseDirPath = baseDirPath.lexically_normal();
-
-  std::ofstream f((baseDirPath / "points.txt").string());
+  auto baseDirPath = baseDir;
+  std::ofstream f(itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath,  "/", "points.txt"})));
   f << "index\n";
   f << std::to_string(inPoints->GetPointSetSeriesSize()) << "\n";
   for (auto it = inPoints->Begin(); it != inPoints->End(); ++it)
@@ -134,7 +132,7 @@ void m2Reconstruction3D::WarpPoints(mitk::Image *ionImage,
 
   for (std::string trafo : transformations)
   {
-    auto p = baseDirPath / "Transform.txt";
+    auto p = itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "Transform.txt"}));
     std::ofstream f(p.c_str());
     f << trafo;
     f.close();
@@ -142,23 +140,27 @@ void m2Reconstruction3D::WarpPoints(mitk::Image *ionImage,
     std::stringstream ss;
     std::vector<std::string> cmd{transformix.toStdString(),
                                  "-def",
-                                 (baseDirPath / "points.txt").string(),
+      itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "points.txt"})),
                                  "-out",
-                                 baseDirPath.string(),
+                                 baseDirPath,
                                  "-tp",
-                                 (baseDirPath / ("Transform.txt")).string()};
+      itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "Transform.txt"}))};
     for (auto s : cmd)
       ss << s << " ";
     auto res = std::system(ss.str().c_str());
     if (res != 0)
       MITK_WARN << "Some error on system call of transformix";
-    boost::filesystem::rename(baseDirPath / "outputpoints.txt", baseDirPath / "points.txt");
+
+    itksys::SystemTools::CopyFileAlways(
+      itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "outputpoints.txt"})),
+      itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "points.txt"})));
   }
 
   auto pointset = mitk::PointSet::New();
   {
     std::string line, word;
-    std::ifstream f((baseDirPath / "points.txt").string());
+    std::ifstream f(
+      itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "points.txt"})));
     while (!f.eof())
     {
       std::getline(f, line);
@@ -187,7 +189,7 @@ void m2Reconstruction3D::WarpPoints(mitk::Image *ionImage,
 }
 
 void m2Reconstruction3D::ExportSlice(mitk::Image *input,
-                                     const boost::filesystem::path &directory,
+                                     const std::string &directory,
                                      const std::string &name,
                                      bool useNormalization,
                                      bool useInvertIntensities)
@@ -219,31 +221,31 @@ void m2Reconstruction3D::ExportSlice(mitk::Image *input,
     mitk::CastToMitkImage(filter->GetOutput(), processImage);
   };
 
-//  const auto ApplyGrayscaleDilateIntensityFilter = [](auto I, auto &processImage) {
-//    using ImageType = typename std::remove_pointer<decltype(I)>::type;
-//    using StructuringElementType = itk::FlatStructuringElement<ImageType::ImageDimension>;
-//    typename StructuringElementType::RadiusType elementRadius;
-//    elementRadius.Fill(1);
-//    StructuringElementType structuringElement = StructuringElementType::Box(elementRadius);
-//    auto filter = itk::GrayscaleDilateImageFilter<ImageType, ImageType, StructuringElementType>::New();
-//    filter->SetInput(I);
-//    filter->SetKernel(structuringElement);
-//    filter->Update();
-//    mitk::CastToMitkImage(filter->GetOutput(), processImage);
-//  };
+  //  const auto ApplyGrayscaleDilateIntensityFilter = [](auto I, auto &processImage) {
+  //    using ImageType = typename std::remove_pointer<decltype(I)>::type;
+  //    using StructuringElementType = itk::FlatStructuringElement<ImageType::ImageDimension>;
+  //    typename StructuringElementType::RadiusType elementRadius;
+  //    elementRadius.Fill(1);
+  //    StructuringElementType structuringElement = StructuringElementType::Box(elementRadius);
+  //    auto filter = itk::GrayscaleDilateImageFilter<ImageType, ImageType, StructuringElementType>::New();
+  //    filter->SetInput(I);
+  //    filter->SetKernel(structuringElement);
+  //    filter->Update();
+  //    mitk::CastToMitkImage(filter->GetOutput(), processImage);
+  //  };
 
-//  const auto ApplyGrayscaleErodeIntensityFilter = [](auto I, auto &processImage) {
-//    using ImageType = typename std::remove_pointer<decltype(I)>::type;
-//    using StructuringElementType = itk::FlatStructuringElement<ImageType::ImageDimension>;
-//    typename StructuringElementType::RadiusType elementRadius;
-//    elementRadius.Fill(1);
-//    StructuringElementType structuringElement = StructuringElementType::Ball(elementRadius);
-//    auto filter = itk::GrayscaleErodeImageFilter<ImageType, ImageType, StructuringElementType>::New();
-//    filter->SetInput(I);
-//    filter->SetKernel(structuringElement);
-//    filter->Update();
-//    mitk::CastToMitkImage(filter->GetOutput(), processImage);
-//  };
+  //  const auto ApplyGrayscaleErodeIntensityFilter = [](auto I, auto &processImage) {
+  //    using ImageType = typename std::remove_pointer<decltype(I)>::type;
+  //    using StructuringElementType = itk::FlatStructuringElement<ImageType::ImageDimension>;
+  //    typename StructuringElementType::RadiusType elementRadius;
+  //    elementRadius.Fill(1);
+  //    StructuringElementType structuringElement = StructuringElementType::Ball(elementRadius);
+  //    auto filter = itk::GrayscaleErodeImageFilter<ImageType, ImageType, StructuringElementType>::New();
+  //    filter->SetInput(I);
+  //    filter->SetKernel(structuringElement);
+  //    filter->Update();
+  //    mitk::CastToMitkImage(filter->GetOutput(), processImage);
+  //  };
 
   auto filter = mitk::Image3DSliceToImage2DFilter::New();
   filter->SetInput(input);
@@ -260,16 +262,17 @@ void m2Reconstruction3D::ExportSlice(mitk::Image *input,
       image = resultImage;
     }
   }
-  //AccessByItk_1(image, (ApplyNormalizationFilter), resultImage);
-  //image = resultImage;
+  // AccessByItk_1(image, (ApplyNormalizationFilter), resultImage);
+  // image = resultImage;
   AccessByItk_1(image, (ApplyRescaleIntensityFilter), resultImage);
   image = resultImage;
-  //AccessByItk_1(image, (ApplyGrayscaleDilateIntensityFilter), resultImage);
-  //image = resultImage;
-  //AccessByItk_1(image, (ApplyGrayscaleErodeIntensityFilter), resultImage);
-  //image = resultImage;
+  // AccessByItk_1(image, (ApplyGrayscaleDilateIntensityFilter), resultImage);
+  // image = resultImage;
+  // AccessByItk_1(image, (ApplyGrayscaleErodeIntensityFilter), resultImage);
+  // image = resultImage;
 
-  mitk::IOUtil::Save(image, (directory / name).string());
+  mitk::IOUtil::Save(image, itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({directory, "/", name})));
+
 }
 
 std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::WarpImage(const DataTuple &fixed,
@@ -286,8 +289,7 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
   };
 
   const auto baseDir = mitk::IOUtil::CreateTemporaryDirectory();
-  auto baseDirPath = boost::filesystem::path(baseDir);
-  baseDirPath = baseDirPath.lexically_normal();
+  auto baseDirPath = baseDir;
 
   // fixed and mask: image save images to disk
   ExportSlice(fixed.image, baseDirPath, "fixed.nrrd", useNormalization, useInvertIntensities);
@@ -300,14 +302,17 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
   // create folder structure
   QString elastix = GetElastixPath();
   QString transformix = GetTransformixPath();
-  auto rigidDirPath = baseDirPath / "rigid";
-  boost::filesystem::create_directory(rigidDirPath);
-  auto rigidTransformDirPath = baseDirPath / "rigid_mask";
-  boost::filesystem::create_directory(rigidTransformDirPath);
-  auto nlTransformDirPath = baseDirPath / "nl_mask";
-  boost::filesystem::create_directory(nlTransformDirPath);
-  auto nlDirPath = baseDirPath / "nl";
-  boost::filesystem::create_directory(nlDirPath);
+  auto rigidDirPath =
+    itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "rigid"}));
+  itksys::SystemTools::MakeDirectory(rigidDirPath);
+  auto rigidTransformDirPath =
+    itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "rigid_mask"}));
+  itksys::SystemTools::MakeDirectory(rigidTransformDirPath);
+  auto nlTransformDirPath =
+    itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "nl_mask"}));
+  itksys::SystemTools::MakeDirectory(nlTransformDirPath);
+  auto nlDirPath = itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "nl"}));
+  itksys::SystemTools::MakeDirectory(nlDirPath);
 
   QProcess process;
   QStringList v;
@@ -318,25 +323,41 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
 
   {
     // adaptions to  parameter file (rigid)
-    std::ofstream elxRigid((rigidDirPath / "rigid.txt").string());
+    std::ofstream elxRigid(
+      itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({rigidDirPath, "/", "rigid.txt"})));
     auto param = m_Controls.textRigid->toPlainText().toStdString();
     param = ReplaceParameter(param, "MaximumNumberOfIterations", std::to_string(m_Controls.RigidMaxIters->value()));
     elxRigid << param;
     elxRigid.close();
 
-    v << "-f" << (baseDirPath / "fixed.nrrd").string().c_str() << "-m" << (baseDirPath / "moving.nrrd").string().c_str()
-      << "-out" << rigidDirPath.string().c_str() << "-p" << (rigidDirPath / "rigid.txt").string().c_str();
+    v << "-f"
+      << itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "fixed.nrrd"}))
+           .c_str()
+      << "-m"
+      << itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "moving.nrrd"}))
+           .c_str()
+      << "-out" << rigidDirPath.c_str() << "-p"
+      << itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({rigidDirPath, "/", "rigid.txt"}))
+           .c_str();
 
     if (m_Controls.chkBxUseFixedMask->isChecked())
-      v << "-fMask" << (baseDirPath / "fixed_mask.nrrd").string().c_str();
+      v << "-fMask"
+        << itksys::SystemTools::ConvertToOutputPath(
+             itksys::SystemTools::JoinPath({baseDirPath, "/", "fixed_mask.nrrd"}))
+             .c_str();
     if (m_Controls.chkBxUseMovingMask->isChecked())
-      v << "-mMask" << (baseDirPath / "moving_mask.nrrd").string().c_str();
+      v << "-mMask"
+        << itksys::SystemTools::ConvertToOutputPath(
+             itksys::SystemTools::JoinPath({baseDirPath, "/", "moving_mask.nrrd"}))
+             .c_str();
 
     // run elastix (rigid)
     process.execute(elastix, v);
 
     // load trafo params (rigid)
-    std::ifstream t((rigidDirPath / "TransformParameters.0.txt").string().c_str());
+    std::ifstream t(itksys::SystemTools::ConvertToOutputPath(
+                      itksys::SystemTools::JoinPath({rigidDirPath, "/", "TransformParameters.0.txt"}))
+                      .c_str());
     std::string transformParameters;
 
     t.seekg(0, std::ios::end);
@@ -349,20 +370,30 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
 
     // change output type and save trafo file
     transformParameters = ReplaceParameter(transformParameters, "ResultImagePixelType ", "\"unsigned short\"");
-    std::ofstream p((rigidTransformDirPath / "TransformParameters.0.txt").string().c_str());
+    std::ofstream p(itksys::SystemTools::ConvertToOutputPath(
+                      itksys::SystemTools::JoinPath({rigidTransformDirPath, "/", "TransformParameters.0.txt"}))
+                      .c_str());
     p << transformParameters;
     p.close();
 
     // apply trafo to mask (rigid)
     v = QStringList();
-    v << "-in" << (baseDirPath / "moving_mask.nrrd").string().c_str() << "-tp"
-      << (rigidTransformDirPath / "TransformParameters.0.txt").string().c_str() << "-out"
-      << rigidTransformDirPath.string().c_str();
+    v << "-in"
+      << itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "moving_mask.nrrd"}))
+           .c_str()
+      << "-tp"
+      << itksys::SystemTools::ConvertToOutputPath(
+           itksys::SystemTools::JoinPath({rigidTransformDirPath, "/", "TransformParameters.0.txt"}))
+           .c_str()
+      << "-out"
+      << rigidTransformDirPath.c_str();
     process.execute(transformix, v);
 
     // store image artifacts (rigid)
-    auto warpedImage = mitk::IOUtil::Load((rigidDirPath / ("result.0.nrrd")).string());
-    auto warpedMask = mitk::IOUtil::Load((rigidTransformDirPath / ("result.nrrd")).string());
+    auto warpedImage = mitk::IOUtil::Load(
+      itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({rigidDirPath, "/", "result.0.nrrd"})));
+    auto warpedMask = mitk::IOUtil::Load(itksys::SystemTools::ConvertToOutputPath(
+      itksys::SystemTools::JoinPath({rigidTransformDirPath, "/", "result.nrrd"})));
 
     DataTuple tuple;
     tuple.image = dynamic_cast<mitk::Image *>(warpedImage[0].GetPointer());
@@ -373,7 +404,8 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
   if (!omitDeformable)
   {
     // adaptions to  parameter file (nl)
-    std::ofstream elxDeformable((nlDirPath / "nl.txt").string());
+    std::ofstream elxDeformable(
+      itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({nlDirPath, "/", "nl.txt"})));
     auto param = m_Controls.textDeformable->toPlainText().toStdString();
     param =
       ReplaceParameter(param, "MaximumNumberOfIterations", std::to_string(m_Controls.DeformableMaxIters->value()));
@@ -381,19 +413,32 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
     elxDeformable.close();
 
     v = QStringList();
-    v << "-f" << (baseDirPath / "fixed.nrrd").string().c_str() << "-m"
-      << (rigidDirPath / "result.0.nrrd").string().c_str() << "-out" << nlDirPath.string().c_str() << "-p"
-      << (nlDirPath / "nl.txt").string().c_str();
+    v << "-f"
+      << itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "fixed.nrrd"}))
+           .c_str()
+      << "-m"
+      << itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({rigidDirPath, "/", "result.0.nrrd"}))
+           .c_str()
+      << "-out" << nlDirPath.c_str() << "-p"
+      << itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({nlDirPath, "/", "nl.txt"})).c_str();
 
     if (m_Controls.chkBxUseFixedMaskDeform->isChecked())
-      v << "-fMask" << (baseDirPath / "fixed_mask.nrrd").string().c_str();
+      v << "-fMask"
+        << itksys::SystemTools::ConvertToOutputPath(
+             itksys::SystemTools::JoinPath({baseDirPath, "/", "fixed_mask.nrrd"}))
+             .c_str();
     if (m_Controls.chkBxUseMovingMaskDeform->isChecked())
-      v << "-mMask" << (rigidTransformDirPath / "result.nrrd").string().c_str();
+      v << "-mMask"
+        << itksys::SystemTools::ConvertToOutputPath(
+             itksys::SystemTools::JoinPath({rigidTransformDirPath, "/", "result.nrrd"}))
+             .c_str();
 
     process.execute(elastix, v);
 
     // load trafo params (nl)
-    std::ifstream t((nlDirPath / "TransformParameters.0.txt").string().c_str());
+    std::ifstream t(itksys::SystemTools::ConvertToOutputPath(
+                      itksys::SystemTools::JoinPath({nlDirPath, "/", "TransformParameters.0.txt"}))
+                      .c_str());
     std::string transformParameters;
 
     t.seekg(0, std::ios::end);
@@ -406,21 +451,32 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
 
     // change output type and save trafo file
     transformParameters = ReplaceParameter(transformParameters, "ResultImagePixelType ", "\"unsigned short\"");
-    std::ofstream p((nlTransformDirPath / "TransformParameters.0.txt").string().c_str());
+    std::ofstream p(itksys::SystemTools::ConvertToOutputPath(
+                      itksys::SystemTools::JoinPath({nlTransformDirPath, "/", "TransformParameters.0.txt"}))
+                      .c_str());
     p << transformParameters;
     p.close();
 
     // apply trafo to mask (nl)
     v = QStringList();
-    v << "-in" << (rigidTransformDirPath / "result.nrrd").string().c_str() << "-tp"
-      << (nlTransformDirPath / "TransformParameters.0.txt").string().c_str() << "-out"
-      << nlTransformDirPath.string().c_str();
+    v << "-in"
+      << itksys::SystemTools::ConvertToOutputPath(
+           itksys::SystemTools::JoinPath({rigidTransformDirPath, "/", "result.nrrd"}))
+           .c_str()
+      << "-tp"
+      << itksys::SystemTools::ConvertToOutputPath(
+           itksys::SystemTools::JoinPath({nlTransformDirPath, "/", "TransformParameters.0.txt"}))
+           .c_str()
+      << "-out"
+      << nlTransformDirPath.c_str();
     process.execute(transformix, v);
 
     // store image artifacts (rigid)
 
-    auto warpedImage = mitk::IOUtil::Load((nlDirPath / ("result.0.nrrd")).string());
-    auto warpedMask = mitk::IOUtil::Load((nlTransformDirPath / ("result.nrrd")).string());
+    auto warpedImage = mitk::IOUtil::Load(
+      itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({nlDirPath, "/", "result.0.nrrd"})));
+    auto warpedMask = mitk::IOUtil::Load(itksys::SystemTools::ConvertToOutputPath(
+      itksys::SystemTools::JoinPath({nlTransformDirPath, "/", "result.nrrd"})));
 
     DataTuple tuple;
     tuple.image = dynamic_cast<mitk::Image *>(warpedImage[0].GetPointer());
@@ -428,7 +484,7 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
     warpedImages.push_back(tuple);
   }
 
-  //boost::filesystem::remove_all(baseDirPath);
+  // boost::filesystem::remove_all(baseDirPath);
   return std::make_shared<DataTupleWarpingResult>(transformations, warpedImages);
 }
 
@@ -509,8 +565,7 @@ void m2Reconstruction3D::OnStartStacking()
       auto moving = getImageDataById(movingIdx, listWidged);
       auto result = WarpImage(fixed, moving, UseNormalization);
 
-      stack->Insert(
-        movingIdx, dynamic_cast<m2::MSImageBase *>(moving.image.GetPointer()), result->transformations());
+      stack->Insert(movingIdx, dynamic_cast<m2::MSImageBase *>(moving.image.GetPointer()), result->transformations());
       warpedIonImages[movingIdx] = result->images().back();
 
       mitk::ProgressBar::GetInstance()->Progress();
@@ -566,35 +621,35 @@ void m2Reconstruction3D::OnStartStacking()
           auto node2 = mitk::DataNode::New();
           node2->SetName("Stack_Mask_" + std::to_string(i));
           node2->SetData(s->GetMaskImage());
-		  node2->SetVisibility(false);
+          node2->SetVisibility(false);
           this->GetDataStorage()->Add(node2, node);
 
           auto node3 = mitk::DataNode::New();
           node3->SetName("Stack_Distance_" + std::to_string(i));
           node3->SetData(s->GetImageArtifacts()["distance"]);
-		  node3->SetVisibility(false);
+          node3->SetVisibility(false);
           this->GetDataStorage()->Add(node3, node);
 
-         /* if (s->GetImageArtifacts().find("landmarks") != s->GetImageArtifacts().end())
-          {
-            auto node4 = mitk::DataNode::New();
-            node4->SetName("Stack_Landmarks_" + std::to_string(i));
-            node4->SetData(s->GetImageArtifacts()["landmarks"]);
-			node4->SetVisibility(false);
-            this->GetDataStorage()->Add(node4, node);
+          /* if (s->GetImageArtifacts().find("landmarks") != s->GetImageArtifacts().end())
+           {
+             auto node4 = mitk::DataNode::New();
+             node4->SetName("Stack_Landmarks_" + std::to_string(i));
+             node4->SetData(s->GetImageArtifacts()["landmarks"]);
+       node4->SetVisibility(false);
+             this->GetDataStorage()->Add(node4, node);
 
-            auto warpedPoints = mitk::PointSet::New();
-			auto landmarkImage = dynamic_cast<mitk::Image*>(s->GetImageArtifacts()["landmarks"].GetPointer());
-            m2::LandMarkEvaluation::ImageToPointSet(landmarkImage, warpedPoints);
-			warpedPoints->SetGeometry(s->GetGeometry());
-			m2::LandMarkEvaluation::EvaluatePointSet(warpedPoints, 7);
+             auto warpedPoints = mitk::PointSet::New();
+       auto landmarkImage = dynamic_cast<mitk::Image*>(s->GetImageArtifacts()["landmarks"].GetPointer());
+             m2::LandMarkEvaluation::ImageToPointSet(landmarkImage, warpedPoints);
+       warpedPoints->SetGeometry(s->GetGeometry());
+       m2::LandMarkEvaluation::EvaluatePointSet(warpedPoints, 7);
 
-            auto node5 = mitk::DataNode::New();
-            node5->SetName("Stack_Landmarks_Points" + std::to_string(i));
-            node5->SetData(warpedPoints);
-			node5->SetFloatProperty("point 2D size", 0.025);
-            this->GetDataStorage()->Add(node5, node);
-          }*/
+             auto node5 = mitk::DataNode::New();
+             node5->SetName("Stack_Landmarks_Points" + std::to_string(i));
+             node5->SetData(warpedPoints);
+       node5->SetFloatProperty("point 2D size", 0.025);
+             this->GetDataStorage()->Add(node5, node);
+           }*/
         }
         ++i;
 
@@ -626,7 +681,7 @@ void m2Reconstruction3D::OnUpdateList()
   m_referenceMap.clear();
   unsigned int i = 0;
   // iterate all objects in data storage and create a list widged item
-//  unsigned id = 1;
+  //  unsigned id = 1;
   for (mitk::DataNode::Pointer node : *all)
   {
     if (node.IsNull())
@@ -641,20 +696,20 @@ void m2Reconstruction3D::OnUpdateList()
 
       if (res->Size() == 1)
       {
-        //auto pointset = dynamic_cast<mitk::PointSet *>(res->front()->GetData());
+        // auto pointset = dynamic_cast<mitk::PointSet *>(res->front()->GetData());
 
-		//data->GetImageArtifacts()["landmarks"] = data->GetIndexImage()->Clone();
+        // data->GetImageArtifacts()["landmarks"] = data->GetIndexImage()->Clone();
         /*data->GetImageArtifacts()["landmarks"]->Initialize(
           mitk::MakeScalarPixelType<m2::IndexImagePixelType>(), 3, data->GetDimensions());
         data->GetImageArtifacts()["landmarks"]->SetSpacing(data->GetGeometry()->GetSpacing());
         data->GetImageArtifacts()["landmarks"]->SetOrigin(data->GetGeometry()->GetOrigin());
 */
-		/*auto landmarkImage = dynamic_cast<mitk::Image *>(data->GetImageArtifacts()["landmarks"].GetPointer());
-        m2::LandMarkEvaluation::PointSetToImage(pointset, landmarkImage);
-		auto ptsNode = mitk::DataNode::New();
-		ptsNode->SetData(data->GetImageArtifacts()["landmarks"]);
-		ptsNode->SetName(node->GetName() + "_landmarks");
-		GetDataStorage()->Add(ptsNode, node);*/
+        /*auto landmarkImage = dynamic_cast<mitk::Image *>(data->GetImageArtifacts()["landmarks"].GetPointer());
+            m2::LandMarkEvaluation::PointSetToImage(pointset, landmarkImage);
+        auto ptsNode = mitk::DataNode::New();
+        ptsNode->SetData(data->GetImageArtifacts()["landmarks"]);
+        ptsNode->SetName(node->GetName() + "_landmarks");
+        GetDataStorage()->Add(ptsNode, node);*/
       }
 
       DataTuple tuple;

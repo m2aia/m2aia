@@ -24,9 +24,9 @@ See LICENSE.txt for details.
 #include <QmitkSingleNodeSelectionWidget.h>
 #include <QtConcurrent>
 #include <berryPlatformUI.h>
-#include <boost/filesystem.hpp>
 #include <boost/format.hpp>
 #include <itkRescaleIntensityImageFilter.h>
+#include <itksys/SystemTools.hxx>
 #include <mitkCameraController.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
@@ -916,21 +916,23 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
         // load associated data
         {
           auto source = msImageImzML->GetSourceList().front();
-          boost::filesystem::path path(source._ImzMLDataPath);
+          
+          auto path = source._ImzMLDataPath;
 
-          path.replace_extension("nrrd");
-          if (boost::filesystem::exists(path))
+          itksys::SystemTools::ReplaceString(path, ".imzML", ".nrrd");
+          if (itksys::SystemTools::FileExists(path))
           {
-            source._MaskDataPath = path.string();
+            source._MaskDataPath = path;
             auto data = mitk::IOUtil::Load(source._MaskDataPath).at(0);
             msImageImzML->GetImageArtifacts()["mask"] = dynamic_cast<mitk::Image *>(data.GetPointer());
             msImageImzML->PreventMaskImageInitializationOn();
           }
 
-          path.replace_extension("mps");
-          if (boost::filesystem::exists(path))
+          path = source._ImzMLDataPath;
+          itksys::SystemTools::ReplaceString(path, ".imzML", ".mps");
+          if (itksys::SystemTools::FileExists(path))
           {
-            source._PointsDataPath = path.string();
+            source._PointsDataPath = path;
             auto data = mitk::IOUtil::Load(source._PointsDataPath).at(0);
             msImageImzML->GetImageArtifacts()["references"] = dynamic_cast<mitk::PointSet *>(data.GetPointer());
           }
