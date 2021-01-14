@@ -151,13 +151,9 @@ namespace m2
     void InitializeImageAccess();
     void InitializeGeometry();
 
-    bool UseMirrorVertical = false;
-    bool UseMirrorHorizontal = false;
     bool UseLog10 = false;
 	bool UsePercentage = false;
-    bool UseBaseLineCorrection = false;
-    bool UseSmoothing = false;
-
+    
 	bool m_PreventMaskImageInitialization = false;
 	bool m_PreventNormalizationImageInitialization = false;
 

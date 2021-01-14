@@ -284,6 +284,24 @@ m2::IonImageGrabStrategyType m2Data::GuiToIonImageGrabStrategyType()
   return m2::IonImageGrabStrategyType::None;
 }
 
+m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
+{
+  if (this->Controls()->rdBtnSmoothingSG->isChecked())
+    return m2::SmoothingType::SavitzkyGolay;
+  if (this->Controls()->rdBtnSmoothingGaussian->isChecked())
+    return m2::SmoothingType::Gaussian;
+  return m2::SmoothingType::None;
+}
+
+m2::BaselineCorrectionType m2Data::GuiToBaselineCorrectionStrategyType()
+{
+  if (this->Controls()->rdBtnBaselineCorrectionTopHat->isChecked())
+    return m2::BaselineCorrectionType::TopHat;
+  if (this->Controls()->rdBtnBaselineCorrectionMedian->isChecked())
+    return m2::BaselineCorrectionType::Median;
+  return m2::BaselineCorrectionType::None;
+}
+
 void m2Data::OnResetTiling()
 {
 	
@@ -458,15 +476,12 @@ void m2Data::ApplySettingsToImage(m2::ImzMLMassSpecImage *data)
     using m2::ImzMLMassSpecImage;
 
     data->SetNormalizationStrategy(GuiToNormalizationStrategyType());
-    data->UseBaseLineCorrection = m_Controls.checkBoxBaseLineCorrection->isChecked();
-    data->UseSmoothing = m_Controls.checkBoxSmoothing->isChecked();
-
+	data->SetBaselineCorrectionStrategy(GuiToBaselineCorrectionStrategyType());
+    data->SetSmoothingStrategy(GuiToSmoothingStrategyType());
     data->SetIonImageGrabStrategy(GuiToIonImageGrabStrategyType());
+
     data->SetSmoothingHalfWindowSize(m_Controls.spnBxSmoothing->value());
     data->SetBaseLinecorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
-
-    // data->SetLowerMZBound(m_Controls.spnBxLowerBound->value());
-    // data->SetUpperMZBound(m_Controls.spnBxUpperBound->value());
 
     data->SetPeakPickingBinningTolerance(m_Controls.spnBxPeakBinning->value());
   }

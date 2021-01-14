@@ -98,6 +98,10 @@ public:
   m2::NormalizationStrategyType GuiToNormalizationStrategyType();
   m2::IonImageGrabStrategyType GuiToIonImageGrabStrategyType();
 
+  m2::SmoothingType GuiToSmoothingStrategyType();
+
+  m2::BaselineCorrectionType GuiToBaselineCorrectionStrategyType();
+
 public slots:
   void UpdateColorBarAndRenderWindows();
   void OnEqualizeLW();
