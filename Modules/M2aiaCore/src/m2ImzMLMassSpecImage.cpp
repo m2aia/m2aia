@@ -1075,7 +1075,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
           m2::Morphology::dilation(baseline, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
           break;
         case BaselineCorrectionType::Median:
-          m2::RunMedian::apply(ints_get, _BaselineCorrectionHalfWindowSize, baseline);
+          m2::RunMedian::apply(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
           break;
         default:
           break;
