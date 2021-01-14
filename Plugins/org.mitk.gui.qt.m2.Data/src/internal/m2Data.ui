@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>518</width>
-    <height>831</height>
+    <width>510</width>
+    <height>802</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -204,82 +204,14 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_16">
        <item>
-        <widget class="QGroupBox" name="SpectralProcessing">
-         <property name="toolTip">
-          <string/>
-         </property>
+        <widget class="QGroupBox" name="groupBox_2">
          <property name="title">
-          <string>Signal processing</string>
+          <string>Normalization</string>
          </property>
-         <property name="checkable">
-          <bool>false</bool>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <property name="spacing">
-           <number>4</number>
-          </property>
-          <property name="leftMargin">
-           <number>8</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>8</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
           <item>
-           <layout class="QGridLayout" name="gridLayout">
-            <item row="3" column="1">
-             <widget class="QSpinBox" name="spnBxBaseline">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string/>
-              </property>
-              <property name="value">
-               <number>50</number>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="QCheckBox" name="checkBoxBaseLineCorrection">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string/>
-              </property>
-              <property name="text">
-               <string>Baseline correction</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0">
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
              <widget class="QRadioButton" name="radioButtonNoneNormalization">
               <property name="maximumSize">
                <size>
@@ -292,7 +224,42 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
+            <item>
+             <widget class="QRadioButton" name="radioButtonInFileNormalization">
+              <property name="maximumSize">
+               <size>
+                <width>1000</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>In-file</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="radioButtonTICNormalization">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>1000</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>TIC</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QRadioButton" name="radioButtonSumNormalization">
               <property name="minimumSize">
                <size>
@@ -314,7 +281,79 @@
               </property>
              </widget>
             </item>
-            <item row="4" column="1">
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="SpectralProcessing">
+         <property name="toolTip">
+          <string/>
+         </property>
+         <property name="title">
+          <string>Smoothing</string>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_3">
+          <property name="spacing">
+           <number>4</number>
+          </property>
+          <property name="leftMargin">
+           <number>8</number>
+          </property>
+          <property name="topMargin">
+           <number>4</number>
+          </property>
+          <property name="rightMargin">
+           <number>8</number>
+          </property>
+          <property name="bottomMargin">
+           <number>4</number>
+          </property>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <item>
+             <widget class="QRadioButton" name="rdBtnSmoothingNone">
+              <property name="text">
+               <string>None</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="rdBtnSmoothingSG">
+              <property name="text">
+               <string>Savitzky-Golay</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="rdBtnSmoothingGaussian">
+              <property name="enabled">
+               <bool>false</bool>
+              </property>
+              <property name="text">
+               <string>Gaussian</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_4">
+            <item>
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>Half window size</string>
+              </property>
+             </widget>
+            </item>
+            <item>
              <widget class="QSpinBox" name="spnBxSmoothing">
               <property name="minimumSize">
                <size>
@@ -342,36 +381,59 @@
               </property>
              </widget>
             </item>
-            <item row="1" column="1">
-             <widget class="QRadioButton" name="radioButtonTICNormalization">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="title">
+          <string>Baseline correction</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_10">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_2">
+            <item>
+             <widget class="QRadioButton" name="rdBtnBaselineCorrectionNone">
               <property name="text">
-               <string>TIC</string>
+               <string>None</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QRadioButton" name="rdBtnBaselineCorrectionTopHat">
+              <property name="text">
+               <string>TopHat</string>
               </property>
               <property name="checked">
                <bool>true</bool>
               </property>
              </widget>
             </item>
-            <item row="4" column="0">
-             <widget class="QCheckBox" name="checkBoxSmoothing">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
+            <item>
+             <widget class="QRadioButton" name="rdBtnBaselineCorrectionMedian">
+              <property name="text">
+               <string>Median</string>
               </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_8">
+            <item>
+             <widget class="QLabel" name="label_4">
+              <property name="text">
+               <string>Half window size</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QSpinBox" name="spnBxBaseline">
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -387,38 +449,8 @@
               <property name="toolTip">
                <string/>
               </property>
-              <property name="text">
-               <string>Smoothing</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QRadioButton" name="radioButtonInFileNormalization">
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Use in-file normalization</string>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="0">
-             <widget class="Line" name="line">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="2" column="1">
-             <widget class="Line" name="line_2">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
+              <property name="value">
+               <number>50</number>
               </property>
              </widget>
             </item>
@@ -560,7 +592,7 @@
             <item row="2" column="0">
              <widget class="QCommandLinkButton" name="btnGrabIonImage">
               <property name="text">
-               <string>Grab ion image</string>
+               <string>Create ion image</string>
               </property>
              </widget>
             </item>
@@ -1137,14 +1169,6 @@
   <tabstop>spnBxPeakBinning</tabstop>
   <tabstop>checkBoxOnlyVisible</tabstop>
   <tabstop>checkBoxOnlyComboBoxSelection</tabstop>
-  <tabstop>radioButtonNoneNormalization</tabstop>
-  <tabstop>radioButtonSumNormalization</tabstop>
-  <tabstop>radioButtonInFileNormalization</tabstop>
-  <tabstop>radioButtonTICNormalization</tabstop>
-  <tabstop>checkBoxBaseLineCorrection</tabstop>
-  <tabstop>spnBxBaseline</tabstop>
-  <tabstop>checkBoxSmoothing</tabstop>
-  <tabstop>spnBxSmoothing</tabstop>
   <tabstop>Tabs</tabstop>
   <tabstop>scaleBarEnableIon</tabstop>
   <tabstop>scaleBarEnableNormalization</tabstop>
