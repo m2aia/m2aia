@@ -7,6 +7,7 @@ set(H_FILES
   include/m2Smoothing.hpp
   include/m2Morphology.hpp
   include/m2Calibration.hpp
+  include/m2RunningMedian.hpp
 
 
   include/m2ImzMLEngine.h

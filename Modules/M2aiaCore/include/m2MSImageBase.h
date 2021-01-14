@@ -75,6 +75,13 @@ namespace m2
     Sum
   };
 
+  enum class BaselineCorrectionType
+  {
+    None,
+    TopHat,
+    Median    
+  };
+
   enum class OutputDataType
   {
     Float,
@@ -157,6 +164,9 @@ namespace m2
     itkSetEnumMacro(IonImageGrabStrategy, IonImageGrabStrategyType);
     itkGetEnumMacro(IonImageGrabStrategy, IonImageGrabStrategyType);
 
+
+	itkSetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
+    itkGetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
     itkSetMacro(BaseLinecorrectionHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(BaseLinecorrectionHalfWindowSize, unsigned int);
 
@@ -256,6 +266,7 @@ namespace m2
     ImageArtifactMapType m_ImageArtifacts;
     SpectrumArtifactMapType m_SpectraArtifacts;
 
+	BaselineCorrectionType m_BaselineCorrectionStrategy;
     /**
      * @brief Vector of ion images associated with this ims file. E.g. peaks or individual picked ion
      * images.
