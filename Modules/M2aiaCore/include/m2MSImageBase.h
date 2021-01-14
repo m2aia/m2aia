@@ -82,6 +82,13 @@ namespace m2
     Median    
   };
 
+  enum class SmoothingType
+  {
+    None,
+    SavitzkyGolay,
+    Gaussian
+  };
+
   enum class OutputDataType
   {
     Float,
@@ -164,9 +171,12 @@ namespace m2
     itkSetEnumMacro(IonImageGrabStrategy, IonImageGrabStrategyType);
     itkGetEnumMacro(IonImageGrabStrategy, IonImageGrabStrategyType);
 
+	itkSetEnumMacro(SmoothingStrategy, SmoothingType);
+    itkGetEnumMacro(SmoothingStrategy, SmoothingType);
 
 	itkSetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
     itkGetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
+
     itkSetMacro(BaseLinecorrectionHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(BaseLinecorrectionHalfWindowSize, unsigned int);
 
@@ -267,6 +277,8 @@ namespace m2
     SpectrumArtifactMapType m_SpectraArtifacts;
 
 	BaselineCorrectionType m_BaselineCorrectionStrategy;
+    SmoothingType m_SmoothingStrategy;
+
     /**
      * @brief Vector of ion images associated with this ims file. E.g. peaks or individual picked ion
      * images.
