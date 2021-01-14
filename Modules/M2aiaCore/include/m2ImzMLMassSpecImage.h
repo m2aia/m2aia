@@ -153,8 +153,7 @@ namespace m2
 
     bool UseLog10 = false;
 	bool UsePercentage = false;
-    bool UseSmoothing = false;
-
+    
 	bool m_PreventMaskImageInitialization = false;
 	bool m_PreventNormalizationImageInitialization = false;
 

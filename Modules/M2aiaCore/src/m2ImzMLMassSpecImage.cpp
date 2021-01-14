@@ -15,7 +15,6 @@ See LICENSE.txt for details.
 ===================================================================*/
 
 #include <boost/range/combine.hpp>
-
 #include <forward_list>
 #include <future>
 #include <itkImageDuplicator.h>
@@ -57,7 +56,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
 
   const auto _BaselineCorrectionHWS = p->m_BaseLinecorrectionHalfWindowSize;
   const auto _NormalizationStrategy = p->GetNormalizationStrategy();
-  auto _UseSmoothing = p->UseSmoothing;
+  auto _SmoothingStrategy = p->GetSmoothingStrategy();
   const auto _BaseLineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
   const auto _IonImageGrabStrategy = p->GetIonImageGrabStrategy();
 
@@ -75,12 +74,14 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
   p->GetMetaDataDictionary()["mz"] = mdMz;
   p->GetMetaDataDictionary()["tol"] = mdTol;
 
-    
   std::vector<MassAxisType> mzs;
   std::vector<double> kernel;
-  
-  if (p->UseSmoothing)
+
+  if (_SmoothingStrategy == m2::SmoothingType::SavitzkyGolay)
     kernel = m2::Smoothing::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
+
+  // if (_SmoothingStrategy == m2::SmoothingType::Gaussian)
+  //  kernel = m2::Smoothing::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
 
   const auto accumulate = [&_IonImageGrabStrategy](auto s, auto e) {
     // Grab the value
@@ -130,7 +131,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
       std::ifstream f(source._BinaryDataPath, std::iostream::binary);
       binaryDataToVector(f, source._Spectra[0].mzOffset, source._Spectra[0].mzLength, mzs);
       f.close();
-	  MITK_INFO << "Init mzAxis: " << mzs.front() << " " << mzs.back();
+      MITK_INFO << "Init mzAxis: " << mzs.front() << " " << mzs.back();
     }
     // mz subrange
     auto subRes = m2::Peaks::Subrange(mzs, mz - tol, mz + tol);
@@ -149,7 +150,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
     {
       MITK_WARN << "Smoothing fails: intensity range size is smaller than kernel size " << length << " "
                 << kernel.size();
-      _UseSmoothing = false;
+      _SmoothingStrategy = m2::SmoothingType::None;
     }
 
     for (auto &source : p->GetSourceList())
@@ -186,9 +187,15 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
             std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&norm](auto &v) { return v / norm; });
           }
 
-          if (_UseSmoothing)
+          switch (_SmoothingStrategy)
           {
-            m2::Smoothing::filter(ints, kernel, false);
+            case m2::SmoothingType::SavitzkyGolay:
+              m2::Smoothing::filter(ints, kernel, false);
+              break;
+            case m2::SmoothingType::Gaussian:
+              break;
+            default:
+              break;
           }
 
           switch (_BaseLineCorrectionStrategy)
@@ -559,7 +566,6 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   acc.SetPixelByIndex({0, max_dim1 - 1, 0}, max_dim1 / 2);
   acc.SetPixelByIndex({max_dim0 - 1, 0, 0}, max_dim0 / 2);
   acc.SetPixelByIndex({max_dim0 - 1, max_dim1 - 1, 0}, max_dim1 + max_dim0);
-
 }
 
 template <class MassAxisType, class IntensityType>
@@ -575,11 +581,6 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
   // ----- PreProcess -----
 
-  // smoothing kernal is initialized once
-  std::vector<double> kernel;
-  if (p->UseSmoothing)
-    kernel = m2::Smoothing::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
-
   // if the data are available as continuous data with equivalent mz axis for all
   // spectra, we can calculate the skyline, sum and mean spectrum over the image
   std::vector<std::vector<double>> skylineT;
@@ -587,11 +588,18 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
   // shortcuts
   const auto _NormalizationStrategy = p->GetNormalizationStrategy();
-  const bool _UseSmoothing = p->UseSmoothing;
+  const auto _SmoothingStrategy = p->GetSmoothingStrategy();
   const auto _BaslineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
   const auto _BaselineCorrectionHalfWindowSize = p->m_BaseLinecorrectionHalfWindowSize;
   const bool _PreventInitMask = p->GetPreventMaskImageInitialization();
   const bool _PreventInitNorm = p->GetPreventNormalizationImageInitialization();
+
+  // smoothing kernal is initialized once
+  std::vector<double> kernel;
+  if (_SmoothingStrategy != m2::SmoothingType::None)
+    kernel = m2::Smoothing::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
+
+  MITK_INFO << "Smoothing: " << (int)_SmoothingStrategy << " " << p->m_SmoothingHalfWindowSize;
   MITK_INFO << "Baseline Correction: " << (int)_BaslineCorrectionStrategy << " "
             << p->m_BaseLinecorrectionHalfWindowSize;
   bool _UseSubRange = false;
@@ -754,9 +762,16 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
               }
             }
 
-            if (_UseSmoothing)
+            if (_SmoothingStrategy != SmoothingType::None)
             {
-              m2::Smoothing::filter(ints, kernel);
+              switch (_SmoothingStrategy)
+              {
+                case SmoothingType::SavitzkyGolay:
+                  m2::Smoothing::filter(ints, kernel);
+                  break;
+                default:
+                  break;
+              }
             }
 
             if (_BaslineCorrectionStrategy != BaselineCorrectionType::None)
@@ -1039,10 +1054,16 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
       });
     }
 
-    // smoothing
-    if (p->UseSmoothing)
+    if (p->GetSmoothingStrategy() != SmoothingType::None)
     {
-      m2::Smoothing::filter(ints_get, kernel);
+      switch (p->GetSmoothingStrategy())
+      {
+        case SmoothingType::SavitzkyGolay:
+          m2::Smoothing::filter(ints_get, kernel);
+          break;
+        default:
+          break;
+      }
     }
 
     if (p->GetBaselineCorrectionStrategy() != BaselineCorrectionType::None)
