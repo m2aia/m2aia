@@ -15,7 +15,6 @@ See LICENSE.txt for details.
 ===================================================================*/
 
 #include <boost/range/combine.hpp>
-
 #include <forward_list>
 #include <future>
 #include <itkImageDuplicator.h>
@@ -27,6 +26,7 @@ See LICENSE.txt for details.
 #include <m2NoiseEstimators.hpp>
 #include <m2PeakDetection.hpp>
 #include <m2Process.hpp>
+#include <m2RunningMedian.hpp>
 #include <m2Smoothing.hpp>
 #include <mitkImage2DToImage3DSliceFilter.h>
 #include <mitkImage3DSliceToImage2DFilter.h>
@@ -56,8 +56,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
 
   const auto _BaselineCorrectionHWS = p->m_BaseLinecorrectionHalfWindowSize;
   const auto _NormalizationStrategy = p->GetNormalizationStrategy();
-  auto _UseSmoothing = p->UseSmoothing;
-  const auto _UseBaseLineCorrection = p->UseBaseLineCorrection;
+  auto _SmoothingStrategy = p->GetSmoothingStrategy();
+  const auto _BaseLineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
   const auto _IonImageGrabStrategy = p->GetIonImageGrabStrategy();
 
   if (mask)
@@ -74,12 +74,14 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
   p->GetMetaDataDictionary()["mz"] = mdMz;
   p->GetMetaDataDictionary()["tol"] = mdTol;
 
-    
   std::vector<MassAxisType> mzs;
   std::vector<double> kernel;
-  
-  if (p->UseSmoothing)
+
+  if (_SmoothingStrategy == m2::SmoothingType::SavitzkyGolay)
     kernel = m2::Smoothing::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
+
+  // if (_SmoothingStrategy == m2::SmoothingType::Gaussian)
+  //  kernel = m2::Smoothing::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
 
   const auto accumulate = [&_IonImageGrabStrategy](auto s, auto e) {
     // Grab the value
@@ -129,7 +131,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
       std::ifstream f(source._BinaryDataPath, std::iostream::binary);
       binaryDataToVector(f, source._Spectra[0].mzOffset, source._Spectra[0].mzLength, mzs);
       f.close();
-	  MITK_INFO << "Init mzAxis: " << mzs.front() << " " << mzs.back();
+      MITK_INFO << "Init mzAxis: " << mzs.front() << " " << mzs.back();
     }
     // mz subrange
     auto subRes = m2::Peaks::Subrange(mzs, mz - tol, mz + tol);
@@ -137,16 +139,18 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
     const unsigned int offset_right = (mzs.size() - (subRes.first + subRes.second));
     const unsigned int offset_left = subRes.first;
     const unsigned int padding_left =
-      (offset_left / _BaselineCorrectionHWS >= 1 ? _BaselineCorrectionHWS : offset_left) * _UseBaseLineCorrection;
+      (offset_left / _BaselineCorrectionHWS >= 1 ? _BaselineCorrectionHWS : offset_left) *
+      (_BaseLineCorrectionStrategy != m2::BaselineCorrectionType::None);
     const unsigned int padding_right =
-      (offset_right / _BaselineCorrectionHWS >= 1 ? _BaselineCorrectionHWS : offset_right) * _UseBaseLineCorrection;
+      (offset_right / _BaselineCorrectionHWS >= 1 ? _BaselineCorrectionHWS : offset_right) *
+      (_BaseLineCorrectionStrategy != m2::BaselineCorrectionType::None);
 
     const unsigned int length = subRes.second + padding_left + padding_right;
     if (length < kernel.size())
     {
       MITK_WARN << "Smoothing fails: intensity range size is smaller than kernel size " << length << " "
                 << kernel.size();
-      _UseSmoothing = false;
+      _SmoothingStrategy = m2::SmoothingType::None;
     }
 
     for (auto &source : p->GetSourceList())
@@ -183,17 +187,30 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
             std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&norm](auto &v) { return v / norm; });
           }
 
-          if (_UseSmoothing)
+          switch (_SmoothingStrategy)
           {
-            m2::Smoothing::filter(ints, kernel, false);
+            case m2::SmoothingType::SavitzkyGolay:
+              m2::Smoothing::filter(ints, kernel, false);
+              break;
+            case m2::SmoothingType::Gaussian:
+              break;
+            default:
+              break;
           }
 
-          if (_UseBaseLineCorrection)
+          switch (_BaseLineCorrectionStrategy)
           {
-            baseline.resize(ints.size());
-            m2::Morphology::erosion(ints, _BaselineCorrectionHWS, baseline);
-            m2::Morphology::dilation(baseline, _BaselineCorrectionHWS, baseline);
-            std::transform(ints.begin(), ints.end(), baseline.begin(), ints.begin(), std::minus<IntensityType>());
+            case m2::BaselineCorrectionType::TopHat:
+              m2::Morphology::erosion(ints, _BaselineCorrectionHWS, baseline);
+              m2::Morphology::dilation(baseline, _BaselineCorrectionHWS, baseline);
+              std::transform(ints.begin(), ints.end(), baseline.begin(), ints.begin(), std::minus<>());
+              break;
+            case m2::BaselineCorrectionType::Median:
+              m2::RunMedian::apply(ints, _BaselineCorrectionHWS, baseline);
+              std::transform(ints.begin(), ints.end(), baseline.begin(), ints.begin(), std::minus<>());
+              break;
+            default:
+              break;
           }
 
           auto val = accumulate(s, e);
@@ -435,8 +452,6 @@ m2::ImzMLMassSpecImage::Pointer m2::ImzMLMassSpecImage::Combine(const m2::ImzMLM
   set.insert(std::begin(B->GetPeaks()), std::end(B->GetPeaks()));
 
   C->GetPeaks().insert(std::end(C->GetPeaks()), std::begin(set), std::end(set));
-  
-
 
   // for (auto &s : C->GetSourceList())
   //{
@@ -489,18 +504,6 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   s[2] = p->GetPropertyValue<double>("pixel size z");
 
   auto d = itkIonImage->GetDirection();
-
-  if (p->UseMirrorHorizontal)
-  {
-    d[0][0] = -1;
-    MITK_INFO << "Mirror Horizontal!";
-  }
-
-  if (p->UseMirrorVertical)
-  {
-    d[1][1] = -1;
-    MITK_INFO << "Mirror Vertical!";
-  }
 
   itkIonImage->SetSpacing(s);
   itkIonImage->SetOrigin(o);
@@ -563,7 +566,6 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   acc.SetPixelByIndex({0, max_dim1 - 1, 0}, max_dim1 / 2);
   acc.SetPixelByIndex({max_dim0 - 1, 0, 0}, max_dim0 / 2);
   acc.SetPixelByIndex({max_dim0 - 1, max_dim1 - 1, 0}, max_dim1 + max_dim0);
-
 }
 
 template <class MassAxisType, class IntensityType>
@@ -579,23 +581,27 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
   // ----- PreProcess -----
 
-  // smoothing kernal is initialized once
-  std::vector<double> kernel;
-  if (p->UseSmoothing)
-    kernel = m2::Smoothing::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
-
   // if the data are available as continuous data with equivalent mz axis for all
   // spectra, we can calculate the skyline, sum and mean spectrum over the image
   std::vector<std::vector<double>> skylineT;
   std::vector<std::vector<double>> sumT;
 
   // shortcuts
-  const auto _NormalizationStrategy = p->m_NormalizationStrategy;
-  const bool _UseSmoothing = p->UseSmoothing;
-  const bool _UseBaseLineCorrection = p->UseBaseLineCorrection;
-  const auto _BaseLinecorrectionHalfWindowSize = p->m_BaseLinecorrectionHalfWindowSize;
+  const auto _NormalizationStrategy = p->GetNormalizationStrategy();
+  const auto _SmoothingStrategy = p->GetSmoothingStrategy();
+  const auto _BaslineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
+  const auto _BaselineCorrectionHalfWindowSize = p->m_BaseLinecorrectionHalfWindowSize;
   const bool _PreventInitMask = p->GetPreventMaskImageInitialization();
   const bool _PreventInitNorm = p->GetPreventNormalizationImageInitialization();
+
+  // smoothing kernal is initialized once
+  std::vector<double> kernel;
+  if (_SmoothingStrategy != m2::SmoothingType::None)
+    kernel = m2::Smoothing::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
+
+  MITK_INFO << "Smoothing: " << (int)_SmoothingStrategy << " " << p->m_SmoothingHalfWindowSize;
+  MITK_INFO << "Baseline Correction: " << (int)_BaslineCorrectionStrategy << " "
+            << p->m_BaseLinecorrectionHalfWindowSize;
   bool _UseSubRange = false;
   unsigned long lenght;
   unsigned long long intsOffsetBytes = 0;
@@ -756,16 +762,34 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
               }
             }
 
-            if (_UseSmoothing)
+            if (_SmoothingStrategy != SmoothingType::None)
             {
-              m2::Smoothing::filter(ints, kernel);
+              switch (_SmoothingStrategy)
+              {
+                case SmoothingType::SavitzkyGolay:
+                  m2::Smoothing::filter(ints, kernel);
+                  break;
+                default:
+                  break;
+              }
             }
 
-            if (_UseBaseLineCorrection)
+            if (_BaslineCorrectionStrategy != BaselineCorrectionType::None)
             {
-              m2::Morphology::erosion(ints, _BaseLinecorrectionHalfWindowSize, baseline);
-              m2::Morphology::dilation(baseline, _BaseLinecorrectionHalfWindowSize, baseline);
-              std::transform(std::begin(ints), std::end(ints), baseline.begin(), std::begin(ints), minus);
+              switch (_BaslineCorrectionStrategy)
+              {
+                case BaselineCorrectionType::TopHat:
+                  m2::Morphology::erosion(ints, _BaselineCorrectionHalfWindowSize, baseline);
+                  m2::Morphology::dilation(baseline, _BaselineCorrectionHalfWindowSize, baseline);
+                  break;
+                case BaselineCorrectionType::Median:
+                  m2::RunMedian::apply(ints, _BaselineCorrectionHalfWindowSize, baseline);
+                  break;
+                default:
+                  break;
+              }
+
+              std::transform(std::begin(ints), std::end(ints), baseline.begin(), std::begin(ints), std::minus<>());
             }
 
             std::transform(std::begin(ints), std::end(ints), sumT.at(t).begin(), sumT.at(t).begin(), plus);
@@ -1030,19 +1054,34 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
       });
     }
 
-    // smoothing
-    if (p->UseSmoothing)
+    if (p->GetSmoothingStrategy() != SmoothingType::None)
     {
-      m2::Smoothing::filter(ints_get, kernel);
+      switch (p->GetSmoothingStrategy())
+      {
+        case SmoothingType::SavitzkyGolay:
+          m2::Smoothing::filter(ints_get, kernel);
+          break;
+        default:
+          break;
+      }
     }
 
-    //
-    if (p->UseBaseLineCorrection)
+    if (p->GetBaselineCorrectionStrategy() != BaselineCorrectionType::None)
     {
-      baseline.resize(ints_get.size());
-      m2::Morphology::erosion(ints_get, baselineCorrectionHWS, baseline);
-      m2::Morphology::dilation(baseline, baselineCorrectionHWS, baseline);
-      std::transform(ints_get.begin(), ints_get.end(), baseline.begin(), ints_get.begin(), std::minus<>());
+      switch (p->GetBaselineCorrectionStrategy())
+      {
+        case BaselineCorrectionType::TopHat:
+          m2::Morphology::erosion(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
+          m2::Morphology::dilation(baseline, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
+          break;
+        case BaselineCorrectionType::Median:
+          m2::RunMedian::apply(ints_get, _BaselineCorrectionHalfWindowSize, baseline);
+          break;
+        default:
+          break;
+      }
+
+      std::transform(std::begin(ints_get), std::end(ints_get), baseline.begin(), std::begin(ints_get), std::minus<>());
     }
   }
 
