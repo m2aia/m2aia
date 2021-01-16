@@ -1043,7 +1043,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
 
   std::vector<IntensityType> ints_get, baseline;
   binaryDataToVector(f, intso, intsl, ints_get);
-
+  baseline.resize(intsl, 0);
   if (any(source.ImportMode & (m2::ImzMLFormatType::ContinuousProfile)))
   {
     if (p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None)

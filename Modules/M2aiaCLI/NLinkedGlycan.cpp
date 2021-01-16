@@ -29,34 +29,10 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 */
 int main(int /*argc*/, char * /*argv*/[])
 {
-  //	mitkCommandLineParser parser;
-
-  //	parser.setTitle("Gibbs Tracking");
-  //	parser.setCategory("Fiber Tracking and Processing Methods");
-  //	parser.setDescription("Perform global fiber tractography (Gibbs tractography)");
-  //	parser.setContributor("MIC");
-
-  //	parser.setArgumentPrefix("--", "-");
-  //	parser.addArgument("", "i", mitkCommandLineParser::String, "Input:", "input image (tensor, ODF or SH-coefficient
-  // image)", us::Any(), false, false, false, mitkCommandLineParser::Input); 	parser.addArgument("", "o",
-  // mitkCommandLineParser::String, "Output:", "output tractogram", us::Any(), false, false, false,
-  // mitkCommandLineParser::Output); 	parser.addArgument("parameters", "", mitkCommandLineParser::String, "Parameters:",
-  //"parameter file (.gtp)", us::Any(), false, false, false, mitkCommandLineParser::Input); 	parser.addArgument("mask",
-  //"", mitkCommandLineParser::String, "Mask:", "binary mask image", us::Any(), false, false, false,
-  // mitkCommandLineParser::Input);
-
-  //	std::map<std::string, us::Any> parsedArgs = parser.parseArguments(argc, argv);
-  //	if (parsedArgs.size() == 0)
-  //		return EXIT_FAILURE;
-
-  //	std::string inFileName = us::any_cast<std::string>(parsedArgs["i"]);
-  //	std::string paramFileName = us::any_cast<std::string>(parsedArgs["parameters"]);
-  //	std::string outFileName = us::any_cast<std::string>(parsedArgs["o"]
-
   std::string png1 = "D:\\HSMannheim\\Data\\MFoell\\png1-no_normalization.imzML";
   std::string png2 = "D:\\HSMannheim\\Data\\MFoell\\png2-no_normalization.imzML";
   std::string control = "D:\\HSMannheim\\Data\\MFoell\\control-no_normalization.imzML";
-  // std::string cal = "D:\\HSMannheim\\Data\\MFoell\\png1-no_normalization.imzML";
+ 
 
   auto dataVec = mitk::IOUtil::Load({png1, png2, control});
   m2::ImzMLMassSpecImage::Pointer imagePNG1, imagePNG2, imageControl;
@@ -75,8 +51,8 @@ int main(int /*argc*/, char * /*argv*/[])
     m2::ImzMLXMLParser::SlowReadMetaData(I);
     const auto &source = I->GetSpectraSource();
     auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source._BinaryDataPath);
-    I->UseBaseLineCorrection = true;
-    I->UseSmoothing = true;
+    I->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::TopHat);
+    I->SetSmoothingStrategy(m2::SmoothingType::SavitzkyGolay);
 
     I->SetSmoothingHalfWindowSize(10);
     I->SetBaseLinecorrectionHalfWindowSize(50);
@@ -131,48 +107,14 @@ int main(int /*argc*/, char * /*argv*/[])
 	pngAll  = m2::ImzMLMassSpecImage::Combine(pngAll , imageControl, 'x');
 
     pngAll->SetNormalizationStrategy(m2::NormalizationStrategyType::TIC);
-    pngAll->UseBaseLineCorrection = true;
-    pngAll->UseSmoothing = true;
+    pngAll->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::TopHat);
+    pngAll->SetSmoothingStrategy(m2::SmoothingType::SavitzkyGolay);
     pngAll->SetSmoothingHalfWindowSize(4);
     pngAll->SetBaseLinecorrectionHalfWindowSize(50);
     pngAll->InitializeImageAccess();
-    pngAll->SetMassPickingTolerance(45);
+    pngAll->SetMassPickingTolerance(25);
 
-	mitk::IOUtil::Save(pngAll->GetNormalizationImage(), "D:/CombiResult_normalization.nrrd");
-
-//    auto filter = m2::ImageToTSNEImageFilter::New();
-//    filter->SetMaskImage(pngAll->GetMaskImage());
-//	filter->SetPerplexity(10);
-//	filter->SetIterations(2000);
-	
-
-//	auto filter2 = m2::PcaEigenImageFilter::New();
-//	filter2->SetMaskImage(pngAll->GetMaskImage());
-	
-
-    auto geom = pngAll->GetGeometry()->Clone();
-    unsigned i = 0;
-    std::list<mitk::Image::Pointer> list;
-
-    for (const auto &p : binPeaks)
-    {
-      pngAll->GetPeaks().push_back(p);
-
-      list.insert(list.end(), mitk::Image::New());
-      list.back()->Initialize(mitk::MakeScalarPixelType<m2::IonImagePixelType>(), *geom);
-
-      double mz = pngAll->MassAxis().at(p.massAxisIndex);
-      pngAll->GrabIonImage(mz, 10 * 10e-6 * mz, nullptr, list.back());
-//      filter->SetInput(i, list.back());
-//	  filter2->SetInput(i, list.back());
-	  ++i;
-    }
-
-//    filter->Update();
-//	filter2->Update();
-//	mitk::IOUtil::Save(filter->GetOutput(), "D:\\Combi_testresult_tsne.nrrd");
-//    mitk::IOUtil::Save(filter2->GetOutput(), "D:\\Combi_testresult_pca.nrrd");
-    
+	//mitk::IOUtil::Save(pngAll->GetNormalizationImage(), "D:/CombiResult_normalization.nrrd");    
     pngAll->SetExportMode(m2::ImzMLFormatType::ContinuousCentroid);
 	mitk::IOUtil::Save(pngAll, "D:\\Combi_testresult.imzML");
   }
