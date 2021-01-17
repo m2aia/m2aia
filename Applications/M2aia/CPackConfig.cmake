@@ -1,11 +1,11 @@
 if(CPACK_GENERATOR MATCHES "NSIS")
 
   # set the package header icon for MUI
-  SET(CPACK_PACKAGE_ICON "D:\\Dev\\MSITK\\Applications\\M2aia\\icons\\icon.ico")
+  SET(CPACK_PACKAGE_ICON "D:\\Dev\\m2aia\\Applications\\M2aia\\icons\\icon.ico")
   # set the install/unistall icon used for the installer itself
   # There is a bug in NSIS that does not handle full unix paths properly.
-  SET(CPACK_NSIS_MUI_ICON "D:\\Dev\\MSITK\\Applications\\M2aia\\icons\\icon.ico")
-  SET(CPACK_NSIS_MUI_UNIICON "D:\\Dev\\MSITK\\Applications\\M2aia\\icons\\icon.ico")
+  SET(CPACK_NSIS_MUI_ICON "D:\\Dev\\m2aia\\Applications\\M2aia\\icons\\icon.ico")
+  SET(CPACK_NSIS_MUI_UNIICON "D:\\Dev\\m2aia\\Applications\\M2aia\\icons\\icon.ico")
 
   set(CPACK_NSIS_DISPLAY_NAME "M2aia")
 
