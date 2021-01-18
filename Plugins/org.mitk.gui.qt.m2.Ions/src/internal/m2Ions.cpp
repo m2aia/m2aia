@@ -24,6 +24,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QPushButton>
 #include <QSlider>
 #include <QSpinBox>
+#include <QtConcurrent>
 #include <berryISelectionService.h>
 #include <berryIWorkbenchWindow.h>
 #include <ctkDoubleSpinBox.h>
@@ -39,7 +40,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateProperty.h>
 #include <qlabel.h>
-#include <QtConcurrent>
 
 const std::string m2Ions::VIEW_ID = "org.mitk.views.m2.Ions";
 
@@ -107,24 +107,24 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
   auto table = m_Controls.itemsTable;
   table->clearContents();
   table->setRowCount(tableRefs.size());
-
   unsigned tableRowPosition = 0;
+
+  m_TableIndexToIonImageRefMap.clear();
   for (auto *ref : tableRefs)
   {
-    // check for which MS image the reference is available
-    QString tooltip = "Related MS images:\n";
+    m_TableIndexToIonImageRefMap[tableRowPosition] = ref;
     for (auto node : *nodes)
     {
       auto msImage = dynamic_cast<m2::MSImageBase *>(node->GetData());
-      auto &ionImages = m_ContainerMap[node];
+      auto &ionImages = m_ContainerMap[node.GetPointer()];
       auto &ionReferences = msImage->GetIonImageReferenceVector();
+
+      // check if the ref is associated to MS image ion referenes
       if (std::find(std::begin(ionReferences), std::end(ionReferences), ref) != std::end(ionReferences))
       {
-        tooltip += QString(node->GetName().c_str()) + "\n";
-
-        // pre grab the image if it not already exist
+        // pre grab the image if it not already exist in the m_Container map
         // TODO: garbage collection missing
-        if (!ionImages[ref])
+        if (ionImages[ref].IsNull())
         {
           auto geom = msImage->GetGeometry()->Clone();
           auto maskImage = msImage->GetMaskImage();
@@ -138,7 +138,6 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
 
     auto rangeWidget = new ctkRangeWidget(table);
     rangeWidget->setRange(0, 100);
-    rangeWidget->setToolTip(tooltip);
     table->setCellWidget(tableRowPosition, 2, rangeWidget);
     rangeWidget->minimumSpinBox()->hide();
     rangeWidget->maximumSpinBox()->hide();
@@ -185,12 +184,10 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
     std::stringstream ss;
     ss << std::fixed << std::setprecision(2) << ref->mz << " m/z +/- " << ref->tol << " Da";
     auto label = new QLabel(QString::fromStdString(ss.str().c_str()), table);
-    label->setToolTip(tooltip);
     table->setCellWidget(tableRowPosition, 0, label);
     label->setContextMenuPolicy(Qt::CustomContextMenu);
 
     auto labelName = new QLabel(ref->name.c_str(), table);
-    labelName->setToolTip(tooltip);
     table->setCellWidget(tableRowPosition, 3, labelName);
     labelName->setContextMenuPolicy(Qt::CustomContextMenu);
 
@@ -222,7 +219,7 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
       menu.addAction(promote);
 
       auto include = new QWidgetAction(&menu);
-      auto chkBx = new QCheckBox(&menu);
+      auto chkBx = new QCheckBox();
       chkBx->setText("Include mass");
       chkBx->setChecked(ref->isActive);
       include->setDefaultWidget(chkBx);
@@ -233,106 +230,130 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
         CalculateVisualization(nodes);
       });
 
-      int minLabelMinHeight = 25;
+      // DR
       int subMenuMinWidth = 165;
-      std::string labelBackgrndStyle = "background-color: #252525";
+      auto CreateLabel = [&menu](auto labelName) {
+        int minLabelMinHeight = 25;
+        const char labelBackgrndStyle[256] = "background-color: #252525\0";
+        auto label = new QLabel();
+        label->setText(labelName);
+        label->setMinimumHeight(minLabelMinHeight);
+        label->setStyleSheet(labelBackgrndStyle);
 
-      QMenu pcaSubMenu;
-      auto pcaAction = new QWidgetAction(&pcaSubMenu);
-      pcaAction->setText("Perform pca");
+        auto action = new QWidgetAction(&menu);
+        action->setDefaultWidget(label);
 
-      auto slider = new QSlider(Qt::Horizontal);
-      slider->setMinimum(1);
-      slider->setMaximum(10);
-      slider->setValue(3);
-      slider->setStyleSheet("padding: 10px");
+        return action;
+      };
 
-      auto sliderAction = new QWidgetAction(&pcaSubMenu);
-      sliderAction->setDefaultWidget(slider);
+      auto menuLabel = CreateLabel("Dimensionality reduction");
+      menu.addAction(menuLabel);
 
-      auto componentLabel = new QLabel();
-      componentLabel->setText(("Number of Components: " + std::to_string(slider->value())).c_str());
-      componentLabel->setMinimumHeight(minLabelMinHeight);
-      componentLabel->setStyleSheet(labelBackgrndStyle.c_str());
+      auto asRGBImageAction = new QWidgetAction(&menu);
+      auto asRGBCheckBox = new QCheckBox();
+      asRGBCheckBox->setText("As RGB image");
+      asRGBCheckBox->setChecked(m_DR_AsRGBImage);
+      asRGBImageAction->setDefaultWidget(asRGBCheckBox);
 
-      auto actionLabel = new QWidgetAction(&pcaSubMenu);
-      actionLabel->setDefaultWidget(componentLabel);
+      auto componentSlider = new QSlider(Qt::Horizontal);
+      componentSlider->setMinimum(1);
+      componentSlider->setMaximum(10);
+      componentSlider->setValue(3);
+      componentSlider->setEnabled(false);
+      componentSlider->setStyleSheet("padding: 10px");
 
-      connect(slider, &QSlider::valueChanged, this, [slider, componentLabel, this]() {
-        componentLabel->setText(("Number of Components: " + std::to_string(slider->value())).c_str());
-        m_NumberOfComponents = slider->value();
+      connect(asRGBCheckBox, &QCheckBox::toggled, [componentSlider, this](bool v) {
+        if (v)
+        {
+          componentSlider->setValue(3);
+          componentSlider->setEnabled(false);
+          m_DR_AsRGBImage = true;
+        }
+        else
+        {
+          componentSlider->setEnabled(true);
+          m_DR_AsRGBImage = false;
+        }
+      });
+      menu.addAction(asRGBImageAction);
+
+      auto componentSliederAction = new QWidgetAction(&menu);
+      componentSliederAction->setDefaultWidget(componentSlider);
+
+      menuLabel = CreateLabel(("Number of Components: " + std::to_string(componentSlider->value())).c_str());
+      menu.addAction(menuLabel);
+
+      connect(componentSlider, &QSlider::valueChanged, this, [componentSlider, menuLabel, this]() {
+        static_cast<QLabel *>(menuLabel->defaultWidget())
+          ->setText(("Number of Components: " + std::to_string(componentSlider->value())).c_str());
+        m_NumberOfComponents = componentSlider->value();
       });
 
-      pcaSubMenu.addAction(pcaAction);
-      pcaSubMenu.addAction(actionLabel);
-      pcaSubMenu.addAction(sliderAction);
+      menu.addAction(componentSliederAction);
 
-      std::string pcaMenuTitle = "PCA";
-      pcaSubMenu.setTitle(pcaMenuTitle.c_str());
-      pcaSubMenu.setMinimumWidth(subMenuMinWidth);
+      {
+        auto subMenu = new QMenu();
+        auto pcaAction = new QWidgetAction(subMenu);
+        pcaAction->setText("Perform pca");
 
-      menu.addMenu(&pcaSubMenu);
+        subMenu->addAction(pcaAction);
 
-      QMenu tsneMenu;
-      tsneMenu.setTitle("T-SNE");
+        std::string pcaMenuTitle = "PCA";
+        subMenu->setTitle(pcaMenuTitle.c_str());
+        subMenu->setMinimumWidth(subMenuMinWidth);
+        connect(pcaAction, &QAction::triggered, this, [tableRefs, nodes, this]() { PerformPCA(tableRefs, nodes); });
 
-      auto tsneItSlider = new QSlider(Qt::Horizontal);
-      tsneItSlider->setMinimum(255);
-      tsneItSlider->setMaximum(2000);
-      tsneItSlider->setValue(m_Iterations);
-      tsneItSlider->setStyleSheet("padding: 10px");
+        menu.addMenu(subMenu);
+      }
 
-      auto tsneItSliderAction = new QWidgetAction(&tsneMenu);
-      tsneItSliderAction->setDefaultWidget(tsneItSlider);
+      {
+        auto subMenu = new QMenu();
+        subMenu->setTitle("T-SNE");
 
-      auto sliderLabel = new QLabel();
-      std::string sliderLabelStr = "Number of iterations: ";
-      sliderLabel->setText((sliderLabelStr + std::to_string(tsneItSlider->value())).c_str());
-      sliderLabel->setMinimumHeight(minLabelMinHeight);
-      sliderLabel->setStyleSheet(labelBackgrndStyle.c_str());
+        auto tsneAction = new QWidgetAction(subMenu);
+        tsneAction->setText("Perform t-SNE");
+        connect(tsneAction, &QAction::triggered, this, [tableRefs, nodes, this]() { PerformTsne(tableRefs, nodes); });
+        subMenu->addAction(tsneAction);
 
-      auto sliderLabelAction = new QWidgetAction(&tsneMenu);
-      sliderLabelAction->setDefaultWidget(sliderLabel);
+        auto tsneItSlider = new QSlider(Qt::Horizontal);
+        tsneItSlider->setMinimum(255);
+        tsneItSlider->setMaximum(2000);
+        tsneItSlider->setValue(m_Iterations);
+        tsneItSlider->setStyleSheet("padding: 10px");
 
-      connect(tsneItSlider, &QSlider::valueChanged, this, [sliderLabel, sliderLabelStr, this](int value) {
-        sliderLabel->setText((sliderLabelStr + std::to_string(value)).c_str());
-        m_Iterations = value;
-      });
+        menuLabel = CreateLabel(("Number of iterations: " + std::to_string(tsneItSlider->value())).c_str());
+        connect(tsneItSlider, &QSlider::valueChanged, this, [menuLabel, this](int value) {
+          static_cast<QLabel *>(menuLabel->defaultWidget())
+            ->setText(("Number of iterations: " + std::to_string(value)).c_str());
+          m_Iterations = value;
+        });
 
-      auto perplexityLabelAction = new QWidgetAction(&tsneMenu);
-      std::string perplexityLabelStr = "Perplexity: ";
-      auto perplexityLabel = new QLabel(perplexityLabelStr.c_str());
-      perplexityLabel->setMinimumHeight(minLabelMinHeight);
-      perplexityLabel->setStyleSheet(labelBackgrndStyle.c_str());
+        subMenu->addAction(menuLabel);
 
-      perplexityLabelAction->setDefaultWidget(perplexityLabel);
+        auto tsneItSliderAction = new QWidgetAction(subMenu);
+        tsneItSliderAction->setDefaultWidget(tsneItSlider);
+        subMenu->addAction(tsneItSliderAction);
 
-      auto tsnePerplexityInput = new QSpinBox();
-      tsnePerplexityInput->setRange(5, 50);
-      tsnePerplexityInput->setStyleSheet("padding-left: 10px");
+        menuLabel = CreateLabel("Perplexity: ");
+        subMenu->addAction(menuLabel);
 
-      connect(tsnePerplexityInput, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
-        m_Perplexity = value;
-      });
+        auto tsnePerplexityInput = new QSpinBox();
+        tsnePerplexityInput->setRange(5, 50);
+        tsnePerplexityInput->setStyleSheet("padding-left: 10px");
 
-      auto tsnePerplexityAction = new QWidgetAction(&tsneMenu);
-      tsnePerplexityAction->setDefaultWidget(tsnePerplexityInput);
+        connect(tsnePerplexityInput, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
+          m_Perplexity = value;
+        });
 
-      auto tsneAction = new QWidgetAction(&tsneMenu);
-      tsneAction->setText("Perform t-SNE");
+        auto tsnePerplexityAction = new QWidgetAction(subMenu);
+        tsnePerplexityAction->setDefaultWidget(tsnePerplexityInput);
+        subMenu->addAction(tsnePerplexityAction);
 
-      connect(tsneAction, &QAction::triggered, this, [tableRefs, this]() { PerformTsne(tableRefs); });
+        subMenu->setMinimumWidth(subMenuMinWidth);
 
-      tsneMenu.addAction(tsneAction);
-      tsneMenu.addAction(perplexityLabelAction);
-      tsneMenu.addAction(tsnePerplexityAction);
-      tsneMenu.addAction(sliderLabelAction);
-      tsneMenu.addAction(tsneItSliderAction);
-      tsneMenu.setMinimumWidth(subMenuMinWidth);
+        menu.addMenu(subMenu);
+      }
 
-      menu.addMenu(&tsneMenu);
-
-      connect(pcaAction, &QAction::triggered, this, [tableRefs, this]() { PerformPCA(tableRefs); });
       menu.exec(label->mapToGlobal(pos));
     };
 
@@ -347,7 +368,6 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
                    .arg(int(rgb[2] * 255));
 
     pButton->setStyleSheet(style);
-    pButton->setToolTip(tooltip);
     table->setCellWidget(tableRowPosition, 1, pButton);
 
     connect(pButton, &QPushButton::clicked, this, [this, ref, nodes, pButton]() {
@@ -369,59 +389,8 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
   CalculateVisualization(nodes);
 }
 
-int m2Ions::InitialzieDimensionalityReductionFilter(
-  m2::MassSpecVisualizationFilter::Pointer imageFilter,
-  std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs)
-{
-  auto select = m_Controls.itemsTable->selectionModel();
-  std::vector<m2::IonImageReference *> selectedReferences;
-  auto it = tableRefs.begin();
-
-  const auto selectedRows = select->selectedRows();
-
-  for (const auto &selectedRow : selectedRows)
-  {
-    auto reference = *std::next(it, selectedRow.row());
-    MITK_INFO << reference->mz << " " << selectedRow.row();
-	if(reference->isActive) // check if it is an active reference
-		selectedReferences.push_back(reference);
-  }
-
-  if (selectedReferences.size() < 3)
-  {
-    QMessageBox::warning(
-      NULL, "Too few images", "Pick at least three images for the calculation of the chosen DR method");
-    return 0;
-  }
-
-
-  int key = 0;
-  mitk::Image::Pointer maskImage;
-  for (const auto &ref : selectedReferences)
-  {
-    for (const auto &nodeImageReferencePair : m_ContainerMap)
-    {
-      if (!maskImage)
-      {
-        maskImage = dynamic_cast<m2::MSImageBase *>(nodeImageReferencePair.first->GetData())->GetMaskImage();
-      }
-      for (const auto &imageReferenceImagePair : nodeImageReferencePair.second)
-      {
-        if (imageReferenceImagePair.first->operator==(*ref))
-        {
-          mitk::Image::Pointer image = nodeImageReferencePair.second.at(ref);
-          imageFilter->SetInput(key, image);
-          ++key;
-        }
-      }
-    }
-  }
-  imageFilter->SetMaskImage(maskImage);
-
-  return 1;
-}
-
-void m2Ions::PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs)
+void m2Ions::PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs,
+                         itk::VectorContainer<unsigned int, mitk::DataNode::Pointer>::Pointer nodes)
 {
   auto res =
     QMessageBox::question(nullptr,
@@ -429,53 +398,90 @@ void m2Ions::PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference
                           "This operation may take some time.\n The status can be tracked in the console window.");
   if (QMessageBox::StandardButton::Yes == res)
   {
-    m2::TSNEImageFilter::Pointer tsneFilter = m2::TSNEImageFilter::New();
-    tsneFilter->SetIterations(m_Iterations);
-    tsneFilter->SetPerplexity(m_Perplexity);
-
-    if (!this->InitialzieDimensionalityReductionFilter(
-          dynamic_cast<m2::MassSpecVisualizationFilter *>(tsneFilter.GetPointer()), tableRefs))
+    auto select = m_Controls.itemsTable->selectionModel();
+    std::vector<m2::IonImageReference *> selectedReferences;
+    const auto selectedRows = select->selectedRows();
+    for (auto n : *nodes)
     {
-      return;
+      if (auto msImage = dynamic_cast<m2::ImzMLMassSpecImage *>(n->GetData()))
+      {
+        m2::TSNEImageFilter::Pointer filter = m2::TSNEImageFilter::New();
+        filter->SetIterations(m_Iterations);
+        filter->SetPerplexity(m_Perplexity);
+        filter->SetNumberOfComponents(m_NumberOfComponents);
+        filter->SetMaskImage(msImage->GetMaskImage());
+        unsigned int index = 0;
+        for (const auto &modelindex : selectedRows)
+        {
+          auto ref = m_TableIndexToIonImageRefMap[modelindex.row()];
+          if (ref->isActive)
+            if (auto bufferedImage = m_ContainerMap[n][ref])
+              filter->SetInput(index++, bufferedImage);
+        }
+        auto watcher = std::make_shared<QFutureWatcher<void>>();
+        watcher->setFuture(QtConcurrent::run([filter] { filter->Update(); }));
+
+        connect(watcher.get(), &QFutureWatcher<void>::finished, [watcher, filter, n, this] {
+          auto outputImage = filter->GetOutput();
+          auto outputNode = mitk::DataNode::New();
+          if (m_DR_AsRGBImage && m_NumberOfComponents == 3)
+          {
+            auto data = m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(filter->GetOutput());
+            outputNode->SetData(data);
+          }
+          else
+          {
+            outputNode->SetData(filter->GetOutput());
+          }
+          outputNode->SetName("T-SNE");
+          this->GetDataStorage()->Add(outputNode, n.GetPointer());
+          n->SetVisibility(false);
+          watcher->disconnect();
+        });
+      }
     }
-
-	QFutureWatcher<void> watcher;
-	watcher.setFuture(QtConcurrent::run([tsneFilter] {  tsneFilter->Update(); }));
-
-	connect(&watcher, &QFutureWatcher<void>::finished, [tsneFilter, this] {
-		auto outputImage = tsneFilter->GetOutput();
-		auto outputNode = mitk::DataNode::New();
-		outputNode->SetData(outputImage);
-		outputNode->SetName("T-SNE");
-		this->GetDataStorage()->Add(outputNode);
-	});
-
-
-
-
-    
   }
 }
 
-void m2Ions::PerformPCA(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs)
+void m2Ions::PerformPCA(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs,
+                        itk::VectorContainer<unsigned int, mitk::DataNode::Pointer>::Pointer nodes)
 
 {
-  m2::PcaImageFilter::Pointer pcaFilter = m2::PcaImageFilter::New();
-  pcaFilter->SetNumberOfComponents(m_NumberOfComponents);
-
-  if (!this->InitialzieDimensionalityReductionFilter(
-        dynamic_cast<m2::MassSpecVisualizationFilter *>(pcaFilter.GetPointer()), tableRefs))
+  auto select = m_Controls.itemsTable->selectionModel();
+  std::vector<m2::IonImageReference *> selectedReferences;
+  const auto selectedRows = select->selectedRows();
+  for (auto n : *nodes)
   {
-    return;
+    if (auto msImage = dynamic_cast<m2::ImzMLMassSpecImage *>(n->GetData()))
+    {
+      m2::PcaImageFilter::Pointer filter = m2::PcaImageFilter::New();
+      filter->SetNumberOfComponents(m_NumberOfComponents);
+      filter->SetMaskImage(msImage->GetMaskImage());
+      unsigned int index = 0;
+      for (const auto &modelindex : selectedRows)
+      {
+        auto ref = m_TableIndexToIonImageRefMap[modelindex.row()];
+        if (ref->isActive)
+          if (auto bufferedImage = m_ContainerMap[n][m_TableIndexToIonImageRefMap[modelindex.row()]])
+            filter->SetInput(index++, bufferedImage);
+      }
+      filter->Update();
+      auto outputNode = mitk::DataNode::New();
+
+      if (m_DR_AsRGBImage && m_NumberOfComponents == 3)
+      {
+        auto data = m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(filter->GetOutput());
+        outputNode->SetData(data);
+      }
+      else
+      {
+        outputNode->SetData(filter->GetOutput());
+      }
+      outputNode->SetName("PCA");
+      n->SetVisibility(false);
+      this->GetDataStorage()->Add(outputNode, n.GetPointer());
+    }
   }
-
-  pcaFilter->Update();
-
-  auto outputImage = pcaFilter->GetOutput();
-  auto outputNode = mitk::DataNode::New();
-  outputNode->SetData(outputImage);
-  outputNode->SetName("pca");
-  this->GetDataStorage()->Add(outputNode);
 }
 
 void m2Ions::CalculateVisualization(m2::CommunicationService::NodesVectorType::Pointer nodes)
