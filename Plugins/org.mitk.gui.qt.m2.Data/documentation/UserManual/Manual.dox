@@ -10,44 +10,63 @@
 This view offers the possibility to interact with Mass Spectrometry Imaging (MSI) data and is the starting point for all MSI related data interactions.\n
 
 \section m2_DATA_Usage Usage
-\imageMacro{m2Data_initialization.png, "Example screenshot showing the main elements of the view used to start MSI processing.", 14}
-
 Before loading any kind of MSI data, make sure that this view is initialized (once opend in a new M2aia session).\n\n
 
 The typical workflow has following steps/sections:\n\n
-(1) <b>MS image selection</b>: Required in multiple MS image interaction. This can be ignored for single MS image interaction,  (see (3)).\n\n
-
-(2) <b>Initialization - Pre-Initialization settings</b>:\n
-You can define an upper and lower bound on the m/z axis (if known). This will reduce the data loading time.\n
+(1) <b>Initialization - Pre-Initialization settings</b>:\n
 If the imzML data is in centroid spectrum data format, peak binning tolerance can be set.\n\n
 
-(3) <b>Initializtion - Behaviour for interaction with multiple MS images</b>:\n
+(2) <b>Initializtion - Behaviour for interaction with multiple MS images</b>:\n
 If multiple MS images with overlapping m/z axes are present, an ion image grab will automatically be applied to all data nodes matching the offered options.\n
 <i>Only visible:</i> Interaction is restricted to nodes makred visible in the data manager.\n
 <i>Only selection:</i> Interaction is restricted to nodes provided by the selection box.\n\n
 
-(4) <b>Initializtion - Signal processing</b>:\n
+(2.1) <b>MS image selection box (at bottom of the Data view)</b>: Required in multiple MS image interaction. This can be ignored for single MS image interaction.\n\n
+
+(3) <b>Imaging</b>:\n
 \remark Due to M2aia's lazy loading strategie (load MSI data only on demand) signal processing may take place in different situations:\n
 (a) During initialization of an MS image to calculate overview spectra and normalization maps.\n
-(b) During an ion image generation (grab).\n
+(b) During the creation of an ion image.\n
 
 
+(3.1) <b>Normalization</b>:\n
 You can choose between normalization strategies:\n
 <i>No normalization:</i> no normalization is applied\n
+<i>In-file normalization:</i> Normalization based on the normalization constants defined in the imzML file.\n\n
 <i>TIC normalization:</i> Total ion count normalization (respects differents step widths on the m/z axis)\n
 <i>Sum normalization:</i> Sum of intensities along the m/z axis\n
-<i>In-file normalization:</i> Normalization based on the normalization constants defined in the imzML file.\n\n
 
 \remark The chosen normalization strategie will produce a normalization map (grayscale image of normalization constants for each pixel).\n
 Currently, only a single normalization strategy can be chosen on initialization (see (a)).\n
 During an ion image grab, the normalization strategy can be turned off choosing the 'no normalization' option.\n\n
 
 
-You can enable Savitzky-Golay signal smoothing. Parameter defines the half window size that is used for processing.\n
-You can enable TopHat baseline correction. Parameter defines the half window size that is used for processing.\n\n
+(3.2) <b>Baseline correction</b>:\n
+You can enable Savitzky-Golay signal smoothing. Parameter defines the half window size that is used for processing.\n\n
+
+(3.3) <b>Smoothing</b>:\n
+You can enable TopHat or median baseline correction. Parameter defines the half window size that is used for processing.\n\n
+
+(4) <b>Ion imaging strategy</b>:\n
+Accumultaion method for rang based queries of ion images. Method is applied over an m/z given range (m/z +- Da) for each valid pixel.\n\n
+
+(5) <b>Ion imaging</b>:\n
+Here you can trigger the creation of ion images by defining an m/z range, tolerance is either given by parts per million (ppm) or Daltons (Da).\n\n
+
+Each MS image data node that can be found in the Data Manager has a child node with "_mask" as postfix. This maks can be manipulated using the MultiLabelSegmentation utilities.\n
+You can disable the use of the mask to create ion images for all valid pixels.\n\n
+
+By activating "Initialize new data node", a new data node is created during the ion image process.In this way, multiple ion images of different m/z ranges can be created for visualization or export.\n
+
+\remark Only MS image instances can be exported as imzML files. Newly created nodes can only be exported as one of the typical image formats (.nrrd, .jpg, ...).\n\n
 
 
+The chosen data type will be assigned to the resulting images. If any data type except 'double' is chosen, ion image pixel values will be rescaled to support the available value range of each data type, e.g. if 'unsigned char' is selected, all pixel will be rescaled to a new value range of 0-255.\n
+Rescaling is necessary for supporting the volume visualization utilities.\n\n
 
+(6) <b>Ion image reference</b>:\n
+You can name ion images to add those to the Ions view (shortcut: Ctrl+I). The last created ion image is committed to be addable.\n\n
 
-
+(7) <b>Reference points</b>:\n
+You can add a point set and define reference points in the image.
 */
