@@ -16,11 +16,11 @@ See LICENSE.txt for details.
 #pragma once
 
 #include <MitkM2aiaCoreExports.h>
+#include <itkImageRegionIterator.h>
 #include <mitkImage.h>
+#include <mitkImageCast.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImageToImageFilter.h>
-
-#include <itkImageRegionIterator.h>
 namespace m2
 {
   class MITKM2AIACORE_EXPORT MassSpecVisualizationFilter : public mitk::ImageToImageFilter
@@ -35,9 +35,18 @@ namespace m2
     void GetValidIndices();
     std::vector<itk::Index<3>> m_ValidIndices = {};
 
+    static mitk::Image::Pointer ConvertMitkVectorImageToRGB(mitk::Image::Pointer vImage)
+    {
+      mitk::Image::Pointer result;
+      itk::VectorImage<unsigned char, 3>::Pointer vectorImage;
+      mitk::CastToItkImage(vImage, vectorImage);
+      mitk::CastToMitkImage(ConvertVectorImageToRGB(vectorImage), result);
+      return result;
+    }
+
     /*This function casts a itk vector Image with vector length of 3, to a RGB itk Image. The buffer of the
-    vector image is copied to the RGB image.*/
-    static itk::Image<itk::RGBPixel<unsigned char>, 3>::Pointer convertVectorImageToRGB(
+      vector image is copied to the RGB image.*/
+    static itk::Image<itk::RGBPixel<unsigned char>, 3>::Pointer ConvertVectorImageToRGB(
       itk::VectorImage<unsigned char, 3>::Pointer vectorImage)
     {
       itk::Image<RGBPixel, 3>::Pointer rgbImage = itk::Image<RGBPixel, 3>::New();
@@ -59,6 +68,10 @@ namespace m2
       rgbImage->SetRegions(region);
       rgbImage->Allocate();
 
+      rgbImage->SetOrigin(vectorImage->GetOrigin());
+      rgbImage->SetSpacing(vectorImage->GetSpacing());
+      rgbImage->SetDirection(vectorImage->GetDirection());
+
       itk::ImageRegionIterator<itk::Image<RGBPixel, 3>> imageIterator(rgbImage, rgbImage->GetRequestedRegion());
       imageIterator.GoToBegin();
       auto pixel = RGBPixel();
@@ -72,7 +85,8 @@ namespace m2
         ++imageIterator;
       }
 
-      memcpy(rgbImage->GetBufferPointer(), vectorImage->GetBufferPointer(), sizeof(RGBPixel) * size[0] * size[1] * size[2]);
+      memcpy(
+        rgbImage->GetBufferPointer(), vectorImage->GetBufferPointer(), sizeof(RGBPixel) * size[0] * size[1] * size[2]);
 
       return rgbImage;
     }

@@ -64,7 +64,6 @@ namespace m2
     // void GenerateOutputInformation() override;
     /*!
     \brief Method generating the output of this filter. Called in the updated process of the pipeline.
-    This method generates the PCA output image.
     */
     void GenerateData() override;
   };
