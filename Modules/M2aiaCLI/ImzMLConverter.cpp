@@ -14,116 +14,232 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-#include <itksys/SystemTools.hxx>
 #include <m2ImzMLMassSpecImage.h>
-#include <m2ImzMLXMLParser.h>
-#include <m2NoiseEstimators.hpp>
-#include <m2PeakDetection.hpp>
-#include <mbilog.h>
 #include <mitkCommandLineParser.h>
 #include <mitkIOUtil.h>
-#include <mitkImageCast.h>
-#include <mitkTimer.h>
-/*!
-\brief Perform N-linked glycane analysis
-*/
-int main(int /*argc*/, char * /*argv*/[])
+#include <mitkImage.h>
+#include <stdlib.h>
+
+std::map<std::string, us::Any> CommandlineParsing(int argc, char *argv[]);
+
+int main(int argc, char *argv[])
 {
-  std::string png1 = "D:\\HSMannheim\\Data\\MFoell\\png1-no_normalization.imzML";
-  std::string png2 = "D:\\HSMannheim\\Data\\MFoell\\png2-no_normalization.imzML";
-  std::string control = "D:\\HSMannheim\\Data\\MFoell\\control-no_normalization.imzML";
- 
+  auto argsMap = CommandlineParsing(argc, argv);
 
-  auto dataVec = mitk::IOUtil::Load({png1, png2, control});
-  m2::ImzMLMassSpecImage::Pointer imagePNG1, imagePNG2, imageControl;
-  imagePNG1 = dynamic_cast<m2::ImzMLMassSpecImage *>(dataVec[0].GetPointer());
-  imagePNG2 = dynamic_cast<m2::ImzMLMassSpecImage *>(dataVec[1].GetPointer());
-  imageControl = dynamic_cast<m2::ImzMLMassSpecImage *>(dataVec[2].GetPointer());
+  const auto setDefaultValue = [&argsMap](const auto &s, const auto defaultValue, auto *v) {
+    if (argsMap.count(s))
+    {
+      *v = us::any_cast<std::remove_pointer<decltype(v)>::type>(argsMap[s]);
+    }
+    else
+    {
+      argsMap[s] = defaultValue;
+      *v = defaultValue;
+    }
+  };
 
-  if (!(imageControl || imagePNG1 || imagePNG2))
+  for (auto kv : argsMap)
   {
-    MITK_ERROR << "Fail to load images.";
+    MITK_INFO << kv.first << " " << kv.second.ToString();
   }
-  std::map<mitk::BaseData *, std::vector<m2::MassValue>> imagePeaks;
-  std::map<mitk::BaseData *, std::vector<m2::MassValue>> pixelPeaks;
-  for (auto I : {imagePNG1, imagePNG2, imageControl})
+  auto image = mitk::IOUtil::Load(argsMap["image"].ToString()).front();
+  if (auto imzMLImage = dynamic_cast<m2::ImzMLMassSpecImage *>(image.GetPointer()))
   {
-    m2::ImzMLXMLParser::SlowReadMetaData(I);
-    const auto &source = I->GetSpectraSource();
-    auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source._BinaryDataPath);
-    I->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::TopHat);
-    I->SetSmoothingStrategy(m2::SmoothingType::SavitzkyGolay);
+    int bc_strategy, bc_hws, sm_strategy, sm_hws, int_type, mzs_type, imaging_strategy;
+    float binning_tol, centroids_tol, mz, tol;
 
-    I->SetSmoothingHalfWindowSize(10);
-    I->SetBaseLinecorrectionHalfWindowSize(50);
-    // I->SetUpperMZBound(3000);
-    // I->SetLowerMZBound(900);
+    setDefaultValue("baseline-correction", 0, &bc_strategy);
+    setDefaultValue("baseline-correction-hws", 25, &bc_hws);
+    setDefaultValue("smoothing", 0, &sm_strategy);
+    setDefaultValue("smoothing-hws", 2, &sm_hws);
 
-    I->InitializeImageAccess();
+    setDefaultValue("intensity-type", 0, &int_type);
+    setDefaultValue("mz-type-hws", 0, &mzs_type);
+    setDefaultValue("imaging-strategy", 1, &imaging_strategy);
 
-    // peak picking on overview spectrum
-    auto &overviewSpectrum = I->MeanSpectrum();
-    auto SNR = m2::Noise::mad(overviewSpectrum);
-    std::vector<m2::MassValue> peaks;
-    m2::Peaks::localMaxima(std::begin(overviewSpectrum),
-                           std::end(overviewSpectrum),
-                           std::begin(I->MassAxis()),
-                           std::back_inserter(peaks),
-                           10,
-                           SNR * 5.5);
+    setDefaultValue("binning-tol", 50, &binning_tol);
+    setDefaultValue("centroids-tol", 50, &centroids_tol);
+    setDefaultValue("smoothing-hws", 2, &sm_hws);
 
-    std::vector<m2::MassValue> filteredPeaks;
-    std::copy_if(std::begin(peaks), std::end(peaks), std::back_inserter(filteredPeaks), [](const auto &p) {
-      return (p.mass > 900 && p.mass < 3000);
-    });
+    setDefaultValue("mz", -1, &mz);
+    setDefaultValue("tol", 0, &tol);
 
-    imagePeaks[I.GetPointer()] = m2::Peaks::monoisotopic(peaks, {3, 4, 5, 6, 7, 8, 9, 10}, 0.40);
-    MITK_INFO << I->GetSpectraSource()._ImzMLDataPath << " monoisotopic peaks found "
-              << imagePeaks[I.GetPointer()].size();
+    imzMLImage->SetBaselineCorrectionStrategy(static_cast<m2::BaselineCorrectionType>(bc_strategy));
+    imzMLImage->SetSmoothingHalfWindowSize(bc_hws);
+
+    imzMLImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(sm_strategy));
+    imzMLImage->SetBaseLinecorrectionHalfWindowSize(sm_hws);
+
+    imzMLImage->SetPeakPickingBinningTolerance(binning_tol);
+    imzMLImage->SetMassPickingTolerance(centroids_tol);
+    imzMLImage->InitializeImageAccess();
+
+    imzMLImage->SetExportMode(m2::ImzMLFormatType::ContinuousProfile);
+    imzMLImage->SetIntsOutputType(static_cast<m2::NumericType>(int_type));
+    imzMLImage->SetMzsOutputType(static_cast<m2::NumericType>(mzs_type));
+
+    if (mz > 0)
+      imzMLImage->GrabIonImage(mz, 10e-6 * tol * mz, nullptr, imzMLImage);
+
+    
+
+    mitk::IOUtil::Save(imzMLImage, argsMap["output"].ToString());
   }
+}
 
-  std::vector<m2::MassValue> unionPeaks, binPeaks;
-  for (const auto &kv : imagePeaks)
-    unionPeaks.insert(std::end(unionPeaks), std::begin(kv.second), std::end(kv.second));
-  std::sort(std::begin(unionPeaks), std::end(unionPeaks));
+std::map<std::string, us::Any> CommandlineParsing(int argc, char *argv[])
+{
+  mitkCommandLineParser parser;
+  parser.setArgumentPrefix("--", "-");
+  // required params
+  parser.addArgument("image",
+                     "i",
+                     mitkCommandLineParser::Image,
+                     "Input imzML Image",
+                     "Path to the input imzML",
+                     us::Any(),
+                     false,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("binning-tol",
+                     "bt",
+                     mitkCommandLineParser::Float,
+                     "Read continuous centroid imzML and apply binning to peaks.",
+                     "Collapsing tolerance of nearby peaks; in ppm",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("centroids-tol",
+                     "p",
+                     mitkCommandLineParser::Float,
+                     "Centroids tolerance",
+                     "If centroid data are written, resulting centroid intensity values are accumulated over the "
+                     "centroid m/z +/- Centroids-tolerance",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("baseline-correction",
+                     "b",
+                     mitkCommandLineParser::Int,
+                     "Baseline correction strategy",
+                     "None = 0, TopHat = 1, Median = 2",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("baseline-correction-hws",
+                     "b-hws",
+                     mitkCommandLineParser::Int,
+                     "Baseline-correction half window size",
+                     "The parameter is used to create a convolution of 2*hws+1",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("smoothing",
+                     "s",
+                     mitkCommandLineParser::Int,
+                     "Smoothing strategy",
+                     "None = 0, SavitzkyGolay = 1, Gaussian = 2",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("smoothing-hws",
+                     "s-hws",
+                     mitkCommandLineParser::Int,
+                     "Smoothing half window size",
+                     "The parameter is used to create a convolution of 2*hws+1",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("mz-type",
+                     "mt",
+                     mitkCommandLineParser::Int,
+                     "m/z value output data type",
+                     "32 bit float = 1, 64 bit float = 1",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
 
-  m2::Peaks::binPeaks(std::begin(unionPeaks), std::end(unionPeaks), std::back_inserter(binPeaks), 50 * 10e-6);
+  parser.addArgument("intensity-type",
+                     "it",
+                     mitkCommandLineParser::Int,
+                     "intensity value output data type",
+                     "32 bit float = 1, 64 bit float = 1",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("imaging-strategy",
+                     "s",
+                     mitkCommandLineParser::Int,
+                     "Accumulation function applied on the range m/z +/- tol",
+                     "mean = 1, maximum = 2, median = 3,sum = 4",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("mz",
+                     "mz",
+                     mitkCommandLineParser::Float,
+                     "Create an ion imaging at m/z position.",
+                     "m/z value",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("tol",
+                     "tol",
+                     mitkCommandLineParser::Float,
+                     "Create an ion imaging at m/z position with tolerance +/- tol.",
+                     "tol value in Daltons",
+                     us::Any(),
+                     true,
+                     false,
+                     false,
+                     mitkCommandLineParser::Input);
+  parser.addArgument("output",
+                     "o",
+                     mitkCommandLineParser::File,
+                     "Output Image",
+                     "Path to the output image path",
+                     us::Any(),
+                     false,
+                     false,
+                     false,
+                     mitkCommandLineParser::Output);
 
-  MITK_INFO << "Size of common indieces " << binPeaks.size() << "\n";
+  // Miniapp Infos
+  parser.setCategory("M2aia Tools");
+  parser.setTitle("ImzMLConverter");
+  parser.setDescription("Read a valid imzML file and write a new image.");
+  parser.setContributor("Jonas Cordes");
+  auto parsedArgs = parser.parseArguments(argc, argv);
 
-  for (auto &I : {imagePNG1, imagePNG2, imageControl})
+  if (parsedArgs.size() == 0)
   {
-    const auto &source = I->GetSpectraSource();
-    auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source._BinaryDataPath);
-    for (const auto &p : binPeaks)
-      I->GetPeaks().push_back(p);
-    I->SetExportMode(m2::ImzMLFormatType::ContinuousCentroid);
-    //mitk::IOUtil::Save(I, "D:\\" + filename + "_testresult.imzML");
+    exit(EXIT_FAILURE);
   }
-
-  try
+  if (parsedArgs.count("help") || parsedArgs.count("h"))
   {
-    auto pngAll = m2::ImzMLMassSpecImage::Combine(imagePNG1, imagePNG2, 'x');
-	pngAll  = m2::ImzMLMassSpecImage::Combine(pngAll , imageControl, 'x');
-
-    pngAll->SetNormalizationStrategy(m2::NormalizationStrategyType::TIC);
-    pngAll->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::TopHat);
-    pngAll->SetSmoothingStrategy(m2::SmoothingType::SavitzkyGolay);
-    pngAll->SetSmoothingHalfWindowSize(4);
-    pngAll->SetBaseLinecorrectionHalfWindowSize(50);
-    pngAll->InitializeImageAccess();
-    pngAll->SetMassPickingTolerance(25);
-
-	//mitk::IOUtil::Save(pngAll->GetNormalizationImage(), "D:/CombiResult_normalization.nrrd");    
-    pngAll->SetExportMode(m2::ImzMLFormatType::ContinuousCentroid);
-	mitk::IOUtil::Save(pngAll, "D:\\Combi_testresult.imzML");
-  }
-  catch (std::exception &e)
-  {
-    MITK_WARN << e.what();
+    exit(EXIT_SUCCESS);
   }
 
-  MITK_INFO << imagePNG1->MassAxis().front() << " " << imagePNG1->MassAxis().back();
-  MITK_INFO << imagePNG2->MassAxis().front() << " " << imagePNG2->MassAxis().back();
-  MITK_INFO << imageControl->MassAxis().front() << " " << imageControl->MassAxis().back();
+  return parsedArgs;
 }
