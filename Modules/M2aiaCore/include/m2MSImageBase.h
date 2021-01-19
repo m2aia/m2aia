@@ -89,7 +89,7 @@ namespace m2
     Gaussian
   };
 
-  enum class OutputDataType
+  enum class NumericType
   {
     Float,
     Double

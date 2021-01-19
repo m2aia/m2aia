@@ -77,7 +77,7 @@
                <string>Only visible </string>
               </property>
               <property name="checked">
-               <bool>true</bool>
+               <bool>false</bool>
               </property>
              </widget>
             </item>
@@ -462,7 +462,7 @@
        <item>
         <widget class="QGroupBox" name="GrabIonImageStrategy">
          <property name="title">
-          <string>Ion image grab strategy</string>
+          <string>Ion imaging strategy</string>
          </property>
          <property name="checkable">
           <bool>false</bool>
@@ -578,7 +578,7 @@
           <string/>
          </property>
          <property name="title">
-          <string>Create ion image</string>
+          <string>Ion imaging</string>
          </property>
          <property name="flat">
           <bool>false</bool>
@@ -745,7 +745,7 @@
                <string/>
               </property>
               <property name="text">
-               <string>Initialize new image on grab </string>
+               <string>Initialize new data node</string>
               </property>
              </widget>
             </item>

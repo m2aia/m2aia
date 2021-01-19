@@ -13,6 +13,7 @@ if(BUILD_M2aiaCLI_Export OR MITK_BUILD_ALL_APPS)
     # they are added after a ^^ and separated by _
     set( m2cli_export_apps
     NLinkedGlycan^^
+    ImzMLConverter^^
     )
 
     foreach(m2cli_export_app ${m2cli_export_apps})

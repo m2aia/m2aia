@@ -6,3 +6,4 @@ mitk_create_plugin(
   MODULE_DEPENDS MitkQtWidgetsExt MitkM2aiaCore
   PACKAGE_DEPENDS 
 )
+

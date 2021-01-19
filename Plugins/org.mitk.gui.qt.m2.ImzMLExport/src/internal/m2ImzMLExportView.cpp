@@ -46,9 +46,9 @@ void m2ImzMLExportView::UpdateExportSettings(const mitk::DataNode *node)
     auto exportMode = static_cast<m2::ImzMLFormatType>(m_Controls.cmbBxOutputMode->currentData(Qt::UserRole).toUInt());
     image->SetExportMode(exportMode);
     image->SetIntsOutputType(
-      static_cast<m2::OutputDataType>(m_Controls.cmbBxOutputDatatypeInt->currentData(Qt::UserRole).toUInt()));
+      static_cast<m2::NumericType>(m_Controls.cmbBxOutputDatatypeInt->currentData(Qt::UserRole).toUInt()));
     image->SetMzsOutputType(
-      static_cast<m2::OutputDataType>(m_Controls.cmbBxOutputDatatypeMz->currentData(Qt::UserRole).toUInt()));
+      static_cast<m2::NumericType>(m_Controls.cmbBxOutputDatatypeMz->currentData(Qt::UserRole).toUInt()));
 
     switch (exportMode)
     {
@@ -104,11 +104,11 @@ void m2ImzMLExportView::CreateQtPartControl(QWidget *parent)
   // m_Controls.cmbBxOutputMode->addItem("Processed Profile",
   //                                    static_cast<unsigned>(m2::ImzMLFormatType::ProcessedProfile));
 
-  m_Controls.cmbBxOutputDatatypeInt->addItem("Float", static_cast<unsigned>(m2::OutputDataType::Float));
-  m_Controls.cmbBxOutputDatatypeInt->addItem("Double", static_cast<unsigned>(m2::OutputDataType::Double));
+  m_Controls.cmbBxOutputDatatypeInt->addItem("Float", static_cast<unsigned>(m2::NumericType::Float));
+  m_Controls.cmbBxOutputDatatypeInt->addItem("Double", static_cast<unsigned>(m2::NumericType::Double));
 
-  m_Controls.cmbBxOutputDatatypeMz->addItem("Float", static_cast<unsigned>(m2::OutputDataType::Float));
-  m_Controls.cmbBxOutputDatatypeMz->addItem("Double", static_cast<unsigned>(m2::OutputDataType::Double));
+  m_Controls.cmbBxOutputDatatypeMz->addItem("Float", static_cast<unsigned>(m2::NumericType::Float));
+  m_Controls.cmbBxOutputDatatypeMz->addItem("Double", static_cast<unsigned>(m2::NumericType::Double));
 
   connect(m_Controls.cmbBxOutputDatatypeInt,
           qOverload<int>(&QComboBox::currentIndexChanged),

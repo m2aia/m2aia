@@ -40,11 +40,17 @@ namespace m2
     itkSetEnumMacro(ExportMode, ImzMLFormatType);
     itkGetEnumMacro(ExportMode, ImzMLFormatType);
 
-    itkSetEnumMacro(MzsOutputType, OutputDataType);
-    itkGetEnumMacro(MzsOutputType, OutputDataType);
+    itkSetEnumMacro(MzsOutputType, NumericType);
+    itkGetEnumMacro(MzsOutputType, NumericType);
 
-    itkSetEnumMacro(IntsOutputType, OutputDataType);
-    itkGetEnumMacro(IntsOutputType, OutputDataType);
+    itkSetEnumMacro(IntsOutputType, NumericType);
+    itkGetEnumMacro(IntsOutputType, NumericType);
+
+	itkSetEnumMacro(MzsInputType, NumericType);
+    itkGetEnumMacro(MzsInputType, NumericType);
+
+    itkSetEnumMacro(IntsInputType, NumericType);
+    itkGetEnumMacro(IntsInputType, NumericType);
 
 	itkSetEnumMacro(PreventMaskImageInitialization, bool);
 	itkGetEnumMacro(PreventMaskImageInitialization, bool);
@@ -168,8 +174,10 @@ namespace m2
                                                    const char stackAxis = 'x');
 
   private:
-    m2::OutputDataType m_IntsOutputType = m2::OutputDataType::Float;
-    m2::OutputDataType m_MzsOutputType = m2::OutputDataType::Float;
+    m2::NumericType m_IntsOutputType = m2::NumericType::Float;
+    m2::NumericType m_MzsOutputType = m2::NumericType::Float;
+    m2::NumericType m_IntsInputType;
+    m2::NumericType m_MzsInputType;
     m2::ImzMLFormatType m_ExportMode = m2::ImzMLFormatType::ContinuousProfile;
 
     using m2::MSImageBase::InternalClone;

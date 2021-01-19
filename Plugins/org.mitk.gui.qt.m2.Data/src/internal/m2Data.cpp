@@ -205,8 +205,8 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   connect(shortcutRight, SIGNAL(activated()), this, SLOT(OnNextIonImage()));
 
   // add ion image
-  QShortcut *shortcutEnter = new QShortcut(QKeySequence(Qt::Key_Return), parent);
-  connect(shortcutEnter, SIGNAL(activated()), this, SLOT(EmitIonImageReference()));
+  QShortcut *shortcutCtrlI = new QShortcut(QKeySequence(tr("Ctrl+I")), parent);
+  connect(shortcutCtrlI, SIGNAL(activated()), this, SLOT(EmitIonImageReference()));
 
   // connect(m_Controls.btnPrev, &QPushButton::clicked, this, &m2Data::OnPrevIonImage);
   // connect(m_Controls.btnNext, &QPushButton::clicked, this, &m2Data::OnNextIonImage);
@@ -484,6 +484,8 @@ void m2Data::ApplySettingsToImage(m2::ImzMLMassSpecImage *data)
     data->SetBaseLinecorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
 
     data->SetPeakPickingBinningTolerance(m_Controls.spnBxPeakBinning->value());
+    data->SetMassPickingTolerance(m_Controls.spnBxPeakBinning->value());
+
   }
 }
 
