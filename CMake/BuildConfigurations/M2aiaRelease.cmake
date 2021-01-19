@@ -28,8 +28,8 @@ set(MITK_CONFIG_PLUGINS
   org.mitk.gui.qt.m2.ImzMLExport
   org.mitk.gui.qt.m2.Reconstruction3D
   org.mitk.gui.qt.m2.Position
-  org.mitk.gui.qt.m2.Manipulator
-  org.mitk.gui.qt.m2.OpticalImageRegistration
+#  org.mitk.gui.qt.m2.Manipulator
+#  org.mitk.gui.qt.m2.OpticalImageRegistration
   org.mitk.m2.core.helper
 )
 
