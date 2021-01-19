@@ -268,40 +268,50 @@ void m2::ImzMLMassSpecImage::InitializeProcessor()
   auto mzValueTypeString = GetPropertyValue<std::string>("m/z array value type");
   if (mzValueTypeString.compare("32-bit float") == 0)
   {
+    SetMzsInputType(m2::NumericType::Float);
     if (intensitiesDataTypeString.compare("32-bit float") == 0)
     {
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, float>(this));
+      SetIntsInputType(m2::NumericType::Float);
     }
     else if (intensitiesDataTypeString.compare("64-bit float") == 0)
     {
+      SetIntsInputType(m2::NumericType::Double);
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, double>(this));
     }
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, long int>(this));
+      //SetIntsInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, long long int>(this));
+      // SetIntsInputType(m2::NumericType::Double);
     }
   }
   else if (mzValueTypeString.compare("64-bit float") == 0)
   {
+    SetMzsInputType(m2::NumericType::Double);
     if (intensitiesDataTypeString.compare("32-bit float") == 0)
     {
+      SetIntsInputType(m2::NumericType::Float);
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<double, float>(this));
     }
     else if (intensitiesDataTypeString.compare("64-bit float") == 0)
     {
+      SetIntsInputType(m2::NumericType::Double);
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<double, double>(this));
     }
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<double, long int>(this));
+      // SetIntsInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<double, long long int>(this));
+      // SetIntsInputType(m2::NumericType::Double);
     }
   }
 }

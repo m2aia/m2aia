@@ -162,11 +162,11 @@ namespace m2
 
       switch (input->GetMzsOutputType())
       {
-        case m2::OutputDataType::Float:
+        case m2::NumericType::Float:
           writeData<float>(std::begin(mzs), std::end(mzs), b);
           offsetDelta = source._Spectra[0].mzLength * sizeof(float);
           break;
-        case m2::OutputDataType::Double:
+        case m2::NumericType::Double:
           writeData<double>(std::begin(mzs), std::end(mzs), b);
           offsetDelta = source._Spectra[0].mzLength * sizeof(double);
           break;
@@ -191,11 +191,11 @@ namespace m2
 
           switch (input->GetIntsOutputType())
           {
-            case m2::OutputDataType::Float:
+            case m2::NumericType::Float:
               writeData<float>(std::begin(ints), std::end(ints), b);
               offsetDelta = s.intLength * sizeof(float);
               break;
-            case m2::OutputDataType::Double:
+            case m2::NumericType::Double:
               writeData<double>(std::begin(ints), std::end(ints), b);
               offsetDelta = s.intLength * sizeof(double);
               break;
@@ -242,11 +242,11 @@ namespace m2
 
       switch (input->GetMzsOutputType())
       {
-        case m2::OutputDataType::Float:
+        case m2::NumericType::Float:
           writeData<float>(std::begin(mzs), std::end(mzs), b);
           offsetDelta = source._Spectra[0].mzLength * sizeof(float);
           break;
-        case m2::OutputDataType::Double:
+        case m2::NumericType::Double:
           writeData<double>(std::begin(mzs), std::end(mzs), b);
           offsetDelta = source._Spectra[0].mzLength * sizeof(double);
           break;
@@ -324,11 +324,11 @@ namespace m2
 
           switch (input->GetIntsOutputType())
           {
-            case m2::OutputDataType::Float:
+            case m2::NumericType::Float:
               writeData<float>(std::begin(ints), std::end(ints), b);
               offsetDelta = s.intLength * sizeof(float);
               break;
-            case m2::OutputDataType::Double:
+            case m2::NumericType::Double:
               writeData<double>(std::begin(ints), std::end(ints), b);
               offsetDelta = s.intLength * sizeof(double);
               break;
@@ -457,11 +457,11 @@ namespace m2
       unsigned intBytes = 0;
       switch (input->GetMzsOutputType())
       {
-        case m2::OutputDataType::Double:
+        case m2::NumericType::Double:
           context["mz_data_type"] = "64-bit float";
           mzBytes = 8;
           break;
-        case m2::OutputDataType::Float:
+        case m2::NumericType::Float:
           context["mz_data_type"] = "32-bit float";
           mzBytes = 4;
           break;
@@ -469,11 +469,11 @@ namespace m2
 
       switch (input->GetIntsOutputType())
       {
-        case m2::OutputDataType::Double:
+        case m2::NumericType::Double:
           context["int_data_type"] = "64-bit float";
           intBytes = 8;
           break;
-        case m2::OutputDataType::Float:
+        case m2::NumericType::Float:
           context["int_data_type"] = "32-bit float";
           intBytes = 4;
           break;
@@ -542,12 +542,12 @@ namespace m2
                      {"int_enc_len", std::to_string(s.intLength * intBytes)},
                      {"int_offset", std::to_string(s.intOffset)}};
 
-          auto nonConst_input = const_cast<m2::ImzMLMassSpecImage *>(input);
+          /*auto nonConst_input = const_cast<m2::ImzMLMassSpecImage *>(input);
           mitk::ImagePixelReadAccessor<m2::NormImagePixelType> nacc(nonConst_input->GetNormalizationImage());
           if (nacc.GetPixelByIndex(s.index + source._offset) != 1)
           {
             context["tic"] = std::to_string(nacc.GetPixelByIndex(s.index+ source._offset));
-          }
+          }*/
           f << m2::TemplateEngine::render(view, context);
           f.flush();
           //++show_progress;
