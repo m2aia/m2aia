@@ -1,7 +1,6 @@
 MITK_CREATE_MODULE(
   DEPENDS MitkCore
-  PACKAGE_DEPENDS
-    PRIVATE Boost Eigen
+  PACKAGE_DEPENDS PUBLIC Eigen
 )
 
 add_subdirectory(autoload/IO)
