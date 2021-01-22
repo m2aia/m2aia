@@ -3,5 +3,5 @@ project(org_mitk_gui_qt_m2_Manipulator)
 mitk_create_plugin(
   EXPORT_DIRECTIVE MITK_GUI_QT_MATCHPOINT_MANIPULATOR_EXPORT
   EXPORTED_INCLUDE_SUFFIXES src
-  MODULE_DEPENDS MitkQtWidgetsExt MitkMatchPointRegistration MitkMatchPointRegistrationUI MitkM2aiaCore
+  MODULE_DEPENDS MitkQtWidgetsExt MitkMatchPointRegistration MitkMatchPointRegistrationUI M2aiaCore
 )

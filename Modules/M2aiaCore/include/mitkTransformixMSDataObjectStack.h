@@ -14,7 +14,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <functional>
 #include <itkCastImageFilter.h>
 #include <itkMetaDataObject.h>
@@ -34,7 +34,7 @@ namespace m2
    * MS3DComposeDataObject represents a Composition of multiple mitk::MSDataObjects
    *
    **/
-  class MITKM2AIACORE_EXPORT TransformixMSDataObjectStack : public MSImageBase
+  class M2AIACORE_EXPORT TransformixMSDataObjectStack : public MSImageBase
   {
   public:
     mitkClassMacro(TransformixMSDataObjectStack, MSImageBase);

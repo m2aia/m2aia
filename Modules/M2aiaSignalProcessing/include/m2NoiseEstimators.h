@@ -15,13 +15,14 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
+#include <M2aiaSignalProcessingExports.h>
 #include <algorithm>
 #include <numeric>
 #include <vector>
 
 namespace m2
 {
-  namespace Noise
+  struct M2AIASIGNALPROCESSING_EXPORT Noise
   {
     /*!
      * Median absolute deviation (mad)
@@ -32,7 +33,7 @@ namespace m2
      */
 
     template <class InContainerType>
-    double mad(InContainerType intsCpy, const double consant = 1.4826)
+    static double mad(InContainerType intsCpy, const double consant = 1.4826)
     {
       std::nth_element(std::begin(intsCpy), std::next(std::begin(intsCpy), intsCpy.size() / 2), std::end(intsCpy));
       auto median = intsCpy[intsCpy.size() / 2];
@@ -46,5 +47,5 @@ namespace m2
       return consant * absDiffOfMedian[absDiffOfMedian.size() / 2];
     };
 
-  } // namespace Noise
+  }; //  Noise
 } // namespace m2

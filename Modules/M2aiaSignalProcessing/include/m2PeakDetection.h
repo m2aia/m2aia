@@ -16,20 +16,21 @@ See LICENSE.txt for details.
 #ifndef M2_PEAKDETECTION
 #define M2_PEAKDETECTION
 
+#include <M2aiaSignalProcessingExports.h>
 #include <algorithm>
 #include <functional>
 #include <iomanip>
 #include <iostream>
 #include <limits>
 #include <m2MassValue.h>
-#include <m2NoiseEstimators.hpp>
+#include <m2NoiseEstimators.h>
 #include <numeric>
 #include <tuple>
 #include <vector>
 
 namespace m2
 {
-  class Peaks
+  class M2AIASIGNALPROCESSING_EXPORT Peaks
   {
   public:
     template <class FirstIt, class LastIt, class RefFirstIt, class RefLastIt, class OutFirstIt>
@@ -466,7 +467,7 @@ namespace m2
       return {offset, length};
     }
 
-  }; // namespace Peaks
+  }; // Peaks
 } // namespace m2
 
 #endif // !M2_PEAKDETECTION

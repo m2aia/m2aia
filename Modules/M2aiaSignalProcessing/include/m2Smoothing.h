@@ -14,6 +14,7 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 #pragma once
+#include <M2aiaSignalProcessingExports.h>
 #include <deque>
 #include <vector>
 //#include <algorithm>
@@ -23,9 +24,9 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  namespace Smoothing
+  struct M2AIASIGNALPROCESSING_EXPORT Smoothing
   {
-    vnl_matrix<double> savitzkyGolayCoefficients(int hws, int order)
+    static vnl_matrix<double> savitzkyGolayCoefficients(int hws, int order)
     {
       std::vector<double> kk;
       for (int i = 0; i < order; i++)
@@ -78,7 +79,7 @@ namespace m2
       return F;
     }
 
-    std::vector<double> savitzkyGolayKernel(int hws, int order)
+    static std::vector<double> savitzkyGolayKernel(int hws, int order)
     {
       auto sg_coef = m2::Smoothing::savitzkyGolayCoefficients(hws, order);
       auto row = sg_coef.get_row(hws);
@@ -88,7 +89,7 @@ namespace m2
     }
 
     template <class T>
-    constexpr void filter(std::vector<T> &y, std::vector<double> const &kernel, bool extend = true)
+    static void filter(std::vector<T> &y, std::vector<double> const &kernel, bool extend = true)
     {
       assert((kernel.size() % 2) == 1);
       const int hws = kernel.size() / 2;
@@ -149,5 +150,5 @@ namespace m2
         }
       }
     }
-  } // namespace Smoothing
+  }; // namespace Smoothing
 } // namespace m2

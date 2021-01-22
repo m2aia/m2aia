@@ -15,13 +15,13 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <m2MassSpecVisualizationFilter.h>
 #include <mitkImage.h>
 
 namespace mitk
 {
-  class MITKM2AIACORE_EXPORT m2KmeanFilter : public m2::MassSpecVisualizationFilter
+  class M2AIACORE_EXPORT m2KmeanFilter : public m2::MassSpecVisualizationFilter
   {
   public:
     mitkClassMacro(m2KmeanFilter, m2::MassSpecVisualizationFilter);

@@ -23,6 +23,7 @@ SOFTWARE.
 ===================================================================*/
 #pragma once
 
+#include <M2aiaSignalProcessingExports.h>
 #include <algorithm>
 #include <cstring>
 #include <stdlib.h>
@@ -30,38 +31,16 @@ SOFTWARE.
 
 namespace m2
 {
-  class RunMedian
+  class M2AIASIGNALPROCESSING_EXPORT RunMedian
   {
   public:
     template <class T>
-    static void apply(const std::vector<T> &y, unsigned int s, std::vector<T> &output)
-    {
-      MedfiltData data;
-      s = s * 2 + 1;
-      MedfiltNode *nodes = new MedfiltNode[s];
-
-      medfilt_init(&data, nodes, s, y.front());
-      
-
-      auto oit = std::begin(output);
-      for (const auto &v : y)
-      {
-        double min, mid, max;
-        medfilt(&data, v, &mid, &min, &max);
-        if (mid < 0)
-          *oit = max;
-        else
-          *oit = mid;
-        ++oit;
-      }
-
-      delete nodes;
-    }
+    static void apply(const std::vector<T> &y, unsigned int s, std::vector<T> &output) noexcept;
 
   protected:
     typedef struct MedfiltNode
     {
-      float value;
+      double value;
       size_t index; // Node index in the sorted table
       struct MedfiltNode *parent;
       struct MedfiltNode *sorted;
@@ -75,7 +54,7 @@ namespace m2
     } MedfiltData;
 
 
-    static void swap(MedfiltNode **a, MedfiltNode **b)
+    static void swap(MedfiltNode **a, MedfiltNode **b) noexcept
     {
       // Swap two node references in the sorted table.
       MedfiltNode *temp = *a;
@@ -88,7 +67,7 @@ namespace m2
       (*b)->index = index;
     }
 
-    static void medfilt(MedfiltData *data, double input, double *median, double *min, double *max)
+    static void medfilt(MedfiltData *data, double input, double *median, double *min, double *max) noexcept
     {
       // New value replaces the oldest
       MedfiltNode *n = data->kernel;
@@ -120,7 +99,7 @@ namespace m2
 #undef VAL
     }
 
-    static void medfilt_init(MedfiltData *data, MedfiltNode *nodes, size_t length, double init)
+    static void medfilt_init(MedfiltData *data, MedfiltNode *nodes, size_t length, double init) noexcept
     {
       data->kernel = nodes;
       data->length = length;

@@ -27,7 +27,7 @@ if(BUILD_M2aiaCLI_Export OR MITK_BUILD_ALL_APPS)
 
       mitkFunctionCreateCommandLineApp(
         NAME ${appname}
-        DEPENDS MitkM2aiaCore ${dependencies_list}
+        DEPENDS M2aiaCore ${dependencies_list}
         PACKAGE_DEPENDS ITK VTK Eigen
 	CPP_FILES ${appname}.cpp
       )

@@ -16,14 +16,14 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #pragma once
 
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <map>
 #include <string>
 
 
 namespace m2
 {
-  class MITKM2AIACORE_EXPORT TemplateEngine
+  class TemplateEngine
   {
     enum RenderIf
     {

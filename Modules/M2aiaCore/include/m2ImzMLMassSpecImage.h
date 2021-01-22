@@ -15,7 +15,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <algorithm>
 #include <array>
 #include <m2MSImageBase.h>
@@ -31,7 +31,7 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  class MITKM2AIACORE_EXPORT ImzMLMassSpecImage final : public MSImageBase
+  class M2AIACORE_EXPORT ImzMLMassSpecImage final : public MSImageBase
   {
   public:
     mitkClassMacro(ImzMLMassSpecImage, MSImageBase);

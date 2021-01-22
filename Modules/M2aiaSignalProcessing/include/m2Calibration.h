@@ -15,14 +15,11 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <algorithm>
-#include <cstring>
-#include <vector>
-
+#include <M2aiaSignalProcessingExports.h>
 
 namespace m2
 {
-  struct Calibration
+  namespace Calibration
   {
     /*!
      * TotalIonCurrent: This function approximates the area under the curve of an given spectrum.
@@ -33,17 +30,7 @@ namespace m2
      * \return tic Value of the TotalIonCount
      */
     template <class MzItFirst, class MzItLast, class IntItFirst>
-    static inline double TotalIonCurrent(MzItFirst mIt0, MzItLast mItEnd, IntItFirst iIt0) noexcept
-    {
-      double TIC = 0;
-      auto mIt1 = std::next(mIt0);
-      auto iIt1 = std::next(iIt0);
-      for (; mIt1 != mItEnd; ++mIt0, ++mIt1, ++iIt0, ++iIt1)
-      {
-        TIC += ((*iIt0) + (*iIt1)) * 0.5 * ((*mIt1) - (*mIt0));
-      }
-      return TIC;
-    }
+    double TotalIonCurrent(MzItFirst mIt0, MzItLast mItEnd, IntItFirst iIt0) noexcept;
 
   }; // namespace Calibration
 } // namespace m2

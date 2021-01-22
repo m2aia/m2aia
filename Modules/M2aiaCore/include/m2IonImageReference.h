@@ -16,13 +16,13 @@ See LICENSE.txt for details.
 
 #include "itkObjectFactory.h"
 #include "mitkCommon.h"
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <array>
 #include <string>
 
 namespace m2
 {
-  class MITKM2AIACORE_EXPORT IonImageReference : public itk::LightObject
+  class M2AIACORE_EXPORT IonImageReference : public itk::LightObject
   {
   private:
     IonImageReference() = default;

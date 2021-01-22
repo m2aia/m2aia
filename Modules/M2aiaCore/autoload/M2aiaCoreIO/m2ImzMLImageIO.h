@@ -16,7 +16,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #pragma once
 
-#include <MitkM2aiaCoreIOExports.h>
+#include <M2aiaCoreIOExports.h>
 #include <m2ImzMLMassSpecImage.h>
 #include <mitkAbstractFileIO.h>
 #include <mitkIOMimeTypes.h>
@@ -32,7 +32,7 @@ namespace m2
   // The export macro should be removed. Currently, the unit
   // tests directly instantiate this class.
 
-  class MITKM2AIACOREIO_EXPORT ImzMLImageIO : public mitk::AbstractFileIO
+  class M2AIACOREIO_EXPORT ImzMLImageIO : public mitk::AbstractFileIO
   {
   public:
     // typedef mitk::MassSpectrometryImage InputType;

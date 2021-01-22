@@ -15,7 +15,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <array>
 #include <itkRGBPixel.h>
 #include <vector>
@@ -24,7 +24,7 @@ namespace m2
   namespace ColorMixer
   {
     template <class T>
-    class MITKM2AIACORE_EXPORT m2RGBColorMixer
+    class M2AIACORE_EXPORT m2RGBColorMixer
     {
     public:
       using RGBPixel = T;

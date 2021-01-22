@@ -33,9 +33,10 @@
 #ifndef TSNE_H
 #define TSNE_H
 
-#include <MitkM2aiaCoreExports.h>
+
+#include <M2aiaDimensionReductionExports.h>
 namespace TSNE {
-	class MITKM2AIACORE_EXPORT  TSNE {
+	class M2AIADIMENSIONREDUCTION_EXPORT  TSNE {
 	public:
 		void run(double* X, int N, int D, double* Y, int no_dims, double perplexity, double theta, int rand_seed,
 			bool skip_random_init, int max_iter, int stop_lying_iter, int mom_switch_iter);
