@@ -176,7 +176,7 @@ void m2Reconstruction3D::WarpPoints(mitk::Image *ionImage,
           int v = std::stoi(word);
           p[i++] = v;
         }
-        catch (std::exception e)
+        catch (std::exception & e)
         {
           break;
         }

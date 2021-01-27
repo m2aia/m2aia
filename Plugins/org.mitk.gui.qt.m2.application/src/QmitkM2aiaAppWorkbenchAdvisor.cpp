@@ -54,10 +54,12 @@ public:
                                       berry::IWorkbenchWindowConfigurer::Pointer configurer)
     : QmitkExtWorkbenchWindowAdvisor(wbAdvisor, configurer)
   {
+
   }
 
   void PostWindowOpen() override
   {
+
     QmitkExtWorkbenchWindowAdvisor::PostWindowOpen();
     berry::IWorkbenchWindowConfigurer::Pointer configurer = GetWindowConfigurer();
     configurer->GetWindow()->GetWorkbench()->GetIntroManager()->ShowIntro(configurer->GetWindow(), false);
@@ -271,7 +273,8 @@ berry::WorkbenchWindowAdvisor *QmitkM2aiaAppWorkbenchAdvisor::CreateWorkbenchWin
   advisor->ShowMitkVersionInfo(false);
   advisor->ShowMemoryIndicator(true);
   advisor->SetProductName("M2aia");
-  advisor->SetWindowIcon(":/org.mitk.gui.qt.m2.application/MitkM2aia.ico");
+  advisor->SetWindowIcon(":/org.mitk.gui.qt.m2.application/icon.ico");
+
 
   std::cout << "M2aia git commit hash: " << MITKM2AIA_REVISION << std::endl;
   std::cout << "M2aia branch name: " << MITKM2AIA_REVISION_NAME << std::endl;
