@@ -389,7 +389,7 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
   CalculateVisualization(nodes);
 }
 
-void m2Ions::PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs,
+void m2Ions::PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> /*tableRefs*/,
                          itk::VectorContainer<unsigned int, mitk::DataNode::Pointer>::Pointer nodes)
 {
   auto res =
@@ -422,7 +422,6 @@ void m2Ions::PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference
         watcher->setFuture(QtConcurrent::run([filter] { filter->Update(); }));
 
         connect(watcher.get(), &QFutureWatcher<void>::finished, [watcher, filter, n, this] {
-          auto outputImage = filter->GetOutput();
           auto outputNode = mitk::DataNode::New();
           if (m_DR_AsRGBImage && m_NumberOfComponents == 3)
           {
@@ -443,7 +442,7 @@ void m2Ions::PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference
   }
 }
 
-void m2Ions::PerformPCA(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs,
+void m2Ions::PerformPCA(std::set<m2::IonImageReference *, m2::IonImageReference::Comp> /*tableRefs*/,
                         itk::VectorContainer<unsigned int, mitk::DataNode::Pointer>::Pointer nodes)
 
 {

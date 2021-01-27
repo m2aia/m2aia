@@ -27,11 +27,12 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 /*!
 \brief Perform N-linked glycane analysis
 */
-int main(int /*argc*/, char * /*argv*/[])
+int main(int argc, char *argv[])
 {
-  std::string png1 = "D:\\HSMannheim\\Data\\MFoell\\png1-no_normalization.imzML";
-  std::string png2 = "D:\\HSMannheim\\Data\\MFoell\\png2-no_normalization.imzML";
-  std::string control = "D:\\HSMannheim\\Data\\MFoell\\control-no_normalization.imzML";
+  std::string png1 = argv[1];
+  std::string png2 = argv[2];
+  std::string control = argv[3];
+  std::string out_path = argv[4];
  
 
   auto dataVec = mitk::IOUtil::Load({png1, png2, control});
@@ -116,7 +117,7 @@ int main(int /*argc*/, char * /*argv*/[])
 
 	//mitk::IOUtil::Save(pngAll->GetNormalizationImage(), "D:/CombiResult_normalization.nrrd");    
     pngAll->SetExportMode(m2::ImzMLFormatType::ContinuousCentroid);
-	mitk::IOUtil::Save(pngAll, "D:\\Combi_testresult.imzML");
+	mitk::IOUtil::Save(pngAll, out_path);
   }
   catch (std::exception &e)
   {

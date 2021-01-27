@@ -16,7 +16,7 @@ See LICENSE.txt for details.
 #pragma once
 
 #include <MitkM2aiaCoreExports.h>
-#include <eigen3/Eigen/Dense>
+#include <Eigen/Dense>
 #include <itkBarrier.h>
 #include <m2ImzMLMassSpecImage.h>
 #include <m2MassSpecVisualizationFilter.h>

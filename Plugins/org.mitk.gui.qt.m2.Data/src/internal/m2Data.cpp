@@ -97,7 +97,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
             {
               page->ShowView("org.mitk.views.pointsetinteraction", "", 1);
             }
-            catch (berry::PartInitException e)
+            catch (berry::PartInitException & e)
             {
               BERRY_ERROR << "Error: " << e.what() << std::endl;
             }
