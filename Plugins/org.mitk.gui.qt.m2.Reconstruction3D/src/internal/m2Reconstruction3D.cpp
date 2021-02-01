@@ -178,6 +178,7 @@ void m2Reconstruction3D::WarpPoints(mitk::Image *ionImage,
         }
         catch (std::exception & e)
         {
+          MITK_INFO << e.what();
           break;
         }
       }
