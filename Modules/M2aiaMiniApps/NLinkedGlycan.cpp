@@ -27,7 +27,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 /*!
 \brief Perform N-linked glycane analysis
 */
-int main(int argc, char *argv[])
+int main(int /*argc*/, char *argv[])
 {
   std::string png1 = argv[1];
   std::string png2 = argv[2];
