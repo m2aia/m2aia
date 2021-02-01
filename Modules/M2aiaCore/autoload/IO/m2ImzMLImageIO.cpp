@@ -542,12 +542,12 @@ namespace m2
                      {"int_enc_len", std::to_string(s.intLength * intBytes)},
                      {"int_offset", std::to_string(s.intOffset)}};
 
-          /*auto nonConst_input = const_cast<m2::ImzMLMassSpecImage *>(input);
+          auto nonConst_input = const_cast<m2::ImzMLMassSpecImage *>(input);
           mitk::ImagePixelReadAccessor<m2::NormImagePixelType> nacc(nonConst_input->GetNormalizationImage());
           if (nacc.GetPixelByIndex(s.index + source._offset) != 1)
           {
             context["tic"] = std::to_string(nacc.GetPixelByIndex(s.index+ source._offset));
-          }*/
+          }
           f << m2::TemplateEngine::render(view, context);
           f.flush();
           //++show_progress;
