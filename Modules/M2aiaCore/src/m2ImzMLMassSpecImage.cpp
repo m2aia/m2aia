@@ -282,7 +282,7 @@ void m2::ImzMLMassSpecImage::InitializeProcessor()
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, long int>(this));
-      //SetIntsInputType(m2::NumericType::Double);
+      // SetIntsInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
@@ -935,12 +935,14 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
           binaryDataToVector(f, iO, iL, ints);
 
           double val = 1;
-          if (spectra[i].normalize != 0)
+          if (_NormalizationStrategy == m2::NormalizationStrategyType::InFile)
           {
-            val = spectra[i].normalize;
-            std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&val](auto &v) { return v / val; });
+            if (spectra[i].normalize != 0)
+            {
+              val = spectra[i].normalize;
+              std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&val](auto &v) { return v / val; });
+            }
           }
-
           accNorm->SetPixelByIndex(spectra[i].index + source._offset, val); // Set normalization image pixel value
 
           auto intsIt = std::cbegin(ints);
