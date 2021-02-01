@@ -29,7 +29,7 @@ int main(int argc, char *argv[])
   const auto setDefaultValue = [&argsMap](const auto &s, const auto defaultValue, auto *v) {
     if (argsMap.count(s))
     {
-      *v = us::any_cast<std::remove_pointer<decltype(v)>::type>(argsMap[s]);
+      *v = us::any_cast<typename std::remove_pointer<decltype(v)>::type>(argsMap[s]);
     }
     else
     {

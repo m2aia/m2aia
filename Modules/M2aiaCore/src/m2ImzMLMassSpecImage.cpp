@@ -158,7 +158,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
       const unsigned long n = source._Spectra.size();
       const unsigned t = p->GetNumberOfThreads();
 
-      m2::Process::Map(n, t, [&, this](auto /*id*/, auto a, auto b) {
+      m2::Process::Map(n, t, [&](auto /*id*/, auto a, auto b) {
         std::ifstream f(source._BinaryDataPath, std::iostream::binary);
         std::vector<IntensityType> ints(length);
         std::vector<IntensityType> baseline(length);
@@ -226,7 +226,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
       // map all spectra to several threads for processing
       const unsigned long n = source._Spectra.size();
       const unsigned t = p->GetNumberOfThreads();
-      m2::Process::Map(n, t, [&, this](auto /*id*/, auto a, auto b) {
+      m2::Process::Map(n, t, [&](auto /*id*/, auto a, auto b) {
         std::ifstream f(source._BinaryDataPath, std::iostream::binary);
         std::vector<IntensityType> ints;
         std::vector<MassAxisType> mzs;
@@ -281,7 +281,7 @@ void m2::ImzMLMassSpecImage::InitializeProcessor()
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, long int>(this));
-      //SetIntsInputType(m2::NumericType::Double);
+      // SetIntsInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
@@ -705,7 +705,6 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
           const auto divides = [&val](const auto &a) { return a / val; };
           const auto maximum = [](const auto &a, const auto &b) { return a > b ? a : b; };
           const auto plus = std::plus<>();
-          const auto minus = std::minus<>();
 
           for (unsigned long int i = a; i < b; i++)
           {
@@ -935,12 +934,14 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
           binaryDataToVector(f, iO, iL, ints);
 
           double val = 1;
-          if (spectra[i].normalize != 0)
+          if (_NormalizationStrategy == m2::NormalizationStrategyType::InFile)
           {
-            val = spectra[i].normalize;
-            std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&val](auto &v) { return v / val; });
+            if (spectra[i].normalize != 0)
+            {
+              val = spectra[i].normalize;
+              std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&val](auto &v) { return v / val; });
+            }
           }
-
           accNorm->SetPixelByIndex(spectra[i].index + source._offset, val); // Set normalization image pixel value
 
           auto intsIt = std::cbegin(ints);
@@ -1045,7 +1046,6 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
   const auto &intso = spectrum.intOffset;
   const auto &intsl = spectrum.intLength;
   const auto kernel = m2::Smoothing::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
-  const unsigned int baselineCorrectionHWS = p->GetBaseLinecorrectionHalfWindowSize();
 
   std::ifstream f;
   f.open(source._BinaryDataPath, std::ios::binary);

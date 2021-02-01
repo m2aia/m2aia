@@ -578,6 +578,15 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
           spectrumIndexReference = std::stod(s);
         else
           spectrumIndexReference = std::stoull(s);
+        if (spectra.size() == spectrumIndexReference)
+        {
+          MITK_WARN << "Index counting starts by 1 -.-";
+          spectrumIndexReference = 0;
+        }
+        else if (spectrumIndexReference > spectra.size())
+        {
+          mitkThrow() << "Index " << spectrumIndexReference << " is not in valid index range.";
+        }
         spectra[spectrumIndexReference].id = spectrumIndexReference;
         spectra[spectrumIndexReference].index.SetElement(2, 0);
       };
