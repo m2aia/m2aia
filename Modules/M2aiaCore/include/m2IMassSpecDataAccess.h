@@ -14,14 +14,14 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <mitkImage.h>
 #include <mitkMessage.h>
 #include <vector>
 
 namespace m2
 {
-  class MITKM2AIACORE_EXPORT IMSImageDataAccess
+  class M2AIACORE_EXPORT IMSImageDataAccess
   {
   public:
     virtual void GrabIntensity(unsigned int index,

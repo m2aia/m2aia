@@ -14,20 +14,19 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 
-#include <boost/range/combine.hpp>
 #include <forward_list>
 #include <future>
 #include <itkImageDuplicator.h>
 #include <itkLog10ImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
-#include <m2Calibration.hpp>
+#include <m2Calibration.h>
 #include <m2ImzMLMassSpecImage.h>
-#include <m2Morphology.hpp>
-#include <m2NoiseEstimators.hpp>
-#include <m2PeakDetection.hpp>
+#include <m2Morphology.h>
+#include <m2NoiseEstimators.h>
+#include <m2PeakDetection.h>
 #include <m2Process.hpp>
-#include <m2RunningMedian.hpp>
-#include <m2Smoothing.hpp>
+#include <m2RunningMedian.h>
+#include <m2Smoothing.h>
 #include <mitkImage2DToImage3DSliceFilter.h>
 #include <mitkImage3DSliceToImage2DFilter.h>
 #include <mitkImageCast.h>
@@ -201,8 +200,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
           switch (_BaseLineCorrectionStrategy)
           {
             case m2::BaselineCorrectionType::TopHat:
-              m2::Morphology::erosion(ints, _BaselineCorrectionHWS, baseline);
-              m2::Morphology::dilation(baseline, _BaselineCorrectionHWS, baseline);
+              m2::Morphology<IntensityType>::erosion(ints, _BaselineCorrectionHWS, baseline);
+              m2::Morphology<IntensityType>::dilation(baseline, _BaselineCorrectionHWS, baseline);
               std::transform(ints.begin(), ints.end(), baseline.begin(), ints.begin(), std::minus<>());
               break;
             case m2::BaselineCorrectionType::Median:
@@ -282,7 +281,7 @@ void m2::ImzMLMassSpecImage::InitializeProcessor()
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
       this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, long int>(this));
-      //SetIntsInputType(m2::NumericType::Double);
+      // SetIntsInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
@@ -788,8 +787,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
               switch (_BaslineCorrectionStrategy)
               {
                 case BaselineCorrectionType::TopHat:
-                  m2::Morphology::erosion(ints, _BaselineCorrectionHalfWindowSize, baseline);
-                  m2::Morphology::dilation(baseline, _BaselineCorrectionHalfWindowSize, baseline);
+                  m2::Morphology<IntensityType>::erosion(ints, _BaselineCorrectionHalfWindowSize, baseline);
+                  m2::Morphology<IntensityType>::dilation(baseline, _BaselineCorrectionHalfWindowSize, baseline);
                   break;
                 case BaselineCorrectionType::Median:
                   m2::RunMedian::apply(ints, _BaselineCorrectionHalfWindowSize, baseline);
@@ -935,12 +934,14 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
           binaryDataToVector(f, iO, iL, ints);
 
           double val = 1;
-          if (spectra[i].normalize != 0)
+          if (_NormalizationStrategy == m2::NormalizationStrategyType::InFile)
           {
-            val = spectra[i].normalize;
-            std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&val](auto &v) { return v / val; });
+            if (spectra[i].normalize != 0)
+            {
+              val = spectra[i].normalize;
+              std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&val](auto &v) { return v / val; });
+            }
           }
-
           accNorm->SetPixelByIndex(spectra[i].index + source._offset, val); // Set normalization image pixel value
 
           auto intsIt = std::cbegin(ints);
@@ -1079,8 +1080,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
       switch (p->GetBaselineCorrectionStrategy())
       {
         case BaselineCorrectionType::TopHat:
-          m2::Morphology::erosion(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
-          m2::Morphology::dilation(baseline, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
+          m2::Morphology<IntensityType>::erosion(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
+          m2::Morphology<IntensityType>::dilation(baseline, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
           break;
         case BaselineCorrectionType::Median:
           m2::RunMedian::apply(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);

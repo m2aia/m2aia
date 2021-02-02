@@ -22,7 +22,7 @@ See LICENSE.txt for details.
 #include <iostream>
 #include <m2CommunicationService.h>
 #include <m2ImzMLMassSpecImage.h>
-#include <m2PeakDetection.hpp>
+#include <m2PeakDetection.h>
 #include <m2SelectionProvider.h>
 #include <mitkLookupTableProperty.h>
 #include <mitkStatusBar.h>

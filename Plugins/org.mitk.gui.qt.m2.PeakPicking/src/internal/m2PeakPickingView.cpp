@@ -28,8 +28,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2CommunicationService.h>
 #include <m2ImzMLMassSpecImage.h>
 #include <m2IonImageReference.h>
-#include <m2NoiseEstimators.hpp>
-#include <m2PeakDetection.hpp>
+#include <m2NoiseEstimators.h>
+#include <m2PeakDetection.h>
 
 // mitk image
 #include <mitkImage.h>

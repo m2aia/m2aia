@@ -15,12 +15,12 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <m2ImzMLMassSpecImage.h>
 
 namespace m2
 {
-  class MITKM2AIACORE_EXPORT ImzMLXMLParser
+  class M2AIACORE_EXPORT ImzMLXMLParser
   {
   public:
     /*!

@@ -15,14 +15,14 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include "MitkM2aiaCoreExports.h"
+#include "M2aiaCoreExports.h"
 #include "mitkCoreObjectFactory.h"
 #include "mitkCoreObjectFactoryBase.h"
 #include <mitkAbstractFileIO.h>
 
 namespace m2
 {
-  class MITKM2AIACORE_EXPORT CoreObjectFactory : public mitk::CoreObjectFactoryBase
+  class M2AIACORE_EXPORT CoreObjectFactory : public mitk::CoreObjectFactoryBase
   {
   public:
     mitkClassMacro(CoreObjectFactory, mitk::CoreObjectFactoryBase);

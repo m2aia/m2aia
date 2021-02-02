@@ -15,7 +15,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <itkImageRegionIterator.h>
 #include <mitkImage.h>
 #include <mitkImageCast.h>
@@ -23,7 +23,7 @@ See LICENSE.txt for details.
 #include <mitkImageToImageFilter.h>
 namespace m2
 {
-  class MITKM2AIACORE_EXPORT MassSpecVisualizationFilter : public mitk::ImageToImageFilter
+  class M2AIACORE_EXPORT MassSpecVisualizationFilter : public mitk::ImageToImageFilter
   {
   public:
     mitkClassMacro(MassSpecVisualizationFilter, ImageToImageFilter);
