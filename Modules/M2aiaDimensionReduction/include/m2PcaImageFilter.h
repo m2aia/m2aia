@@ -15,7 +15,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <M2aiaCoreExports.h>
+#include <M2aiaDimensionReductionExports.h>
 #include <eigen3/Eigen/Dense>
 #include <itkBarrier.h>
 #include <m2ImzMLMassSpecImage.h>
@@ -26,7 +26,7 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  class M2AIACORE_EXPORT PcaImageFilter : public m2::MassSpecVisualizationFilter
+  class M2AIADIMENSIONREDUCTION_EXPORT PcaImageFilter : public m2::MassSpecVisualizationFilter
   {
   public:
     mitkClassMacro(PcaImageFilter, MassSpecVisualizationFilter);

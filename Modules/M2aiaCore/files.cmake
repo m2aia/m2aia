@@ -1,8 +1,5 @@
 set(H_FILES 
-  include/m2Process.hpp
-  include/m2ImzMLEngine.h
-  include/m2ImzMLTemplate.h
-  
+  include/m2Process.hpp 
   include/m2IMassSpecDataAccess.h
   include/m2MSImageBase.h
 
@@ -24,8 +21,6 @@ set(CPP_FILES
   m2IonImageReference.cpp
   m2MSImageBase.cpp
   m2CoreObjectFactory.cpp
-
-  m2ImzMLEngine.cpp
   m2MassValue.cpp
   mitkTransformixMSDataObjectStack.cpp
 

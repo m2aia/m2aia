@@ -15,6 +15,11 @@ set(H_FILES
 set(CPP_FILES
   sptree.cpp
   tsne.cpp
+  m2MassSpecVisualizationFilter.cpp
+  m2MultiSliceFilter.cpp
+  m2KmeanFilter.cpp
+  m2PcaImageFilter.cpp
+  m2TSNEImageFilter.cpp
 )
 
 set(RESOURCE_FILES)

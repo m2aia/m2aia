@@ -17,8 +17,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <itksys/SystemTools.hxx>
 #include <m2ImzMLMassSpecImage.h>
 #include <m2ImzMLXMLParser.h>
-#include <m2NoiseEstimators.hpp>
-#include <m2PeakDetection.hpp>
+#include <m2NoiseEstimators.h>
+#include <m2PeakDetection.h>
 #include <mbilog.h>
 #include <mitkCommandLineParser.h>
 #include <mitkIOUtil.h>

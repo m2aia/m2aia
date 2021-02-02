@@ -29,26 +29,4 @@ SOFTWARE.
 #include <stdlib.h>
 #include <vector>
 
-template <class T>
-void m2::RunMedian::apply(const std::vector<T> &y, unsigned int s, std::vector<T> &output) noexcept
-{
-  MedfiltData data;
-  s = s * 2 + 1;
-  MedfiltNode *nodes = new MedfiltNode[s];
 
-  medfilt_init(&data, nodes, s, y.front());
-
-  auto oit = std::begin(output);
-  for (const auto &v : y)
-  {
-    double min, mid, max;
-    medfilt(&data, v, &mid, &min, &max);
-    if (mid < 0)
-      *oit = max;
-    else
-      *oit = mid;
-    ++oit;
-  }
-
-  delete nodes;
-}

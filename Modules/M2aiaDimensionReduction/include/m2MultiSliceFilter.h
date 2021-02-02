@@ -15,14 +15,14 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <M2aiaCoreExports.h>
+#include <M2aiaDimensionReductionExports.h>
 #include <m2MassSpecVisualizationFilter.h>
 #include <mitkImage.h>
 #include <mitkImageToImageFilter.h>
 
 namespace m2
 {
-  class M2AIACORE_EXPORT MultiSliceFilter : public MassSpecVisualizationFilter
+  class M2AIADIMENSIONREDUCTION_EXPORT MultiSliceFilter : public MassSpecVisualizationFilter
   {
     using ColorType = float;
     using OutputColorType = unsigned char;

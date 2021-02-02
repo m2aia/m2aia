@@ -13,7 +13,7 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 #pragma once
-#include <M2aiaCoreExports.h>
+#include <M2aiaDimensionReductionExports.h>
 
 #include <mitkImageSource.h>
 #include <mitkImageToImageFilter.h>
@@ -21,7 +21,7 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  class M2AIACORE_EXPORT TSNEImageFilter : public m2::MassSpecVisualizationFilter
+  class M2AIADIMENSIONREDUCTION_EXPORT TSNEImageFilter : public m2::MassSpecVisualizationFilter
   {
   public:
     mitkClassMacro(TSNEImageFilter, MassSpecVisualizationFilter);

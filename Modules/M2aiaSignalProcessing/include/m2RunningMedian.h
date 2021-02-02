@@ -35,8 +35,28 @@ namespace m2
   {
   public:
     template <class T>
-    static void apply(const std::vector<T> &y, unsigned int s, std::vector<T> &output) noexcept;
+    static void apply(const std::vector<T> &y, unsigned int s, std::vector<T> &output) noexcept
+    {
+      MedfiltData data;
+      s = s * 2 + 1;
+      MedfiltNode *nodes = new MedfiltNode[s];
 
+      medfilt_init(&data, nodes, s, y.front());
+
+      auto oit = std::begin(output);
+      for (const auto &v : y)
+      {
+        double min, mid, max;
+        medfilt(&data, v, &mid, &min, &max);
+        if (mid < 0)
+          *oit = max;
+        else
+          *oit = mid;
+        ++oit;
+      }
+
+      delete nodes;
+    }
   protected:
     typedef struct MedfiltNode
     {

@@ -26,8 +26,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLTemplate.h>
 #include <m2ImzMLXMLParser.h>
-#include <m2NoiseEstimators.hpp>
-#include <m2PeakDetection.hpp>
+#include <m2PeakDetection.h>
 #include <mitkIOMimeTypes.h>
 #include <mitkIOUtil.h>
 #include <mitkImagePixelReadAccessor.h>
