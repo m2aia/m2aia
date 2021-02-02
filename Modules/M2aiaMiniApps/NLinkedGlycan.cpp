@@ -17,7 +17,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <itksys/SystemTools.hxx>
 #include <m2ImzMLMassSpecImage.h>
 #include <m2ImzMLXMLParser.h>
-#include <m2NoiseEstimators.h>
+#include <m2MedianAbsoluteDeviation.h>
 #include <m2PeakDetection.h>
 #include <mbilog.h>
 #include <mitkCommandLineParser.h>
@@ -64,7 +64,7 @@ int main(int /*argc*/, char *argv[])
 
     // peak picking on overview spectrum
     auto &overviewSpectrum = I->MeanSpectrum();
-    auto SNR = m2::Noise::mad(overviewSpectrum);
+    auto SNR = m2::Signal::mad(overviewSpectrum);
     std::vector<m2::MassValue> peaks;
     m2::Peaks::localMaxima(std::begin(overviewSpectrum),
                            std::end(overviewSpectrum),

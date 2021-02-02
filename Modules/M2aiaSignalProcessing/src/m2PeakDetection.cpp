@@ -23,7 +23,7 @@ See LICENSE.txt for details.
 #include <iostream>
 #include <limits>
 #include <m2MassValue.h>
-#include <m2NoiseEstimators.h>
+#include <m2MedianAbsoluteDeviation.h>
 #include <numeric>
 #include <tuple>
 #include <vector>

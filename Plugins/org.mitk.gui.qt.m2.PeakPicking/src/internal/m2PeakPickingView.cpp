@@ -28,7 +28,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2CommunicationService.h>
 #include <m2ImzMLMassSpecImage.h>
 #include <m2IonImageReference.h>
-#include <m2NoiseEstimators.h>
+#include <m2MedianAbsoluteDeviation.h>
 #include <m2PeakDetection.h>
 
 // mitk image
@@ -98,7 +98,7 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
 
         m = imageBase->MassAxis();
 
-        auto mad = m2::Noise::mad(s);
+        auto mad = m2::Signal::mad(s);
         std::vector<m2::MassValue> peaks;
         m2::Peaks::localMaxima(std::begin(s),
                                std::end(s),

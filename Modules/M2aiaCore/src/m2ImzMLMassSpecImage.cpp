@@ -22,7 +22,7 @@ See LICENSE.txt for details.
 #include <m2Calibration.h>
 #include <m2ImzMLMassSpecImage.h>
 #include <m2Morphology.h>
-#include <m2NoiseEstimators.h>
+#include <m2MedianAbsoluteDeviation.h>
 #include <m2PeakDetection.h>
 #include <m2Process.hpp>
 #include <m2RunningMedian.h>
@@ -200,8 +200,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
           switch (_BaseLineCorrectionStrategy)
           {
             case m2::BaselineCorrectionType::TopHat:
-              m2::Morphology<IntensityType>::erosion(ints, _BaselineCorrectionHWS, baseline);
-              m2::Morphology<IntensityType>::dilation(baseline, _BaselineCorrectionHWS, baseline);
+              m2::Signal::Erosion(ints, _BaselineCorrectionHWS, baseline);
+              m2::Signal::Dilation(baseline, _BaselineCorrectionHWS, baseline);
               std::transform(ints.begin(), ints.end(), baseline.begin(), ints.begin(), std::minus<>());
               break;
             case m2::BaselineCorrectionType::Median:
@@ -787,8 +787,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
               switch (_BaslineCorrectionStrategy)
               {
                 case BaselineCorrectionType::TopHat:
-                  m2::Morphology<IntensityType>::erosion(ints, _BaselineCorrectionHalfWindowSize, baseline);
-                  m2::Morphology<IntensityType>::dilation(baseline, _BaselineCorrectionHalfWindowSize, baseline);
+                  m2::Signal::Erosion(ints, _BaselineCorrectionHalfWindowSize, baseline);
+                  m2::Signal::Dilation(baseline, _BaselineCorrectionHalfWindowSize, baseline);
                   break;
                 case BaselineCorrectionType::Median:
                   m2::RunMedian::apply(ints, _BaselineCorrectionHalfWindowSize, baseline);
@@ -1080,8 +1080,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
       switch (p->GetBaselineCorrectionStrategy())
       {
         case BaselineCorrectionType::TopHat:
-          m2::Morphology<IntensityType>::erosion(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
-          m2::Morphology<IntensityType>::dilation(baseline, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
+          m2::Signal::Erosion(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
+          m2::Signal::Dilation(baseline, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
           break;
         case BaselineCorrectionType::Median:
           m2::RunMedian::apply(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
