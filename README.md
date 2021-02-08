@@ -6,6 +6,8 @@ You can download M<sup>2</sup>aia [here](https://github.com/jtfcordes/m2aia/rele
 
 [![DOI](https://zenodo.org/badge/314852965.svg)](https://zenodo.org/badge/latestdoi/314852965)
 
+[RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324)
+
 Manuscript in preparation.
 
 Features
