@@ -13,8 +13,7 @@ A PARTICULAR PURPOSE.
 See LICENSE.txt for details.
 
 ===================================================================*/
-#ifndef M2_PEAKDETECTION
-#define M2_PEAKDETECTION
+#pragma once
 
 #include <M2aiaSignalProcessingExports.h>
 #include <algorithm>
@@ -29,11 +28,10 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  class M2AIASIGNALPROCESSING_EXPORT Peaks
+  namespace Signal
   {
-  public:
     template <class FirstIt, class LastIt, class RefFirstIt, class RefLastIt, class OutFirstIt>
-    static inline void findMatches(
+    inline void findMatches(
       FirstIt iIt, LastIt iItEnd, RefFirstIt rIt, RefLastIt rItEnd, OutFirstIt oIt, double tolerance)
     {
       for (; iIt != iItEnd; ++iIt)
@@ -61,7 +59,7 @@ namespace m2
     }
 
     template <class InIterType, class OutIterType>
-    static inline void binPeaks(
+    inline void binPeaks(
       InIterType s, InIterType e, OutIterType output, double tolerance, bool absoluteDistance = false)
     {
       if (s == e)
@@ -132,13 +130,13 @@ namespace m2
     };
 
     template <typename IntsItFirst, typename IntsItLast, typename MzsItFirst, typename PeakMzIntDestItFirst>
-    static inline auto localMaxima(IntsItFirst intsInFirst,
-                                   IntsItLast intsInLast,
-                                   MzsItFirst mzsInFirst,
-                                   PeakMzIntDestItFirst peaksOutFirst,
-                                   unsigned int windowSize,
-                                   double threshold,
-                                   bool fillWithZeros = false)
+    inline auto localMaxima(IntsItFirst intsInFirst,
+                            IntsItLast intsInLast,
+                            MzsItFirst mzsInFirst,
+                            PeakMzIntDestItFirst peaksOutFirst,
+                            unsigned int windowSize,
+                            double threshold,
+                            bool fillWithZeros = false)
     {
       auto upper = std::next(intsInFirst, windowSize);
       auto lower = intsInFirst;
@@ -178,10 +176,10 @@ namespace m2
       }
     }
 
-    static inline std::vector<std::vector<unsigned int>> pseudoCluster(const std::vector<double> &x,
-                                                                       unsigned int size = 3L,
-                                                                       double distance = 1.00235,
-                                                                       double tolerance = 1e-4)
+    inline std::vector<std::vector<unsigned int>> pseudoCluster(const std::vector<double> &x,
+                                                                unsigned int size = 3L,
+                                                                double distance = 1.00235,
+                                                                double tolerance = 1e-4)
     {
       std::vector<std::vector<unsigned int>> r;
 
@@ -232,7 +230,7 @@ namespace m2
 
     // Map mass to poisson mean/lambda.
     //  Model isotopic distribution by poisson distribution.
-    static inline std::vector<double> P(const std::vector<double> &xp, const std::vector<unsigned int> &isotopes)
+    inline std::vector<double> P(const std::vector<double> &xp, const std::vector<unsigned int> &isotopes)
     {
       std::function<unsigned int(unsigned int)> factorial;
       factorial = [&factorial](unsigned int n) { return n < 2 ? 1 : n * factorial(n - 1); };
@@ -252,8 +250,8 @@ namespace m2
 
     // Model isotopic distribution by poisson distribution and sum to 1 (similar to
     // TIC).
-    static inline std::vector<std::vector<double>> Psum(const std::vector<double> &x,
-                                                        const std::vector<unsigned int> &isotopes)
+    inline std::vector<std::vector<double>> Psum(const std::vector<double> &x,
+                                                 const std::vector<unsigned int> &isotopes)
     {
       const auto ni = isotopes.size();
       const auto nx = x.size();
@@ -288,8 +286,7 @@ namespace m2
     }
 
     // Calculate the correlation for two matrices columnwise.
-    static inline std::vector<double> colCors(std::vector<std::vector<double>> x,
-                                              std::vector<std::vector<double>> y) noexcept
+    inline std::vector<double> colCors(std::vector<std::vector<double>> x, std::vector<std::vector<double>> y) noexcept
     {
       if (x.size() != y.size())
         return {};
@@ -310,7 +307,7 @@ namespace m2
       return colCors;
     }
 
-    static inline auto moveVectorsWithUniqueElementsOnly(std::vector<std::vector<unsigned int>> &origin)
+    inline auto moveVectorsWithUniqueElementsOnly(std::vector<std::vector<unsigned int>> &origin)
       -> std::vector<std::vector<unsigned int>>
     {
       std::remove_reference<decltype(origin)>::type resultPccr;
@@ -343,13 +340,12 @@ namespace m2
       return resultPccr;
     }
 
-
     //  Model isotopic distribution by poisson distribution.
-    static inline std::vector<std::vector<unsigned int>> monoisotopicPattern(const std::vector<MassValue> &x,
-                                                                             double minCor = 0.95,
-                                                                             double tolerance = 1e-4,
-                                                                             double distance = 1.00235,
-                                                                             unsigned int size = 3L)
+    inline std::vector<std::vector<unsigned int>> monoisotopicPattern(const std::vector<MassValue> &x,
+                                                                      double minCor = 0.95,
+                                                                      double tolerance = 1e-4,
+                                                                      double distance = 1.00235,
+                                                                      unsigned int size = 3L)
     {
       std::vector<std::vector<unsigned int>> pccr;
       {
@@ -395,11 +391,11 @@ namespace m2
 
     // Loop through multiple .monoisotopicPattern outputs and remove duplicated
     // peaks.
-    static inline std::vector<MassValue> monoisotopic(const std::vector<MassValue> &peaks,
-                                                      std::vector<unsigned int> size = {3, 4, 5, 6, 7, 8, 9, 10},
-                                                      double minCor = 0.95,
-                                                      double tolerance = 1e-4,
-                                                      double distance = 1.00235)
+    inline std::vector<MassValue> monoisotopic(const std::vector<MassValue> &peaks,
+                                               std::vector<unsigned int> size = {3, 4, 5, 6, 7, 8, 9, 10},
+                                               double minCor = 0.95,
+                                               double tolerance = 1e-4,
+                                               double distance = 1.00235)
     {
       sort(size.begin(), size.end(), std::greater<int>());
       std::vector<std::vector<unsigned int>> patterns;
@@ -420,12 +416,12 @@ namespace m2
     }
 
     template <class MzsContainer, class IntsContainer>
-    static inline std::vector<MassValue> PickPeaks(const MzsContainer &mzs,
-                                                   const IntsContainer &ints,
-                                                   double SNR = 10,
-                                                   unsigned int halfWindowSize = 20,
-                                                   double binningTolInPpm = 50.0,
-                                                   bool pickMonoisotopic = false)
+    inline std::vector<MassValue> PickPeaks(const MzsContainer &mzs,
+                                            const IntsContainer &ints,
+                                            double SNR = 10,
+                                            unsigned int halfWindowSize = 20,
+                                            double binningTolInPpm = 50.0,
+                                            bool pickMonoisotopic = false)
     {
       std::vector<m2::MassValue> peaks, binPeaks;
 
@@ -449,7 +445,7 @@ namespace m2
     }
 
     template <class MassAxisType>
-    static auto Subrange(const MassAxisType &mzs, const double &lower, const double &upper) noexcept
+    inline auto Subrange(const MassAxisType &mzs, const double &lower, const double &upper) noexcept
       -> std::pair<unsigned int, unsigned int>
     {
       unsigned long offset = 0;
@@ -466,7 +462,5 @@ namespace m2
       return {offset, length};
     }
 
-  }; // Peaks
+  }; // namespace Signal
 } // namespace m2
-
-#endif // !M2_PEAKDETECTION

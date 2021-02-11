@@ -66,7 +66,7 @@ int main(int /*argc*/, char *argv[])
     auto &overviewSpectrum = I->MeanSpectrum();
     auto SNR = m2::Signal::mad(overviewSpectrum);
     std::vector<m2::MassValue> peaks;
-    m2::Peaks::localMaxima(std::begin(overviewSpectrum),
+    m2::Signal::localMaxima(std::begin(overviewSpectrum),
                            std::end(overviewSpectrum),
                            std::begin(I->MassAxis()),
                            std::back_inserter(peaks),
@@ -78,7 +78,7 @@ int main(int /*argc*/, char *argv[])
       return (p.mass > 900 && p.mass < 3000);
     });
 
-    imagePeaks[I.GetPointer()] = m2::Peaks::monoisotopic(peaks, {3, 4, 5, 6, 7, 8, 9, 10}, 0.40);
+    imagePeaks[I.GetPointer()] = m2::Signal::monoisotopic(peaks, {3, 4, 5, 6, 7, 8, 9, 10}, 0.40);
     MITK_INFO << I->GetSpectraSource()._ImzMLDataPath << " monoisotopic peaks found "
               << imagePeaks[I.GetPointer()].size();
   }
@@ -88,7 +88,7 @@ int main(int /*argc*/, char *argv[])
     unionPeaks.insert(std::end(unionPeaks), std::begin(kv.second), std::end(kv.second));
   std::sort(std::begin(unionPeaks), std::end(unionPeaks));
 
-  m2::Peaks::binPeaks(std::begin(unionPeaks), std::end(unionPeaks), std::back_inserter(binPeaks), 50 * 10e-6);
+  m2::Signal::binPeaks(std::begin(unionPeaks), std::end(unionPeaks), std::back_inserter(binPeaks), 50 * 10e-6);
 
   MITK_INFO << "Size of common indieces " << binPeaks.size() << "\n";
 

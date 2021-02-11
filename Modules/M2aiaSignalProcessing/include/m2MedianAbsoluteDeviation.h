@@ -38,12 +38,15 @@ namespace m2
       std::nth_element(std::begin(intsCpy), std::next(std::begin(intsCpy), intsCpy.size() / 2), std::end(intsCpy));
       auto median = intsCpy[intsCpy.size() / 2];
       std::vector<double> absDiffOfMedian;
+
       std::transform(std::cbegin(intsCpy), std::cend(intsCpy), std::back_inserter(absDiffOfMedian), [median](auto &a) {
         return std::abs(a - median);
       });
-      std::nth_element(std::begin(absDiffOfMedian),
+      
+	  std::nth_element(std::begin(absDiffOfMedian),
                        std::next(std::begin(absDiffOfMedian), absDiffOfMedian.size() / 2),
                        std::end(absDiffOfMedian));
+
       return consant * absDiffOfMedian[absDiffOfMedian.size() / 2];
     };
 

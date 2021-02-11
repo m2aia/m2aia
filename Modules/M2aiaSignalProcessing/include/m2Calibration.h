@@ -22,7 +22,7 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  namespace Calibration
+  namespace Signal
   {
     /*!
      * TotalIonCurrent: This function approximates the area under the curve of an given spectrum.
