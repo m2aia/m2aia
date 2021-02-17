@@ -5,22 +5,30 @@ M<sup>2</sup>aia provides modules and plugins for viewing and analysing mass spe
 You can download M<sup>2</sup>aia [here](https://github.com/jtfcordes/m2aia/releases).
 
 [![DOI](https://zenodo.org/badge/314852965.svg)](https://zenodo.org/badge/latestdoi/314852965)
+Please reference to [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324).
 
-[RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324)
-
-Manuscript in preparation.
+Manuscript submitted. M<sup>2</sup>aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data
 
 Features
 --------
 
 <ul>
   <li> Images: imzML, NRRD, DICOM
-  <li> Signal processing: Normalization, baseline correction, smoothing and peak picking
-  <li> Image registration: 3D reconstruction and multi-modal image fusion   
+  <li> Signal processing: Normalization, baseline correction, smoothing and peak picking 
+  <li> Image registration: 3D reconstruction
+  <li> Image fusion: Multi-modal MSI (multi polarity, multi matrix)
   <li> Semi-automatic segmentation
   <li> Image interaction and visualization in 2D and 3D
 </ul>
 
+Supporting Material
+-------------------
+
+Supporting protocol for use-case 1: N-linked glycan m/z candidate detection in "M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data" [dx.doi.org/10.17504/protocols.io.brw2m7ge](http://dx.doi.org/10.17504/protocols.io.brw2m7ge)
+
+Supporting capsule for use-case 1: R-based processing in "M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data"[doi.org/10.24433/CO.2384502.v1](https://doi.org/10.24433/CO.2384502.v1)
+
+Supporting capsule for use-case 1: Command-line application based pre-processing in "M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data" [doi.org/10.24433/CO.7662658.v1](https://doi.org/10.24433/CO.7662658.v1)
 
 
 Setup for development
