@@ -1,5 +1,5 @@
 MITK_CREATE_MODULE(
-  DEPENDS MitkCore
+  DEPENDS MitkCore MitkSegmentation
   PACKAGE_DEPENDS
     PRIVATE Boost Eigen
 )

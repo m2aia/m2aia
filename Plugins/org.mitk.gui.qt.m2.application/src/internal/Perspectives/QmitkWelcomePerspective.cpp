@@ -43,6 +43,7 @@ void QmitkWelcomePerspective::CreateInitialLayout(berry::IPageLayout::Pointer la
   layout->AddShowViewShortcut("org.mitk.views.m2.CombineImages");
   layout->AddShowViewShortcut("org.mitk.views.m2.ImzMLExport");
   layout->AddShowViewShortcut("org.mitk.views.m2.PeakPicking");
+  layout->AddShowViewShortcut("org.mitk.views.m2.multimodalmaskexport");
 
   
 //*/

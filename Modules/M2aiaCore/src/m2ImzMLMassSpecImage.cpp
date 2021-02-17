@@ -706,7 +706,6 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
           const auto divides = [&val](const auto &a) { return a / val; };
           const auto maximum = [](const auto &a, const auto &b) { return a > b ? a : b; };
           const auto plus = std::plus<>();
-          const auto minus = std::minus<>();
 
           for (unsigned long int i = a; i < b; i++)
           {
@@ -1046,7 +1045,6 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
   const auto &intso = spectrum.intOffset;
   const auto &intsl = spectrum.intLength;
   const auto kernel = m2::Smoothing::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
-  const unsigned int baselineCorrectionHWS = p->GetBaseLinecorrectionHalfWindowSize();
 
   std::ifstream f;
   f.open(source._BinaryDataPath, std::ios::binary);

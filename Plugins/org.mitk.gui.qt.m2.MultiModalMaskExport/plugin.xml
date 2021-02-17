@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+
+  <extension point="org.blueberry.ui.views">
+    <view id="org.mitk.views.m2.MultiModalMaskExport"
+          name="MultiModalMaskExport"
+          class="MultiModalMaskExport"
+	  category="MS imaging"
+          icon="resources/icon.xpm" />
+  </extension>
+</plugin>

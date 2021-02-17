@@ -39,6 +39,7 @@ set(H_FILES
   include/m2KmeanFilter.h
   
   include/m2MultiSliceFilter.h
+  include/m2MultiModalMaskExportHelper.h
 
   include/m2RGBColorMixer.hpp
 )
@@ -64,9 +65,11 @@ set(CPP_FILES
  
   m2MassSpecVisualizationFilter.cpp
   m2MultiSliceFilter.cpp
+  m2MultiModalMaskExportHelper.cpp
 
   sptree.cpp
   tsne.cpp
+
 
 )
 
