@@ -14,8 +14,7 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 #include <m2MSImageBase.h>
-#include <m2NoiseEstimators.hpp>
-#include <m2PeakDetection.hpp>
+#include <m2PeakDetection.h>
 #include <mitkDataNode.h>
 #include <mitkLevelWindowProperty.h>
 #include <mitkLookupTableProperty.h>

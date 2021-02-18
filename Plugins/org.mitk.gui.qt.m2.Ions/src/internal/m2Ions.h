@@ -27,7 +27,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <ctkRangeWidget.h>
 #include <m2CommunicationService.h>
 #include <m2MSImageBase.h>
-#include <m2MultiSliceFilter.h>
 #include <mitkImage.h>
 #include <qaction.h>
 #include <qwidgetaction.h>

@@ -15,18 +15,18 @@ See LICENSE.txt for details.
 #ifndef MITKMSImageBase
 #define MITKMSImageBase
 
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <array>
+#include <map>
 #include <itkMetaDataObject.h>
 #include <m2IMassSpecDataAccess.h>
 #include <m2IonImageReference.h>
-#include <map>
 #include <mitkBaseData.h>
 #include <mitkDataNode.h>
 #include <mitkImage.h>
-
 #include <m2MassValue.h>
 #include <set>
+
 
 namespace m2
 {
@@ -159,7 +159,7 @@ namespace m2
    * MaxSpectrum: max intensity over all spectra in the image.
    *
    **/
-  class MITKM2AIACORE_EXPORT MSImageBase : public IMSImageDataAccess, public mitk::Image
+  class M2AIACORE_EXPORT MSImageBase : public IMSImageDataAccess, public mitk::Image
   {
   public:
     mitkClassMacro(MSImageBase, mitk::Image);
