@@ -80,45 +80,69 @@ void m2::MultiModalMaskExportHelper::WriteSpectraToCsv(m2::MSImageBase::Pointer 
 
   std::vector<int> validVectorIndices;
   int counter = 0;
-  for (auto mz : msImage->MassAxis())
+
+  if (m_UpperMzBound != m_LowerMzBound)
   {
-    if (mz <= m_UpperMzBound && mz >= m_LowerMzBound)
+    for (auto mz : msImage->MassAxis())
     {
-      validVectorIndices.push_back(counter);
+      if (mz <= m_UpperMzBound && mz >= m_LowerMzBound)
+      {
+        validVectorIndices.push_back(counter);
+      }
+      ++counter;
     }
-    ++counter;
   }
+  else
+  {
+    validVectorIndices.resize(msImage->MassAxis().size());
+    int i = 0;
+
+    for (auto it = msImage->MassAxis().begin(); it < msImage->MassAxis().end(); ++it)
+    {
+      validVectorIndices.push_back(i);
+      ++i;
+    }
+  }
+
+  std::vector<double> intensities;
 
   for (auto imzlIndex : indexValues)
   {
-    std::vector<double> intensities;
     msImage->GrabIntensity(imzlIndex, intensities);
 
-    for (auto position : validVectorIndices)
-    {
-      oss << intensities.at(position) << ",";
-    }
+    auto indicesIt = validVectorIndices.begin();
 
-    oss << "\n";
+    std::string outputString = std::to_string(intensities.at(*indicesIt));
+    output.write(outputString.c_str(), outputString.size());
+    ++indicesIt;
+
+    while (indicesIt != validVectorIndices.end())
+    {
+      std::string outputString = "," + std::to_string(intensities.at(*indicesIt));
+      output.write(outputString.c_str(), outputString.size());
+
+      ++indicesIt;
+    }
+    output.write(std::string(" \n").c_str(), 2);
   }
 
-  auto outputString = oss.str();
-  output.write(outputString.c_str(), outputString.size());
   output.close();
-
-  oss.str("");
-  oss.clear();
 
   std::ofstream massAxisOutput(massAxisFileName);
   std::vector<double> massAxis = msImage->MassAxis();
 
-  for (auto mz : massAxis)
-  {
-    oss << mz << ",";
-  }
+  auto mzIt = validVectorIndices.begin();
+  std::string outputString = std::to_string(massAxis.at(*mzIt));
+  massAxisOutput.write(outputString.c_str(), outputString.size());
 
-  auto massAxisString = oss.str();
-  massAxisOutput.write(massAxisString.c_str(), massAxisString.size());
+  ++mzIt;
+
+  while (mzIt != validVectorIndices.end())
+  {
+    std::string outputString = "," + std::to_string(massAxis.at(*mzIt));
+    massAxisOutput.write(outputString.c_str(), outputString.size());
+    ++mzIt;
+  }
   massAxisOutput.close();
 }
 
