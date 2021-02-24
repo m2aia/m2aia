@@ -40,6 +40,8 @@ namespace m2
     {
       mitk::CustomMimeType mimeType(OPENSLIDE_MIMETYPE_NAME());
       mimeType.AddExtension("svs");
+      mimeType.AddExtension("scn");
+      mimeType.AddExtension("tif");
       mimeType.SetCategory("Images");
       mimeType.SetComment("OpenSlide");
       return mimeType;
