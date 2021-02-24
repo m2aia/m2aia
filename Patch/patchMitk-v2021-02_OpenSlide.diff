@@ -1,5 +1,5 @@
 diff --git a/CMakeExternals/ITK.cmake b/CMakeExternals/ITK.cmake
-index 973e57229d..44194a72fd 100644
+index 973e57229d..f222f6c3fb 100644
 --- a/CMakeExternals/ITK.cmake
 +++ b/CMakeExternals/ITK.cmake
 @@ -50,8 +50,8 @@ if(NOT DEFINED ITK_DIR)
@@ -8,8 +8,8 @@ index 973e57229d..44194a72fd 100644
       UPDATE_COMMAND ""
 -     URL ${MITK_THIRDPARTY_DOWNLOAD_PREFIX_URL}/InsightToolkit-4.13.3.tar.gz
 -     URL_MD5 d1c10c8288b47577d718a71190444815
-+     URL https://github.com/jtfcordes/m2aia-itk/releases/download/OpenSlide-v0.1/InsightToolkit-4.13.3_OpenSlide.tar.gz
-+     URL_MD5 79e6e7a6603751a8980bc803ed35229a
++     URL https://github.com/jtfcordes/m2aia-itk/archive/OpenSlide-v0.2.tar.gz
++     URL_MD5 5c51b9d20db5a0bb4136af8d032dc685
       PATCH_COMMAND
         ${PATCH_COMMAND} -N -p1 -i ${CMAKE_CURRENT_LIST_DIR}/ITK-4.13.3.patch
       CMAKE_GENERATOR ${gen}
