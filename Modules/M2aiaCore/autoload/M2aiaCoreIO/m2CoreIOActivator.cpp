@@ -20,6 +20,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <usModuleContext.h>
 
 #include <m2ImzMLImageIO.h>
+#include <m2OpenSlideIO.h>
 
 #include <m2CoreObjectFactory.h>
 
@@ -38,6 +39,7 @@ namespace m2
     { 
 		//m_FileIOs.push_back(new IACovisImageIO());
 		m_FileIOs.push_back(new ImzMLImageIO());
+		m_FileIOs.push_back(new OpenSlideIO());
     }
     void Unload(us::ModuleContext *) override
     {
