@@ -18,6 +18,7 @@ See LICENSE.txt for details.
 #include <M2aiaSignalProcessingExports.h>
 #include <algorithm>
 #include <vector>
+#include <functional>
 
 namespace m2
 {

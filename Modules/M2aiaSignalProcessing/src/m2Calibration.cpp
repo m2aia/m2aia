@@ -13,6 +13,4 @@ A PARTICULAR PURPOSE.
 See LICENSE.txt for details.
 
 ===================================================================*/
-#pragma once
-
 #include <m2Calibration.h>

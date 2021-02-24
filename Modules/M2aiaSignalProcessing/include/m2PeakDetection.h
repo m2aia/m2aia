@@ -22,8 +22,10 @@ See LICENSE.txt for details.
 #include <iostream>
 #include <limits>
 #include <m2MassValue.h>
+#include <m2MedianAbsoluteDeviation.h>
 #include <numeric>
 #include <tuple>
+#include <cmath>
 #include <vector>
 
 namespace m2
@@ -425,21 +427,21 @@ namespace m2
     {
       std::vector<m2::MassValue> peaks, binPeaks;
 
-      auto noise = m2::Noise::mad(ints);
+      auto noise = m2::Signal::mad(ints);
 
-      m2::Peaks::localMaxima(
+      m2::Signal::localMaxima(
         std::begin(ints), std::end(ints), std::begin(mzs), std::back_inserter(peaks), halfWindowSize, SNR * noise);
 
       if (binningTolInPpm)
       {
         binPeaks.clear();
-        m2::Peaks::binPeaks(std::begin(peaks), std::end(peaks), std::back_inserter(binPeaks), binningTolInPpm * 10e-6);
+        m2::Signal::binPeaks(std::begin(peaks), std::end(peaks), std::back_inserter(binPeaks), binningTolInPpm * 10e-6);
         peaks = std::move(binPeaks);
       }
 
       if (pickMonoisotopic)
       {
-        peaks = m2::Peaks::monoisotopic(peaks);
+        peaks = m2::Signal::monoisotopic(peaks);
       }
       return peaks;
     }
