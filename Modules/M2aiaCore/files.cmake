@@ -2,6 +2,7 @@ set(H_FILES
   include/m2Process.hpp 
   include/m2IMassSpecDataAccess.h
   include/m2MSImageBase.h
+  include/m2OpenSlideImageIOHelperObject.h
 
   include/m2IonImageReference.h
   include/m2ImzMLMassSpecImage.h
@@ -22,6 +23,7 @@ set(CPP_FILES
   m2MSImageBase.cpp
   m2CoreObjectFactory.cpp
   m2MassValue.cpp
+  m2OpenSlideImageIOHelperObject.cpp
   mitkTransformixMSDataObjectStack.cpp
 
   m2ImzMLXMLParser.cpp

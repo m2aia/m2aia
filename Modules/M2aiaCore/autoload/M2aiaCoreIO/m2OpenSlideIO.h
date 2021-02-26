@@ -42,6 +42,7 @@ namespace m2
       mimeType.AddExtension("svs");
       mimeType.AddExtension("scn");
       mimeType.AddExtension("tif");
+      mimeType.AddExtension("ndpi");
       mimeType.SetCategory("Images");
       mimeType.SetComment("OpenSlide");
       return mimeType;

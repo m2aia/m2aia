@@ -5,15 +5,18 @@ set(SRC_CPP_FILES
 set(INTERNAL_CPP_FILES
   org_mitk_gui_qt_m2_Data_Activator.cpp
   m2Data.cpp
+  m2OpenSlideImageIOHelperDialog.cpp
 )
 
 set(UI_FILES
   src/internal/m2Data.ui
+  src/internal/m2OpenSlideImageIOHelperDialog.ui
 )
 
 set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_Data_Activator.h
   src/internal/m2Data.h
+  src/internal/m2OpenSlideImageIOHelperDialog.h
 )
 
 # list of resource files which can be used by the plug-in

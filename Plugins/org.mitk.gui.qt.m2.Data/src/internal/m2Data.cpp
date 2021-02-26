@@ -17,6 +17,7 @@ See LICENSE.txt for details.
 
 #include "m2Data.h"
 
+#include "m2OpenSlideImageIOHelperDialog.h"
 #include <QFutureWatcher>
 #include <QShortcut>
 #include <QmitkMultiNodeSelectionWidget.h>
@@ -27,11 +28,13 @@ See LICENSE.txt for details.
 #include <boost/format.hpp>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itksys/SystemTools.hxx>
+#include <m2OpenSlideImageIOHelperObject.h>
 #include <mitkCameraController.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
 #include <mitkImageAccessByItk.h>
 #include <mitkImageCast.h>
+#include <mitkItkImageIO.h>
 #include <mitkLabelSetImageConverter.h>
 #include <mitkLayoutAnnotationRenderer.h>
 #include <mitkLookupTableProperty.h>
@@ -52,6 +55,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 {
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
+  m_Parent = parent;
 
   // 20201023: custom selection service did not work as expected
   // m_CustomSelectionChangedListener.reset(
@@ -97,7 +101,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
             {
               page->ShowView("org.mitk.views.pointsetinteraction", "", 1);
             }
-            catch (berry::PartInitException & e)
+            catch (berry::PartInitException &e)
             {
               BERRY_ERROR << "Error: " << e.what() << std::endl;
             }
@@ -304,49 +308,45 @@ m2::BaselineCorrectionType m2Data::GuiToBaselineCorrectionStrategyType()
 
 void m2Data::OnResetTiling()
 {
-	
-	auto all = AllNodes();
-//	unsigned int maxWidth = 0, maxHeight = 0;
-	if (all->Size() == 0)
-		return;
+  auto all = AllNodes();
+  //	unsigned int maxWidth = 0, maxHeight = 0;
+  if (all->Size() == 0)
+    return;
 
-	
+  for (auto &e : *all)
+  {
+    double initP[] = {0, 0, 0};
+    mitk::Point3D origin(initP);
+    mitk::Point3D prevOrigin(initP);
+    if (auto *image = dynamic_cast<m2::MSImageBase *>(e->GetData()))
+    {
+      prevOrigin = image->GetGeometry()->GetOrigin();
+      origin = image->GetGeometry()->GetOrigin();
 
-	
-	for (auto &e : *all)
-	{
-	    double initP[] = {0,0,0};
-	    mitk::Point3D origin(initP);
-	    mitk::Point3D prevOrigin(initP);
-		if (auto *image = dynamic_cast<m2::MSImageBase *>(e->GetData()))
-		{
-			prevOrigin = image->GetGeometry()->GetOrigin();
-			origin = image->GetGeometry()->GetOrigin();
-			
-			origin[0] = image->GetPropertyValue<double>("origin x");
-			origin[1] = image->GetPropertyValue<double>("origin y");
-			origin[2] = 0;
-			image->GetGeometry()->SetOrigin(origin);
-			for (auto &&kv : image->GetImageArtifacts())
-				kv.second->GetGeometry()->SetOrigin(origin);
-		}
+      origin[0] = image->GetPropertyValue<double>("origin x");
+      origin[1] = image->GetPropertyValue<double>("origin y");
+      origin[2] = 0;
+      image->GetGeometry()->SetOrigin(origin);
+      for (auto &&kv : image->GetImageArtifacts())
+        kv.second->GetGeometry()->SetOrigin(origin);
+    }
 
-		double dx = origin[0] - prevOrigin[0];
-		double dy = origin[1] - prevOrigin[1];
+    double dx = origin[0] - prevOrigin[0];
+    double dy = origin[1] - prevOrigin[1];
 
-		auto der = this->GetDataStorage()->GetDerivations(e, mitk::TNodePredicateDataType<mitk::PointSet>::New());
-		for (auto &&e : *der)
-		{
-			auto pts = dynamic_cast<mitk::PointSet *>(e->GetData());
-			for (auto p = pts->Begin(); p != pts->End(); ++p)
-			{
-				auto &pp = p->Value();
-				pp[0] += dx;
-				pp[1] += dy;
-			}
-		}
-	}
-	mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
+    auto der = this->GetDataStorage()->GetDerivations(e, mitk::TNodePredicateDataType<mitk::PointSet>::New());
+    for (auto &&e : *der)
+    {
+      auto pts = dynamic_cast<mitk::PointSet *>(e->GetData());
+      for (auto p = pts->Begin(); p != pts->End(); ++p)
+      {
+        auto &pp = p->Value();
+        pp[0] += dx;
+        pp[1] += dy;
+      }
+    }
+  }
+  mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
 }
 
 void m2Data::OnNextIonImage()
@@ -476,7 +476,7 @@ void m2Data::ApplySettingsToImage(m2::ImzMLMassSpecImage *data)
     using m2::ImzMLMassSpecImage;
 
     data->SetNormalizationStrategy(GuiToNormalizationStrategyType());
-	data->SetBaselineCorrectionStrategy(GuiToBaselineCorrectionStrategyType());
+    data->SetBaselineCorrectionStrategy(GuiToBaselineCorrectionStrategyType());
     data->SetSmoothingStrategy(GuiToSmoothingStrategyType());
     data->SetIonImageGrabStrategy(GuiToIonImageGrabStrategyType());
 
@@ -485,7 +485,6 @@ void m2Data::ApplySettingsToImage(m2::ImzMLMassSpecImage *data)
 
     data->SetPeakPickingBinningTolerance(m_Controls.spnBxPeakBinning->value());
     data->SetMassPickingTolerance(m_Controls.spnBxPeakBinning->value());
-
   }
 }
 
@@ -914,6 +913,30 @@ void m2Data::UpdateLevelWindow(const mitk::DataNode *node)
 
 void m2Data::NodeAdded(const mitk::DataNode *node)
 {
+  if (auto openSlideIOHelper = dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
+  {
+    auto dialog = new m2OpenSlideImageIOHelperDialog(m_Parent);
+    dialog->SetOpenSlideImageIOHelperObject(openSlideIOHelper);
+    auto result = dialog->exec();
+    auto level = dialog->GetSelectedLevel();
+    delete dialog;
+    if (result == QDialog::Accepted)
+    {
+      MITK_INFO << "Selected level is " << level;
+      auto IO = openSlideIOHelper->GetOpenSlideIO();
+      IO->SetLevel(level);
+      mitk::ItkImageIO levelReader(IO);
+      levelReader.mitk::AbstractFileIOReader::SetInput(IO->GetFileName());
+      auto dataVec = levelReader.Read();
+
+      auto image = dynamic_cast<mitk::Image *>(dataVec.begin()->GetPointer());
+      auto node = mitk::DataNode::New();
+      node->SetData(image);
+      node->SetName(itksys::SystemTools::GetFilenameWithoutExtension(IO->GetFileName()));
+      this->GetDataStorage()->Add(node);
+    }
+  }
+
   if (auto msImageBase = dynamic_cast<m2::MSImageBase *>(node->GetData()))
   {
     auto lut = mitk::LookupTable::New();
@@ -933,7 +956,7 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
         // load associated data
         {
           auto source = msImageImzML->GetSourceList().front();
-          
+
           auto path = source._ImzMLDataPath;
 
           itksys::SystemTools::ReplaceString(path, ".imzML", ".nrrd");

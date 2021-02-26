@@ -16,6 +16,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <itkOpenSlideImageIO.h>
 #include <m2OpenSlideIO.h>
+#include <m2OpenSlideImageIOHelperObject.h>
 
 namespace m2
 {
@@ -23,7 +24,7 @@ namespace m2
     : AbstractFileIO(mitk::Image::GetStaticNameOfClass(), OPENSLIDE_MIMETYPE(), "OpenSlide Image")
   {
     AbstractFileWriter::SetRanking(10);
-    AbstractFileReader::SetRanking(10);
+    AbstractFileReader::SetRanking(20);
     this->RegisterService();
   }
 
@@ -49,20 +50,15 @@ namespace m2
 
   std::vector<mitk::BaseData::Pointer> OpenSlideIO::DoRead()
   {
-    /*std::string mzGroupId, intGroupId;
-    mitk::Image *image;
-    */
+    auto ioHelper = m2::OpenSlideImageIOHelperObject::New();
 
-    auto osIO = itk::OpenSlideImageIO::New();
+    auto osIO = ioHelper->GetOpenSlideIO();
     osIO->SetFileName(this->GetInputLocation());
     osIO->ReadImageInformation();
     osIO->SetLevel(osIO->GetLevelCount() - 1);
-    
+	ioHelper->ParesOpenSlideLevelsToMap();
 
-    mitk::ItkImageIO reader(osIO.GetPointer());
-    reader.AbstractFileReader::SetInput(this->GetInputLocation());
-
-    return reader.Read();
+    return {ioHelper.GetPointer()};
   }
 
   OpenSlideIO *OpenSlideIO::IOClone() const { return new OpenSlideIO(*this); }
