@@ -940,7 +940,6 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
       auto spacing = image3d->GetGeometry()->GetSpacing();
       for (const int &i : {0, 1})
         spacing[i] *= 1e-3;
-      auto thickness = dialog->GetSliceThickness();
       spacing[2] = dialog->GetSliceThickness(); // apply thickness from dialog
       image3d->GetGeometry()->SetSpacing(spacing);
 

@@ -39,7 +39,7 @@ bool m2::OpenSlideImageIOHelperObject::VerifyRequestedRegion()
   return true;
 }
 
-void m2::OpenSlideImageIOHelperObject::SetRequestedRegion(const itk::DataObject *data) {}
+void m2::OpenSlideImageIOHelperObject::SetRequestedRegion(const itk::DataObject * /*data*/) {}
 
 void m2::OpenSlideImageIOHelperObject::ParesOpenSlideLevelsToMap()
 {
