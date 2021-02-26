@@ -32,6 +32,7 @@ See LICENSE.txt for details.
 #include <mitkCameraController.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
+#include <mitkImage2DToImage3DSliceFilter.h>
 #include <mitkImageAccessByItk.h>
 #include <mitkImageCast.h>
 #include <mitkItkImageIO.h>
@@ -918,11 +919,10 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
     auto dialog = new m2OpenSlideImageIOHelperDialog(m_Parent);
     dialog->SetOpenSlideImageIOHelperObject(openSlideIOHelper);
     auto result = dialog->exec();
-    auto level = dialog->GetSelectedLevel();
-    delete dialog;
     if (result == QDialog::Accepted)
     {
-      MITK_INFO << "Selected level is " << level;
+      auto level = dialog->GetSelectedLevel();
+      auto thickness = dialog->GetSliceThickness();
       auto IO = openSlideIOHelper->GetOpenSlideIO();
       IO->SetLevel(level);
       mitk::ItkImageIO levelReader(IO);
@@ -930,14 +930,28 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
       auto dataVec = levelReader.Read();
 
       auto image = dynamic_cast<mitk::Image *>(dataVec.begin()->GetPointer());
+
+      auto filter = mitk::Image2DToImage3DSliceFilter::New();
+      filter->SetInput(image);
+      filter->Update();
+      auto image3d = filter->GetOutput();
+      // convert spacings from micrometer to millimeter
+      auto spacing = image3d->GetGeometry()->GetSpacing();
+      for (const int &i : {0, 1})
+        spacing[i] *= 1e-3;
+      spacing[2] = dialog->GetSliceThickness();
+      image3d->GetGeometry()->SetSpacing(spacing);
+
       auto node = mitk::DataNode::New();
-      node->SetData(image);
+      node->SetData(image3d);
       node->SetName(itksys::SystemTools::GetFilenameWithoutExtension(IO->GetFileName()));
       this->GetDataStorage()->Add(node);
     }
+    // remove IO helper object from DS
+    GetDataStorage()->Remove(node);
+    delete dialog;
   }
-
-  if (auto msImageBase = dynamic_cast<m2::MSImageBase *>(node->GetData()))
+  else if (auto msImageBase = dynamic_cast<m2::MSImageBase *>(node->GetData()))
   {
     auto lut = mitk::LookupTable::New();
     lut->SetType(mitk::LookupTable::LookupTableType::VIRIDIS_TRANSPARENT);
