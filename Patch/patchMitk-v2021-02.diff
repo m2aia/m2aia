@@ -231,18 +231,6 @@ index 24fab05733..546607b5b5 100644
  
      std::string fontFamilyAsString;
      if (GetStringProperty("font.family", fontFamilyAsString) == false)
-diff --git a/Modules/AppUtil/src/mitkBaseApplication.cpp b/Modules/AppUtil/src/mitkBaseApplication.cpp
-index e41a40fe79..7c47ea5b01 100644
---- a/Modules/AppUtil/src/mitkBaseApplication.cpp
-+++ b/Modules/AppUtil/src/mitkBaseApplication.cpp
-@@ -660,6 +660,7 @@ namespace mitk
- #endif
- 
-       QCoreApplication::setAttribute(Qt::AA_ShareOpenGLContexts);
-+      QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
- 
-       d->m_QApp = this->getSingleMode()
-         ? static_cast<QCoreApplication*>(new QmitkSingleApplication(d->m_Argc, d->m_Argv, this->getSafeMode()))
 diff --git a/Modules/Core/CMakeLists.txt b/Modules/Core/CMakeLists.txt
 index b38af61df6..2e79dc40ce 100644
 --- a/Modules/Core/CMakeLists.txt
@@ -282,19 +270,6 @@ index f0c881fae8..5bd9c5910a 100644
    private:
      template <class P>
      friend class TestCaller;
-diff --git a/Modules/Core/include/mitkDataStorage.h b/Modules/Core/include/mitkDataStorage.h
-index a860959317..7ef6fb8c73 100644
---- a/Modules/Core/include/mitkDataStorage.h
-+++ b/Modules/Core/include/mitkDataStorage.h
-@@ -66,7 +66,7 @@ namespace mitk
-     //##Documentation
-     //## @brief Convenience method to add a node that has one parent
-     //##
--    void Add(DataNode *node, DataNode *parent);
-+    void Add(DataNode *node, const DataNode *parent);
- 
-     //##Documentation
-     //## @brief Removes node from the DataStorage
 diff --git a/Modules/Core/include/mitkLookupTable.h b/Modules/Core/include/mitkLookupTable.h
 index 5ab7de7dba..d2c1ec2560 100644
 --- a/Modules/Core/include/mitkLookupTable.h
@@ -331,24 +306,6 @@ index 5ab7de7dba..d2c1ec2560 100644
      virtual void BuildMagmaLookupTable();
      virtual void BuildJetLookupTable(bool transparent = false);
      virtual void BuildPETColorLookupTable();
-diff --git a/Modules/Core/src/DataManagement/mitkDataStorage.cpp b/Modules/Core/src/DataManagement/mitkDataStorage.cpp
-index 5a555a15da..5e7cc3fc5d 100644
---- a/Modules/Core/src/DataManagement/mitkDataStorage.cpp
-+++ b/Modules/Core/src/DataManagement/mitkDataStorage.cpp
-@@ -36,11 +36,11 @@ mitk::DataStorage::~DataStorage()
-   // m_NodeDeleteObserverTags.clear();
- }
- 
--void mitk::DataStorage::Add(DataNode *node, DataNode *parent)
-+void mitk::DataStorage::Add(DataNode *node, const DataNode *parent)
- {
-   DataStorage::SetOfObjects::Pointer parents = DataStorage::SetOfObjects::New();
-   if (parent != nullptr) //< Return empty set if parent is null
--    parents->InsertElement(0, parent);
-+    parents->InsertElement(0, const_cast<DataNode *>(parent));
-   this->Add(node, parents);
- }
- 
 diff --git a/Modules/Core/src/DataManagement/mitkImage.cpp b/Modules/Core/src/DataManagement/mitkImage.cpp
 index 4ed855b751..381bd0aebe 100644
 --- a/Modules/Core/src/DataManagement/mitkImage.cpp
@@ -362,6 +319,35 @@ index 4ed855b751..381bd0aebe 100644
      dimension = 3;
    if (dimensions[3] > 1)
      dimension = 4;
+diff --git a/Modules/Core/src/DataManagement/mitkImageCastPart4.cpp b/Modules/Core/src/DataManagement/mitkImageCastPart4.cpp
+index 5c4786a10a..4ff01ced03 100644
+--- a/Modules/Core/src/DataManagement/mitkImageCastPart4.cpp
++++ b/Modules/Core/src/DataManagement/mitkImageCastPart4.cpp
+@@ -18,6 +18,7 @@ found in the LICENSE file.
+ namespace mitk
+ {
+   typedef itk::Image<itk::RGBPixel<unsigned char>, 2> itkImageRGBUC2;
++  typedef itk::Image<itk::RGBAPixel<unsigned char>, 2> itkImageRGBAUC2;
+   typedef itk::Image<itk::DiffusionTensor3D<float>, 2> itkImageDTIF2;
+   typedef itk::Image<itk::DiffusionTensor3D<double>, 2> itkImageDTID2;
+ 
+@@ -32,6 +33,16 @@ namespace mitk
+                            itkOutputImage);
+   }
+   template <>
++  void MITKCORE_EXPORT CastToItkImage(const mitk::Image *mitkImage, itk::SmartPointer<itkImageRGBAUC2> &itkOutputImage)
++  {
++    typedef itkImageRGBAUC2 ItkOutputImageType;
++    AccessFixedTypeByItk_1(mitkImage,
++                           _CastToItkImage2Access,
++                           (itk::RGBAPixel<unsigned char>),
++                           (ItkOutputImageType::ImageDimension),
++                           itkOutputImage);
++  }
++  template <>
+   void MITKCORE_EXPORT CastToItkImage(const mitk::Image *mitkImage, itk::SmartPointer<itkImageDTIF2> &itkOutputImage)
+   {
+     typedef itkImageDTIF2 ItkOutputImageType;
 diff --git a/Modules/Core/src/DataManagement/mitkLevelWindowManager.cpp b/Modules/Core/src/DataManagement/mitkLevelWindowManager.cpp
 index c0b04c6570..f8ac8f7d8d 100644
 --- a/Modules/Core/src/DataManagement/mitkLevelWindowManager.cpp
@@ -695,25 +681,6 @@ index cfecd85744..8c40ae6d85 100644
  {
  }
  
-diff --git a/Modules/Core/src/Rendering/mitkImageVtkMapper2D.cpp b/Modules/Core/src/Rendering/mitkImageVtkMapper2D.cpp
-index 5e4e797c38..60e4883cf8 100644
---- a/Modules/Core/src/Rendering/mitkImageVtkMapper2D.cpp
-+++ b/Modules/Core/src/Rendering/mitkImageVtkMapper2D.cpp
-@@ -624,6 +624,14 @@ void mitk::ImageVtkMapper2D::ApplyLookuptable(mitk::BaseRenderer *renderer)
- {
-   LocalStorage *localStorage = m_LSH.GetLocalStorage(renderer);
-   vtkLookupTable *usedLookupTable = localStorage->m_ColorLookupTable;
-+  
-+ /* auto lookuptable_updatelater = this->GetDataNode()->GetProperty("LookupTable_updatelater", renderer);
-+  if (lookuptable_updatelater)
-+  {
-+    auto lutProp = dynamic_cast<mitk::LookupTableProperty *>(lookuptable_updatelater);
-+    this->GetDataNode()->SetProperty("LookupTable", lutProp);
-+    this->GetDataNode()->RemoveProperty("LookupTable_updatelater");
-+  }*/
- 
-   // If lookup table or transferfunction use is requested...
-   mitk::LookupTableProperty::Pointer lookupTableProp =
 diff --git a/Modules/ImageStatistics/mitkImageStatisticsPredicateHelper.cpp b/Modules/ImageStatistics/mitkImageStatisticsPredicateHelper.cpp
 index 623924f0b3..f549e3610a 100644
 --- a/Modules/ImageStatistics/mitkImageStatisticsPredicateHelper.cpp
@@ -735,41 +702,6 @@ index 623924f0b3..f549e3610a 100644
      auto hasBinaryProperty = mitk::NodePredicateProperty::New("binary", mitk::BoolProperty::New(true));
      auto isNotBinary = mitk::NodePredicateNot::New(hasBinaryProperty);
      auto isNotBinaryImage = mitk::NodePredicateAnd::New(isImage, isNotBinary);
-diff --git a/Modules/MapperExt/src/vtkMitkGPUVolumeRayCastMapper.cpp b/Modules/MapperExt/src/vtkMitkGPUVolumeRayCastMapper.cpp
-index 7858b5a49d..1aaf77ba59 100644
---- a/Modules/MapperExt/src/vtkMitkGPUVolumeRayCastMapper.cpp
-+++ b/Modules/MapperExt/src/vtkMitkGPUVolumeRayCastMapper.cpp
-@@ -50,8 +50,8 @@ vtkMitkGPUVolumeRayCastMapper::vtkMitkGPUVolumeRayCastMapper()
- {
-   this->AutoAdjustSampleDistances = 1;
-   this->ImageSampleDistance = 1.0;
--  this->MinimumImageSampleDistance = 1.0;
--  this->MaximumImageSampleDistance = 10.0;
-+  this->MinimumImageSampleDistance = 0.0;
-+  this->MaximumImageSampleDistance = 100.0;
-   this->SampleDistance = 1.0;
-   this->SmallVolumeRender = 0;
-   this->BigTimeToDraw = 0.0;
-diff --git a/Modules/QtWidgets/src/QmitkDataStorageComboBoxWithSelectNone.cpp b/Modules/QtWidgets/src/QmitkDataStorageComboBoxWithSelectNone.cpp
-index dacc7ea0d3..d7203263e5 100644
---- a/Modules/QtWidgets/src/QmitkDataStorageComboBoxWithSelectNone.cpp
-+++ b/Modules/QtWidgets/src/QmitkDataStorageComboBoxWithSelectNone.cpp
-@@ -19,6 +19,7 @@ QmitkDataStorageComboBoxWithSelectNone::QmitkDataStorageComboBoxWithSelectNone(Q
-   : QmitkDataStorageComboBox(parent, autoSelectNewNodes)
-   , m_CurrentPath("")
- {
-+  Reset();
- }
- 
- QmitkDataStorageComboBoxWithSelectNone::QmitkDataStorageComboBoxWithSelectNone(mitk::DataStorage* dataStorage,
-@@ -27,6 +28,7 @@ QmitkDataStorageComboBoxWithSelectNone::QmitkDataStorageComboBoxWithSelectNone(m
-                                                                                bool autoSelectNewNodes)
-   : QmitkDataStorageComboBox(dataStorage, predicate, parent, autoSelectNewNodes)
- {
-+  Reset();
- }
- 
- QmitkDataStorageComboBoxWithSelectNone::~QmitkDataStorageComboBoxWithSelectNone()
 diff --git a/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp b/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp
 index 46a8600375..2f4cf06ef2 100644
 --- a/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp
@@ -1227,39 +1159,6 @@ index 27b424aafd..89e6fc8105 100644
  
    // a new row was inserted
    if (m_CurrentRowCount == 0 && m_NodeTreeModel->rowCount() == 1)
-diff --git a/Plugins/org.mitk.gui.qt.ext/src/internal/QmitkExternalProgramsPreferencePage.cpp b/Plugins/org.mitk.gui.qt.ext/src/internal/QmitkExternalProgramsPreferencePage.cpp
-index 6f2257760f..a2f12d5e08 100644
---- a/Plugins/org.mitk.gui.qt.ext/src/internal/QmitkExternalProgramsPreferencePage.cpp
-+++ b/Plugins/org.mitk.gui.qt.ext/src/internal/QmitkExternalProgramsPreferencePage.cpp
-@@ -68,15 +68,15 @@ void QmitkExternalProgramsPreferencePage::CreateQtControl(QWidget* parent)
- 
- void QmitkExternalProgramsPreferencePage::OnFFmpegButtonClicked()
- {
--  QString filter = "ffmpeg executable ";
-+  QString filter = "ffmpeg/avconv executable ";
- 
- #if defined(WIN32)
--  filter += "(ffmpeg.exe)";
-+  filter += "(ffmpeg.exe avconv.exe)";
- #else
--  filter += "(ffmpeg)";
-+  filter += "(ffmpeg avconv)";
- #endif
- 
--  QString ffmpegPath = QFileDialog::getOpenFileName(m_Control, "FFmpeg", "", filter);
-+  QString ffmpegPath = QFileDialog::getOpenFileName(m_Control, "FFmpeg/Libav", "", filter);
- 
-   if (!ffmpegPath.isEmpty())
-   {
-@@ -97,7 +97,7 @@ void QmitkExternalProgramsPreferencePage::OnFFmpegProcessFinished(int exitCode,
-   {
-     QString output = QTextCodec::codecForName("UTF-8")->toUnicode(m_FFmpegProcess->readAllStandardOutput());
- 
--    if (output.startsWith("ffmpeg"))
-+    if (output.startsWith("ffmpeg") || output.startsWith("avconv"))
-     {
-       m_Ui->ffmpegLineEdit->setText(m_FFmpegPath);
-       return;
 diff --git a/Plugins/org.mitk.gui.qt.pointsetinteraction/src/internal/QmitkPointSetInteractionView.cpp b/Plugins/org.mitk.gui.qt.pointsetinteraction/src/internal/QmitkPointSetInteractionView.cpp
 index dfbd27ae6a..1c40749014 100755
 --- a/Plugins/org.mitk.gui.qt.pointsetinteraction/src/internal/QmitkPointSetInteractionView.cpp
