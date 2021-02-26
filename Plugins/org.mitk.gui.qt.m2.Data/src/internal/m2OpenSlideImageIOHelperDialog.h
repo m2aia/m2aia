@@ -40,9 +40,11 @@ public:
   }
 
   int GetSelectedLevel() { return m_SelectedLevel; }
+  double GetSliceThickness() { return m_SliceThickness; }
 
 private:
   m2::OpenSlideImageIOHelperObject::Pointer m_Helper;
   Ui::OpenSlideImageIOHelperDialog m_Controls;
   int m_SelectedLevel = -1;
+  double m_SliceThickness = 1;
 };

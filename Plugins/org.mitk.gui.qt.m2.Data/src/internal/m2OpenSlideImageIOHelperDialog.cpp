@@ -142,5 +142,6 @@ void m2OpenSlideImageIOHelperDialog::UpdateImageInformation()
   connect(m_Controls.imageSelectionList, &QListWidget::currentItemChanged, [this](QListWidgetItem *item, auto prev) {
     MITK_INFO << "Selected level " << item->data(Qt::UserRole).toUInt();
     this->m_SelectedLevel = item->data(Qt::UserRole).toUInt();
+    this->m_SliceThickness = m_Controls.thickness->value();
   });
 }
