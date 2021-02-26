@@ -24,8 +24,6 @@ class QWidget;
 class QCheckBox;
 class QComboBox;
 class QSpinBox;
-class QmitkDirectoryListWidget;
-class QmitkFileListWidget;
 class ctkDirectoryButton;
 
 

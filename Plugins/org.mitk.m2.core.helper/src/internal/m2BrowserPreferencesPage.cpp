@@ -15,15 +15,11 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #include "m2BrowserPreferencesPage.h"
-#include "m2BrowserConstants.h"
 
 #include <berryIPreferencesService.h>
 #include <berryPlatform.h>
 
 #include <mitkExceptionMacro.h>
-
-#include "QmitkDirectoryListWidget.h"
-#include "QmitkFileListWidget.h"
 #include <ui_m2PreferencePage.h>
 
 #include <QFileDialog>
