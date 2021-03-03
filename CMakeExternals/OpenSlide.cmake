@@ -55,7 +55,10 @@ set(OpenSlide_DEPENDS ${proj})
         WORKING_DIRECTORY ${ep_prefix}
       )
       set(OpenSlide_DIR ${ep_prefix}/src/OpenSlide)
+    else()
+      mitkMacroEmptyExternalProject(${proj} "${proj_DEPENDENCIES}")
     endif()
+
   else()
     mitkMacroEmptyExternalProject(${proj} "${proj_DEPENDENCIES}")
   endif()

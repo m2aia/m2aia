@@ -70,7 +70,7 @@ private:
 
     for (int i = 0; i < vec.size(); i++)
     {
-      f << std::setprecision(128) << result[i];
+      f << std::setprecision(128) << vec[i];
       if (i < vec.size() - 1)
         f << delim;
     }
