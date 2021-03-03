@@ -23,16 +23,12 @@ Features
 
 Setup for development
 -----------
-M<sup>2</sup>aia Windows build instructions
-- https://github.com/jtfcordes/m2aia/wiki/Windows-build-instructions
 
 M<sup>2</sup>aia in app preferences
 - add path to local installation of elastix and transformix executabels (https://github.com/SuperElastix/elastix/releases)
 
-More details for MITK:
+Supported Platforms:
 - System requirments: https://docs.mitk.org/nightly/SupportedPlatformsPage.html
-- MITK build Instructions: https://docs.mitk.org/nightly/BuildInstructionsPage.html
-
 
 Projects that use M<sup>2</sup>aia:
 -----------------------------------
