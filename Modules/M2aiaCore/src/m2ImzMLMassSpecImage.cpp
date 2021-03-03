@@ -22,7 +22,7 @@ See LICENSE.txt for details.
 #include <m2Calibration.h>
 #include <m2ImzMLMassSpecImage.h>
 #include <m2Morphology.h>
-#include <m2NoiseEstimators.h>
+#include <m2MedianAbsoluteDeviation.h>
 #include <m2PeakDetection.h>
 #include <m2Process.hpp>
 #include <m2RunningMedian.h>
@@ -133,7 +133,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
       MITK_INFO << "Init mzAxis: " << mzs.front() << " " << mzs.back();
     }
     // mz subrange
-    auto subRes = m2::Peaks::Subrange(mzs, mz - tol, mz + tol);
+    auto subRes = m2::Signal::Subrange(mzs, mz - tol, mz + tol);
 
     const unsigned int offset_right = (mzs.size() - (subRes.first + subRes.second));
     const unsigned int offset_left = subRes.first;
@@ -200,8 +200,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
           switch (_BaseLineCorrectionStrategy)
           {
             case m2::BaselineCorrectionType::TopHat:
-              m2::Morphology<IntensityType>::erosion(ints, _BaselineCorrectionHWS, baseline);
-              m2::Morphology<IntensityType>::dilation(baseline, _BaselineCorrectionHWS, baseline);
+              m2::Signal::Erosion(ints, _BaselineCorrectionHWS, baseline);
+              m2::Signal::Dilation(baseline, _BaselineCorrectionHWS, baseline);
               std::transform(ints.begin(), ints.end(), baseline.begin(), ints.begin(), std::minus<>());
               break;
             case m2::BaselineCorrectionType::Median:
@@ -239,7 +239,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
             continue;
           }
           binaryDataToVector(f, spectrum.mzOffset, spectrum.mzLength, mzs); // !! read mass axis for each spectrum
-          auto subRes = m2::Peaks::Subrange(mzs, mz - tol, mz + tol);
+          auto subRes = m2::Signal::Subrange(mzs, mz - tol, mz + tol);
           if (subRes.second == 0)
           {
             imageAccess.SetPixelByIndex(spectrum.index + source._offset, 0);
@@ -652,7 +652,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
     if (_UseSubRange)
     {
-      auto subRes = m2::Peaks::Subrange(mzs, p->m_LowerMZBound, p->m_UpperMZBound);
+      auto subRes = m2::Signal::Subrange(mzs, p->m_LowerMZBound, p->m_UpperMZBound);
       intsOffsetBytes = subRes.first * sizeof(IntensityType);
       lenght = subRes.second;
 
@@ -731,7 +731,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
                     std::transform(std::begin(ints), std::end(ints), std::begin(ints), divides);
                     break;
                   case NormalizationStrategyType::TIC:
-                    val = m2::Calibration::TotalIonCurrent(std::begin(mzs), std::end(mzs), std::begin(ints));
+                    val = m2::Signal::TotalIonCurrent(std::begin(mzs), std::end(mzs), std::begin(ints));
                     std::transform(std::begin(ints), std::end(ints), std::begin(ints), divides);
                     break;
                   case NormalizationStrategyType::Sum:
@@ -787,8 +787,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
               switch (_BaslineCorrectionStrategy)
               {
                 case BaselineCorrectionType::TopHat:
-                  m2::Morphology<IntensityType>::erosion(ints, _BaselineCorrectionHalfWindowSize, baseline);
-                  m2::Morphology<IntensityType>::dilation(baseline, _BaselineCorrectionHalfWindowSize, baseline);
+                  m2::Signal::Erosion(ints, _BaselineCorrectionHalfWindowSize, baseline);
+                  m2::Signal::Dilation(baseline, _BaselineCorrectionHalfWindowSize, baseline);
                   break;
                 case BaselineCorrectionType::Median:
                   m2::RunMedian::apply(ints, _BaselineCorrectionHalfWindowSize, baseline);
@@ -866,7 +866,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
           tempList = std::move(peaksT.at(t));
 
           peaksT.at(t).clear();
-          m2::Peaks::binPeaks(std::begin(tempList),
+          m2::Signal::binPeaks(std::begin(tempList),
                               std::end(tempList),
                               std::back_inserter(peaksT.at(t)),
                               p->GetPeakPickingBinningTolerance() * 10e-6);
@@ -881,7 +881,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
       peaksT.clear();
 
       std::list<m2::MassValue> finalPeaks;
-      m2::Peaks::binPeaks(std::begin(mergeList),
+      m2::Signal::binPeaks(std::begin(mergeList),
                           std::end(mergeList),
                           std::back_inserter(finalPeaks),
                           p->GetPeakPickingBinningTolerance() * 10e-6);
@@ -989,7 +989,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
       {
         const auto tol = p->GetPeakPickingBinningTolerance();
         std::vector<m2::MassValue> binPeaks;
-        m2::Peaks::binPeaks(std::begin(peaks), std::end(peaks), std::back_inserter(binPeaks), tol * 10e-6);
+        m2::Signal::binPeaks(std::begin(peaks), std::end(peaks), std::back_inserter(binPeaks), tol * 10e-6);
 
         for (const auto &peak : binPeaks)
         {
@@ -1080,8 +1080,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
       switch (p->GetBaselineCorrectionStrategy())
       {
         case BaselineCorrectionType::TopHat:
-          m2::Morphology<IntensityType>::erosion(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
-          m2::Morphology<IntensityType>::dilation(baseline, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
+          m2::Signal::Erosion(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
+          m2::Signal::Dilation(baseline, p->GetBaseLinecorrectionHalfWindowSize(), baseline);
           break;
         case BaselineCorrectionType::Median:
           m2::RunMedian::apply(ints_get, p->GetBaseLinecorrectionHalfWindowSize(), baseline);

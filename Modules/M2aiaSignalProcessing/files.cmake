@@ -1,5 +1,5 @@
 set(H_FILES 
-  include/m2NoiseEstimators.h
+  include/m2MedianAbsoluteDeviation.h
   include/m2PeakDetection.h
   include/m2Smoothing.h
   include/m2Morphology.h
@@ -10,7 +10,7 @@ set(H_FILES
 
 set(CPP_FILES
   m2MassValue.cpp
-  m2NoiseEstimators.cpp
+  m2MedianAbsoluteDeviation.cpp
   m2PeakDetection.cpp
   m2Smoothing.cpp
   m2Morphology.cpp

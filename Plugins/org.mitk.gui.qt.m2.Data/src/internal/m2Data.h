@@ -149,12 +149,12 @@ protected:
                                         const berry::ISelection::ConstPointer &selection);*/
 
   Ui::imsDataControls m_Controls;
+  QWidget * m_Parent = nullptr;
+
   QThreadPool m_pool;
   m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Maximum;
 
   m2::IonImageReference::Pointer m_IonImageReference;
-
-  mitk::ColorSequenceRainbow m_ColorSequence;
 
   /*!
    * Main element holding a list of DataNodes containing MassSpecBaseData objects.

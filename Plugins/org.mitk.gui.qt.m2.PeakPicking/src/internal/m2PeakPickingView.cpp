@@ -28,7 +28,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2CommunicationService.h>
 #include <m2ImzMLMassSpecImage.h>
 #include <m2IonImageReference.h>
-#include <m2NoiseEstimators.h>
+#include <m2MedianAbsoluteDeviation.h>
 #include <m2PeakDetection.h>
 
 // mitk image
@@ -98,9 +98,9 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
 
         m = imageBase->MassAxis();
 
-        auto mad = m2::Noise::mad(s);
+        auto mad = m2::Signal::mad(s);
         std::vector<m2::MassValue> peaks;
-        m2::Peaks::localMaxima(std::begin(s),
+        m2::Signal::localMaxima(std::begin(s),
                                std::end(s),
                                std::begin(m),
                                std::back_inserter(peaks),
@@ -108,7 +108,7 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
                                mad * m_Controls.sbSNR->value());
         if (m_Controls.ckbMonoisotopic->isChecked())
         {
-          peaks = m2::Peaks::monoisotopic(peaks,
+          peaks = m2::Signal::monoisotopic(peaks,
                                           {3, 4, 5, 6, 7, 8, 9, 10},
                                           m_Controls.sbMinCor->value(),
                                           m_Controls.sbTolerance->value(),

@@ -276,7 +276,7 @@ namespace m2
             else
             {
               auto tol = input->GetMassPickingTolerance() * 10e-6 * mzs[i];
-              auto subRes = m2::Peaks::Subrange(mzs, mzs[i] - tol, mzs[i] + tol);
+              auto subRes = m2::Signal::Subrange(mzs, mzs[i] - tol, mzs[i] + tol);
               auto s = std::next(std::begin(ints), subRes.first);
               auto e = std::next(s, subRes.second);
               switch (input->GetIonImageGrabStrategy())

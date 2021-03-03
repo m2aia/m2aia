@@ -17,16 +17,16 @@ See LICENSE.txt for details.
 
 #include <M2aiaCoreExports.h>
 #include <array>
+#include <map>
 #include <itkMetaDataObject.h>
 #include <m2IMassSpecDataAccess.h>
 #include <m2IonImageReference.h>
-#include <map>
 #include <mitkBaseData.h>
 #include <mitkDataNode.h>
 #include <mitkImage.h>
-
 #include <m2MassValue.h>
 #include <set>
+
 
 namespace m2
 {
