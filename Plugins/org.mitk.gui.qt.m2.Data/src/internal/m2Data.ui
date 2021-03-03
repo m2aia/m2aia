@@ -170,6 +170,9 @@
               <property name="suffix">
                <string> ppm</string>
               </property>
+              <property name="decimals">
+               <number>4</number>
+              </property>
               <property name="maximum">
                <double>10000.000000000000000</double>
               </property>
@@ -674,10 +677,10 @@
                <string> ppm</string>
               </property>
               <property name="decimals">
-               <number>2</number>
+               <number>4</number>
               </property>
               <property name="maximum">
-               <double>1000.000000000000000</double>
+               <double>9999.000000000000000</double>
               </property>
               <property name="value">
                <double>75.000000000000000</double>
@@ -708,6 +711,9 @@
               </property>
               <property name="suffix">
                <string> m/z</string>
+              </property>
+              <property name="decimals">
+               <number>4</number>
               </property>
               <property name="maximum">
                <double>999999.000000000000000</double>
