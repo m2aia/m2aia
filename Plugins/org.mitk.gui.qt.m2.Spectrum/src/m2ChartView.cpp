@@ -89,7 +89,7 @@ void m2::ChartView::mouseDoubleClickEvent(QMouseEvent *event)
   auto mods = QGuiApplication::keyboardModifiers();
 
   auto p = this->chart()->mapToValue(event->pos());
-  emit(mouseDoubleClick(p.x(), p.y(), event->button(), mods));
+  emit(mouseDoubleClick(event->pos(), p.x(), p.y(), event->button(), mods));
   event->accept();
 }
 
@@ -98,7 +98,7 @@ void m2::ChartView::wheelEvent(QWheelEvent *event)
   auto mods = QGuiApplication::keyboardModifiers();
 
   auto p = this->chart()->mapToValue(event->pos());
-  emit(mouseWheel(p.x(), p.y(), event->angleDelta().y(), mods));
+  emit(mouseWheel(event->pos(), p.x(), p.y(), event->angleDelta().y(), mods));
   QChartView::wheelEvent(event);
   event->accept();
 }
@@ -120,7 +120,7 @@ void m2::ChartView::mouseMoveEvent(QMouseEvent *event)
 //  QRectF plotArea = chart()->plotArea();
 
   auto p = this->chart()->mapToValue(event->pos());
-  emit(mouseMove(p.x(), p.y(), event->button(), mods));
+  emit(mouseMove(event->pos(), p.x(), p.y(), event->button(), mods));
 
   QChartView::mouseMoveEvent(event);
   event->accept();
@@ -131,7 +131,7 @@ void m2::ChartView::mousePressEvent(QMouseEvent *event)
 
   auto mods = QGuiApplication::keyboardModifiers();
   auto p = this->chart()->mapToValue(event->pos());
-  emit(mousePress(p.x(), p.y(), event->button(), mods));
+  emit(mousePress(event->pos(), p.x(), p.y(), event->button(), mods));
   QChartView::mousePressEvent(event);
   // event->accept();
 }
@@ -141,7 +141,7 @@ void m2::ChartView::mouseReleaseEvent(QMouseEvent *event)
   auto mods = QGuiApplication::keyboardModifiers();
 
   auto p = this->chart()->mapToValue(event->pos());
-  emit(mouseRelease(p.x(), p.y(), event->button(), mods));
+  emit(mouseRelease(event->pos(), p.x(), p.y(), event->button(), mods));
 
   QChartView::mouseReleaseEvent(event);
   event->accept();

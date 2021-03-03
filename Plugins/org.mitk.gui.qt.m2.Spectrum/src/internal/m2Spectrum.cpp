@@ -16,6 +16,7 @@ See LICENSE.txt for details.
 
 #include "m2Spectrum.h"
 
+#include <QApplication>
 #include <QValueAxis>
 #include <QtConcurrent>
 #include <berryPlatformUI.h>
@@ -106,12 +107,12 @@ void m2Spectrum::DrawSelectedArea()
   }
 }
 
-void m2Spectrum::OnMousePress(qreal x, qreal y, Qt::MouseButton button, Qt::KeyboardModifiers mod)
+void m2Spectrum::OnMousePress(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod)
 {
   if (mod & Qt::AltModifier && !m_RangeSelectionStarted)
   {
     m_Controls.chartView->setRubberBand(QtCharts::QChartView::RubberBand::HorizontalRubberBand);
-    m_SelectedAreaStartX = x;
+    m_SelectedAreaStartX = mz;
     m_RangeSelectionStarted = true;
   }
 
@@ -120,11 +121,11 @@ void m2Spectrum::OnMousePress(qreal x, qreal y, Qt::MouseButton button, Qt::Keyb
     auto c = m_Controls.chartView->chart();
     const auto *xAx = dynamic_cast<QtCharts::QValueAxis *>(c->axes(Qt::Horizontal).front());
     const auto *yAx = dynamic_cast<QtCharts::QValueAxis *>(c->axes(Qt::Vertical).front());
-    if (x > xAx->min() && x < xAx->max() && y > yAx->min() && y < yAx->max())
+    if (mz > xAx->min() && mz < xAx->max() && intValue > yAx->min() && intValue < yAx->max())
     {
-      m_MouseDragCenterPos = x;
-      m_MouseDragLowerDelta = x - xAx->min();
-      m_MouseDragUpperDelta = xAx->max() - x;
+      m_MouseDragCenterPos = mz;
+      m_MouseDragLowerDelta = mz - xAx->min();
+      m_MouseDragUpperDelta = xAx->max() - mz;
       m_DraggingActive = true;
     }
   }
@@ -342,26 +343,51 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
   }
 }
 
-void m2Spectrum::OnMouseMove(qreal x, qreal /*y*/, Qt::MouseButton /*button*/, Qt::KeyboardModifiers /*mod*/)
+void m2Spectrum::OnMouseMove(
+  QPoint pos, qreal mz, qreal intValue, Qt::MouseButton /*button*/, Qt::KeyboardModifiers /*mod*/)
 {
-  sprintf(m_StatusBarTextBuffer, "m/z %.2f; %.2f%%", x, m_CurrentVisibleDataPoints * 100);
+  sprintf(m_StatusBarTextBuffer, "m/z %.4f; %.4f%%", mz, m_CurrentVisibleDataPoints * 100);
   mitk::StatusBar::GetInstance()->DisplayText(m_StatusBarTextBuffer);
+  const auto chart = m_Controls.chartView->chart();
+  const auto chartPos = chart->mapToPosition(QPoint(mz, intValue));
+
   if (m_DraggingActive)
   {
-    auto chart = m_Controls.chartView->chart();
-    const auto xPos = chart->mapToPosition(QPoint(x, 0)).x();
+    const auto xPos = chartPos.x();
     const auto xLastPos = chart->mapToPosition(QPoint(m_MouseDragCenterPos, 0)).x();
     const auto delta = xLastPos - xPos;
     // m_MouseDragCenterPos = x;
     chart->scroll(delta, 0);
   }
+
+  // inside draw area
+  if (!chart->series().empty())
+  {
+    if (((intValue > m_yAxis->min()) && (intValue < m_yAxis->max()) && (mz > m_xAxis->min()) && (mz < m_xAxis->max())))
+    {
+      QApplication::setOverrideCursor(QCursor(Qt::CrossCursor));
+      m_Controls.chartView->repaint();
+      m_Crosshair->setText(QString("mz: %1 \nint: %2 ").arg(mz).arg(intValue));
+      m_Crosshair->setAnchor(pos);
+
+      m_Crosshair->setZValue(11);
+      m_Crosshair->updateGeometry();
+      m_Crosshair->show();
+    }
+    else
+    {
+      QApplication::setOverrideCursor(QCursor(Qt::ArrowCursor));
+      m_Crosshair->hide();
+      m_Controls.chartView->repaint();
+    }
+  }
 }
 
-void m2Spectrum::OnMouseRelease(qreal x, qreal /*y*/, Qt::MouseButton button, Qt::KeyboardModifiers mod)
+void m2Spectrum::OnMouseRelease(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod)
 {
   if (mod & Qt::AltModifier && m_RangeSelectionStarted)
   {
-    m_SelectedAreaEndX = x;
+    m_SelectedAreaEndX = mz;
   }
   if (m_RangeSelectionStarted)
   {
@@ -381,28 +407,29 @@ void m2Spectrum::OnMouseRelease(qreal x, qreal /*y*/, Qt::MouseButton button, Qt
   }
 }
 
-void m2Spectrum::OnMouseDoubleClick(qreal x, qreal y, Qt::MouseButton /*button*/, Qt::KeyboardModifiers /*mod*/)
+void m2Spectrum::OnMouseDoubleClick(
+  QPoint pos, qreal mz, qreal intValue, Qt::MouseButton /*button*/, Qt::KeyboardModifiers /*mod*/)
 {
-  MITK_INFO << x << " " << y;
-  if (y < m_yAxis->min())
+  if (intValue < m_yAxis->min())
   {
     m_xAxis->setRange(m_CurrentMinMZ, m_CurrentMaxMZ);
   }
-  else if (x < m_xAxis->min())
+  else if (mz < m_xAxis->min())
   {
     m_yAxis->setRange(0, m_CurrentMaxIntensity);
   }
   else
   {
-    emit m2::CommunicationService::Instance()->GrabIonImage(x, -1);
+    emit m2::CommunicationService::Instance()->GrabIonImage(mz, -1);
   }
 }
 
-void m2Spectrum::OnMouseWheel(qreal x, qreal y, int angle, Qt::KeyboardModifiers mod)
+void m2Spectrum::OnMouseWheel(QPoint pos, qreal mz, qreal intValue, int angle, Qt::KeyboardModifiers mod)
 {
   // const auto c = m_Controls.chartView->chart();
 
-  bool bothAxes = ((y > m_yAxis->min()) && (y < m_yAxis->max()) && (x > m_xAxis->min()) && (x < m_xAxis->max()));
+  bool bothAxes =
+    ((intValue > m_yAxis->min()) && (intValue < m_yAxis->max()) && (mz > m_xAxis->min()) && (mz < m_xAxis->max()));
 
   if (angle != 0)
   {
@@ -412,15 +439,15 @@ void m2Spectrum::OnMouseWheel(qreal x, qreal y, int angle, Qt::KeyboardModifiers
       zoomFactor = 0.35;
     }
 
-    if ((y < m_yAxis->min()) || bothAxes)
+    if ((intValue < m_yAxis->min()) || bothAxes)
     {
       const int zoomDirection = angle / std::abs(angle);
-      const auto d0 = std::abs(x - m_xAxis->min()) * zoomFactor * zoomDirection;
-      const auto d1 = std::abs(x - m_xAxis->max()) * zoomFactor * zoomDirection;
+      const auto d0 = std::abs(mz - m_xAxis->min()) * zoomFactor * zoomDirection;
+      const auto d1 = std::abs(mz - m_xAxis->max()) * zoomFactor * zoomDirection;
       m_xAxis->setRange(m_xAxis->min() + d0, m_xAxis->max() - d1);
     }
 
-    if ((x < m_xAxis->min()) || (bothAxes && (mod == Qt::ShiftModifier)))
+    if ((mz < m_xAxis->min()) || (bothAxes && (mod == Qt::ShiftModifier)))
     {
       const int zoomDirection = angle / std::abs(angle);
       const auto d1 = m_yAxis->max() * (1 - zoomDirection * zoomFactor);
@@ -616,14 +643,14 @@ void m2Spectrum::CreateQchartViewMenu()
       connect(action, &QAction::triggered, this, [node, this]() { OnSerieFocused(node); });
     }
 
-	for (auto &kv : this->m_PeakSeries)
-	{
-		auto action = new QAction(m_FocusMenu);
-		m_FocusMenu->addAction(action);
-		action->setText(kv.first->GetName().c_str());
-		auto node = kv.first;
-		connect(action, &QAction::triggered, this, [node, this]() { OnSerieFocused(node); });
-	}
+    for (auto &kv : this->m_PeakSeries)
+    {
+      auto action = new QAction(m_FocusMenu);
+      m_FocusMenu->addAction(action);
+      action->setText(kv.first->GetName().c_str());
+      auto node = kv.first;
+      connect(action, &QAction::triggered, this, [node, this]() { OnSerieFocused(node); });
+    }
 
     m_Menu->exec(m_Controls.chartView->viewport()->mapToGlobal(pos));
   });
@@ -645,6 +672,9 @@ void m2Spectrum::CreateQChartView()
   chart->legend()->setShowToolTips(true);
   chart->setAnimationOptions(QtCharts::QChart::NoAnimation);
   chart->setTheme(QtCharts::QChart::ChartThemeDark);
+
+  m_Crosshair = new m2Crosshair(chart);
+  m_Crosshair->hide();
 
   connect(m_Controls.chartView, &m2::ChartView::mouseDoubleClick, this, &m2Spectrum::OnMouseDoubleClick);
   connect(m_Controls.chartView, &m2::ChartView::mousePress, this, &m2Spectrum::OnMousePress);
