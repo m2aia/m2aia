@@ -39,11 +39,24 @@ namespace m2
     mitk::CustomMimeType OPENSLIDE_MIMETYPE()
     {
       mitk::CustomMimeType mimeType(OPENSLIDE_MIMETYPE_NAME());
+	  // Aperio
       mimeType.AddExtension("svs");
+	  // Sakura
+      mimeType.AddExtension("svslide");
+	  // Leica
       mimeType.AddExtension("scn");
-      mimeType.AddExtension("tif");
+      // Hamamatsu
+      mimeType.AddExtension("vms");
+      mimeType.AddExtension("vmu");
       mimeType.AddExtension("ndpi");
-      mimeType.SetCategory("Images");
+	  // Aperio, Ventana, Generic tiled TIFF
+      mimeType.AddExtension("tif");
+	  // Ventana
+      mimeType.AddExtension("bif");
+	  // Philips
+      mimeType.AddExtension("tiff");
+      
+	  mimeType.SetCategory("Images");
       mimeType.SetComment("OpenSlide");
       return mimeType;
     }

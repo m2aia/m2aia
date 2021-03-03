@@ -14,14 +14,14 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <M2aiaCoreExports.h>
+#include <M2aiaOpenSlideIOExports.h>
 #include <itkOpenSlideImageIO.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
 
 namespace m2
 {
-  class M2AIACORE_EXPORT OpenSlideImageIOHelperObject : public mitk::BaseData
+  class M2AIAOPENSLIDEIO_EXPORT OpenSlideImageIOHelperObject : public mitk::BaseData
   {
   public:
     mitkClassMacro(OpenSlideImageIOHelperObject, mitk::BaseData);

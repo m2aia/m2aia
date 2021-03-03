@@ -2,8 +2,6 @@ set(MITK_MODULE_NAME_PREFIX "")
 
 MITK_CREATE_MODULE(
   DEPENDS MitkCore M2aiaSignalProcessing
-  PACKAGE_DEPENDS PRIVATE ITK|IOOpenSlide
-  PRIVATE Boost Eigen
   )
 
   
