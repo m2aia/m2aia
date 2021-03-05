@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>587</width>
-    <height>573</height>
+    <width>894</width>
+    <height>776</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -88,6 +88,60 @@
              <property name="text">
               <string>Slice thickness</string>
              </property>
+            </widget>
+           </item>
+           <item row="1" column="0">
+            <widget class="QLabel" name="label_2">
+             <property name="text">
+              <string>Import</string>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="1">
+            <widget class="QComboBox" name="comboBox">
+             <property name="currentIndex">
+              <number>0</number>
+             </property>
+             <item>
+              <property name="text">
+               <string>RGB(A)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Vector Image</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Separated Channels (RGB)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Separated Channels (RGBA)</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Channel 0</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Channel 1</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Channel 2</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Channel 3</string>
+              </property>
+             </item>
             </widget>
            </item>
           </layout>
