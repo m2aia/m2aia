@@ -52,20 +52,15 @@ private:
   double m_SliceThickness = 1;
 
   /*This function casts a itk RGBA Image, to a itk varaible lenght vector image with 3 components. */
-  static itk::VectorImage<unsigned char, 2>::Pointer ConvertRGBAToVectorImage(
-    itk::Image<itk::RGBAPixel<unsigned char>, 2>::Pointer rgbaImage)
+  static itk::VectorImage<unsigned char, 3>::Pointer ConvertRGBAToVectorImage(
+    itk::Image<itk::RGBAPixel<unsigned char>, 3>::Pointer rgbaImage)
   {
-    itk::VectorImage<unsigned char, 2>::IndexType start;
-    start[0] = 0;
-    start[1] = 0;
-
-    auto size = rgbaImage->GetLargestPossibleRegion().GetSize();
-
-    itk::VectorImage<unsigned char, 2>::RegionType region;
+    const auto size = rgbaImage->GetLargestPossibleRegion().GetSize();
+	itk::VectorImage<unsigned char, 3>::RegionType region;
     region.SetSize(size);
-    region.SetIndex(start);
+    region.SetIndex({0,0,0});
 
-    auto vectorImage = itk::VectorImage<unsigned char, 2>::New();
+    auto vectorImage = itk::VectorImage<unsigned char, 3>::New();
     vectorImage->SetRegions(region);
     vectorImage->SetOrigin(rgbaImage->GetOrigin());
     vectorImage->SetSpacing(rgbaImage->GetSpacing());
@@ -73,10 +68,10 @@ private:
     vectorImage->SetVectorLength(4);
     vectorImage->Allocate();
 
-    itk::ImageRegionConstIterator<itk::Image<itk::RGBAPixel<unsigned char>, 2>> rgbaIterator(
+    itk::ImageRegionConstIterator<itk::Image<itk::RGBAPixel<unsigned char>, 3>> rgbaIterator(
       rgbaImage, rgbaImage->GetLargestPossibleRegion());
 
-    itk::ImageRegionIterator<itk::VectorImage<unsigned char, 2>> vectorIterator(
+    itk::ImageRegionIterator<itk::VectorImage<unsigned char, 3>> vectorIterator(
       vectorImage, vectorImage->GetLargestPossibleRegion());
 
     rgbaIterator.GoToBegin();
@@ -96,30 +91,27 @@ private:
   }
 
   /*This function casts a itk RGBA Image, to a itk varaible lenght vector image with 3 components. */
-  static itk::Image<unsigned char, 2>::Pointer ConvertRGBAToImage(
-    itk::Image<itk::RGBAPixel<unsigned char>, 2>::Pointer rgbaImage, unsigned int component)
+  static itk::Image<unsigned char, 3>::Pointer ConvertRGBAToImage(
+    itk::Image<itk::RGBAPixel<unsigned char>, 3>::Pointer rgbaImage, unsigned int component)
   {
-    itk::Image<unsigned char, 2>::IndexType start;
-    start[0] = 0;
-    start[1] = 0;
+  
+    const auto size = rgbaImage->GetLargestPossibleRegion().GetSize();
 
-    auto size = rgbaImage->GetLargestPossibleRegion().GetSize();
-
-    itk::Image<unsigned char, 2>::RegionType region;
+    itk::Image<unsigned char, 3>::RegionType region;
     region.SetSize(size);
-    region.SetIndex(start);
+    region.SetIndex({0,0,0});
 
-    auto image = itk::Image<unsigned char, 2>::New();
+    auto image = itk::Image<unsigned char, 3>::New();
     image->SetRegions(region);
     image->SetOrigin(rgbaImage->GetOrigin());
     image->SetSpacing(rgbaImage->GetSpacing());
     image->SetDirection(rgbaImage->GetDirection());
     image->Allocate();
 
-    itk::ImageRegionConstIterator<itk::Image<itk::RGBAPixel<unsigned char>, 2>> rgbaIterator(
+    itk::ImageRegionConstIterator<itk::Image<itk::RGBAPixel<unsigned char>, 3>> rgbaIterator(
       rgbaImage, rgbaImage->GetLargestPossibleRegion());
 
-    itk::ImageRegionIterator<itk::Image<unsigned char, 2>> imageIterator(image, image->GetLargestPossibleRegion());
+    itk::ImageRegionIterator<itk::Image<unsigned char, 3>> imageIterator(image, image->GetLargestPossibleRegion());
 
     rgbaIterator.GoToBegin();
     imageIterator.GoToBegin();

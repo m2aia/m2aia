@@ -924,6 +924,7 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
       auto data = dialog->GetData();
       if (data.size() == 1)
       {
+		
         auto node = mitk::DataNode::New();
         node->SetData(data.back());
         node->SetName(

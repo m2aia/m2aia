@@ -161,14 +161,18 @@ std::vector<mitk::Image::Pointer> m2OpenSlideImageIOHelperDialog::GetData()
   // read the image data
   IO->SetLevel(this->GetSelectedLevel());
 
-  using ItkRGBAImageType = itk::Image<itk::RGBAPixel<unsigned char>, 2>;
-  using ItkVectorImageType = itk::VectorImage<unsigned char, 2>;
-
+  using ItkRGBAImageType = itk::Image<itk::RGBAPixel<unsigned char>, 3>;
+  
   auto reader = itk::ImageFileReader<ItkRGBAImageType>::New();
   reader->SetImageIO(IO);
   reader->SetFileName(IO->GetFileName());
   reader->Update();
   ItkRGBAImageType::Pointer itkImage = reader->GetOutput();
+  auto s = itkImage->GetSpacing();
+  s[0] *= 1e-3;
+  s[1] *= 1e-3;
+  s[2] = this->GetSliceThickness();
+  itkImage->SetSpacing(s);
 
   if (m_Controls.comboBox->currentIndex() == 0) // RGBA
   {
