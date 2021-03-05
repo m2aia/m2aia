@@ -921,33 +921,29 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
     auto result = dialog->exec();
     if (result == QDialog::Accepted)
     {
-      auto IO = openSlideIOHelper->GetOpenSlideIO();
-
-	  // read the image data
-      IO->SetLevel(dialog->GetSelectedLevel());
-      mitk::ItkImageIO levelReader(IO); // wrapp the itkOpenSlideIO into an mitkItkImageIO object
-      levelReader.mitk::AbstractFileIOReader::SetInput(IO->GetFileName());
-      auto dataVec = levelReader.Read();
-      auto image = dynamic_cast<mitk::Image *>(dataVec.begin()->GetPointer());
-	  
-	  // 2D image to 3D slice image
-      auto filter = mitk::Image2DToImage3DSliceFilter::New();
-      filter->SetInput(image);
-      filter->Update();
-      auto image3d = filter->GetOutput();
-
-      // convert spacings from micrometer to millimeter
-      auto spacing = image3d->GetGeometry()->GetSpacing();
-      for (const int &i : {0, 1})
-        spacing[i] *= 1e-3;
-      spacing[2] = dialog->GetSliceThickness(); // apply thickness from dialog
-      image3d->GetGeometry()->SetSpacing(spacing);
-
-	  // add image to data storage
-      auto node = mitk::DataNode::New();
-      node->SetData(image3d);
-      node->SetName(itksys::SystemTools::GetFilenameWithoutExtension(IO->GetFileName()));
-      this->GetDataStorage()->Add(node);
+      auto data = dialog->GetData();
+      if (data.size() == 1)
+      {
+		
+        auto node = mitk::DataNode::New();
+        node->SetData(data.back());
+        node->SetName(
+          itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName()));
+        this->GetDataStorage()->Add(node);
+      }
+      else
+      {
+        unsigned int i = 0;
+        for (auto &I : data)
+        {
+          auto node = mitk::DataNode::New();
+          node->SetData(I);
+          node->SetName(
+            itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName()) + "_" +
+            std::to_string(i++));
+          this->GetDataStorage()->Add(node);
+        }
+      }
     }
     // remove IO helper object from DS
     GetDataStorage()->Remove(node);

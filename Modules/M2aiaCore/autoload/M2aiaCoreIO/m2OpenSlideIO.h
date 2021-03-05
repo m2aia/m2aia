@@ -56,7 +56,7 @@ namespace m2
 	  // Philips
       mimeType.AddExtension("tiff");
       
-	  mimeType.SetCategory("Images");
+	  mimeType.SetCategory("OpenSlide");
       mimeType.SetComment("OpenSlide");
       return mimeType;
     }

@@ -18,10 +18,17 @@ See LICENSE.txt for details.
 
 #include <QPixmap>
 #include <QmitkNodeDescriptorManager.h>
+#include <itkImageDuplicator.h>
+#include <itkImageFileReader.h>
 #include <itkMetaDataObject.h>
+#include <itkRGBToVectorImageAdaptor.h>
+#include <itkVectorImage.h>
+#include <itkVectorImageToImageAdaptor.h>
 #include <mitkDataNode.h>
 #include <mitkExtractSliceFilter.h>
 #include <mitkImage.h>
+#include <mitkImage2DToImage3DSliceFilter.h>
+#include <mitkImageCast.h>
 #include <mitkItkImageIO.h>
 #include <qpushbutton.h>
 #include <vtkLookupTable.h>
@@ -139,9 +146,98 @@ void m2OpenSlideImageIOHelperDialog::UpdateImageInformation()
     m_Controls.imageSelectionList->addItem(item);
   }
 
-  connect(m_Controls.imageSelectionList, &QListWidget::currentItemChanged, [this](QListWidgetItem *item, auto /*prev*/) {
-    MITK_INFO << "Selected level " << item->data(Qt::UserRole).toUInt();
-    this->m_SelectedLevel = item->data(Qt::UserRole).toUInt();
-    this->m_SliceThickness = m_Controls.thickness->value();
-  });
+  connect(
+    m_Controls.imageSelectionList, &QListWidget::currentItemChanged, [this](QListWidgetItem *item, auto /*prev*/) {
+      MITK_INFO << "Selected level " << item->data(Qt::UserRole).toUInt();
+      this->m_SelectedLevel = item->data(Qt::UserRole).toUInt();
+      this->m_SliceThickness = m_Controls.thickness->value();
+    });
+}
+
+std::vector<mitk::Image::Pointer> m2OpenSlideImageIOHelperDialog::GetData()
+{
+  auto IO = m_Helper->GetOpenSlideIO();
+
+  // read the image data
+  IO->SetLevel(this->GetSelectedLevel());
+
+  using ItkRGBAImageType = itk::Image<itk::RGBAPixel<unsigned char>, 3>;
+  
+  auto reader = itk::ImageFileReader<ItkRGBAImageType>::New();
+  reader->SetImageIO(IO);
+  reader->SetFileName(IO->GetFileName());
+  reader->Update();
+  ItkRGBAImageType::Pointer itkImage = reader->GetOutput();
+  auto s = itkImage->GetSpacing();
+  s[0] *= 1e-3;
+  s[1] *= 1e-3;
+  s[2] = this->GetSliceThickness();
+  itkImage->SetSpacing(s);
+
+  if (m_Controls.comboBox->currentIndex() == 0) // RGBA
+  {
+    mitk::Image::Pointer image;
+    mitk::CastToMitkImage(itkImage, image);
+    return {image};
+  }
+  else if (m_Controls.comboBox->currentIndex() == 1) // vector
+  {
+    auto vectorImage = ConvertRGBAToVectorImage(itkImage);
+    mitk::Image::Pointer image;
+    mitk::CastToMitkImage(vectorImage, image);
+    return {image};
+  }
+  else if (m_Controls.comboBox->currentIndex() == 2) // split images RGB
+  {
+    std::vector<mitk::Image::Pointer> result;
+    for (unsigned int c : {0, 1, 2})
+    {
+      auto componentImage = ConvertRGBAToImage(itkImage, c);
+      mitk::Image::Pointer image;
+      mitk::CastToMitkImage(componentImage, image);
+      result.push_back(image);
+    }
+    return result;
+  }
+  else if (m_Controls.comboBox->currentIndex() == 3) // split images RGBA
+  {
+    std::vector<mitk::Image::Pointer> result;
+    for (unsigned int c : {0, 1, 2, 3})
+    {
+      auto componentImage = ConvertRGBAToImage(itkImage, c);
+      mitk::Image::Pointer image;
+      mitk::CastToMitkImage(componentImage, image);
+      result.push_back(image);
+    }
+    return result;
+  }
+  else if (m_Controls.comboBox->currentIndex() == 4) // Channel 0
+  {
+    auto componentImage = ConvertRGBAToImage(itkImage, 0);
+    mitk::Image::Pointer image;
+    mitk::CastToMitkImage(componentImage, image);
+    return {image};
+  }
+  else if (m_Controls.comboBox->currentIndex() == 5) // Channel 1
+  {
+    auto componentImage = ConvertRGBAToImage(itkImage, 1);
+    mitk::Image::Pointer image;
+    mitk::CastToMitkImage(componentImage, image);
+    return {image};
+  }
+  else if (m_Controls.comboBox->currentIndex() == 6) // Channel 2
+  {
+    auto componentImage = ConvertRGBAToImage(itkImage, 2);
+    mitk::Image::Pointer image;
+    mitk::CastToMitkImage(componentImage, image);
+    return {image};
+  }
+  else if (m_Controls.comboBox->currentIndex() == 7) // Channel 3
+  {
+    auto componentImage = ConvertRGBAToImage(itkImage, 3);
+    mitk::Image::Pointer image;
+    mitk::CastToMitkImage(componentImage, image);
+    return {image};
+  }
+  return {};
 }
