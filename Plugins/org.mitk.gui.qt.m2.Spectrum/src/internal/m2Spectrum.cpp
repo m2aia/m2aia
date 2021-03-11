@@ -150,7 +150,7 @@ void m2Spectrum::SetDefaultScatterSeriesStyle(QtCharts::QScatterSeries *series)
 
 void m2Spectrum::CreateLevelData(const mitk::DataNode *node)
 {
-  if (auto image = dynamic_cast<m2::MSImageBase *>(node->GetData()))
+  if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     // determine level of details
     const auto &mzs = image->MassAxis();
@@ -162,7 +162,7 @@ void m2Spectrum::CreateLevelData(const mitk::DataNode *node)
     };
     if (auto imzMLImage = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
     {
-      if (imzMLImage->GetSourceList().front().ImportMode == m2::ImzMLFormatType::ContinuousCentroid)
+      if (imzMLImage->GetSourceList().front().ImportMode == m2::SpectrumFormatType::ContinuousCentroid)
       {
         PushBackFormat = [](auto &s, auto &&p) -> void {
           s.push_back({p.x(), -0.3});
@@ -225,7 +225,7 @@ void m2Spectrum::CreateLevelData(const mitk::DataNode *node)
 
 void m2Spectrum::CreatePeakData(const mitk::DataNode *node)
 {
-  if (auto image = dynamic_cast<m2::MSImageBase *>(node->GetData()))
+  if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     // determine level of details
     const auto &mzs = image->MassAxis();
@@ -260,14 +260,14 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
 {
   if (!node)
     return;
-  if (dynamic_cast<m2::MSImageBase *>(node->GetData()))
+  if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     auto chart = m_Controls.chartView->chart();
     bool isCentroidSpectrum = false;
     if (auto imzMLImage = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
     {
-      isCentroidSpectrum |= imzMLImage->GetSourceList().front().ImportMode == m2::ImzMLFormatType::ContinuousCentroid;
-      isCentroidSpectrum |= imzMLImage->GetSourceList().front().ImportMode == m2::ImzMLFormatType::ProcessedCentroid;
+      isCentroidSpectrum |= imzMLImage->GetSourceList().front().ImportMode == m2::SpectrumFormatType::ContinuousCentroid;
+      isCentroidSpectrum |= imzMLImage->GetSourceList().front().ImportMode == m2::SpectrumFormatType::ProcessedCentroid;
     }
 
     const unsigned numSeries = m_LineSeries.size() + m_ScatterSeries.size() + m_PeakSeries.size();
@@ -346,8 +346,7 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
 void m2Spectrum::OnMouseMove(
   QPoint pos, qreal mz, qreal intValue, Qt::MouseButton /*button*/, Qt::KeyboardModifiers /*mod*/)
 {
-  sprintf(m_StatusBarTextBuffer, "m/z %.4f; %.4f%%", mz, m_CurrentVisibleDataPoints * 100);
-  mitk::StatusBar::GetInstance()->DisplayText(m_StatusBarTextBuffer);
+  
   const auto chart = m_Controls.chartView->chart();
   const auto chartPos = chart->mapToPosition(QPoint(mz, intValue));
 
@@ -356,7 +355,6 @@ void m2Spectrum::OnMouseMove(
     const auto xPos = chartPos.x();
     const auto xLastPos = chart->mapToPosition(QPoint(m_MouseDragCenterPos, 0)).x();
     const auto delta = xLastPos - xPos;
-    // m_MouseDragCenterPos = x;
     chart->scroll(delta, 0);
   }
 
@@ -365,9 +363,9 @@ void m2Spectrum::OnMouseMove(
   {
     if (((intValue > m_yAxis->min()) && (intValue < m_yAxis->max()) && (mz > m_xAxis->min()) && (mz < m_xAxis->max())))
     {
-      QApplication::setOverrideCursor(QCursor(Qt::CrossCursor));
+      
       m_Controls.chartView->repaint();
-      m_Crosshair->setText(QString("mz: %1 \nint: %2 ").arg(mz).arg(intValue));
+      m_Crosshair->setText(QString("%2 @ %1").arg(mz).arg(intValue, 0, 'E', 3));
       m_Crosshair->setAnchor(pos);
 
       m_Crosshair->setZValue(11);
@@ -376,7 +374,6 @@ void m2Spectrum::OnMouseMove(
     }
     else
     {
-      QApplication::setOverrideCursor(QCursor(Qt::ArrowCursor));
       m_Crosshair->hide();
       m_Controls.chartView->repaint();
     }
@@ -396,7 +393,7 @@ void m2Spectrum::OnMouseRelease(QPoint pos, qreal mz, qreal intValue, Qt::MouseB
     const auto mz = (m_SelectedAreaEndX + m_SelectedAreaStartX) * 0.5;
     const auto tol = std::abs(m_SelectedAreaEndX - m_SelectedAreaStartX) * 0.5;
 
-    emit m2::CommunicationService::Instance()->GrabIonImage(mz, tol);
+    emit m2::CommunicationService::Instance()->GenerateImageData(mz, tol);
   }
   m_RangeSelectionStarted = false;
   m_Controls.chartView->setRubberBand(QtCharts::QChartView::RubberBand::NoRubberBand);
@@ -420,7 +417,7 @@ void m2Spectrum::OnMouseDoubleClick(
   }
   else
   {
-    emit m2::CommunicationService::Instance()->GrabIonImage(mz, -1);
+    emit m2::CommunicationService::Instance()->GenerateImageData(mz, -1);
   }
 }
 
@@ -497,7 +494,7 @@ void m2Spectrum::CreateQtPartControl(QWidget *parent)
 
   // 20201023: use communciation service
   auto serviceRef = m2::CommunicationService::Instance();
-  connect(serviceRef, SIGNAL(MassRangeChanged(qreal, qreal)), this, SLOT(OnMassRangeChanged(qreal, qreal)));
+  connect(serviceRef, SIGNAL(RangeChanged(qreal, qreal)), this, SLOT(OnMassRangeChanged(qreal, qreal)));
   connect(serviceRef,
           SIGNAL(MSImageNodeAdded(const mitk::DataNode *)),
           this,
@@ -686,7 +683,7 @@ void m2Spectrum::CreateQChartView()
 void m2Spectrum::OnSerieFocused(const mitk::DataNode *node)
 {
   UpdateSeriesMinMaxValues();
-  if (auto image = dynamic_cast<m2::MSImageBase *>(node->GetData()))
+  if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     if (m_LineTypeLevelData.find(node) != std::end(m_LineTypeLevelData))
     {
@@ -739,6 +736,7 @@ void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
     m_Controls.chartView->chart()->removeSeries(m_ScatterSeries[node]);
     m_ScatterSeries.erase(node);
   }
+ 
 }
 
 void m2Spectrum::OnLegnedHandleMarkerClicked()
@@ -863,7 +861,7 @@ void m2Spectrum::OnRangeChangedAxisY(qreal min, qreal max)
 
 void m2Spectrum::OnUpdateScatterSeries(const mitk::DataNode *node)
 {
-  auto img = dynamic_cast<m2::MSImageBase *>(node->GetData());
+  auto img = dynamic_cast<m2::SpectrumImageBase *>(node->GetData());
   const auto &peaks = img->GetPeaks();
   const auto &data = m_LineTypeLevelData[node][m_CurrentOverviewSpectrumType][0];
 
@@ -925,7 +923,7 @@ void m2Spectrum::UpdateLineSeriesWindow(const mitk::DataNode *node)
 
 void m2Spectrum::UpdateZoomLevel(const mitk::DataNode *node)
 {
-  auto image = dynamic_cast<m2::MSImageBase *>(node->GetData());
+  auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData());
   const auto &mzs = image->MassAxis();
   // determine how many points of the original data are visible
   const auto axesMin = m_xAxis->min();

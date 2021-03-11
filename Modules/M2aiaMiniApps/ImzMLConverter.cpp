@@ -70,16 +70,16 @@ int main(int argc, char *argv[])
     imzMLImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(sm_strategy));
     imzMLImage->SetBaseLinecorrectionHalfWindowSize(sm_hws);
 
-    imzMLImage->SetPeakPickingBinningTolerance(binning_tol);
-    imzMLImage->SetMassPickingTolerance(centroids_tol);
+    imzMLImage->SetBinningTolerance(binning_tol);
+    imzMLImage->SetTolerance(centroids_tol);
     imzMLImage->InitializeImageAccess();
 
-    imzMLImage->SetExportMode(m2::ImzMLFormatType::ContinuousProfile);
+    imzMLImage->SetExportMode(m2::SpectrumFormatType::ContinuousProfile);
     imzMLImage->SetIntsOutputType(static_cast<m2::NumericType>(int_type));
     imzMLImage->SetMzsOutputType(static_cast<m2::NumericType>(mzs_type));
 
     if (mz > 0)
-      imzMLImage->GrabIonImage(mz, 10e-6 * tol * mz, nullptr, imzMLImage);
+      imzMLImage->GenerateImageData(mz, 10e-6 * tol * mz, nullptr, imzMLImage);
 
     
 

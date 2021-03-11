@@ -86,12 +86,22 @@ void m2Position::Move(std::array<int, 2> &&vec)
   if (data)
   {
     // test if this data item is an image or not (could also be a surface or something totally different)
-    m2::MSImageBase *image = dynamic_cast<m2::MSImageBase *>(data);
-    if (image)
+    
+    if (m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data))
     {
       image->ApplyMoveOriginOperation(vec);
-      RequestRenderWindowUpdate();
     }
+    else if (mitk::Image *image = dynamic_cast<mitk::Image *>(data))
+    {
+      auto geometry = image->GetGeometry();
+      auto pos = geometry->GetOrigin();
+      auto space = geometry->GetSpacing();
+      pos[0] = pos[0] + vec.at(0) * space[0];
+      pos[1] = pos[1] + vec.at(1) * space[1];
+      geometry->SetOrigin(pos);
+	}
+
+    RequestRenderWindowUpdate();
     auto deriv = GetDataStorage()->GetDerivations(node, mitk::TNodePredicateDataType<mitk::PointSet>::New());
     if (deriv->Size())
     {
@@ -121,7 +131,7 @@ void m2Position::Mirror(int w)
   if (data)
   {
     // test if this data item is an image or not (could also be a surface or something totally different)
-    m2::MSImageBase *image = dynamic_cast<m2::MSImageBase *>(data);
+    m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data);
     if (image)
     {
       std::unique_ptr<mitk::ApplyTransformMatrixOperation> op;
@@ -151,7 +161,7 @@ void m2Position::Rotate(int angleDeg)
   if (data)
   {
     // test if this data item is an image or not (could also be a surface or something totally different)
-    m2::MSImageBase *image = dynamic_cast<m2::MSImageBase *>(data);
+    m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data);
     std::unique_ptr<mitk::RotationOperation> op;
     mitk::ScalarType rotAx[3] = {0, 0, 1};
     op.reset(new mitk::RotationOperation(

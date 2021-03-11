@@ -29,7 +29,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryIWorkbenchWindow.h>
 #include <ctkDoubleSpinBox.h>
 #include <ctkRangeWidget.h>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <m2MultiSliceFilter.h>
 #include <m2PcaImageFilter.h>
 #include <m2TSNEImageFilter.h>
@@ -99,7 +99,7 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
   std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs;
   for (auto n : *nodes)
   {
-    auto img = dynamic_cast<m2::MSImageBase *>(n->GetData());
+    auto img = dynamic_cast<m2::SpectrumImageBase *>(n->GetData());
     auto &refs = img->GetIonImageReferenceVector();
     tableRefs.insert(std::begin(refs), std::end(refs));
   }
@@ -115,7 +115,7 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
     m_TableIndexToIonImageRefMap[tableRowPosition] = ref;
     for (auto node : *nodes)
     {
-      auto msImage = dynamic_cast<m2::MSImageBase *>(node->GetData());
+      auto msImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData());
       auto &ionImages = m_ContainerMap[node.GetPointer()];
       auto &ionReferences = msImage->GetIonImageReferenceVector();
 
@@ -129,8 +129,8 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
           auto geom = msImage->GetGeometry()->Clone();
           auto maskImage = msImage->GetMaskImage();
           mitk::Image::Pointer ionImage = mitk::Image::New();
-          ionImage->Initialize(mitk::MakeScalarPixelType<m2::IonImagePixelType>(), *geom);
-          msImage->GrabIonImage(ref->mz, ref->tol, maskImage, ionImage);
+          ionImage->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), *geom);
+          msImage->GenerateImageData(ref->mz, ref->tol, maskImage, ionImage);
           ionImages[ref] = ionImage;
         }
       }
@@ -202,7 +202,7 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
       connect(remove, &QAction::triggered, this, [=]() {
         for (auto node : *nodes)
         {
-          if (auto image = dynamic_cast<m2::MSImageBase *>(node->GetData()))
+          if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
           {
             auto &refVec = image->GetIonImageReferenceVector();
             if (std::find(std::begin(refVec), std::end(refVec), ref) != std::end(refVec))
@@ -489,7 +489,7 @@ void m2Ions::CalculateVisualization(m2::CommunicationService::NodesVectorType::P
   {
     for (auto node : *nodes)
     {
-      if (auto msImage = dynamic_cast<m2::MSImageBase *>(node->GetData()))
+      if (auto msImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
       {
         auto &ionImages = m_ContainerMap[node];
         if (ionImages.size() > 0)

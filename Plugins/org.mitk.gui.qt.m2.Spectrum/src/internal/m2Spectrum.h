@@ -211,7 +211,7 @@ private:
 //                              std::function<void(SeriesType *series)> seriesInitializer,
 //                              std::function<void(QList<QPointF> &, QPointF &p)> pointModifier)
 //{
-//  if (auto msiBase = dynamic_cast<m2::MSImageBase *>(source->GetData()))
+//  if (auto msiBase = dynamic_cast<m2::SpectrumImageBase *>(source->GetData()))
 //  {
 //    for (auto &&key_spec : msiBase->GetSpectraArtifacts())
 //    {
@@ -251,7 +251,7 @@ private:
 //                          std::function<void(SeriesType *series)> seriesInitializer,
 //                          std::function<void(QList<QPointF> &, QPointF &p)> pointModifier)
 //{
-//  if (auto msiBase = dynamic_cast<m2::MSImageBase *>(source->GetData()))
+//  if (auto msiBase = dynamic_cast<m2::SpectrumImageBase *>(source->GetData()))
 //  {
 //    auto &container = m_DataAssociatedSeriesMap[source];
 //

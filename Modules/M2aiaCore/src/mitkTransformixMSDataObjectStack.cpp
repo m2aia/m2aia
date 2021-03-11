@@ -174,7 +174,7 @@ namespace m2
   }
 
   void TransformixMSDataObjectStack::Insert(unsigned i,
-                                            m2::MSImageBase::Pointer data,
+                                            m2::SpectrumImageBase::Pointer data,
                                             TransformixMSDataObjectStack::TransformationVector transformations)
   {
     /*
@@ -249,7 +249,7 @@ namespace m2
     spacing[2] = zSpacing;
 
     {
-      this->Initialize(mitk::MakeScalarPixelType<m2::IonImagePixelType>(), 3, dims);
+      this->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), 3, dims);
       this->SetSpacing(spacing);
       this->SetOrigin(refImage->GetGeometry()->GetOrigin());
     }
@@ -322,7 +322,7 @@ namespace m2
     MITK_INFO << "Stacking complete!";
   }
 
-  // void TransformixMSDataObjectStack::GrabSpectrum(unsigned int /*index*/,
+  // void TransformixMSDataObjectStack::GetSpectrum(unsigned int /*index*/,
   //                                                std::vector<double> & /*mzs*/,
   //                                                std::vector<double> & /*ints*/) const
   //{
@@ -348,7 +348,7 @@ namespace m2
                                        3);
   }
 
-  void TransformixMSDataObjectStack::GrabIonImage(double mz,
+  void TransformixMSDataObjectStack::GenerateImageData(double mz,
                                                   double tol,
                                                   const mitk::Image * /*mask*/,
                                                   mitk::Image *img) const
@@ -357,7 +357,7 @@ namespace m2
     {
       auto current = m_MSDataObjectReferences[i].front();
       auto transformations = m_MSDataObjectTransformations[i].front();
-      current->GrabIonImage(mz, tol, current->GetMaskImage(), current);
+      current->GenerateImageData(mz, tol, current->GetMaskImage(), current);
 
       MITK_INFO << "Grab ok";
 

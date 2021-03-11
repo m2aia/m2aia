@@ -27,7 +27,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 // mitk image
 #include <m2ImzMLMassSpecImage.h>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkImage.h>
 
 const std::string m2ImzMLExportView::VIEW_ID = "org.mitk.views.imzmlexport";
@@ -43,7 +43,8 @@ void m2ImzMLExportView::UpdateExportSettings(const mitk::DataNode *node)
 {
   if (auto image = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
   {
-    auto exportMode = static_cast<m2::ImzMLFormatType>(m_Controls.cmbBxOutputMode->currentData(Qt::UserRole).toUInt());
+    auto exportMode =
+      static_cast<m2::SpectrumFormatType>(m_Controls.cmbBxOutputMode->currentData(Qt::UserRole).toUInt());
     image->SetExportMode(exportMode);
     image->SetIntsOutputType(
       static_cast<m2::NumericType>(m_Controls.cmbBxOutputDatatypeInt->currentData(Qt::UserRole).toUInt()));
@@ -52,18 +53,19 @@ void m2ImzMLExportView::UpdateExportSettings(const mitk::DataNode *node)
 
     switch (exportMode)
     {
-      case m2::ImzMLFormatType::ContinuousProfile:
-        m_Controls.labelInfo->setText("Modified intensity values are stored , according to M2aia's Data view settings.");
+      case m2::SpectrumFormatType::ContinuousProfile:
+        m_Controls.labelInfo->setText(
+          "Modified intensity values are stored , according to M2aia's Data view settings.");
         break;
-      case m2::ImzMLFormatType::ContinuousCentroid:
-      case m2::ImzMLFormatType::ContinuousMonoisotopicCentroid:
-        m_Controls.labelInfo->setText("Centroid spectra are stored based on peak picking result of the Peak Picking view.");
+      case m2::SpectrumFormatType::ContinuousCentroid:
+        m_Controls.labelInfo->setText(
+          "Centroid spectra are stored based on peak picking result of the Peak Picking view.");
         break;
-      case m2::ImzMLFormatType::ProcessedMonoisotopicCentroid:
-      case m2::ImzMLFormatType::ProcessedCentroid:
-        m_Controls.labelInfo->setText("Export centroid spectra in processed fashion. Spectral preprocessing is applied\n"
-                                     "as specified in m2Data view. Peak picking is applied for each pixel spectrum\n"
-                                     "individually. (optional) Monoisotopic peaks are selected.");
+      case m2::SpectrumFormatType::ProcessedCentroid:
+        m_Controls.labelInfo->setText(
+          "Export centroid spectra in processed fashion. Spectral preprocessing is applied\n"
+          "as specified in m2Data view. Peak picking is applied for each pixel spectrum\n"
+          "individually. (optional) Monoisotopic peaks are selected.");
         break;
       default:
         break;
@@ -92,15 +94,15 @@ void m2ImzMLExportView::CreateQtPartControl(QWidget *parent)
   m_Controls.setupUi(parent);
 
   m_Controls.cmbBxOutputMode->addItem("Continuous Profile",
-                                      static_cast<unsigned>(m2::ImzMLFormatType::ContinuousProfile));
+                                      static_cast<unsigned>(m2::SpectrumFormatType::ContinuousProfile));
   m_Controls.cmbBxOutputMode->addItem("Continuous Centroid",
-                                      static_cast<unsigned>(m2::ImzMLFormatType::ContinuousCentroid));
-  //m_Controls.cmbBxOutputMode->addItem("Continuous Centroid (filter monoisotopic peaks)",
-                                      //static_cast<unsigned>(m2::ImzMLFormatType::ContinuousMonoisotopicCentroid));
-  //m_Controls.cmbBxOutputMode->addItem("Processed Centroid",
-                                      //static_cast<unsigned>(m2::ImzMLFormatType::ProcessedCentroid));
-  //m_Controls.cmbBxOutputMode->addItem("Processed Centroid (filter monoisotopic peaks)",
-                                      //static_cast<unsigned>(m2::ImzMLFormatType::ProcessedMonoisotopicCentroid));
+                                      static_cast<unsigned>(m2::SpectrumFormatType::ContinuousCentroid));
+  // m_Controls.cmbBxOutputMode->addItem("Continuous Centroid (filter monoisotopic peaks)",
+  // static_cast<unsigned>(m2::ImzMLFormatType::ContinuousMonoisotopicCentroid));
+  // m_Controls.cmbBxOutputMode->addItem("Processed Centroid",
+  // static_cast<unsigned>(m2::ImzMLFormatType::ProcessedCentroid));
+  // m_Controls.cmbBxOutputMode->addItem("Processed Centroid (filter monoisotopic peaks)",
+  // static_cast<unsigned>(m2::ImzMLFormatType::ProcessedMonoisotopicCentroid));
   // m_Controls.cmbBxOutputMode->addItem("Processed Profile",
   //                                    static_cast<unsigned>(m2::ImzMLFormatType::ProcessedProfile));
 
@@ -128,13 +130,13 @@ void m2ImzMLExportView::CreateQtPartControl(QWidget *parent)
           &m2ImzMLExportView::UpdateExportSettingsAllNodes,
           Qt::UniqueConnection);
 
-  //connect(m_Controls.spnBxPeakPickingHWS,
+  // connect(m_Controls.spnBxPeakPickingHWS,
   //        qOverload<int>(&QSpinBox::valueChanged),
   //        this,
   //        &m2ImzMLExportView::UpdateExportSettingsAllNodes,
   //        Qt::UniqueConnection);
 
-  //connect(m_Controls.spnBxSNR,
+  // connect(m_Controls.spnBxSNR,
   //        qOverload<int>(&QSpinBox::valueChanged),
   //        this,
   //        &m2ImzMLExportView::UpdateExportSettingsAllNodes,

@@ -21,18 +21,18 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  class M2AIACORE_EXPORT IMSImageDataAccess
+  class M2AIACORE_EXPORT ISpectrumDataAccess
   {
   public:
-    virtual void GrabIntensity(unsigned int index,
+    virtual void GetIntensities(unsigned int index,
                                std::vector<double> &ints,
                                unsigned int sourceIndex = 0) const = 0;
-    virtual void GrabMass(unsigned int index,
+    virtual void GetXValues(unsigned int index,
                           std::vector<double> &mzs,
                           unsigned int sourceIndex = 0) const = 0;
-    virtual void GrabIonImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const = 0;
-    virtual void GrabSpectrum(unsigned int index,
-                              std::vector<double> &mzs,
+    virtual void GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const = 0;
+    virtual void GetSpectrum(unsigned int index,
+                              std::vector<double> &xs,
                               std::vector<double> &ints,
                               unsigned int sourceIndex = 0) const = 0;
 

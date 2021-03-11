@@ -350,20 +350,20 @@ void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
       // in reading mode, only one source is possible
       auto &source = data->GetSourceList().front();
       if (data->GetProperty("continuous") && data->GetProperty("profile spectrum"))
-        source.ImportMode = m2::ImzMLFormatType::ContinuousProfile;
+        source.ImportMode = m2::SpectrumFormatType::ContinuousProfile;
       else if (data->GetProperty("processed") && data->GetProperty("profile spectrum"))
-        source.ImportMode = m2::ImzMLFormatType::ProcessedProfile;
+        source.ImportMode = m2::SpectrumFormatType::ProcessedProfile;
       else if (data->GetProperty("continuous") && data->GetProperty("centroid spectrum"))
-        source.ImportMode = m2::ImzMLFormatType::ContinuousCentroid;
+        source.ImportMode = m2::SpectrumFormatType::ContinuousCentroid;
       else if (data->GetProperty("processed") && data->GetProperty("centroid spectrum"))
-        source.ImportMode = m2::ImzMLFormatType::ProcessedCentroid;
+        source.ImportMode = m2::SpectrumFormatType::ProcessedCentroid;
 
       if (!data->GetProperty("processed") && !data->GetProperty("continuous"))
       {
         MITK_ERROR << "Set the continous (IMS:1000030) or processed (IMS:1000031) property in the ImzML "
                       "fileContent element.";
         MITK_ERROR << "Fallback to continous (MS:1000030)";
-        source.ImportMode = m2::ImzMLFormatType::ContinuousProfile;
+        source.ImportMode = m2::SpectrumFormatType::ContinuousProfile;
       }
 
       if (!data->GetProperty("centroid spectrum") && !data->GetProperty("profile spectrum"))
@@ -371,7 +371,7 @@ void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
         MITK_ERROR << "Set the profile spectrum (MS:1000127) or centroid spectrum (MS:1000128) property in the ImzML "
                       "fileContent element.";
         MITK_ERROR << "Fallback to profile spectrum (MS:1000127)";
-        source.ImportMode = m2::ImzMLFormatType::ContinuousProfile;
+        source.ImportMode = m2::SpectrumFormatType::ContinuousProfile;
       }
 
       // data->SetIsContinuous();

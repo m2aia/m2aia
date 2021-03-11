@@ -18,7 +18,7 @@ See LICENSE.txt for details.
 #include <M2aiaCoreExports.h>
 #include <algorithm>
 #include <array>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkDataNode.h>
 #include <mitkITKImageImport.h>
 #include <mitkImage.h>
@@ -31,14 +31,14 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  class M2AIACORE_EXPORT ImzMLMassSpecImage final : public MSImageBase
+  class M2AIACORE_EXPORT ImzMLMassSpecImage final : public SpectrumImageBase
   {
   public:
-    mitkClassMacro(ImzMLMassSpecImage, MSImageBase);
+    mitkClassMacro(ImzMLMassSpecImage, SpectrumImageBase);
     itkNewMacro(Self);
 
-    itkSetEnumMacro(ExportMode, ImzMLFormatType);
-    itkGetEnumMacro(ExportMode, ImzMLFormatType);
+    itkSetEnumMacro(ExportMode, SpectrumFormatType);
+    itkGetEnumMacro(ExportMode, SpectrumFormatType);
 
     itkSetEnumMacro(MzsOutputType, NumericType);
     itkGetEnumMacro(MzsOutputType, NumericType);
@@ -72,7 +72,7 @@ namespace m2
     using BinaryDataOffsetType = unsigned long long;
     using BinaryDataLengthType = unsigned long;
 
-	void GrabIonImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
+	void GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
 
     /**
      * @brief The BinarySpectrumMetaData structure holds meta data for a single spectrum.
@@ -134,7 +134,7 @@ namespace m2
        */
 	    TransformationsVectorType _Transformations;
       itk::Offset<3> _offset = {0, 0, 0};
-      m2::ImzMLFormatType ImportMode;
+      m2::SpectrumFormatType ImportMode;
     };
     using SourceListType = std::vector<Source>;
 
@@ -154,8 +154,8 @@ namespace m2
       return m_SourcesList[i];
     }
 
-    void InitializeImageAccess();
-    void InitializeGeometry();
+    void InitializeImageAccess() override;
+    void InitializeGeometry() override;
 
     bool UseLog10 = false;
 	bool UsePercentage = false;
@@ -178,9 +178,9 @@ namespace m2
     m2::NumericType m_MzsOutputType = m2::NumericType::Float;
     m2::NumericType m_IntsInputType;
     m2::NumericType m_MzsInputType;
-    m2::ImzMLFormatType m_ExportMode = m2::ImzMLFormatType::ContinuousProfile;
+    m2::SpectrumFormatType m_ExportMode = m2::SpectrumFormatType::ContinuousProfile;
 
-    using m2::MSImageBase::InternalClone;
+    using m2::SpectrumImageBase::InternalClone;
     template <class MassAxisType, class IntensityType>
     class ImzMLProcessor;
     void InitializeProcessor();

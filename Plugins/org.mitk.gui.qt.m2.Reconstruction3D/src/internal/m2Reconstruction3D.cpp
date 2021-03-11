@@ -36,7 +36,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <itkNormalizeImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itksys/SystemTools.hxx>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
 #include <mitkImage3DSliceToImage2DFilter.h>
@@ -548,7 +548,7 @@ void m2Reconstruction3D::OnStartStacking()
     bool UseSubsequentOrdering = m_Controls.chkBxUseConsecutiveSequence->isChecked();
 
     auto referenceData = getImageDataById(currentListRow, listWidged);
-    stack->Insert(currentListRow, dynamic_cast<m2::MSImageBase *>(referenceData.image.GetPointer()), {});
+    stack->Insert(currentListRow, dynamic_cast<m2::SpectrumImageBase *>(referenceData.image.GetPointer()), {});
 
     if (stack2)
     {
@@ -558,7 +558,7 @@ void m2Reconstruction3D::OnStartStacking()
       mitk::ProgressBar::GetInstance()->Progress();
 
       stack2->Insert(
-        currentListRow, dynamic_cast<m2::MSImageBase *>(ionImage2.image.GetPointer()), result->transformations());
+        currentListRow, dynamic_cast<m2::SpectrumImageBase *>(ionImage2.image.GetPointer()), result->transformations());
     }
 
     const auto registrationStep = [&](int movingIdx, int fixedIdx) {
@@ -566,7 +566,7 @@ void m2Reconstruction3D::OnStartStacking()
       auto moving = getImageDataById(movingIdx, listWidged);
       auto result = WarpImage(fixed, moving, UseNormalization);
 
-      stack->Insert(movingIdx, dynamic_cast<m2::MSImageBase *>(moving.image.GetPointer()), result->transformations());
+      stack->Insert(movingIdx, dynamic_cast<m2::SpectrumImageBase *>(moving.image.GetPointer()), result->transformations());
       warpedIonImages[movingIdx] = result->images().back();
 
       mitk::ProgressBar::GetInstance()->Progress();
@@ -577,7 +577,7 @@ void m2Reconstruction3D::OnStartStacking()
         auto result = WarpImage(
           warpedIonImages[movingIdx], ionImage2, UseNormalization, UseInvertIntensities, OmitDeformableMultiModal);
         stack2->Insert(
-          movingIdx, dynamic_cast<m2::MSImageBase *>(ionImage2.image.GetPointer()), result->transformations());
+          movingIdx, dynamic_cast<m2::SpectrumImageBase *>(ionImage2.image.GetPointer()), result->transformations());
 
         mitk::ProgressBar::GetInstance()->Progress();
       }

@@ -18,7 +18,7 @@ See LICENSE.txt for details.
 #include <functional>
 #include <itkCastImageFilter.h>
 #include <itkMetaDataObject.h>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
 #include <mitkImageAccessByItk.h>
@@ -34,16 +34,16 @@ namespace m2
    * MS3DComposeDataObject represents a Composition of multiple mitk::MSDataObjects
    *
    **/
-  class M2AIACORE_EXPORT TransformixMSDataObjectStack : public MSImageBase
+  class M2AIACORE_EXPORT TransformixMSDataObjectStack : public SpectrumImageBase
   {
   public:
-    mitkClassMacro(TransformixMSDataObjectStack, MSImageBase);
+    mitkClassMacro(TransformixMSDataObjectStack, SpectrumImageBase);
 
     mitkNewMacro1Param(Self, std::string);
 
   protected:
     using TransformationVector = std::vector<std::string>;
-    std::vector<std::vector<MSImageBase::Pointer>> m_MSDataObjectReferences;
+    std::vector<std::vector<SpectrumImageBase::Pointer>> m_MSDataObjectReferences;
     std::vector<std::vector<TransformationVector>> m_MSDataObjectTransformations;
     double m_ZSpacing = 0.0;
     unsigned m_StackSize = 0;
@@ -66,14 +66,14 @@ namespace m2
     void Resize(unsigned num);
 
     void Insert(unsigned i,
-                m2::MSImageBase::Pointer data,
+                m2::SpectrumImageBase::Pointer data,
                 TransformixMSDataObjectStack::TransformationVector transformations);
     void InitializeImages(unsigned i, double zSpacing);
 
     // Inherited via IMSImageDataAccess
-    // virtual void GrabSpectrum(unsigned int index, std::vector<double> &mzs, std::vector<double> &ints) const
+    // virtual void GetSpectrum(unsigned int index, std::vector<double> &mzs, std::vector<double> &ints) const
     // override;
-    virtual void GrabIonImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
+    virtual void GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
   };
 
 } // namespace m2

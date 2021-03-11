@@ -96,7 +96,7 @@ void m2::TSNEImageFilter::GenerateData()
     // get image values
     unsigned j = 0;
     mitk::Image::Pointer image = dynamic_cast<mitk::Image *>(data[c].GetPointer());
-    mitk::ImagePixelReadAccessor<m2::IonImagePixelType, 3> iia(image);
+    mitk::ImagePixelReadAccessor<m2::DisplayImagePixelType, 3> iia(image);
     //		double max = 0;
     double sum = 0;
     double sq_sum = 0;
@@ -148,7 +148,7 @@ void m2::TSNEImageFilter::GenerateData()
   unsigned j = 0;
   auto output = mitk::Image::New();
   output->Initialize(input->GetPixelType(), *(input->GetGeometry()));
-  mitk::ImagePixelWriteAccessor<m2::IonImagePixelType, 3> outAc(output);
+  mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> outAc(output);
 
   std::vector<std::vector<double>> values;
 

@@ -27,7 +27,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkAbstractView.h>
 #include <berryISelectionListener.h>
 #include <m2ImzMLMassSpecImage.h>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkImage.h>
 #include <mitkPointSet.h>
 #include <mitkTransformixMSDataObjectStack.h>

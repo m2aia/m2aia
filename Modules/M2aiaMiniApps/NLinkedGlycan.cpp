@@ -98,7 +98,7 @@ int main(int /*argc*/, char *argv[])
     auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source._BinaryDataPath);
     for (const auto &p : binPeaks)
       I->GetPeaks().push_back(p);
-    I->SetExportMode(m2::ImzMLFormatType::ContinuousCentroid);
+    I->SetExportMode(m2::SpectrumFormatType::ContinuousCentroid);
     //mitk::IOUtil::Save(I, "D:\\" + filename + "_testresult.imzML");
   }
 
@@ -113,10 +113,10 @@ int main(int /*argc*/, char *argv[])
     pngAll->SetSmoothingHalfWindowSize(4);
     pngAll->SetBaseLinecorrectionHalfWindowSize(50);
     pngAll->InitializeImageAccess();
-    pngAll->SetMassPickingTolerance(25);
+    pngAll->SetTolerance(25);
 
 	//mitk::IOUtil::Save(pngAll->GetNormalizationImage(), "D:/CombiResult_normalization.nrrd");    
-    pngAll->SetExportMode(m2::ImzMLFormatType::ContinuousCentroid);
+    pngAll->SetExportMode(m2::SpectrumFormatType::ContinuousCentroid);
 	mitk::IOUtil::Save(pngAll, out_path);
   }
   catch (std::exception &e)

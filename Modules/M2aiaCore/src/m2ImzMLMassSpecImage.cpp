@@ -21,8 +21,8 @@ See LICENSE.txt for details.
 #include <itkRescaleIntensityImageFilter.h>
 #include <m2Calibration.h>
 #include <m2ImzMLMassSpecImage.h>
-#include <m2Morphology.h>
 #include <m2MedianAbsoluteDeviation.h>
+#include <m2Morphology.h>
 #include <m2PeakDetection.h>
 #include <m2Process.hpp>
 #include <m2RunningMedian.h>
@@ -37,9 +37,9 @@ See LICENSE.txt for details.
 #include <mitkTimer.h>
 #include <mitkWeakPointerProperty.h>
 
-void m2::ImzMLMassSpecImage::GrabIonImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
+void m2::ImzMLMassSpecImage::GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
-  m2::MSImageBase::GrabIonImage(mz, tol, mask, img);
+  m2::SpectrumImageBase::GenerateImageData(mz, tol, mask, img);
 }
 
 template <class MassAxisType, class IntensityType>
@@ -49,7 +49,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
   AccessByItk(destImage, [](auto itkImg) { itkImg->FillBuffer(0); });
   using namespace m2;
   // accessors
-  mitk::ImagePixelWriteAccessor<IonImagePixelType, 3> imageAccess(destImage);
+  mitk::ImagePixelWriteAccessor<DisplayImagePixelType, 3> imageAccess(destImage);
   mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
   std::shared_ptr<mitk::ImagePixelReadAccessor<MaskImagePixelType, 3>> maskAccess;
 
@@ -88,18 +88,18 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
     double val = 0;
     switch (_IonImageGrabStrategy)
     {
-      case IonImageGrabStrategyType::None:
+      case ImagingStrategyType::None:
         break;
-      case IonImageGrabStrategyType::Sum:
+      case ImagingStrategyType::Sum:
         val = std::accumulate(s, e, IntensityType(0));
         break;
-      case IonImageGrabStrategyType::Mean:
+      case ImagingStrategyType::Mean:
         val = std::accumulate(s, e, IntensityType(0)) / IntensityType(std::distance(s, e));
         break;
-      case IonImageGrabStrategyType::Maximum:
+      case ImagingStrategyType::Maximum:
         val = *std::max_element(s, e);
         break;
-      case IonImageGrabStrategyType::Median:
+      case ImagingStrategyType::Median:
       {
         const unsigned int _N = std::distance(s, e);
         double median = 0;
@@ -124,7 +124,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
 
   // Profile (continuous) spectrum
   const auto &source = p->GetSpectraSource();
-  if (any(source.ImportMode & ImzMLFormatType::ContinuousProfile))
+  if (any(source.ImportMode & SpectrumFormatType::ContinuousProfile))
   {
     { // open binary file stream and read mzs once
       std::ifstream f(source._BinaryDataPath, std::iostream::binary);
@@ -219,7 +219,8 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
       });
     }
   }
-  else if (any(source.ImportMode & (m2::ImzMLFormatType::ContinuousCentroid | m2::ImzMLFormatType::ProcessedCentroid)))
+  else if (any(source.ImportMode &
+               (m2::SpectrumFormatType::ContinuousCentroid | m2::SpectrumFormatType::ProcessedCentroid)))
   {
     for (auto &source : p->GetSourceList())
     {
@@ -270,22 +271,22 @@ void m2::ImzMLMassSpecImage::InitializeProcessor()
     SetMzsInputType(m2::NumericType::Float);
     if (intensitiesDataTypeString.compare("32-bit float") == 0)
     {
-      this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, float>(this));
+      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<float, float>(this));
       SetIntsInputType(m2::NumericType::Float);
     }
     else if (intensitiesDataTypeString.compare("64-bit float") == 0)
     {
       SetIntsInputType(m2::NumericType::Double);
-      this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, double>(this));
+      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<float, double>(this));
     }
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
-      this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, long int>(this));
+      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<float, long int>(this));
       // SetIntsInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
-      this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<float, long long int>(this));
+      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<float, long long int>(this));
       // SetIntsInputType(m2::NumericType::Double);
     }
   }
@@ -295,21 +296,21 @@ void m2::ImzMLMassSpecImage::InitializeProcessor()
     if (intensitiesDataTypeString.compare("32-bit float") == 0)
     {
       SetIntsInputType(m2::NumericType::Float);
-      this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<double, float>(this));
+      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<double, float>(this));
     }
     else if (intensitiesDataTypeString.compare("64-bit float") == 0)
     {
       SetIntsInputType(m2::NumericType::Double);
-      this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<double, double>(this));
+      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<double, double>(this));
     }
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
-      this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<double, long int>(this));
+      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<double, long int>(this));
       // SetIntsInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
-      this->m_Processor.reset((m2::MSImageBase::ProcessorBase *)new ImzMLProcessor<double, long long int>(this));
+      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<double, long long int>(this));
       // SetIntsInputType(m2::NumericType::Double);
     }
   }
@@ -487,7 +488,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
                                        p->GetPropertyValue<double>("origin y") * 0.001,
                                        p->GetPropertyValue<double>("origin z") * 0.001};
 
-  using ImageType = itk::Image<m2::IonImagePixelType, 3>;
+  using ImageType = itk::Image<m2::DisplayImagePixelType, 3>;
   auto itkIonImage = ImageType::New();
   ImageType::IndexType idx;
   ImageType::SizeType size;
@@ -519,14 +520,14 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   itkIonImage->SetDirection(d);
 
   {
-    using LocalImageType = itk::Image<m2::IonImagePixelType, 3>;
+    using LocalImageType = itk::Image<m2::DisplayImagePixelType, 3>;
     auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
     caster->SetInput(itkIonImage);
     caster->Update();
     p->InitializeByItk(caster->GetOutput());
 
-    mitk::ImagePixelWriteAccessor<m2::IonImagePixelType, 3> acc(p);
-    std::memset(acc.GetData(), 0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::IonImagePixelType));
+    mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> acc(p);
+    std::memset(acc.GetData(), 0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::DisplayImagePixelType));
   }
 
   {
@@ -568,7 +569,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
     std::memset(acc.GetData(), 1, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
   }
 
-  mitk::ImagePixelWriteAccessor<m2::IonImagePixelType, 3> acc(p);
+  mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> acc(p);
   auto max_dim0 = p->GetDimensions()[0];
   auto max_dim1 = p->GetDimensions()[1];
   acc.SetPixelByIndex({0, 0, 0}, 1);
@@ -611,13 +612,13 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   MITK_INFO << "Smoothing: " << (int)_SmoothingStrategy << " " << p->m_SmoothingHalfWindowSize;
   MITK_INFO << "Baseline Correction: " << (int)_BaslineCorrectionStrategy << " "
             << p->m_BaseLinecorrectionHalfWindowSize;
-  bool _UseSubRange = false;
+  
   unsigned long lenght;
   unsigned long long intsOffsetBytes = 0;
 
   const auto &source = p->GetSourceList().front();
 
-  if (any(source.ImportMode & (m2::ImzMLFormatType::ContinuousProfile | m2::ImzMLFormatType::ContinuousCentroid)))
+  if (any(source.ImportMode & (m2::SpectrumFormatType::ContinuousProfile | m2::SpectrumFormatType::ContinuousCentroid)))
   {
     // shortcuts
     const auto &spectra = source._Spectra;
@@ -634,43 +635,20 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
     p->SetPropertyValue<double>("max m/z", mzs.back());
   }
 
-  if (any(source.ImportMode & (m2::ImzMLFormatType::ContinuousProfile)))
+  if (any(source.ImportMode & (m2::SpectrumFormatType::ContinuousProfile)))
   {
     // shortcuts
     const auto &spectra = source._Spectra;
     std::ifstream f(source._BinaryDataPath, std::ios::binary);
 
-    // clean up the bounds
-    if ((p->GetLowerMZBound() >= 0 || p->GetUpperMZBound() > 0) && (p->GetLowerMZBound() < p->GetUpperMZBound()))
-      _UseSubRange = true;
-    else
-    {
-      p->SetLowerMZBound(mzs.front());
-      p->SetUpperMZBound(mzs.back());
-      _UseSubRange = false;
-    }
-
-    if (_UseSubRange)
-    {
-      auto subRes = m2::Signal::Subrange(mzs, p->m_LowerMZBound, p->m_UpperMZBound);
-      intsOffsetBytes = subRes.first * sizeof(IntensityType);
-      lenght = subRes.second;
-
-      unsigned long long mzOffsetBytes = subRes.first * sizeof(MassAxisType);
-      binaryDataToVector(f, spectra[0].mzOffset + mzOffsetBytes, lenght, mzs);
-    }
-    else
-    {
-      lenght = spectra[0].mzLength;
-    }
-
+    lenght = spectra[0].mzLength;
     skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(mzs.size(), 0));
     sumT.resize(p->GetNumberOfThreads(), std::vector<double>(mzs.size(), 0));
   }
 
   //////////---------------------------
   // profile spectra have to be continuous
-  if (any(source.ImportMode & (m2::ImzMLFormatType::ProcessedProfile)))
+  if (any(source.ImportMode & (m2::SpectrumFormatType::ProcessedProfile)))
   {
     mitkThrow() << R"(
 		This ImzML file seems to contain profile spectra in a processed memory order. 
@@ -680,7 +658,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   }
   MITK_INFO << "Initialize imzML common info:";
   MITK_INFO << "\tNormalizationStrategyType [" << static_cast<unsigned>(_NormalizationStrategy) << "]";
-  if (any(source.ImportMode & (m2::ImzMLFormatType::ContinuousProfile)))
+  if (any(source.ImportMode & (m2::SpectrumFormatType::ContinuousProfile)))
   {
     mitk::Timer t("Initialize image");
     for (const auto &source : p->GetSourceList())
@@ -828,7 +806,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
     std::transform(sum.begin(), sum.end(), mean.begin(), [&](auto &a) { return a / double(N); });
   }
   //////////---------------------------
-  else if (any(source.ImportMode & (m2::ImzMLFormatType::ProcessedCentroid)))
+  else if (any(source.ImportMode & (m2::SpectrumFormatType::ProcessedCentroid)))
   {
     std::vector<std::list<m2::MassValue>> peaksT(p->GetNumberOfThreads());
     for (const auto &source : p->GetSourceList())
@@ -867,9 +845,9 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
           peaksT.at(t).clear();
           m2::Signal::binPeaks(std::begin(tempList),
-                              std::end(tempList),
-                              std::back_inserter(peaksT.at(t)),
-                              p->GetPeakPickingBinningTolerance() * 10e-6);
+                               std::end(tempList),
+                               std::back_inserter(peaksT.at(t)),
+                               p->GetBinningTolerance() * 10e-6);
         }
 
         f.close();
@@ -882,9 +860,9 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
       std::list<m2::MassValue> finalPeaks;
       m2::Signal::binPeaks(std::begin(mergeList),
-                          std::end(mergeList),
-                          std::back_inserter(finalPeaks),
-                          p->GetPeakPickingBinningTolerance() * 10e-6);
+                           std::end(mergeList),
+                           std::back_inserter(finalPeaks),
+                           p->GetBinningTolerance() * 10e-6);
 
       auto &mzAxis = p->MassAxis();
       auto &skyline = p->SkylineSpectrum();
@@ -902,7 +880,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
     }
   }
 
-  else if (any(source.ImportMode & (m2::ImzMLFormatType::ContinuousCentroid)))
+  else if (any(source.ImportMode & (m2::SpectrumFormatType::ContinuousCentroid)))
   {
     std::vector<std::vector<m2::MassValue>> peaksT(p->GetNumberOfThreads());
 
@@ -987,7 +965,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
       for (auto &peaks : peaksT)
       {
-        const auto tol = p->GetPeakPickingBinningTolerance();
+        const auto tol = p->GetBinningTolerance();
         std::vector<m2::MassValue> binPeaks;
         m2::Signal::binPeaks(std::begin(peaks), std::end(peaks), std::back_inserter(binPeaks), tol * 10e-6);
 
@@ -1023,8 +1001,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
         // If it is a processed file, normalization maps are set to 1 - assuming that spectra were already processed
         if (any(source.ImportMode &
-                (m2::ImzMLFormatType::ProcessedCentroid | m2::ImzMLFormatType::ProcessedMonoisotopicCentroid |
-                 m2::ImzMLFormatType::ProcessedProfile)))
+                (m2::SpectrumFormatType::ProcessedCentroid | m2::SpectrumFormatType::ProcessedProfile)))
           accNorm->SetPixelByIndex(spectrum.index + source._offset, 1);
       }
     });
@@ -1053,7 +1030,7 @@ void m2::ImzMLMassSpecImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
   std::vector<IntensityType> ints_get, baseline;
   binaryDataToVector(f, intso, intsl, ints_get);
   baseline.resize(intsl, 0);
-  if (any(source.ImportMode & (m2::ImzMLFormatType::ContinuousProfile)))
+  if (any(source.ImportMode & (m2::SpectrumFormatType::ContinuousProfile)))
   {
     if (p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None)
     {
@@ -1126,5 +1103,5 @@ m2::ImzMLMassSpecImage::ImzMLMassSpecImage()
 {
   MITK_INFO << GetStaticNameOfClass() << " created!";
 
-  this->SetExportMode(m2::ImzMLFormatType::ContinuousProfile);
+  this->SetExportMode(m2::SpectrumFormatType::ContinuousProfile);
 }

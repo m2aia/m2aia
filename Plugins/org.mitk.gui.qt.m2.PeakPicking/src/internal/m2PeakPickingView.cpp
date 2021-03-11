@@ -50,11 +50,11 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
 
-  // auto m_MassSpecPredicate = mitk::TNodePredicateDataType<m2::MSImageBase>::New();
+  // auto m_MassSpecPredicate = mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New();
   // m_MassSpecDataNodeSelectionWidget = new QmitkSingleNodeSelectionWidget();
   // m_MassSpecDataNodeSelectionWidget->SetDataStorage(GetDataStorage());
   // m_MassSpecDataNodeSelectionWidget->SetNodePredicate(
-  //  mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::MSImageBase>::New(),
+  //  mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
   //                              mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
   // m_MassSpecDataNodeSelectionWidget->SetSelectionIsOptional(true);
   // m_MassSpecDataNodeSelectionWidget->SetEmptyInfo(QString("Mass spectrometry image"));
@@ -82,7 +82,7 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
   for (auto node : *m_ReceivedNodes)
     if (auto imageBase = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
     {
-      if (imageBase->GetSourceList().front().ImportMode != m2::ImzMLFormatType::ContinuousProfile)
+      if (imageBase->GetSourceList().front().ImportMode != m2::SpectrumFormatType::ContinuousProfile)
       {
         QMessageBox::warning(nullptr, "Warning", "Centroid data are not supported for peak picking operations!");
       }

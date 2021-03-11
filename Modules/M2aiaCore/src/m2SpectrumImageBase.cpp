@@ -13,14 +13,14 @@ A PARTICULAR PURPOSE.
 See LICENSE.txt for details.
 
 ===================================================================*/
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <m2PeakDetection.h>
 #include <mitkDataNode.h>
 #include <mitkLevelWindowProperty.h>
 #include <mitkLookupTableProperty.h>
 #include <mitkOperation.h>
 
-void m2::MSImageBase::ApplyMoveOriginOperation(const std::array<int, 2> &v)
+void m2::SpectrumImageBase::ApplyMoveOriginOperation(const std::array<int, 2> &v)
 {
   auto geometry = this->GetGeometry();
   auto pos = geometry->GetOrigin();
@@ -40,7 +40,7 @@ void m2::MSImageBase::ApplyMoveOriginOperation(const std::array<int, 2> &v)
   }
 }
 
-void m2::MSImageBase::ApplyGeometryOperation(mitk::Operation *op)
+void m2::SpectrumImageBase::ApplyGeometryOperation(mitk::Operation *op)
 {
   auto manipulatedGeometry = this->GetGeometry()->Clone();
   manipulatedGeometry->ExecuteOperation(op);
@@ -57,79 +57,79 @@ void m2::MSImageBase::ApplyGeometryOperation(mitk::Operation *op)
 }
 
 
-m2::MSImageBase::SpectrumArtifactVectorType &m2::MSImageBase::SkylineSpectrum()
+m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::SkylineSpectrum()
 {
   return m_SpectraArtifacts[m2::OverviewSpectrumType::Maximum];
 }
 
-m2::MSImageBase::SpectrumArtifactVectorType &m2::MSImageBase::PeakIndicators()
+m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::PeakIndicators()
 {
   return m_SpectraArtifacts[m2::OverviewSpectrumType::PeakIndicators];
 }
 
-m2::MSImageBase::SpectrumArtifactVectorType &m2::MSImageBase::MeanSpectrum()
+m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::MeanSpectrum()
 {
   return m_SpectraArtifacts[m2::OverviewSpectrumType::Mean];
 }
 
-m2::MSImageBase::SpectrumArtifactVectorType &m2::MSImageBase::SumSpectrum()
+m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::SumSpectrum()
 {
   return m_SpectraArtifacts[m2::OverviewSpectrumType::Sum];
 }
 
-m2::MSImageBase::SpectrumArtifactVectorType &m2::MSImageBase::MassAxis()
+m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::MassAxis()
 {
   return m_MassAxis;
 }
 
-const m2::MSImageBase::SpectrumArtifactVectorType &m2::MSImageBase::MassAxis() const
+const m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::MassAxis() const
 {
   return m_MassAxis;
 }
 
-mitk::Image::Pointer m2::MSImageBase::GetNormalizationImage()
+mitk::Image::Pointer m2::SpectrumImageBase::GetNormalizationImage()
 {
   if (m_ImageArtifacts.find("NormalizationImage") != m_ImageArtifacts.end())
     return dynamic_cast<mitk::Image*>(m_ImageArtifacts.at("NormalizationImage").GetPointer());
   return nullptr;
 }
 
-mitk::Image::Pointer m2::MSImageBase::GetMaskImage()
+mitk::Image::Pointer m2::SpectrumImageBase::GetMaskImage()
 {
   if (m_ImageArtifacts.find("mask") != m_ImageArtifacts.end())
     return dynamic_cast<mitk::Image*>(m_ImageArtifacts.at("mask").GetPointer());
   return nullptr;
 }
 
-mitk::Image::Pointer m2::MSImageBase::GetIndexImage()
+mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage()
 {
   if (m_ImageArtifacts.find("index") != m_ImageArtifacts.end())
     return dynamic_cast<mitk::Image*>(m_ImageArtifacts.at("index").GetPointer());
   return nullptr;
 }
 
-void m2::MSImageBase::GrabIonImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
+void m2::SpectrumImageBase::GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
   GrabImageStart.Send();
   m_Processor->GrabIonImagePrivate(mz, tol, mask, img);
   GrabImageEnd.Send();
 }
 
-void m2::MSImageBase::GrabIntensity(unsigned int index, std::vector<double> &ints, unsigned int sourceIndex) const
+void m2::SpectrumImageBase::GetIntensities(unsigned int index, std::vector<double> &ints, unsigned int sourceIndex) const
 {
   GrabSpectrumStart.Send();
   m_Processor->GrabIntensityPrivate(index, ints, sourceIndex);
   GrabSpectrumEnd.Send();
 }
 
-void m2::MSImageBase::GrabMass(unsigned int index, std::vector<double> &mzs, unsigned int sourceIndex) const
+void m2::SpectrumImageBase::GetXValues(unsigned int index, std::vector<double> &mzs, unsigned int sourceIndex) const
 {
   GrabSpectrumStart.Send();
   m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
   GrabSpectrumEnd.Send();
 }
 
-void m2::MSImageBase::GrabSpectrum(unsigned int index,
+void m2::SpectrumImageBase::GetSpectrum(unsigned int index,
                                          std::vector<double> &mzs,
                                          std::vector<double> &ints,
                                          unsigned int sourceIndex) const
@@ -145,4 +145,4 @@ void m2::MSImageBase::GrabSpectrum(unsigned int index,
   GrabSpectrumEnd.Send();
 }
 
-m2::MSImageBase::~MSImageBase() {}
+m2::SpectrumImageBase::~SpectrumImageBase() {}

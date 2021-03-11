@@ -25,7 +25,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <itkVectorContainer.h>
 #include <m2CommunicationService.h>
 #include <m2ImzMLMassSpecImage.h>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkColorBarAnnotation.h>
 #include <mitkColorSequenceRainbow.h>
 #include <mitkDataNode.h>
@@ -60,7 +60,7 @@ public:
   /**
    * @brief Get the Overview Spectrum Type object
    *
-   * @return MSImageBase::OverviewSpectrumType
+   * @return SpectrumImageBase::OverviewSpectrumType
    */
   m2::OverviewSpectrumType GetOverviewSpectrumType() { return m_CurrentOverviewSpectrumType; }
 
@@ -93,10 +93,10 @@ public:
    * Configures the I/O strategy state of a single MS image.
    * @param image A mass spectrometry image.
    */
-  void ApplySettingsToImage(m2::ImzMLMassSpecImage *image);
+  void ApplySettingsToImage(m2::SpectrumImageBase *image);
 
   m2::NormalizationStrategyType GuiToNormalizationStrategyType();
-  m2::IonImageGrabStrategyType GuiToIonImageGrabStrategyType();
+  m2::ImagingStrategyType GuiToIonImageGrabStrategyType();
 
   m2::SmoothingType GuiToSmoothingStrategyType();
 
