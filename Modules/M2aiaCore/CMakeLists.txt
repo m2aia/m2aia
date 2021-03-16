@@ -7,9 +7,9 @@ MITK_CREATE_MODULE(
   
   add_subdirectory(autoload/M2aiaCoreIO)
   
-  #if(BUILD_TESTING)
-  # add_subdirectory(Testing)
-  #endif()
+  if(BUILD_TESTING)
+   add_subdirectory(Testing)
+  endif()
   
   
   configure_file(mitkM2aiaVersion.h.in ${MITK_BINARY_DIR}/mitkM2aiaVersion.h)
