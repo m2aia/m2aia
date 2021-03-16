@@ -14,7 +14,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <mitkCommandLineParser.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     MITK_INFO << kv.first << " " << kv.second.ToString();
   }
   auto image = mitk::IOUtil::Load(argsMap["image"].ToString()).front();
-  if (auto imzMLImage = dynamic_cast<m2::ImzMLMassSpecImage *>(image.GetPointer()))
+  if (auto imzMLImage = dynamic_cast<m2::ImzMLSpectrumImage *>(image.GetPointer()))
   {
     int bc_strategy, bc_hws, sm_strategy, sm_hws, int_type, mzs_type, imaging_strategy;
     float binning_tol, centroids_tol, mz, tol;

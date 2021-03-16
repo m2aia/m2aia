@@ -403,7 +403,7 @@ void m2Ions::PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference
     const auto selectedRows = select->selectedRows();
     for (auto n : *nodes)
     {
-      if (auto msImage = dynamic_cast<m2::ImzMLMassSpecImage *>(n->GetData()))
+      if (auto msImage = dynamic_cast<m2::ImzMLSpectrumImage *>(n->GetData()))
       {
         m2::TSNEImageFilter::Pointer filter = m2::TSNEImageFilter::New();
         filter->SetIterations(m_Iterations);
@@ -451,7 +451,7 @@ void m2Ions::PerformPCA(std::set<m2::IonImageReference *, m2::IonImageReference:
   const auto selectedRows = select->selectedRows();
   for (auto n : *nodes)
   {
-    if (auto msImage = dynamic_cast<m2::ImzMLMassSpecImage *>(n->GetData()))
+    if (auto msImage = dynamic_cast<m2::ImzMLSpectrumImage *>(n->GetData()))
     {
       m2::PcaImageFilter::Pointer filter = m2::PcaImageFilter::New();
       filter->SetNumberOfComponents(m_NumberOfComponents);

@@ -17,7 +17,7 @@ See LICENSE.txt for details.
 #include <cstdlib>
 #include <itkSignedMaurerDistanceMapImageFilter.h>
 #include <itksys/SystemTools.hxx>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <mitkExtractSliceFilter.h>
 #include <mitkIOUtil.h>
 #include <mitkITKImageImport.h>
@@ -184,7 +184,7 @@ namespace m2
       this->SetPropertyValue<std::string>("ims.stack.transformation.t" + std::to_string(i) + "." + std::to_string(a++),
     t);
 
-    if (auto imzml = dynamic_cast<m2::ImzMLMassSpecImage *>(data.GetPointer()))
+    if (auto imzml = dynamic_cast<m2::ImzMLSpectrumImage *>(data.GetPointer()))
       this->SetPropertyValue<std::string>("ims.stack.transformation.t" + std::to_string(i) + ".imzml",
     imzml->GetImzMLDataPath());
 
@@ -322,7 +322,7 @@ namespace m2
     MITK_INFO << "Stacking complete!";
   }
 
-  // void TransformixMSDataObjectStack::GetSpectrum(unsigned int /*index*/,
+  // void TransformixMSDataObjectStack::ReceiveSpectrum(unsigned int /*index*/,
   //                                                std::vector<double> & /*mzs*/,
   //                                                std::vector<double> & /*ints*/) const
   //{

@@ -77,14 +77,14 @@ m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::SumSpe
   return m_SpectraArtifacts[m2::OverviewSpectrumType::Sum];
 }
 
-m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::MassAxis()
+m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetXAxis()
 {
-  return m_MassAxis;
+  return m_XAxis;
 }
 
-const m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::MassAxis() const
+const m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetXAxis() const
 {
-  return m_MassAxis;
+  return m_XAxis;
 }
 
 mitk::Image::Pointer m2::SpectrumImageBase::GetNormalizationImage()
@@ -110,39 +110,31 @@ mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage()
 
 void m2::SpectrumImageBase::GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
-  GrabImageStart.Send();
+  GenerateImageStart.Send();
   m_Processor->GrabIonImagePrivate(mz, tol, mask, img);
-  GrabImageEnd.Send();
+  GenerateImageEnd.Send();
 }
 
-void m2::SpectrumImageBase::GetIntensities(unsigned int index, std::vector<double> &ints, unsigned int sourceIndex) const
+void m2::SpectrumImageBase::ReceiveIntensities(unsigned int index, std::vector<double> &ints, unsigned int sourceIndex) const
 {
-  GrabSpectrumStart.Send();
   m_Processor->GrabIntensityPrivate(index, ints, sourceIndex);
-  GrabSpectrumEnd.Send();
 }
 
-void m2::SpectrumImageBase::GetXValues(unsigned int index, std::vector<double> &mzs, unsigned int sourceIndex) const
+void m2::SpectrumImageBase::ReceivePositions(unsigned int index, std::vector<double> &mzs, unsigned int sourceIndex) const
 {
-  GrabSpectrumStart.Send();
-  m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
-  GrabSpectrumEnd.Send();
+  m_Processor->GrabMassPrivate(index, mzs, sourceIndex);  
 }
 
-void m2::SpectrumImageBase::GetSpectrum(unsigned int index,
+void m2::SpectrumImageBase::ReceiveSpectrum(unsigned int index,
                                          std::vector<double> &mzs,
                                          std::vector<double> &ints,
                                          unsigned int sourceIndex) const
 {
-  using namespace m2;
-  GrabSpectrumStart.Send();
-  // Grab spectrum intensities and masses
+  ReceiveSpectrumStart.Send();
   m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
-
-  // ints may be a preprocessed version of the raw intensities
   m_Processor->GrabIntensityPrivate(index, ints, sourceIndex);
-
-  GrabSpectrumEnd.Send();
+  ReceiveSpectrumEnd.Send();
 }
 
 m2::SpectrumImageBase::~SpectrumImageBase() {}
+

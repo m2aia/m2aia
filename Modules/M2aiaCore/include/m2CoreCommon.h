@@ -26,28 +26,9 @@ namespace m2
     ProcessedCentroid = 8
   };
 
-  enum class BaselineCorrectionType
-  {
-    None,
-    TopHat,
-    Median
-  };
 
-  enum class SmoothingType
-  {
-    None,
-    SavitzkyGolay,
-    Gaussian
-  };
 
-  enum class NormalizationStrategyType
-  {
-    None,
-    TIC,
-    Median,
-    InFile,
-    Sum
-  };
+
 
   enum class OverviewSpectrumType
   {
@@ -60,14 +41,7 @@ namespace m2
     None
   };
 
-  enum class ImagingStrategyType
-  {
-    None,
-    Mean,
-    Maximum,
-    Median,
-    Sum
-  };
+
 
   enum class NumericType
   {

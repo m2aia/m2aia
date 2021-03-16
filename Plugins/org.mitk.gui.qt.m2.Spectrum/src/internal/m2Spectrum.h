@@ -21,7 +21,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkAbstractView.h>
 #include <berryISelectionListener.h>
 #include "m2Crosshair.h"
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <m2SelectionProvider.h>
 #include <qlegendmarker.h>
 #include <qscatterseries.h>
@@ -71,7 +71,7 @@ protected:
 
   struct BiasedSereisContainer : public std::map<m2::OverviewSpectrumType, QtCharts::QXYSeries *>
   {
-    std::vector<double> MassAxis;
+    std::vector<double> GetXAxis;
     QColor Color = {0, 0, 0, 0};
   };
 
@@ -189,7 +189,7 @@ protected:
   //	void GrabIonImages(qreal, qreal);
 
   // void OnAlignSpectra(qreal, qreal);
-  // void OnGrabIonImage(qreal, qreal);
+  // void OnGenerateImageData(qreal, qreal);
 private:
   QMenu *m_Menu;
   QAction *m_SpectrumSkyline;
@@ -260,10 +260,10 @@ private:
 //
 //    SeriesType *series = new SeriesType();
 //    container[type] = series;
-//    container.MassAxis = msiBase->MassAxis();
+//    container.GetXAxis = msiBase->GetXAxis();
 //
 //    QList<QPointF> points;
-//    for (auto y = ints.cbegin(), x = msiBase->MassAxis().cbegin(); y != ints.end(); ++x, ++y)
+//    for (auto y = ints.cbegin(), x = msiBase->GetXAxis().cbegin(); y != ints.end(); ++x, ++y)
 //    {
 //      auto a = QPointF{*x, *y};
 //      pointModifier(points, a);

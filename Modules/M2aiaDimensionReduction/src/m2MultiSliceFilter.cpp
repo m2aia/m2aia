@@ -1,7 +1,7 @@
 ﻿#include <itkIntensityWindowingImageFilter.h>
 #include <itkMinimumMaximumImageCalculator.h>
 #include <itkRescaleIntensityImageFilter.h>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <m2MultiSliceFilter.h>
 #include <m2RGBColorMixer.hpp>
 #include <mitkImage.h>

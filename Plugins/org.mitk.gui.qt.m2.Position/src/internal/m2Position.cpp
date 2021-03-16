@@ -32,7 +32,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkRotationOperation.h>
 #include <mitkScaleOperation.h>
 //#include <mitk>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <mitkApplyTransformMatrixOperation.h>
 #include <mitkInteractionConst.h>
 #include <qpushbutton.h>
@@ -81,42 +81,43 @@ void m2Position::Move(std::array<int, 2> &&vec)
   if (nodes.empty())
     return;
 
-  for(auto node : nodes){
-  mitk::BaseData *data = node->GetData();
-  if (data)
+  for (auto node : nodes)
   {
-    // test if this data item is an image or not (could also be a surface or something totally different)
-    
-    if (m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data))
+    mitk::BaseData *data = node->GetData();
+    if (data)
     {
-      image->ApplyMoveOriginOperation(vec);
-    }
-    else if (mitk::Image *image = dynamic_cast<mitk::Image *>(data))
-    {
-      auto geometry = image->GetGeometry();
-      auto pos = geometry->GetOrigin();
-      auto space = geometry->GetSpacing();
-      pos[0] = pos[0] + vec.at(0) * space[0];
-      pos[1] = pos[1] + vec.at(1) * space[1];
-      geometry->SetOrigin(pos);
-	}
+      // test if this data item is an image or not (could also be a surface or something totally different)
 
-    RequestRenderWindowUpdate();
-    auto deriv = GetDataStorage()->GetDerivations(node, mitk::TNodePredicateDataType<mitk::PointSet>::New());
-    if (deriv->Size())
-    {
-      for (auto p : *deriv)
+      if (m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data))
       {
-        auto geometry = p->GetData()->GetGeometry();
+        image->ApplyMoveOriginOperation(vec);
+      }
+      else if (mitk::Image *image = dynamic_cast<mitk::Image *>(data))
+      {
+        auto geometry = image->GetGeometry();
         auto pos = geometry->GetOrigin();
         auto space = geometry->GetSpacing();
         pos[0] = pos[0] + vec.at(0) * space[0];
         pos[1] = pos[1] + vec.at(1) * space[1];
         geometry->SetOrigin(pos);
       }
+
       RequestRenderWindowUpdate();
+      auto deriv = GetDataStorage()->GetDerivations(node, mitk::TNodePredicateDataType<mitk::PointSet>::New());
+      if (deriv->Size())
+      {
+        for (auto p : *deriv)
+        {
+          auto geometry = p->GetData()->GetGeometry();
+          auto pos = geometry->GetOrigin();
+          auto space = geometry->GetSpacing();
+          pos[0] = pos[0] + vec.at(0) * space[0];
+          pos[1] = pos[1] + vec.at(1) * space[1];
+          geometry->SetOrigin(pos);
+        }
+        RequestRenderWindowUpdate();
+      }
     }
-  }
   }
 }
 
@@ -126,26 +127,27 @@ void m2Position::Mirror(int w)
   if (nodes.empty())
     return;
 
-  for(auto node : nodes){
-  mitk::BaseData *data = node->GetData();
-  if (data)
+  for (auto node : nodes)
   {
-    // test if this data item is an image or not (could also be a surface or something totally different)
-    m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data);
-    if (image)
+    mitk::BaseData *data = node->GetData();
+    if (data)
     {
-      std::unique_ptr<mitk::ApplyTransformMatrixOperation> op;
+      // test if this data item is an image or not (could also be a surface or something totally different)
+      m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data);
+      if (image)
+      {
+        std::unique_ptr<mitk::ApplyTransformMatrixOperation> op;
 
-      vtkSmartPointer<vtkMatrix4x4> m = vtkMatrix4x4::New();
-      m->Identity();
-      m->SetElement(w, w, -1.0);
-      op.reset(new mitk::ApplyTransformMatrixOperation(
-        mitk::EOperations::OpAPPLYTRANSFORMMATRIX, m, image->GetGeometry()->GetCenter()));
+        vtkSmartPointer<vtkMatrix4x4> m = vtkMatrix4x4::New();
+        m->Identity();
+        m->SetElement(w, w, -1.0);
+        op.reset(new mitk::ApplyTransformMatrixOperation(
+          mitk::EOperations::OpAPPLYTRANSFORMMATRIX, m, image->GetGeometry()->GetCenter()));
 
-      image->ApplyGeometryOperation(op.get());
-      RequestRenderWindowUpdate();
+        image->ApplyGeometryOperation(op.get());
+        RequestRenderWindowUpdate();
+      }
     }
-  }
   }
 }
 
@@ -155,35 +157,35 @@ void m2Position::Rotate(int angleDeg)
   if (nodes.empty())
     return;
 
-  for(auto node : nodes){
-
-  mitk::BaseData *data = node->GetData();
-  if (data)
+  for (auto node : nodes)
   {
-    // test if this data item is an image or not (could also be a surface or something totally different)
-    m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data);
-    std::unique_ptr<mitk::RotationOperation> op;
-    mitk::ScalarType rotAx[3] = {0, 0, 1};
-    op.reset(new mitk::RotationOperation(
-      mitk::EOperations::OpROTATE, image->GetGeometry()->GetCenter(), mitk::Vector3D(rotAx), angleDeg));
-    if (image)
+    mitk::BaseData *data = node->GetData();
+    if (data)
     {
-      image->ApplyGeometryOperation(op.get());
-      RequestRenderWindowUpdate();
-      // actually do something here...
-    }
-    auto deriv = GetDataStorage()->GetDerivations(node, mitk::TNodePredicateDataType<mitk::PointSet>::New());
-    if (deriv->Size())
-    {
-      for (auto p : *deriv)
+      // test if this data item is an image or not (could also be a surface or something totally different)
+      m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data);
+      std::unique_ptr<mitk::RotationOperation> op;
+      mitk::ScalarType rotAx[3] = {0, 0, 1};
+      op.reset(new mitk::RotationOperation(
+        mitk::EOperations::OpROTATE, image->GetGeometry()->GetCenter(), mitk::Vector3D(rotAx), angleDeg));
+      if (image)
       {
-		  auto manipulatedGeometry = p->GetData()->GetGeometry()->Clone();
-		  manipulatedGeometry->ExecuteOperation(op.get());
-		  p->GetData()->GetGeometry()->SetIdentity();
-		  p->GetData()->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
+        image->ApplyGeometryOperation(op.get());
+        RequestRenderWindowUpdate();
+        // actually do something here...
       }
-      RequestRenderWindowUpdate();
+      auto deriv = GetDataStorage()->GetDerivations(node, mitk::TNodePredicateDataType<mitk::PointSet>::New());
+      if (deriv->Size())
+      {
+        for (auto p : *deriv)
+        {
+          auto manipulatedGeometry = p->GetData()->GetGeometry()->Clone();
+          manipulatedGeometry->ExecuteOperation(op.get());
+          p->GetData()->GetGeometry()->SetIdentity();
+          p->GetData()->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
+        }
+        RequestRenderWindowUpdate();
+      }
     }
   }
-    }
 }

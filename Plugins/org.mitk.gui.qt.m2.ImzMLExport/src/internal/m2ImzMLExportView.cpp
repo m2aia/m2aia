@@ -26,7 +26,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QPushButton>
 
 // mitk image
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageBase.h>
 #include <mitkImage.h>
 
@@ -41,7 +41,7 @@ void m2ImzMLExportView::NodeAdded(const mitk::DataNode *node)
 
 void m2ImzMLExportView::UpdateExportSettings(const mitk::DataNode *node)
 {
-  if (auto image = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
+  if (auto image = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
   {
     auto exportMode =
       static_cast<m2::SpectrumFormatType>(m_Controls.cmbBxOutputMode->currentData(Qt::UserRole).toUInt());
@@ -71,7 +71,7 @@ void m2ImzMLExportView::UpdateExportSettings(const mitk::DataNode *node)
         break;
     }
 
-    /* if (auto imzMLImage = dynamic_cast<m2::ImzMLMassSpecImage *>(image))
+    /* if (auto imzMLImage = dynamic_cast<m2::ImzMLSpectrumImage *>(image))
      {
        imzMLImage->SetPeakPickingHalfWindowSize(m_Controls.spnBxPeakPickingHWS->value());
        imzMLImage->SetPeakPickingSNR(m_Controls.spnBxSNR->value());

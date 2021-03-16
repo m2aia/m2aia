@@ -17,7 +17,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #pragma once
 
 #include <M2aiaCoreIOExports.h>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <mitkAbstractFileIO.h>
 #include <mitkIOMimeTypes.h>
 #include <mitkImage.h>
@@ -57,15 +57,15 @@ namespace m2
 
     
     /**
-     * @brief Reads a number of m2::ImzMLMassSpecImage from the file system
-     * @return a vector of m2::ImzMLMassSpecImage
+     * @brief Reads a number of m2::ImzMLSpectrumImage from the file system
+     * @return a vector of m2::ImzMLSpectrumImage
      */
     std::vector<mitk::BaseData::Pointer> DoRead() override;
     ConfidenceLevel GetReaderConfidenceLevel() const override;
 
     // -------------- AbstractFileWriter -------------
     /**
-     * @brief Writes a m2::ImzMLMassSpecImage  as its *.imzML and *.ibd file to disk
+     * @brief Writes a m2::ImzMLSpectrumImage  as its *.imzML and *.ibd file to disk
      *
      */
     void Write() override;
@@ -74,12 +74,14 @@ namespace m2
     ConfidenceLevel GetWriterConfidenceLevel() const override;
     std::string GetIBDOutputPath() const;
     std::string GetImzMLOutputPath() const;
-    void WriteContinuousProfile(m2::ImzMLMassSpecImage::SourceListType &sourceList) const;
-    void WriteContinuousCentroid(m2::ImzMLMassSpecImage::SourceListType &sourceList) const;
-    void WriteProcessedProfile(m2::ImzMLMassSpecImage::SourceListType &sourceList) const;
-    void WriteProcessedCentroid(m2::ImzMLMassSpecImage::SourceListType &sourceList) const;
+    void WriteContinuousProfile(m2::ImzMLSpectrumImage::SourceListType &sourceList) const;
+    void WriteContinuousCentroid(m2::ImzMLSpectrumImage::SourceListType &sourceList) const;
+    void WriteProcessedProfile(m2::ImzMLSpectrumImage::SourceListType &sourceList) const;
+    void WriteProcessedCentroid(m2::ImzMLSpectrumImage::SourceListType &sourceList) const;
 
   private:
+    void EvaluateSpectrumFormatType(m2::SpectrumImageBase * );
+    void LoadAssociatedData(m2::ImzMLSpectrumImage *);
     ImzMLImageIO *IOClone() const override;
   };
 } // end of namespace mitk

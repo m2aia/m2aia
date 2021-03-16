@@ -20,6 +20,7 @@ See LICENSE.txt for details.
 #include <iterator>
 #include <mitkTimer.h>
 #include <numeric>
+#include <unordered_map>
 
 auto m2::ImzMLXMLParser::findLine(std::ifstream &f, std::string name, std::string start_tag, bool eol)
   -> unsigned long long
@@ -63,7 +64,7 @@ auto m2::ImzMLXMLParser::findLine(std::ifstream &f, std::string name, std::strin
   return -1;
 }
 
-void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
+void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
 {
   std::ifstream f;
   std::vector<std::string> stack, context_stack;
@@ -77,7 +78,7 @@ void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
   std::unordered_map<std::string, std::function<void(const std::string &)>> accession_map;
   std::unordered_map<std::string, std::function<void(const std::string &)>> context_map;
 
-  for (auto &source : data->GetSourceList())
+  for (auto &source : data->GetSpectrumImageSourceList())
   {
     f.open((source._ImzMLDataPath), std::ios_base::binary);
 
@@ -216,13 +217,13 @@ void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
       accession_map["IMS:X1"] = accession_map["M2:0000001"] = ValueToDoubleProperty; // origin x
       accession_map["IMS:X2"] = accession_map["M2:0000002"] = ValueToDoubleProperty; // origin y
       accession_map["IMS:X3"] = accession_map["M2:0000003"] = ValueToDoubleProperty; // origin z
-      
-	  accession_map["IMS:1000053"] = [&](const std::string &line) {                  // origin x
+
+      accession_map["IMS:1000053"] = [&](const std::string &line) { // origin x
         attributValue(line, "value", value);
         data->SetPropertyValue<double>("origin x", std::stoul(value));
       };
-      
-	  accession_map["IMS:1000054"] = [&](const std::string &line) {					 // origin y
+
+      accession_map["IMS:1000054"] = [&](const std::string &line) { // origin y
         attributValue(line, "value", value);
         data->SetPropertyValue<double>("origin y", std::stoul(value));
       };
@@ -348,31 +349,6 @@ void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
       }
 
       // in reading mode, only one source is possible
-      auto &source = data->GetSourceList().front();
-      if (data->GetProperty("continuous") && data->GetProperty("profile spectrum"))
-        source.ImportMode = m2::SpectrumFormatType::ContinuousProfile;
-      else if (data->GetProperty("processed") && data->GetProperty("profile spectrum"))
-        source.ImportMode = m2::SpectrumFormatType::ProcessedProfile;
-      else if (data->GetProperty("continuous") && data->GetProperty("centroid spectrum"))
-        source.ImportMode = m2::SpectrumFormatType::ContinuousCentroid;
-      else if (data->GetProperty("processed") && data->GetProperty("centroid spectrum"))
-        source.ImportMode = m2::SpectrumFormatType::ProcessedCentroid;
-
-      if (!data->GetProperty("processed") && !data->GetProperty("continuous"))
-      {
-        MITK_ERROR << "Set the continous (IMS:1000030) or processed (IMS:1000031) property in the ImzML "
-                      "fileContent element.";
-        MITK_ERROR << "Fallback to continous (MS:1000030)";
-        source.ImportMode = m2::SpectrumFormatType::ContinuousProfile;
-      }
-
-      if (!data->GetProperty("centroid spectrum") && !data->GetProperty("profile spectrum"))
-      {
-        MITK_ERROR << "Set the profile spectrum (MS:1000127) or centroid spectrum (MS:1000128) property in the ImzML "
-                      "fileContent element.";
-        MITK_ERROR << "Fallback to profile spectrum (MS:1000127)";
-        source.ImportMode = m2::SpectrumFormatType::ContinuousProfile;
-      }
 
       // data->SetIsContinuous();
       // data->SetIsProfileSpectrum();
@@ -491,7 +467,7 @@ void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
   }
 }
 
-void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
+void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
 {
   std::ifstream f;
   std::vector<std::string> stack, context_stack;
@@ -504,7 +480,7 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
 
   std::unordered_map<std::string, std::function<void(const std::string &)>> accession_map;
   std::unordered_map<std::string, std::function<void(const std::string &)>> context_map;
-  for (auto &source : data->GetSourceList())
+  for (auto &source : data->GetSpectrumImageSourceList())
   {
     f.open((source._ImzMLDataPath), std::ios_base::binary);
 
@@ -744,7 +720,7 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLMassSpecImage::Pointer data)
   }
 }
 
-// std::string m2::ImzMLXMLParser::WriteMetaData(m2::ImzMLMassSpecImage::Pointer /*val*/, std::string &path)
+// std::string m2::ImzMLXMLParser::WriteMetaData(m2::ImzMLSpectrumImage::Pointer /*val*/, std::string &path)
 //{
 //  const auto &meta = mitk::ImzMLXMLTemplate::IMZML_TEMPLATE_START;
 //  const auto &spectrum = mitk::ImzMLXMLTemplate::IMZML_SPECTRUM_TEMPLATE;

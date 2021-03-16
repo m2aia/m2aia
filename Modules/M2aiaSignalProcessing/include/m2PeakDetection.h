@@ -17,6 +17,7 @@ See LICENSE.txt for details.
 
 #include <M2aiaSignalProcessingExports.h>
 #include <algorithm>
+#include <cmath>
 #include <functional>
 #include <iomanip>
 #include <iostream>
@@ -25,7 +26,6 @@ See LICENSE.txt for details.
 #include <m2MedianAbsoluteDeviation.h>
 #include <numeric>
 #include <tuple>
-#include <cmath>
 #include <vector>
 
 namespace m2
@@ -452,16 +452,28 @@ namespace m2
     {
       unsigned long offset = 0;
       unsigned long length = 0;
-      for (auto it = std::cbegin(mzs); it != std::cend(mzs); ++it)
+      auto start = mzs.cend() - 1;
+      auto end = mzs.cend();
+      for (auto it = mzs.cbegin(); it < mzs.cend(); ++it)
       {
-        if (*it < lower)
-          ++offset;
-        else if (*it < upper)
-          ++length;
-        else
+        if (*it >= lower)
+        {
+          start = it;
           break;
+        }
       }
-      return {offset, length};
+      for (auto it = mzs.cbegin(); it < mzs.cend(); ++it)
+      {
+        if (*it > upper)
+        {
+          end = it;
+          break;
+        }
+      }
+
+      // auto start = std::upper_bound(std::begin(mzs), std::end(mzs), lower) - 1;
+      // auto end = std::upper_bound(std::begin(mzs), std::end(mzs), upper) - 1;
+      return {std::distance(std::begin(mzs), start), std::distance(start, end)};
     }
 
   }; // namespace Signal

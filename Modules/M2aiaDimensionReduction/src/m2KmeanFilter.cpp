@@ -8,7 +8,7 @@
 #include <mitkImage.h>
 #include <mitkImageCast.h>
 #include <mitkImagePixelReadAccessor.h>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 
 void mitk::m2KmeanFilter::GenerateData()
 {

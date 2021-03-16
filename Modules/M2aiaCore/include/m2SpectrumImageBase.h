@@ -12,16 +12,17 @@ A PARTICULAR PURPOSE.
 See LICENSE.txt for details.
 
 ===================================================================*/
-#ifndef MITKMSImageBase
-#define MITKMSImageBase
+#pragma once
 
 #include <M2aiaCoreExports.h>
 #include <itkMetaDataObject.h>
-#include <m2Common.h>
+#include <m2CoreCommon.h>
 #include <m2ISpectrumDataAccess.h>
 #include <m2IonImageReference.h>
 #include <m2MassValue.h>
+#include <m2SignalCommon.h>
 #include <mitkBaseData.h>
+#include <mitkImage.h>
 
 namespace m2
 {
@@ -47,14 +48,21 @@ namespace m2
   class M2AIACORE_EXPORT SpectrumImageBase : public ISpectrumDataAccess, public mitk::Image
   {
   public:
+    using ImageArtifactMapType = std::map<std::string, mitk::BaseData::Pointer>;
+    using SpectrumArtifactDataType = double;
+    using SpectrumArtifactVectorType = std::vector<SpectrumArtifactDataType>;
+    using SpectrumArtifactMapType = std::map<m2::OverviewSpectrumType, SpectrumArtifactVectorType>;
+    using IonImageReferenceVectorType = std::vector<IonImageReference::Pointer>;
+    using PeaksVectorType = std::vector<m2::MassValue>;
+
     mitkClassMacro(SpectrumImageBase, mitk::Image);
     itkNewMacro(Self);
 
     itkSetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
     itkGetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
 
-    itkSetEnumMacro(IonImageGrabStrategy, ImagingStrategyType);
-    itkGetEnumMacro(IonImageGrabStrategy, ImagingStrategyType);
+    itkSetEnumMacro(RangePoolingStrategy, RangePoolingStrategyType);
+    itkGetEnumMacro(RangePoolingStrategy, RangePoolingStrategyType);
 
     itkSetEnumMacro(SmoothingStrategy, SmoothingType);
     itkGetEnumMacro(SmoothingStrategy, SmoothingType);
@@ -68,11 +76,22 @@ namespace m2
     itkSetMacro(SmoothingHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(SmoothingHalfWindowSize, unsigned int);
 
-    // itkSetMacro(PeakPickingHalfWindowSize, unsigned int);
-    // itkGetConstReferenceMacro(PeakPickingHalfWindowSize, unsigned int);
+    itkSetEnumMacro(ExportMode, SpectrumFormatType);
+    itkGetEnumMacro(ExportMode, SpectrumFormatType);
+    itkSetEnumMacro(ImportMode, SpectrumFormatType);
+    itkGetEnumMacro(ImportMode, SpectrumFormatType);
 
-    // itkSetMacro(PeakPickingSNR, double);
-    // itkGetConstReferenceMacro(PeakPickingSNR, double);
+    itkSetEnumMacro(MzsOutputType, NumericType);
+    itkGetEnumMacro(MzsOutputType, NumericType);
+
+    itkSetEnumMacro(IntsOutputType, NumericType);
+    itkGetEnumMacro(IntsOutputType, NumericType);
+
+    itkSetEnumMacro(MzsInputType, NumericType);
+    itkGetEnumMacro(MzsInputType, NumericType);
+
+    itkSetEnumMacro(IntsInputType, NumericType);
+    itkGetEnumMacro(IntsInputType, NumericType);
 
     itkSetMacro(BinningTolerance, double);
     itkGetConstReferenceMacro(BinningTolerance, double);
@@ -80,25 +99,11 @@ namespace m2
     itkSetMacro(Tolerance, double);
     itkGetConstReferenceMacro(Tolerance, double);
 
-    mitk::Image::Pointer GetNormalizationImage();
-    mitk::Image::Pointer GetMaskImage();
-    mitk::Image::Pointer GetIndexImage();
+    itkGetMacro(Peaks, PeaksVectorType &);
+    itkGetConstReferenceMacro(Peaks, PeaksVectorType);
 
-    virtual void InitializeImageAccess(){};
-    virtual void InitializeGeometry(){};
-
-    using ImageArtifactMapType = std::map<std::string, mitk::BaseData::Pointer>;
-    using SpectrumArtifactDataType = double;
-    using SpectrumArtifactVectorType = std::vector<SpectrumArtifactDataType>;
-    using SpectrumArtifactMapType = std::map<m2::OverviewSpectrumType, SpectrumArtifactVectorType>;
-    using IonImageReferenceVectorType = std::vector<IonImageReference::Pointer>;
-
-    SpectrumArtifactVectorType &SkylineSpectrum();
-    SpectrumArtifactVectorType &SumSpectrum();
-    SpectrumArtifactVectorType &MeanSpectrum();
-    SpectrumArtifactVectorType &PeakIndicators();
-    SpectrumArtifactVectorType &MassAxis();
-    const SpectrumArtifactVectorType &MassAxis() const;
+    itkGetConstReferenceMacro(NumberOfThreads, unsigned int);
+    itkSetMacro(NumberOfThreads, unsigned int);
 
     itkGetMacro(ImageArtifacts, ImageArtifactMapType &);
     itkGetConstReferenceMacro(ImageArtifacts, ImageArtifactMapType);
@@ -113,16 +118,26 @@ namespace m2
     itkGetConstObjectMacro(CurrentIonImageReference, IonImageReference);
     itkSetObjectMacro(CurrentIonImageReference, IonImageReference);
 
-    using PeaksVectorType = std::vector<m2::MassValue>;
-    itkGetMacro(Peaks, PeaksVectorType &);
-    itkGetConstReferenceMacro(Peaks, PeaksVectorType);
+    mitk::Image::Pointer GetNormalizationImage();
+    mitk::Image::Pointer GetMaskImage();
+    mitk::Image::Pointer GetIndexImage();
 
-    void GetIntensities(unsigned int index, std::vector<double> &ints, unsigned int sourceIndex = 0) const override;
-    void GetXValues(unsigned int index, std::vector<double> &mzs, unsigned int sourceIndex = 0) const override;
-    void GetSpectrum(unsigned int index,
-                     std::vector<double> &mzs,
-                     std::vector<double> &ints,
-                     unsigned int sourceIndex = 0) const override;
+    virtual void InitializeImageAccess(){};
+    virtual void InitializeGeometry(){};
+
+    SpectrumArtifactVectorType &SkylineSpectrum();
+    SpectrumArtifactVectorType &SumSpectrum();
+    SpectrumArtifactVectorType &MeanSpectrum();
+    SpectrumArtifactVectorType &PeakIndicators();
+    SpectrumArtifactVectorType &GetXAxis();
+    const SpectrumArtifactVectorType &GetXAxis() const;
+
+    void ReceiveIntensities(unsigned int index, std::vector<double> &ints, unsigned int sourceIndex = 0) const override;
+    void ReceivePositions(unsigned int index, std::vector<double> &mzs, unsigned int sourceIndex = 0) const override;
+    void ReceiveSpectrum(unsigned int index,
+                         std::vector<double> &mzs,
+                         std::vector<double> &ints,
+                         unsigned int sourceIndex = 0) const override;
     void GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
 
     template <class T>
@@ -136,9 +151,6 @@ namespace m2
 
     inline void SaveModeOn() const { this->m_InSaveMode = true; }
     inline void SaveModeOff() const { this->m_InSaveMode = false; }
-
-    itkGetConstReferenceMacro(NumberOfThreads, unsigned int);
-    itkSetMacro(NumberOfThreads, unsigned int);
 
   protected:
     bool mutable m_InSaveMode = false;
@@ -157,6 +169,12 @@ namespace m2
     BaselineCorrectionType m_BaselineCorrectionStrategy;
     SmoothingType m_SmoothingStrategy;
 
+    NumericType m_IntsOutputType = NumericType::Float;
+    NumericType m_MzsOutputType = NumericType::Float;
+    NumericType m_IntsInputType;
+    NumericType m_MzsInputType;
+    SpectrumFormatType m_ExportMode = SpectrumFormatType::ContinuousProfile;
+    SpectrumFormatType m_ImportMode;
     /**
      * @brief Vector of ion images associated with this ims file. E.g. peaks or individual picked ion
      * images.
@@ -170,8 +188,8 @@ namespace m2
      */
     IonImageReference::Pointer m_CurrentIonImageReference;
 
-    NormalizationStrategyType m_NormalizationStrategy = m2::NormalizationStrategyType::TIC;
-    m2::ImagingStrategyType m_IonImageGrabStrategy = m2::ImagingStrategyType::Sum;
+    NormalizationStrategyType m_NormalizationStrategy = NormalizationStrategyType::TIC;
+    RangePoolingStrategyType m_RangePoolingStrategy = RangePoolingStrategyType::Sum;
 
     ~SpectrumImageBase() override;
     bool m_IsDataAccessInitialized = false;
@@ -183,62 +201,57 @@ namespace m2
      * */
     class ProcessorBase;
     std::unique_ptr<ProcessorBase> m_Processor;
-
-    std::function<double(double)> m_Offset = [](double) { return 0; };
-    std::function<double(double)> m_InverseOffset = [](double) { return 0; };
-    SpectrumArtifactVectorType m_MassAxis;
-  };
-
-  template <class T>
-  inline void m2::SpectrumImageBase::SetPropertyValue(const std::string &key, const T &value)
-  {
-    auto dd = this->GetPropertyList();
-    auto prop = dd->GetProperty(key);
-    using TargetProperty = mitk::GenericProperty<T>;
-
-    auto entry = dynamic_cast<TargetProperty *>(prop);
-    if (!entry)
-    {
-      auto entry = TargetProperty::New(value);
-      dd->SetProperty(key, entry);
-    }
-    else
-    {
-      entry->SetValue(value);
-    }
-  }
-
-  template <class T>
-  inline const T m2::SpectrumImageBase::GetPropertyValue(const std::string &key) const
-  {
-    auto dd = this->GetPropertyList();
-    const mitk::GenericProperty<T> *entry = dynamic_cast<mitk::GenericProperty<T> *>(dd->GetProperty(key));
-    if (entry)
-    {
-      return entry->GetValue();
-    }
-    else
-    {
-      MITK_WARN << "No meta data object found! " << key;
-      return T(0);
-    }
-  }
-
-  class SpectrumImageBase::ProcessorBase
-  {
-  public:
-    virtual void GrabIonImagePrivate(double mz, double tol, const Image *mask, Image *image) const = 0;
-    virtual void GrabIntensityPrivate(unsigned long int index,
-                                      std::vector<double> &ints,
-                                      unsigned int sourceIndex = 0) const = 0;
-    virtual void GrabMassPrivate(unsigned long int index,
-                                 std::vector<double> &mzs,
-                                 unsigned int sourceIndex = 0) const = 0;
-    virtual void InitializeImageAccess() = 0;
-    virtual void InitializeGeometry() = 0;
-    virtual ~ProcessorBase() = default;
+    SpectrumArtifactVectorType m_XAxis;
   };
 
 } // namespace m2
 
-#endif // MITKMSImageBase
+template <class T>
+inline void m2::SpectrumImageBase::SetPropertyValue(const std::string &key, const T &value)
+{
+  auto dd = this->GetPropertyList();
+  auto prop = dd->GetProperty(key);
+  using TargetProperty = mitk::GenericProperty<T>;
+
+  auto entry = dynamic_cast<TargetProperty *>(prop);
+  if (!entry)
+  {
+    auto entry = TargetProperty::New(value);
+    dd->SetProperty(key, entry);
+  }
+  else
+  {
+    entry->SetValue(value);
+  }
+}
+
+template <class T>
+inline const T m2::SpectrumImageBase::GetPropertyValue(const std::string &key) const
+{
+  auto dd = this->GetPropertyList();
+  const mitk::GenericProperty<T> *entry = dynamic_cast<mitk::GenericProperty<T> *>(dd->GetProperty(key));
+  if (entry)
+  {
+    return entry->GetValue();
+  }
+  else
+  {
+    MITK_WARN << "No meta data object found! " << key;
+    return T(0);
+  }
+}
+
+class m2::SpectrumImageBase::ProcessorBase
+{
+public:
+  virtual void GrabIonImagePrivate(double mz, double tol, const Image *mask, Image *image) const = 0;
+  virtual void GrabIntensityPrivate(unsigned long int index,
+                                    std::vector<double> &ints,
+                                    unsigned int sourceIndex = 0) const = 0;
+  virtual void GrabMassPrivate(unsigned long int index,
+                               std::vector<double> &mzs,
+                               unsigned int sourceIndex = 0) const = 0;
+  virtual void InitializeImageAccess() = 0;
+  virtual void InitializeGeometry() = 0;
+  virtual ~ProcessorBase() = default;
+};

@@ -66,7 +66,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
   // 20201023: use communciation service
   auto serviceRef = m2::CommunicationService::Instance();
-  connect(serviceRef, SIGNAL(GenerateImageData(qreal, qreal)), this, SLOT(OnGrabIonImage(qreal, qreal)));
+  connect(serviceRef, SIGNAL(GenerateImageData(qreal, qreal)), this, SLOT(OnGenerateImageData(qreal, qreal)));
   connect(serviceRef,
           SIGNAL(RequestProcessingNodes(const QString &)),
           this,
@@ -85,9 +85,9 @@ void m2Data::CreateQtPartControl(QWidget *parent)
       mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
                                   mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
     m_MassSpecDataNodeSelectionWidget->SetSelectionIsOptional(true);
-    m_MassSpecDataNodeSelectionWidget->SetEmptyInfo(QString("Spectrum image selection"));
-    m_MassSpecDataNodeSelectionWidget->SetPopUpTitel(QString("Spectrum image"));
-    ((QVBoxLayout *)(parent->layout()))->insertWidget(1, m_MassSpecDataNodeSelectionWidget);
+    m_MassSpecDataNodeSelectionWidget->SetEmptyInfo(QString("Image selection"));
+    m_MassSpecDataNodeSelectionWidget->SetPopUpTitel(QString("Image"));
+    ((QVBoxLayout *)(parent->layout()))->addWidget(m_MassSpecDataNodeSelectionWidget);
   }
 
   connect(m_Controls.btnOpenPointSetWidget, &QAbstractButton::clicked, []() {
@@ -148,7 +148,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
      auto nodes = this->AllNodes();
      for (auto node : *nodes)
      {
-       if (m2::ImzMLMassSpecImage::Pointer imzml = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
+       if (m2::ImzMLSpectrumImage::Pointer imzml = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
        {
          auto childs = this->GetDataStorage()->GetDerivations(node, nullptr, true);
          for (auto child : *childs)
@@ -173,18 +173,8 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   connect(m_Controls.applyTiling, &QPushButton::clicked, this, &m2Data::OnApplyTiling);
   connect(m_Controls.resetTiling, &QPushButton::clicked, this, &m2Data::OnResetTiling);
 
-  // connect(m_Controls.btnCopyRescale, &QPushButton::clicked, this, &m2Data::OnCopyRescale);
-
-  /*connect(m_Controls.radioButtonMeanSpectrum, &QRadioButton::toggle, this, [this](auto t) {
-    if (t) this->m_CurrentOverviewSpectrumType = m2::SpectrumImageBase::OverviewSpectrumType::Mean;
-  });*/
-
-  connect(m_Controls.rbtnTolPPM, &QAbstractButton::clicked, this, [&] { m_Controls.spnBxTol->setSuffix(" ppm"); });
-
-  connect(m_Controls.rbtnTolDa, &QAbstractButton::clicked, this, [&] { m_Controls.spnBxTol->setSuffix(" Da"); });
-
   connect(m_Controls.btnGrabIonImage, &QAbstractButton::clicked, this, [&] {
-    OnGrabIonImage(m_Controls.spnBxMz->value(), -1);
+    OnGenerateImageData(m_Controls.spnBxMz->value(), -1);
   });
 
   connect(m_Controls.scaleBarEnableIon, &QRadioButton::toggled, this, [this](bool state) {
@@ -205,17 +195,17 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
   // step through
   QShortcut *shortcutLeft = new QShortcut(QKeySequence(Qt::Key_Left), parent);
-  connect(shortcutLeft, SIGNAL(activated()), this, SLOT(OnPrevIonImage()));
+  connect(shortcutLeft, SIGNAL(activated()), this, SLOT(OnCreatePrevImage()));
 
   QShortcut *shortcutRight = new QShortcut(QKeySequence(Qt::Key_Right), parent);
-  connect(shortcutRight, SIGNAL(activated()), this, SLOT(OnNextIonImage()));
+  connect(shortcutRight, SIGNAL(activated()), this, SLOT(OnCreateNextImage()));
 
   // add ion image
   QShortcut *shortcutCtrlI = new QShortcut(QKeySequence(tr("Ctrl+I")), parent);
   connect(shortcutCtrlI, SIGNAL(activated()), this, SLOT(EmitIonImageReference()));
 
-  // connect(m_Controls.btnPrev, &QPushButton::clicked, this, &m2Data::OnPrevIonImage);
-  // connect(m_Controls.btnNext, &QPushButton::clicked, this, &m2Data::OnNextIonImage);
+  // connect(m_Controls.btnPrev, &QPushButton::clicked, this, &m2Data::OnCreatePrevImage);
+  // connect(m_Controls.btnNext, &QPushButton::clicked, this, &m2Data::OnCreateNextImage);
 
   this->m_ColorBarAnnotations.clear();
   for (int i = 0; i < 2; ++i)
@@ -277,17 +267,17 @@ m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
   return m2::NormalizationStrategyType::None;
 }
 
-m2::ImagingStrategyType m2Data::GuiToIonImageGrabStrategyType()
+m2::RangePoolingStrategyType m2Data::GuiToRangePoolingStrategyType()
 {
   if (this->Controls()->radioButtonMax->isChecked())
-    return m2::ImagingStrategyType::Maximum;
+    return m2::RangePoolingStrategyType::Maximum;
   if (this->Controls()->radioButtonMean->isChecked())
-    return m2::ImagingStrategyType::Mean;
+    return m2::RangePoolingStrategyType::Mean;
   if (this->Controls()->radioButtonMedian->isChecked())
-    return m2::ImagingStrategyType::Median;
+    return m2::RangePoolingStrategyType::Median;
   if (this->Controls()->radioButtonSum->isChecked())
-    return m2::ImagingStrategyType::Sum;
-  return m2::ImagingStrategyType::None;
+    return m2::RangePoolingStrategyType::Sum;
+  return m2::RangePoolingStrategyType::None;
 }
 
 m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
@@ -351,7 +341,7 @@ void m2Data::OnResetTiling()
   mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
 }
 
-void m2Data::OnNextIonImage()
+void m2Data::OnCreateNextImage()
 {
   if (m_IonImageReference)
   {
@@ -361,11 +351,11 @@ void m2Data::OnNextIonImage()
     {
       tol = tol * 10e-6 * mz;
     }
-    this->OnGrabIonImage(mz + tol, -1);
+    this->OnGenerateImageData(mz + tol, -1);
   }
 }
 
-void m2Data::OnPrevIonImage()
+void m2Data::OnCreatePrevImage()
 {
   if (m_IonImageReference)
   {
@@ -375,7 +365,7 @@ void m2Data::OnPrevIonImage()
     {
       tol = tol * 10e-6 * mz;
     }
-    this->OnGrabIonImage(mz - tol, -1);
+    this->OnGenerateImageData(mz - tol, -1);
   }
 }
 
@@ -391,11 +381,11 @@ void m2Data::EmitIonImageReference()
   auto nodes = this->AllNodes();
   for (auto &n : *nodes)
   {
-    if (auto msImage = dynamic_cast<m2::ImzMLMassSpecImage *>(n->GetData()))
+    if (auto msImage = dynamic_cast<m2::ImzMLSpectrumImage *>(n->GetData()))
     {
       if (auto current = m_IonImageReference)
       {
-        const auto &mzAxis = msImage->MassAxis();
+        const auto &mzAxis = msImage->GetXAxis();
         if (current->mz >= mzAxis.front() && current->mz <= mzAxis.back())
         {
           current->name = this->m_Controls.textIonName->text().toStdString();
@@ -418,7 +408,7 @@ void m2Data::EmitIonImageReference()
   emit m2::CommunicationService::Instance()->SendProcessingNodes(QString::fromStdString(m2Data::VIEW_ID), nodes);
 }
 
-void m2Data::OnGrabIonImageFinished(mitk::DataNode * /*dataNode*/, mitk::Image * /*ionImage*/) {}
+void m2Data::OnGrabIonImageFinished(mitk::DataNode * /*dataNode*/, mitk::Image * /*image*/) {}
 
 m2Data::NodesVectorType::Pointer m2Data::AllNodes()
 {
@@ -466,8 +456,7 @@ void m2Data::ApplySettingsToNodes(m2Data::NodesVectorType::Pointer v)
   {
     if (auto data = dynamic_cast<m2::SpectrumImageBase *>(dataNode->GetData()))
       ApplySettingsToImage(data); // ImzML
-                                  /*else if (auto data = dynamic_cast<mitk::Imzs*>(dataNode->GetData()))
-                                    UpdateImzMLDataObject(data);*/
+                                  
   }
 }
 
@@ -475,13 +464,16 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
 {
   if (data)
   {
-    using m2::ImzMLMassSpecImage;
-
     data->SetNormalizationStrategy(GuiToNormalizationStrategyType());
     data->SetBaselineCorrectionStrategy(GuiToBaselineCorrectionStrategyType());
     data->SetSmoothingStrategy(GuiToSmoothingStrategyType());
-    data->SetIonImageGrabStrategy(GuiToIonImageGrabStrategyType());
+    data->SetRangePoolingStrategy(GuiToRangePoolingStrategyType());
 
+    if (data->GetSmoothingStrategy() == m2::SmoothingType::Gaussian)
+    {
+      auto d = int(m_Controls.spnBxSigma->value() * 4 + 0.5);
+      m_Controls.spnBxSmoothing->setValue(d);
+    }
     data->SetSmoothingHalfWindowSize(m_Controls.spnBxSmoothing->value());
     data->SetBaseLinecorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
 
@@ -671,7 +663,7 @@ void m2Data::UpdateColorBarAndRenderWindows()
   }
 }
 
-void m2Data::OnGrabIonImage(qreal mz, qreal tol)
+void m2Data::OnGenerateImageData(qreal mz, qreal tol)
 {
   const bool initializeNew = m2Data::Controls()->chkBxInitNew->isChecked();
 
@@ -689,7 +681,7 @@ void m2Data::OnGrabIonImage(qreal mz, qreal tol)
   emit m2::CommunicationService::Instance()->RangeChanged(mz, tol);
 
   auto flag = std::make_shared<std::atomic<bool>>(0);
-  QString labelText = str(boost::format("%.2f +/- %.2f Da") % mz % tol).c_str();
+  QString labelText = str(boost::format("%.4f +/- %.2f") % mz % tol).c_str();
   if (nodesToProcess->size() == 1)
     labelText = QString(nodesToProcess->front()->GetName().c_str()) + "\n" + labelText;
 
@@ -714,11 +706,8 @@ void m2Data::OnGrabIonImage(qreal mz, qreal tol)
       if (!data->IsInitialized())
         mitkThrow() << "Trying to grab an ion image but data access was not initialized properly!";
 
-      if (dynamic_cast<m2::ImzMLMassSpecImage *>(data.GetPointer()))
-      {
-        if (mz > data->MassAxis().back() || mz < data->MassAxis().front())
-          continue;
-      }
+      if (mz > data->GetXAxis().back() || mz < data->GetXAxis().front())
+        continue;
 
       mitk::Image::Pointer maskImage;
       auto maskNode = FindChildNodeWithNameContaining(dataNode, "mask");
@@ -741,23 +730,23 @@ void m2Data::OnGrabIonImage(qreal mz, qreal tol)
       // capture holds a copy of the smartpointer, so it will stay alive. Make the lambda mutable to
       // allow the manipulation of captured varaibles that are copied by '='.
       const auto futureFinished = [future, dataNode, nodesToProcess, labelText, this]() mutable {
-        auto ionImage = future->result();
+        auto image = future->result();
 
         if (this->m_Controls.chkBxInitNew->isChecked())
         {
           using SourceImageType = itk::Image<m2::DisplayImagePixelType, 3>;
-          auto Caster = [&ionImage](auto *itkImage) {
-            SourceImageType::Pointer srcIonImage;
+          auto Caster = [&image](auto *itkImage) {
+            SourceImageType::Pointer srcImage;
 
-            mitk::CastToItkImage(ionImage, srcIonImage);
+            mitk::CastToItkImage(image, srcImage);
             using ImageType = typename std::remove_pointer<decltype(itkImage)>::type;
             using FilterType = itk::RescaleIntensityImageFilter<SourceImageType, ImageType>;
             auto filter = FilterType::New();
-            filter->SetInput(srcIonImage);
+            filter->SetInput(srcImage);
             filter->SetOutputMinimum(0);
             filter->SetOutputMaximum(std::numeric_limits<typename ImageType::PixelType>::max());
             filter->Update();
-            mitk::CastToMitkImage(filter->GetOutput(), ionImage);
+            mitk::CastToMitkImage(filter->GetOutput(), image);
           };
 
           auto id = m_Controls.cmbBxType->currentIndex();
@@ -788,7 +777,7 @@ void m2Data::OnGrabIonImage(qreal mz, qreal tol)
           auto lut = mitk::LookupTable::New();
           lut->SetType(mitk::LookupTable::LookupTableType::GRAYSCALE_TRANSPARENT);
           dataNode->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
-          dataNode->SetData(ionImage);
+          dataNode->SetData(image);
           this->GetDataStorage()->Add(dataNode);
           if (nodesToProcess->size() == 1)
             dataNode->SetName(labelText.toStdString());
@@ -799,11 +788,11 @@ void m2Data::OnGrabIonImage(qreal mz, qreal tol)
         {
           UpdateLevelWindow(dataNode);
         }
-        dataNode->SetProperty("mz", ionImage->GetProperty("mz"));
-        dataNode->SetProperty("tol", ionImage->GetProperty("tol"));
+        dataNode->SetProperty("mz", image->GetProperty("mz"));
+        dataNode->SetProperty("tol", image->GetProperty("tol"));
         mitk::LevelWindow lw;
         dataNode->GetLevelWindow(lw);
-        lw.SetToImageRange(ionImage);
+        lw.SetToImageRange(image);
         dataNode->SetLevelWindow(lw);
 
         this->UpdateColorBarAndRenderWindows();
@@ -814,7 +803,7 @@ void m2Data::OnGrabIonImage(qreal mz, qreal tol)
 
       //*************** Worker Block******************//
       const auto futureWorker = [mz, tol, data, maskImage, initializeNew, this]() {
-        mitk::Timer t("Grab IonImage@[" + std::to_string(mz) + " " + std::to_string(tol) + "]");
+        mitk::Timer t("Creat image @[" + std::to_string(mz) + " " + std::to_string(tol) + "]");
         if (initializeNew)
         {
           auto geom = data->GetGeometry()->Clone();
@@ -917,6 +906,23 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
 {
   if (auto openSlideIOHelper = dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
   {
+    OpenSlideImageNodeAdded(node);
+  }
+  else if (auto msImageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  {
+    SpectrumImageNodeAdded(node);
+
+    if (auto msImageImzML = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
+      ImzMLImageNodeAdded(node);
+    else if (auto fsmImage = dynamic_cast<m2::FsmIRSpecImage *>(node->GetData()))
+      FsmImageNodeAdded(node);
+  }
+}
+
+void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
+{
+  if (auto openSlideIOHelper = dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
+  {
     auto dialog = new m2OpenSlideImageIOHelperDialog(m_Parent);
     dialog->SetOpenSlideImageIOHelperObject(openSlideIOHelper);
     auto result = dialog->exec();
@@ -949,117 +955,109 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
     GetDataStorage()->Remove(node);
     delete dialog;
   }
-  else if (auto msImageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+}
+
+void m2Data::ImzMLImageNodeAdded(const mitk::DataNode *node)
+{
+  if (auto msImageImzML = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
   {
-    auto lut = mitk::LookupTable::New();
-    lut->SetType(mitk::LookupTable::LookupTableType::VIRIDIS_TRANSPARENT);
-    const_cast<mitk::DataNode *>(node)->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
-    const_cast<mitk::DataNode *>(node)->SetBoolProperty("binary", false);
-    mitk::LevelWindow lw;
-    const_cast<mitk::DataNode *>(node)->GetLevelWindow(lw);
-    lw.SetToMaxWindowSize();
-    const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
-
-    // If an MS base image object is add to the datastorage
-    if (auto msImageImzML = dynamic_cast<m2::ImzMLMassSpecImage *>(msImageBase))
+    if (!msImageImzML->GetImageAccessInitialized())
     {
-      if (!msImageImzML->GetImageAccessInitialized())
+      this->ApplySettingsToImage(msImageImzML);
+      msImageImzML->InitializeImageAccess();
+      emit m2::CommunicationService::Instance()->MSImageNodeAdded(node);
+
+      this->RequestRenderWindowUpdate();
+
+      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
       {
-        // load associated data
+        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
         {
-          auto source = msImageImzML->GetSourceList().front();
-
-          auto path = source._ImzMLDataPath;
-
+          controller->SetViewToCaudal();
         }
-
-        // preprocessing options defined in gui passed to ImzML object
-        this->ApplySettingsToImage(msImageImzML);
-        // now initialize the MS image
-        msImageImzML->InitializeImageAccess();
-
-        // and add as child node
-        if (msImageImzML->GetImageArtifacts().find("references") != std::end(msImageImzML->GetImageArtifacts()))
-        {
-          auto helperNode = mitk::DataNode::New();
-          helperNode->SetName(node->GetName());
-          helperNode->SetVisibility(false);
-          helperNode->SetData(msImageImzML->GetImageArtifacts()["references"]);
-          helperNode->SetFloatProperty("point 2D size",
-                                       msImageImzML->GetGeometry()->GetSpacing()[0] * 3);              // x spacing
-          helperNode->SetFloatProperty("pointsize", msImageImzML->GetGeometry()->GetSpacing()[0] * 3); // x spacing
-          this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-        }
-
-        // -------------- add Mask to datastorage --------------
-        {
-          auto labelSetImag = mitk::ConvertImageToLabelSetImage(msImageImzML->GetMaskImage());
-          msImageImzML->GetImageArtifacts()["mask"] = labelSetImag;
-
-          auto helperNode = mitk::DataNode::New();
-          helperNode->SetName(node->GetName() + "_mask");
-          helperNode->SetVisibility(true);
-          helperNode->SetData(msImageImzML->GetMaskImage());
-
-          this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-
-          labelSetImag->GetLabel(1)->SetOpacity(0);
-          labelSetImag->GetActiveLabelSet()->UpdateLookupTable(1);
-        }
-
-        // -------------- add Index to datastorage --------------
-        {
-          auto helperNode = mitk::DataNode::New();
-          helperNode->SetName(node->GetName() + "_index");
-          helperNode->SetVisibility(false);
-          helperNode->SetData(msImageImzML->GetIndexImage());
-
-          this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-        }
-
-        // -------------- add Normalization to datastorage --------------
-        {
-          auto helperNode = mitk::DataNode::New();
-          helperNode->SetName(node->GetName() + "_normalization");
-          helperNode->SetVisibility(false);
-          helperNode->SetData(msImageImzML->GetNormalizationImage());
-
-          this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-        }
-
-        // 20201023: custom selection service did not work as expected
-        // using NodeSelection = m2::SelectionProvider::NodeSelection;
-        // using NodeWrapper = m2::SelectionProvider::NodeWrapper;
-        // NodeSelection::Pointer infoSelection = NodeSelection::Pointer(new NodeSelection(NodeWrapper{node, 0}));
-        // this->m_SelectionProvider->SetSelection(infoSelection);
-
-        // 20201023: use communciation service
-        emit m2::CommunicationService::Instance()->MSImageNodeAdded(node);
-
-        // rotate 3D view
-        this->RequestRenderWindowUpdate();
-
-        if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-        {
-          if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-          {
-            controller->SetViewToCaudal();
-            /* this->GetRenderWindowPart()->GetActiveQmitkRenderWindow()->SetLayoutIndex(
-               QmitkRenderWindowMenu::LayoutIndex::AXIAL);
-             this->GetRenderWindowPart()->GetActiveQmitkRenderWindow()->LayoutDesignChanged(
-               QmitkRenderWindowMenu::LayoutDesign::ONE_BIG);*/
-          }
-        }
-        // this->GetRenderWindowPart()->GetActiveQmitkRenderWindow()->LayoutDesignChanged(QmitkRenderWindowMenu::LayoutDesign::ONE_LEFT_3D_RIGHT);
-
-        // controller->SetViewToCaudal();
-        // controller->SetViewToCranial();
-        // controller->SetViewToAnterior();
-
-        //      controller->SetViewToPosterior();
-        //      controller->SetViewToSinister();
       }
-      // -------------- end read operation --------------
+    }
+  }
+}
+
+void m2Data::FsmImageNodeAdded(const mitk::DataNode *node)
+{
+  if (auto image = dynamic_cast<m2::FsmIRSpecImage *>(node->GetData()))
+  {
+    this->ApplySettingsToImage(image);
+    emit m2::CommunicationService::Instance()->MSImageNodeAdded(node);
+    this->RequestRenderWindowUpdate();
+
+    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+    {
+      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+      {
+        controller->SetViewToCaudal();
+      }
+    }
+  }
+}
+
+void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
+{
+  auto lut = mitk::LookupTable::New();
+  lut->SetType(mitk::LookupTable::LookupTableType::VIRIDIS_TRANSPARENT);
+  const_cast<mitk::DataNode *>(node)->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
+  const_cast<mitk::DataNode *>(node)->SetBoolProperty("binary", false);
+  mitk::LevelWindow lw;
+  const_cast<mitk::DataNode *>(node)->GetLevelWindow(lw);
+  lw.SetToMaxWindowSize();
+  const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
+
+  if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  {
+    // and add as child node
+    if (spectrumImage->GetImageArtifacts().find("references") != std::end(spectrumImage->GetImageArtifacts()))
+    {
+      auto helperNode = mitk::DataNode::New();
+      helperNode->SetName(node->GetName());
+      helperNode->SetVisibility(false);
+      helperNode->SetData(spectrumImage->GetImageArtifacts()["references"]);
+      helperNode->SetFloatProperty("point 2D size",
+                                   spectrumImage->GetGeometry()->GetSpacing()[0] * 3);              // x spacing
+      helperNode->SetFloatProperty("pointsize", spectrumImage->GetGeometry()->GetSpacing()[0] * 3); // x spacing
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    }
+
+    // -------------- add Mask to datastorage --------------
+    {
+      auto labelSetImag = mitk::ConvertImageToLabelSetImage(spectrumImage->GetMaskImage());
+      spectrumImage->GetImageArtifacts()["mask"] = labelSetImag;
+
+      auto helperNode = mitk::DataNode::New();
+      helperNode->SetName(node->GetName() + "_mask");
+      helperNode->SetVisibility(true);
+      helperNode->SetData(spectrumImage->GetMaskImage());
+
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+
+      labelSetImag->GetLabel(1)->SetOpacity(0);
+      labelSetImag->GetActiveLabelSet()->UpdateLookupTable(1);
+    }
+
+    // -------------- add Index to datastorage --------------
+    {
+      auto helperNode = mitk::DataNode::New();
+      helperNode->SetName(node->GetName() + "_index");
+      helperNode->SetVisibility(false);
+      helperNode->SetData(spectrumImage->GetIndexImage());
+
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    }
+
+    // -------------- add Normalization to datastorage --------------
+    {
+      auto helperNode = mitk::DataNode::New();
+      helperNode->SetName(node->GetName() + "_normalization");
+      helperNode->SetVisibility(false);
+      helperNode->SetData(spectrumImage->GetNormalizationImage());
+
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
     }
   }
 }
@@ -1068,13 +1066,10 @@ void m2Data::NodeRemoved(const mitk::DataNode *node)
 {
   if (auto msImageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-    if (dynamic_cast<m2::ImzMLMassSpecImage *>(msImageBase))
+    auto derivations = this->GetDataStorage()->GetDerivations(node);
+    for (auto &&d : *derivations)
     {
-      auto derivations = this->GetDataStorage()->GetDerivations(node);
-      for (auto &&d : *derivations)
-      {
-        this->GetDataStorage()->Remove(d);
-      }
+      this->GetDataStorage()->Remove(d);
     }
   }
 }

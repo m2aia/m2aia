@@ -15,7 +15,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #include <itksys/SystemTools.hxx>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <m2ImzMLXMLParser.h>
 #include <m2MedianAbsoluteDeviation.h>
 #include <m2PeakDetection.h>
@@ -36,10 +36,10 @@ int main(int /*argc*/, char *argv[])
  
 
   auto dataVec = mitk::IOUtil::Load({png1, png2, control});
-  m2::ImzMLMassSpecImage::Pointer imagePNG1, imagePNG2, imageControl;
-  imagePNG1 = dynamic_cast<m2::ImzMLMassSpecImage *>(dataVec[0].GetPointer());
-  imagePNG2 = dynamic_cast<m2::ImzMLMassSpecImage *>(dataVec[1].GetPointer());
-  imageControl = dynamic_cast<m2::ImzMLMassSpecImage *>(dataVec[2].GetPointer());
+  m2::ImzMLSpectrumImage::Pointer imagePNG1, imagePNG2, imageControl;
+  imagePNG1 = dynamic_cast<m2::ImzMLSpectrumImage *>(dataVec[0].GetPointer());
+  imagePNG2 = dynamic_cast<m2::ImzMLSpectrumImage *>(dataVec[1].GetPointer());
+  imageControl = dynamic_cast<m2::ImzMLSpectrumImage *>(dataVec[2].GetPointer());
 
   if (!(imageControl || imagePNG1 || imagePNG2))
   {
@@ -50,7 +50,7 @@ int main(int /*argc*/, char *argv[])
   for (auto I : {imagePNG1, imagePNG2, imageControl})
   {
     m2::ImzMLXMLParser::SlowReadMetaData(I);
-    const auto &source = I->GetSpectraSource();
+    const auto &source = I->GetSpectrumImageSource();
     auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source._BinaryDataPath);
     I->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::TopHat);
     I->SetSmoothingStrategy(m2::SmoothingType::SavitzkyGolay);
@@ -68,7 +68,7 @@ int main(int /*argc*/, char *argv[])
     std::vector<m2::MassValue> peaks;
     m2::Signal::localMaxima(std::begin(overviewSpectrum),
                            std::end(overviewSpectrum),
-                           std::begin(I->MassAxis()),
+                           std::begin(I->GetXAxis()),
                            std::back_inserter(peaks),
                            10,
                            SNR * 5.5);
@@ -79,7 +79,7 @@ int main(int /*argc*/, char *argv[])
     });
 
     imagePeaks[I.GetPointer()] = m2::Signal::monoisotopic(peaks, {3, 4, 5, 6, 7, 8, 9, 10}, 0.40);
-    MITK_INFO << I->GetSpectraSource()._ImzMLDataPath << " monoisotopic peaks found "
+    MITK_INFO << I->GetSpectrumImageSource()._ImzMLDataPath << " monoisotopic peaks found "
               << imagePeaks[I.GetPointer()].size();
   }
 
@@ -94,7 +94,7 @@ int main(int /*argc*/, char *argv[])
 
   for (auto &I : {imagePNG1, imagePNG2, imageControl})
   {
-    const auto &source = I->GetSpectraSource();
+    const auto &source = I->GetSpectrumImageSource();
     auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source._BinaryDataPath);
     for (const auto &p : binPeaks)
       I->GetPeaks().push_back(p);
@@ -104,8 +104,8 @@ int main(int /*argc*/, char *argv[])
 
   try
   {
-    auto pngAll = m2::ImzMLMassSpecImage::Combine(imagePNG1, imagePNG2, 'x');
-	pngAll  = m2::ImzMLMassSpecImage::Combine(pngAll , imageControl, 'x');
+    auto pngAll = m2::ImzMLSpectrumImage::Combine(imagePNG1, imagePNG2, 'x');
+	pngAll  = m2::ImzMLSpectrumImage::Combine(pngAll , imageControl, 'x');
 
     pngAll->SetNormalizationStrategy(m2::NormalizationStrategyType::TIC);
     pngAll->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::TopHat);
@@ -124,7 +124,7 @@ int main(int /*argc*/, char *argv[])
     MITK_WARN << e.what();
   }
 
-  MITK_INFO << imagePNG1->MassAxis().front() << " " << imagePNG1->MassAxis().back();
-  MITK_INFO << imagePNG2->MassAxis().front() << " " << imagePNG2->MassAxis().back();
-  MITK_INFO << imageControl->MassAxis().front() << " " << imageControl->MassAxis().back();
+  MITK_INFO << imagePNG1->GetXAxis().front() << " " << imagePNG1->GetXAxis().back();
+  MITK_INFO << imagePNG2->GetXAxis().front() << " " << imagePNG2->GetXAxis().back();
+  MITK_INFO << imageControl->GetXAxis().front() << " " << imageControl->GetXAxis().back();
 }

@@ -34,7 +34,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkNodePredicateProperty.h>
 
 // m2
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 
 const std::string m2CombineImagesView::VIEW_ID = "org.mitk.views.m2.combineimages";
 
@@ -50,7 +50,7 @@ void m2CombineImagesView::CreateQtPartControl(QWidget *parent)
 
   {
     auto predicate =
-      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::ImzMLMassSpecImage>::New(),
+      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::ImzMLSpectrumImage>::New(),
                                   mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")));
     m_SelectA = new QmitkMultiNodeSelectionWidget();
     m_SelectA->SetDataStorage(GetDataStorage());
@@ -75,14 +75,14 @@ void m2CombineImagesView::CombineImages()
   {
     auto index = m_Controls.cbAxis->currentIndex();
 
-    auto imageA = dynamic_cast<m2::ImzMLMassSpecImage *>(nodes[0]->GetData());
-    auto imageB = dynamic_cast<m2::ImzMLMassSpecImage *>(nodes[1]->GetData());
-    auto imageC = m2::ImzMLMassSpecImage::Combine(imageA, imageB, CombineImageAxis[index]);
+    auto imageA = dynamic_cast<m2::ImzMLSpectrumImage *>(nodes[0]->GetData());
+    auto imageB = dynamic_cast<m2::ImzMLSpectrumImage *>(nodes[1]->GetData());
+    auto imageC = m2::ImzMLSpectrumImage::Combine(imageA, imageB, CombineImageAxis[index]);
 
     for (int i = 2; i < nodes.size(); ++i)
     {
-      auto image = dynamic_cast<const m2::ImzMLMassSpecImage *>(nodes[i]->GetData());
-      imageC = m2::ImzMLMassSpecImage::Combine(imageC, image, CombineImageAxis[index]);
+      auto image = dynamic_cast<const m2::ImzMLSpectrumImage *>(nodes[i]->GetData());
+      imageC = m2::ImzMLSpectrumImage::Combine(imageC, image, CombineImageAxis[index]);
     }
 
     // we want to take over the mask and normalization images of the source images and prevent overriding during
@@ -100,8 +100,8 @@ void m2CombineImagesView::CombineImages()
       for (auto &node : nodes)
       {
 		  name += "\n" + node->GetName();
-        auto image = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData());
-        auto source = imageC->GetSourceList()[sourceIndex++];
+        auto image = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData());
+        auto source = imageC->GetSpectrumImageSourceList()[sourceIndex++];
         auto offset = source._offset;
         mitk::ImagePixelReadAccessor<m2::MaskImagePixelType, 3> accMaskSource(image->GetMaskImage());
         mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> accNormSource(image->GetNormalizationImage());

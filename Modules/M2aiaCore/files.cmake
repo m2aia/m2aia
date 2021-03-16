@@ -1,11 +1,11 @@
 set(H_FILES 
-  include/m2Common.h
+  include/m2CoreCommon.h
   include/m2Process.hpp 
   include/m2ISpectrumDataAccess.h
   include/m2SpectrumImageBase.h
 
   include/m2IonImageReference.h
-  include/m2ImzMLMassSpecImage.h
+  include/m2ImzMLSpectrumImage.h
   include/m2ImzMLXMLParser.h  
 
   include/mitkMassSpecImageInteractor.h
@@ -27,7 +27,7 @@ set(CPP_FILES
   mitkTransformixMSDataObjectStack.cpp
 
   m2ImzMLXMLParser.cpp
-  m2ImzMLMassSpecImage.cpp 
+  m2ImzMLSpectrumImage.cpp
 
   m2FsmIRSpecImage.cpp
 

@@ -19,7 +19,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <berryAbstractUICTKPlugin.h>
 #include <m2SelectionT.hxx>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 
 class org_mitk_m2_core_helper_Activator :
     public berry::AbstractUICTKPlugin

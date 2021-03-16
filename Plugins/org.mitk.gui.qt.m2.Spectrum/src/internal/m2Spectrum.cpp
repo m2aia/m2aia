@@ -22,7 +22,7 @@ See LICENSE.txt for details.
 #include <berryPlatformUI.h>
 #include <iostream>
 #include <m2CommunicationService.h>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <m2PeakDetection.h>
 #include <m2SelectionProvider.h>
 #include <mitkLookupTableProperty.h>
@@ -153,16 +153,16 @@ void m2Spectrum::CreateLevelData(const mitk::DataNode *node)
   if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     // determine level of details
-    const auto &mzs = image->MassAxis();
+    const auto &mzs = image->GetXAxis();
     const std::vector<double> scales = {1.0, 2.0, 4.0, 8.0, 16.0};
 
     const auto &artifacts = image->GetSpectraArtifacts();
     std::function<void(QVector<QPointF> & s, QPointF && p)> PushBackFormat = [](auto &s, auto &&p) -> void {
       s.push_back(p);
     };
-    if (auto imzMLImage = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
+    if (auto imzMLImage = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
     {
-      if (imzMLImage->GetSourceList().front().ImportMode == m2::SpectrumFormatType::ContinuousCentroid)
+      if (imzMLImage->GetImportMode() == m2::SpectrumFormatType::ContinuousCentroid)
       {
         PushBackFormat = [](auto &s, auto &&p) -> void {
           s.push_back({p.x(), -0.3});
@@ -228,7 +228,7 @@ void m2Spectrum::CreatePeakData(const mitk::DataNode *node)
   if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     // determine level of details
-    const auto &mzs = image->MassAxis();
+    const auto &mzs = image->GetXAxis();
     const auto &artifacts = image->GetSpectraArtifacts();
     std::function<void(QVector<QPointF> & s, QPointF && p)> PushBackFormat = [](auto &s, auto &&p) -> void {
       s.push_back({p.x(), -0.3});
@@ -264,10 +264,10 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
   {
     auto chart = m_Controls.chartView->chart();
     bool isCentroidSpectrum = false;
-    if (auto imzMLImage = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
+    if (auto imzMLImage = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
     {
-      isCentroidSpectrum |= imzMLImage->GetSourceList().front().ImportMode == m2::SpectrumFormatType::ContinuousCentroid;
-      isCentroidSpectrum |= imzMLImage->GetSourceList().front().ImportMode == m2::SpectrumFormatType::ProcessedCentroid;
+      isCentroidSpectrum |= imzMLImage->GetImportMode() == m2::SpectrumFormatType::ContinuousCentroid;
+      isCentroidSpectrum |= imzMLImage->GetImportMode() == m2::SpectrumFormatType::ProcessedCentroid;
     }
 
     const unsigned numSeries = m_LineSeries.size() + m_ScatterSeries.size() + m_PeakSeries.size();
@@ -695,7 +695,7 @@ void m2Spectrum::OnSerieFocused(const mitk::DataNode *node)
       if (m_yAxis)
         m_yAxis->setRange(0, 1.1 * max);
       if (m_xAxis)
-        m_xAxis->setRange(image->MassAxis().front(), image->MassAxis().back());
+        m_xAxis->setRange(image->GetXAxis().front(), image->GetXAxis().back());
     }
     else if (m_PeakSeries.find(node) != std::end(m_PeakSeries))
     {
@@ -707,7 +707,7 @@ void m2Spectrum::OnSerieFocused(const mitk::DataNode *node)
       if (m_yAxis)
         m_yAxis->setRange(0, 1.1 * max);
       if (m_xAxis)
-        m_xAxis->setRange(image->MassAxis().front(), image->MassAxis().back());
+        m_xAxis->setRange(image->GetXAxis().front(), image->GetXAxis().back());
     }
   }
 }
@@ -924,7 +924,7 @@ void m2Spectrum::UpdateLineSeriesWindow(const mitk::DataNode *node)
 void m2Spectrum::UpdateZoomLevel(const mitk::DataNode *node)
 {
   auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData());
-  const auto &mzs = image->MassAxis();
+  const auto &mzs = image->GetXAxis();
   // determine how many points of the original data are visible
   const auto axesMin = m_xAxis->min();
   const auto axesMax = m_xAxis->max();
