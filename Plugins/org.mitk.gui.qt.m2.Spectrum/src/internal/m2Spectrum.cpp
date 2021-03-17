@@ -109,6 +109,7 @@ void m2Spectrum::DrawSelectedArea()
 
 void m2Spectrum::OnMousePress(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod)
 {
+  Q_UNUSED(pos)
   if (mod & Qt::AltModifier && !m_RangeSelectionStarted)
   {
     m_Controls.chartView->setRubberBand(QtCharts::QChartView::RubberBand::HorizontalRubberBand);
@@ -382,6 +383,8 @@ void m2Spectrum::OnMouseMove(
 
 void m2Spectrum::OnMouseRelease(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod)
 {
+  Q_UNUSED(pos)
+  Q_UNUSED(intValue)
   if (mod & Qt::AltModifier && m_RangeSelectionStarted)
   {
     m_SelectedAreaEndX = mz;
@@ -407,6 +410,8 @@ void m2Spectrum::OnMouseRelease(QPoint pos, qreal mz, qreal intValue, Qt::MouseB
 void m2Spectrum::OnMouseDoubleClick(
   QPoint pos, qreal mz, qreal intValue, Qt::MouseButton /*button*/, Qt::KeyboardModifiers /*mod*/)
 {
+  Q_UNUSED(pos)
+  
   if (intValue < m_yAxis->min())
   {
     m_xAxis->setRange(m_CurrentMinMZ, m_CurrentMaxMZ);
@@ -423,8 +428,8 @@ void m2Spectrum::OnMouseDoubleClick(
 
 void m2Spectrum::OnMouseWheel(QPoint pos, qreal mz, qreal intValue, int angle, Qt::KeyboardModifiers mod)
 {
-  // const auto c = m_Controls.chartView->chart();
-
+  Q_UNUSED(pos)
+   
   bool bothAxes =
     ((intValue > m_yAxis->min()) && (intValue < m_yAxis->max()) && (mz > m_xAxis->min()) && (mz < m_xAxis->max()));
 

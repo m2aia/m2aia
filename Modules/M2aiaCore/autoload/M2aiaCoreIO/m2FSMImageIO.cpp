@@ -89,7 +89,7 @@ namespace m2
     start_byte += read(start_byte, n_bytes, s);
     MITK_INFO << std::string(s.data(), n_bytes);
     const auto Print = [](const auto &names, const auto &data) {
-      for (int i = 0; i < names.size(); ++i)
+      for (unsigned int i = 0; i < names.size(); ++i)
         MITK_INFO << names[i] << " " << data[i];
     };
     std::array<double, 10> meta;
@@ -143,7 +143,7 @@ namespace m2
 
       start_byte += read(start_byte, n_bytes, s);
       std::vector<float> data;
-      bool eof = inFile.eof();
+      
 
       switch (block_id)
       {
@@ -213,7 +213,7 @@ namespace m2
           }
 
           // copy information
-          for (int i = 0; i < text_mapping.size(); ++i)
+          for (unsigned int i = 0; i < text_mapping.size(); ++i)
             information[i] = text[text_mapping[i]];
 
           Print(information_names, information);
@@ -281,7 +281,6 @@ namespace m2
 
       if (inverse)
       {
-        spectrum.data;
         std::copy(std::rbegin(*sit), std::rend(*sit), std::back_inserter(spectrum.data));
       }
       else

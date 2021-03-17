@@ -450,8 +450,6 @@ namespace m2
     inline auto Subrange(const MassAxisType &mzs, const double &lower, const double &upper) noexcept
       -> std::pair<unsigned int, unsigned int>
     {
-      unsigned long offset = 0;
-      unsigned long length = 0;
       auto start = mzs.cend() - 1;
       auto end = mzs.cend();
       for (auto it = mzs.cbegin(); it < mzs.cend(); ++it)

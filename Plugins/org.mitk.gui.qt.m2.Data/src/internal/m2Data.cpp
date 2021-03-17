@@ -475,7 +475,7 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
       m_Controls.spnBxSmoothing->setValue(d);
     }
     data->SetSmoothingHalfWindowSize(m_Controls.spnBxSmoothing->value());
-    data->SetBaseLinecorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
+    data->SetBaseLineCorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
 
     data->SetBinningTolerance(m_Controls.spnBxPeakBinning->value());
     data->SetTolerance(m_Controls.spnBxPeakBinning->value());
@@ -904,17 +904,17 @@ void m2Data::UpdateLevelWindow(const mitk::DataNode *node)
 
 void m2Data::NodeAdded(const mitk::DataNode *node)
 {
-  if (auto openSlideIOHelper = dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
+  if (dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
   {
     OpenSlideImageNodeAdded(node);
   }
-  else if (auto msImageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  else if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     SpectrumImageNodeAdded(node);
 
-    if (auto msImageImzML = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
+    if (dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
       ImzMLImageNodeAdded(node);
-    else if (auto fsmImage = dynamic_cast<m2::FsmIRSpecImage *>(node->GetData()))
+    else if (dynamic_cast<m2::FsmIRSpecImage *>(node->GetData()))
       FsmImageNodeAdded(node);
   }
 }
@@ -1064,7 +1064,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
 
 void m2Data::NodeRemoved(const mitk::DataNode *node)
 {
-  if (auto msImageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     auto derivations = this->GetDataStorage()->GetDerivations(node);
     for (auto &&d : *derivations)

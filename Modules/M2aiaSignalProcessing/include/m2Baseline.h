@@ -15,6 +15,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 #include <M2aiaSignalProcessingExports.h>
+#include <m2RunningMedian.h>
 #include <functional>
 #include <m2Morphology.h>
 #include <m2Normalization.h>
@@ -57,7 +58,7 @@ namespace m2
           break;
       }
 
-      return [](std::vector<ContainerValueType> &ints) mutable {};
+      return [](std::vector<ContainerValueType> &) mutable {};
     }
   } // namespace Signal
 } // namespace m2

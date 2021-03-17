@@ -70,12 +70,6 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
   mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
   std::shared_ptr<mitk::ImagePixelReadAccessor<MaskImagePixelType, 3>> maskAccess;
 
-  const auto _BaselineCorrectionHWS = p->m_BaseLinecorrectionHalfWindowSize;
-  const auto _NormalizationStrategy = p->GetNormalizationStrategy();
-  auto _SmoothingStrategy = p->GetSmoothingStrategy();
-  const auto _BaseLineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
-  const auto _RangePoolingStrategy = p->GetRangePoolingStrategy();
-
   if (mask)
   {
     maskAccess.reset(new mitk::ImagePixelReadAccessor<MaskImagePixelType, 3>(mask));
@@ -100,7 +94,8 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
     // mz subrange
     const auto mzs = p->GetXAxis();
     auto subRes = m2::Signal::Subrange(mzs, mz - tol, mz + tol);
-
+    const auto _BaselineCorrectionHWS = p->GetBaseLineCorrectionHalfWindowSize();
+    const auto _BaseLineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
     const unsigned int offset_right = (mzs.size() - (subRes.first + subRes.second));
     const unsigned int offset_left = subRes.first;
     const unsigned int padding_left =
@@ -117,7 +112,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
       // map all spectra to several threads for processing
       const unsigned long n = source._Spectra.size();
       const unsigned t = p->GetNumberOfThreads();
-
+      const auto _NormalizationStrategy = p->GetNormalizationStrategy();
       m2::Process::Map(n, t, [&](auto /*id*/, auto a, auto b) {
         std::ifstream f(source._BinaryDataPath, std::iostream::binary);
         std::vector<IntensityType> ints(length);
@@ -129,7 +124,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
           m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), true);
 
         const auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
-          p->GetBaselineCorrectionStrategy(), p->GetBaseLinecorrectionHalfWindowSize());
+          p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
         double d;
         const auto divide = [&d](const auto &v) { return v / d; };
@@ -161,7 +156,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
           // substract basline
           BaselineSubstractor(ints);
 
-          const auto val = Signal::RangePooling<IntensityType>(s, e, _RangePoolingStrategy);
+          const auto val = Signal::RangePooling<IntensityType>(s, e, p->GetRangePoolingStrategy());
           imageAccess.SetPixelByIndex(spectrum.index + source._offset, val);
         }
       });
@@ -174,6 +169,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
       // map all spectra to several threads for processing
       const unsigned long n = source._Spectra.size();
       const unsigned t = p->GetNumberOfThreads();
+      const auto _NormalizationStrategy = p->GetNormalizationStrategy();
       m2::Process::Map(n, t, [&](auto /*id*/, auto a, auto b) {
         std::ifstream f(source._BinaryDataPath, std::iostream::binary);
         std::vector<IntensityType> ints;
@@ -201,7 +197,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
             std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&norm](auto &v) { return v / norm; });
           }
 
-          auto val = Signal::RangePooling<IntensityType>(std::begin(ints), std::end(ints), _RangePoolingStrategy);
+          auto val = Signal::RangePooling<IntensityType>(std::begin(ints), std::end(ints), p->GetRangePoolingStrategy());
           imageAccess.SetPixelByIndex(spectrum.index + source._offset, val);
         }
       });
@@ -543,21 +539,9 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   std::vector<std::vector<double>> skylineT;
   std::vector<std::vector<double>> sumT;
 
-  // shortcuts
-  const auto _NormalizationStrategy = p->GetNormalizationStrategy();
-  const auto _SmoothingStrategy = p->GetSmoothingStrategy();
-  const auto _BaslineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
-  const auto _BaselineCorrectionHalfWindowSize = p->m_BaseLinecorrectionHalfWindowSize;
   const bool _PreventInitMask = p->GetPreventMaskImageInitialization();
   const bool _PreventInitNorm = p->GetPreventNormalizationImageInitialization();
 
-  /*std::vector<double> kernel;
-  if (_SmoothingStrategy != m2::SmoothingType::None)
-    kernel = m2::Signal::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);*/
-
-  MITK_INFO << "Smoothing: " << (int)_SmoothingStrategy << " " << p->m_SmoothingHalfWindowSize;
-  MITK_INFO << "Baseline Correction: " << (int)_BaslineCorrectionStrategy << " "
-            << p->m_BaseLinecorrectionHalfWindowSize;
 
   unsigned long lenght;
   unsigned long long intsOffsetBytes = 0;
@@ -602,19 +586,13 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 		each spectrum, please resample the m/z axis and create one that is commonly
 		used for all spectra. Save it as continuous ImzML!)";
   }
-  MITK_INFO << "Initialize imzML common info:";
-  MITK_INFO << "\tNormalizationStrategyType [" << static_cast<unsigned>(_NormalizationStrategy) << "]";
+  
   if (any(importMode & (m2::SpectrumFormatType::ContinuousProfile)))
   {
     mitk::Timer t("Initialize image");
     for (const auto &source : p->GetSpectrumImageSourceList())
     {
-      MITK_INFO << "Initialize imzML source info:";
-      MITK_INFO << "\tImportMode [" << static_cast<unsigned>(importMode) << "]";
-      MITK_INFO << "\tBinaryDataPath [" << source._BinaryDataPath << "]";
-      MITK_INFO << "\tImzMLDataPath [" << source._ImzMLDataPath << "]";
-      MITK_INFO << "\t#Spectra [" << source._Spectra.size() << "]";
-      MITK_INFO << "\tOffset [" << source._offset << "]";
+   
 
       m2::Process::Map(
         source._Spectra.size(), p->GetNumberOfThreads(), [&](unsigned int t, unsigned int a, unsigned int b) {
@@ -625,7 +603,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
             m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), true);
 
           const auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
-            p->GetBaselineCorrectionStrategy(), p->GetBaseLinecorrectionHalfWindowSize());
+            p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
           const auto Normalizator =
             m2::Signal::CreateNormalizor<MassAxisType, IntensityType>(p->GetNormalizationStrategy());
@@ -798,7 +776,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
           binaryDataToVector(f, iO, iL, ints);
 
           double val = 1;
-          if (_NormalizationStrategy == m2::NormalizationStrategyType::InFile)
+          if (p->GetNormalizationStrategy() == m2::NormalizationStrategyType::InFile)
           {
             if (spectra[i].normalize != 0)
             {
@@ -911,7 +889,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIn
     m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), true);
 
   const auto BaslineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
-    p->GetBaselineCorrectionStrategy(), p->GetBaseLinecorrectionHalfWindowSize());
+    p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
   const auto importMode = p->GetImportMode();
 
   std::ifstream f;

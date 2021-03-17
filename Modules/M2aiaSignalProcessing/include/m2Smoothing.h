@@ -193,7 +193,7 @@ namespace m2
           break;
       }
 
-      return [](std::vector<ContainerValueType> &ints) -> void {};
+      return [](std::vector<ContainerValueType> &) -> void {};
     }
 
   }; // namespace Signal

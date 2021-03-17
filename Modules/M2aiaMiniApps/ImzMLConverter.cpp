@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
     imzMLImage->SetSmoothingHalfWindowSize(bc_hws);
 
     imzMLImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(sm_strategy));
-    imzMLImage->SetBaseLinecorrectionHalfWindowSize(sm_hws);
+    imzMLImage->SetBaseLineCorrectionHalfWindowSize(sm_hws);
 
     imzMLImage->SetBinningTolerance(binning_tol);
     imzMLImage->SetTolerance(centroids_tol);

@@ -56,7 +56,7 @@ int main(int /*argc*/, char *argv[])
     I->SetSmoothingStrategy(m2::SmoothingType::SavitzkyGolay);
 
     I->SetSmoothingHalfWindowSize(10);
-    I->SetBaseLinecorrectionHalfWindowSize(50);
+    I->SetBaseLineCorrectionHalfWindowSize(50);
     // I->SetUpperMZBound(3000);
     // I->SetLowerMZBound(900);
 
@@ -111,7 +111,7 @@ int main(int /*argc*/, char *argv[])
     pngAll->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::TopHat);
     pngAll->SetSmoothingStrategy(m2::SmoothingType::SavitzkyGolay);
     pngAll->SetSmoothingHalfWindowSize(4);
-    pngAll->SetBaseLinecorrectionHalfWindowSize(50);
+    pngAll->SetBaseLineCorrectionHalfWindowSize(50);
     pngAll->InitializeImageAccess();
     pngAll->SetTolerance(25);
 

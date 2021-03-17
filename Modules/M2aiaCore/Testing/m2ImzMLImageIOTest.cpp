@@ -55,7 +55,7 @@ private:
   {
     std::ofstream f(GetTestDataFilePath(fileNameInM2aiaDir, M2AIA_DATA_DIR));
 
-    for (int i = 0; i < vec.size(); i++)
+    for (unsigned int i = 0; i < vec.size(); i++)
     {
       f << std::setprecision(128) << vec[i];
       if (i < vec.size() - 1)

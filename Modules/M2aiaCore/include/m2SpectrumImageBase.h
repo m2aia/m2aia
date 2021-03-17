@@ -70,8 +70,8 @@ namespace m2
     itkSetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
     itkGetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
 
-    itkSetMacro(BaseLinecorrectionHalfWindowSize, unsigned int);
-    itkGetConstReferenceMacro(BaseLinecorrectionHalfWindowSize, unsigned int);
+    itkSetMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
+    itkGetConstReferenceMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
 
     itkSetMacro(SmoothingHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(SmoothingHalfWindowSize, unsigned int);
@@ -157,7 +157,7 @@ namespace m2
     double m_Tolerance = 10;
     double m_BinningTolerance = 50;
 
-    unsigned int m_BaseLinecorrectionHalfWindowSize = 100;
+    unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
     unsigned int m_NumberOfThreads = 10;
 

@@ -17,7 +17,7 @@ See LICENSE.txt for details.
 
 #include <M2aiaSignalProcessingExports.h>
 #include <algorithm>
-#include <cstring>
+#include <numeric>
 #include <functional>
 #include <vector>
 #include <m2SignalCommon.h>
@@ -87,7 +87,7 @@ namespace m2
           return
             [](std::vector<ContainerValueType1> &,
                std::vector<ContainerValueType2> & ints,
-               const ContainerValueType1 &constant = 1) -> ContainerValueType1 {
+               const ContainerValueType1 &constant ) -> ContainerValueType1 {
               ContainerValueType1 val = constant;
               std::transform(
                 std::begin(ints), std::end(ints), std::begin(ints), [&val](const auto &a) { return a / val; });
@@ -97,7 +97,7 @@ namespace m2
           return
             [](std::vector<ContainerValueType1> & pos,
                std::vector<ContainerValueType2> & ints,
-               const ContainerValueType1 &constant = 1) -> ContainerValueType1 {
+               const ContainerValueType1 &) -> ContainerValueType1 {
             ContainerValueType1 val = m2::Signal::TotalIonCurrent(std::begin(pos), std::end(pos), std::begin(ints));
               std::transform(
                 std::begin(ints), std::end(ints), std::begin(ints), [&val](const auto &a) { return a / val; });
@@ -107,7 +107,7 @@ namespace m2
           return
             [](std::vector<ContainerValueType1> & ,
                std::vector<ContainerValueType2> & ints,
-               const ContainerValueType1 &constant = 1) -> ContainerValueType1 {
+               const ContainerValueType1 &) -> ContainerValueType1 {
               ContainerValueType1 val = std::accumulate(std::begin(ints), std::end(ints), (long double)(0));
               std::transform(
                 std::begin(ints), std::end(ints), std::begin(ints), [&val](const auto &a) { return a / val; });
@@ -117,7 +117,7 @@ namespace m2
           return
             [](std::vector<ContainerValueType1> &,
                std::vector<ContainerValueType2> & ints,
-               const ContainerValueType1 &constant = 1) -> ContainerValueType1 {
+               const ContainerValueType1 &) -> ContainerValueType1 {
               ContainerValueType1 val = m2::Signal::Median(std::begin(ints), std::end(ints));
               std::transform(
                 std::begin(ints), std::end(ints), std::begin(ints), [&val](const auto &a) { return a / val; });
@@ -129,7 +129,7 @@ namespace m2
 
       return [](std::vector<ContainerValueType1> &,
                 std::vector<ContainerValueType2> &,
-                const ContainerValueType1 &constant = 1) -> ContainerValueType1 { return 1; };
+                const ContainerValueType1 &) -> ContainerValueType1 { return 1; };
     }
 
   }; // namespace Signal

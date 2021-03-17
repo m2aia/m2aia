@@ -44,13 +44,9 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabIonImagePri
   mitk::ImagePixelWriteAccessor<DisplayImagePixelType, 3> imageAccess(destImage);
   mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
   std::shared_ptr<mitk::ImagePixelReadAccessor<MaskImagePixelType, 3>> maskAccess;
-
-  const auto _BaselineCorrectionHWS = p->m_BaseLinecorrectionHalfWindowSize;
+  
   const auto _NormalizationStrategy = p->GetNormalizationStrategy();
-  auto _SmoothingStrategy = p->GetSmoothingStrategy();
-  const auto _BaseLineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
-  const auto _IonImageGrabStrategy = p->GetRangePoolingStrategy();
-
+  
   if (mask)
   {
     maskAccess.reset(new mitk::ImagePixelReadAccessor<MaskImagePixelType, 3>(mask));
@@ -85,7 +81,7 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabIonImagePri
           m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
 
         auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
-          p->GetBaselineCorrectionStrategy(), p->GetBaseLinecorrectionHalfWindowSize());
+          p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
         const auto Normalizor = m2::Signal::CreateNormalizor<IntensityType, XAxisType>(p->GetNormalizationStrategy());
 
@@ -269,12 +265,8 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::InitializeImage
 
   // shortcuts
   const auto _NormalizationStrategy = p->GetNormalizationStrategy();
-  const auto _SmoothingStrategy = p->GetSmoothingStrategy();
-  const auto _BaslineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
-  const auto _BaselineCorrectionHalfWindowSize = p->m_BaseLinecorrectionHalfWindowSize;
-  unsigned long lenght;
-  unsigned long long offset = 0;
 
+  
   const auto &source = p->GetSpectrumImageSourceList().front();
 
   if (any(source.ImportMode & m2::SpectrumFormatType::ContinuousProfile))
@@ -282,9 +274,6 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::InitializeImage
     p->SetPropertyValue<unsigned>("spectral depth", wavelength.size());
     p->SetPropertyValue<double>("min cm^-1", wavelength.front());
     p->SetPropertyValue<double>("max cm^-1", wavelength.back());
-
-    const auto &spectra = source._Spectra;
-    lenght = p->GetXAxis().size();
 
     skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(wavelength.size(), 0));
     sumT.resize(p->GetNumberOfThreads(), std::vector<double>(wavelength.size(), 0));
@@ -298,7 +287,7 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::InitializeImage
             p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
 
           auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
-            p->GetBaselineCorrectionStrategy(), p->GetBaseLinecorrectionHalfWindowSize());
+            p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
           const auto Normalizor = m2::Signal::CreateNormalizor<XAxisType, IntensityType>(p->GetNormalizationStrategy());
 
@@ -393,7 +382,7 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabIntensityPr
   auto divide = [&d](auto &val) { return val / d; };
   auto Smoother = m2::Signal::CreateSmoother<double>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
   auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<double>(
-    p->GetBaselineCorrectionStrategy(), p->GetBaseLinecorrectionHalfWindowSize());
+    p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
   if (any(source.ImportMode & (m2::SpectrumFormatType::ContinuousProfile)))
   {
@@ -409,9 +398,9 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabIntensityPr
 }
 
 template <class XAxisType, class IntensityType>
-void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabMassPrivate(unsigned long int index,
+void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabMassPrivate(unsigned long int,
                                                                                  std::vector<double> &mzs,
-                                                                                 unsigned int sourceIndex) const
+                                                                                 unsigned int) const
 {
   mzs.clear();
   std::copy(std::begin(p->GetXAxis()), std::end(p->GetXAxis()), std::back_inserter(mzs));
