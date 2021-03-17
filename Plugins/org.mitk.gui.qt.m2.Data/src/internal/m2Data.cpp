@@ -803,7 +803,7 @@ void m2Data::OnGenerateImageData(qreal mz, qreal tol)
 
       //*************** Worker Block******************//
       const auto futureWorker = [mz, tol, data, maskImage, initializeNew, this]() {
-        mitk::Timer t("Creat image @[" + std::to_string(mz) + " " + std::to_string(tol) + "]");
+        mitk::Timer t("Create image @[" + std::to_string(mz) + " " + std::to_string(tol) + "]");
         if (initializeNew)
         {
           auto geom = data->GetGeometry()->Clone();
@@ -916,6 +916,15 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
       ImzMLImageNodeAdded(node);
     else if (dynamic_cast<m2::FsmIRSpecImage *>(node->GetData()))
       FsmImageNodeAdded(node);
+
+    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+    {
+      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+      {
+        controller->SetViewToCaudal();
+      }
+    }
+
   }
 }
 
@@ -959,23 +968,14 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
 
 void m2Data::ImzMLImageNodeAdded(const mitk::DataNode *node)
 {
-  if (auto msImageImzML = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
+  if (auto image = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
   {
-    if (!msImageImzML->GetImageAccessInitialized())
+    if (!image->GetImageAccessInitialized())
     {
-      this->ApplySettingsToImage(msImageImzML);
-      msImageImzML->InitializeImageAccess();
-      emit m2::CommunicationService::Instance()->MSImageNodeAdded(node);
-
+      this->ApplySettingsToImage(image);
+      image->InitializeImageAccess();
       this->RequestRenderWindowUpdate();
-
-      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-      {
-        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-        {
-          controller->SetViewToCaudal();
-        }
-      }
+      emit m2::CommunicationService::Instance()->SpectrumImageNodeAdded(node);
     }
   }
 }
@@ -985,16 +985,9 @@ void m2Data::FsmImageNodeAdded(const mitk::DataNode *node)
   if (auto image = dynamic_cast<m2::FsmIRSpecImage *>(node->GetData()))
   {
     this->ApplySettingsToImage(image);
-    emit m2::CommunicationService::Instance()->MSImageNodeAdded(node);
+    image->InitializeImageAccess();
     this->RequestRenderWindowUpdate();
-
-    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-    {
-      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-      {
-        controller->SetViewToCaudal();
-      }
-    }
+    emit m2::CommunicationService::Instance()->SpectrumImageNodeAdded(node);
   }
 }
 

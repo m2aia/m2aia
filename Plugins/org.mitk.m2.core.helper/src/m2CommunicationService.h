@@ -39,7 +39,7 @@ namespace m2
 	using NodesVectorType = itk::VectorContainer<unsigned, mitk::DataNode::Pointer>;
   public:
   signals:
-	void MSImageNodeAdded(const mitk::DataNode *);
+	void SpectrumImageNodeAdded(const mitk::DataNode *);
     
 	void RangeChanged(qreal, qreal);
     void GenerateImageData(qreal, qreal);

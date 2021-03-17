@@ -501,7 +501,7 @@ void m2Spectrum::CreateQtPartControl(QWidget *parent)
   auto serviceRef = m2::CommunicationService::Instance();
   connect(serviceRef, SIGNAL(RangeChanged(qreal, qreal)), this, SLOT(OnMassRangeChanged(qreal, qreal)));
   connect(serviceRef,
-          SIGNAL(MSImageNodeAdded(const mitk::DataNode *)),
+          SIGNAL(SpectrumImageNodeAdded(const mitk::DataNode *)),
           this,
           SLOT(OnDataNodeReceived(const mitk::DataNode *)));
   connect(serviceRef,

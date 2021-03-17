@@ -621,51 +621,9 @@ void m2Reconstruction3D::OnStartStacking()
           node->SetName("Stack_" + std::to_string(i));
           node->SetData(s);
           this->GetDataStorage()->Add(node);
-
-          auto node2 = mitk::DataNode::New();
-          node2->SetName("Stack_Mask_" + std::to_string(i));
-          node2->SetData(s->GetMaskImage());
-          node2->SetVisibility(false);
-          this->GetDataStorage()->Add(node2, node);
-
-          auto node3 = mitk::DataNode::New();
-          node3->SetName("Stack_Distance_" + std::to_string(i));
-          node3->SetData(s->GetImageArtifacts()["distance"]);
-          node3->SetVisibility(false);
-          this->GetDataStorage()->Add(node3, node);
-
-          auto node4 = mitk::DataNode::New();
-          node4->SetName("Stack_Index_" + std::to_string(i));
-          node4->SetData(s->GetIndexImage());
-          this->GetDataStorage()->Add(node4, node);
-
-          /* if (s->GetImageArtifacts().find("landmarks") != s->GetImageArtifacts().end())
-           {
-             auto node4 = mitk::DataNode::New();
-             node4->SetName("Stack_Landmarks_" + std::to_string(i));
-             node4->SetData(s->GetImageArtifacts()["landmarks"]);
-       node4->SetVisibility(false);
-             this->GetDataStorage()->Add(node4, node);
-
-             auto warpedPoints = mitk::PointSet::New();
-       auto landmarkImage = dynamic_cast<mitk::Image*>(s->GetImageArtifacts()["landmarks"].GetPointer());
-             m2::LandMarkEvaluation::ImageToPointSet(landmarkImage, warpedPoints);
-       warpedPoints->SetGeometry(s->GetGeometry());
-       m2::LandMarkEvaluation::EvaluatePointSet(warpedPoints, 7);
-
-             auto node5 = mitk::DataNode::New();
-             node5->SetName("Stack_Landmarks_Points" + std::to_string(i));
-             node5->SetData(warpedPoints);
-       node5->SetFloatProperty("point 2D size", 0.025);
-             this->GetDataStorage()->Add(node5, node);
-           }*/
-        }
+		}
         ++i;
 
-        // auto node2 = mitk::DataNode::New();
-        // node2->SetName("Stack_Index_" + std::to_string(i++));
-        // node2->SetData(s->GetIndexImage());
-        // this->GetDataStorage()->Add(node2);
       }
 
       // future release all connections and destroy itself
