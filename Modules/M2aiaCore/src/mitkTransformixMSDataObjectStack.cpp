@@ -254,7 +254,7 @@ namespace m2
 
     {
       GetImageArtifacts()["mask"] = mitk::Image::New();
-      GetMaskImage()->Initialize(mitk::MakeScalarPixelType<m2::MaskImagePixelType>(), 3, dims);
+      GetMaskImage()->Initialize(mitk::MakeScalarPixelType<mitk::LabelSetImage::PixelType>(), 3, dims);
       GetMaskImage()->SetSpacing(spacing);
       GetMaskImage()->SetOrigin(refImage->GetGeometry()->GetOrigin());
     }

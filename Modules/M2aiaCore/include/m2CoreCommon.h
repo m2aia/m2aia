@@ -15,6 +15,9 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
+#include <mitkLabelSetImage.h>
+
+
 namespace m2
 {
   enum class SpectrumFormatType : unsigned
@@ -51,7 +54,6 @@ namespace m2
 
   using DisplayImagePixelType = double;
   using NormImagePixelType = double;
-  using MaskImagePixelType = unsigned short;
   using IndexType = unsigned;
   using WorldCoordinateType = float;
   using IndexImagePixelType = IndexType;

@@ -13,8 +13,8 @@ A PARTICULAR PURPOSE.
 See LICENSE.txt for details.
 
 ===================================================================*/
-#include <m2SpectrumImageBase.h>
 #include <m2PeakDetection.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkDataNode.h>
 #include <mitkLevelWindowProperty.h>
 #include <mitkLookupTableProperty.h>
@@ -32,7 +32,7 @@ void m2::SpectrumImageBase::ApplyMoveOriginOperation(const std::array<int, 2> &v
   for (auto kv : m_ImageArtifacts)
   {
     geometry = kv.second->GetGeometry();
-	pos = geometry->GetOrigin();
+    pos = geometry->GetOrigin();
     space = geometry->GetSpacing();
     pos[0] = pos[0] + v.at(0) * space[0];
     pos[1] = pos[1] + v.at(1) * space[1];
@@ -55,7 +55,6 @@ void m2::SpectrumImageBase::ApplyGeometryOperation(mitk::Operation *op)
     kv.second->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
   }
 }
-
 
 m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::SkylineSpectrum()
 {
@@ -90,21 +89,21 @@ const m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::
 mitk::Image::Pointer m2::SpectrumImageBase::GetNormalizationImage()
 {
   if (m_ImageArtifacts.find("NormalizationImage") != m_ImageArtifacts.end())
-    return dynamic_cast<mitk::Image*>(m_ImageArtifacts.at("NormalizationImage").GetPointer());
+    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("NormalizationImage").GetPointer());
   return nullptr;
 }
 
 mitk::Image::Pointer m2::SpectrumImageBase::GetMaskImage()
 {
   if (m_ImageArtifacts.find("mask") != m_ImageArtifacts.end())
-    return dynamic_cast<mitk::Image*>(m_ImageArtifacts.at("mask").GetPointer());
+    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("mask").GetPointer());
   return nullptr;
 }
 
 mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage()
 {
   if (m_ImageArtifacts.find("index") != m_ImageArtifacts.end())
-    return dynamic_cast<mitk::Image*>(m_ImageArtifacts.at("index").GetPointer());
+    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("index").GetPointer());
   return nullptr;
 }
 
@@ -115,20 +114,24 @@ void m2::SpectrumImageBase::GenerateImageData(double mz, double tol, const mitk:
   GenerateImageEnd.Send();
 }
 
-void m2::SpectrumImageBase::ReceiveIntensities(unsigned int index, std::vector<double> &ints, unsigned int sourceIndex) const
+void m2::SpectrumImageBase::ReceiveIntensities(unsigned int index,
+                                               std::vector<double> &ints,
+                                               unsigned int sourceIndex) const
 {
   m_Processor->GrabIntensityPrivate(index, ints, sourceIndex);
 }
 
-void m2::SpectrumImageBase::ReceivePositions(unsigned int index, std::vector<double> &mzs, unsigned int sourceIndex) const
+void m2::SpectrumImageBase::ReceivePositions(unsigned int index,
+                                             std::vector<double> &mzs,
+                                             unsigned int sourceIndex) const
 {
-  m_Processor->GrabMassPrivate(index, mzs, sourceIndex);  
+  m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
 }
 
 void m2::SpectrumImageBase::ReceiveSpectrum(unsigned int index,
-                                         std::vector<double> &mzs,
-                                         std::vector<double> &ints,
-                                         unsigned int sourceIndex) const
+                                            std::vector<double> &mzs,
+                                            std::vector<double> &ints,
+                                            unsigned int sourceIndex) const
 {
   ReceiveSpectrumStart.Send();
   m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
@@ -138,3 +141,4 @@ void m2::SpectrumImageBase::ReceiveSpectrum(unsigned int index,
 
 m2::SpectrumImageBase::~SpectrumImageBase() {}
 
+m2::SpectrumImageBase::SpectrumImageBase() : mitk::Image() {}

@@ -17,7 +17,7 @@ See LICENSE.txt for details.
 #include "mitkIOUtil.h"
 #include <algorithm>
 #include <m2Normalization.h>
-#include <m2FsmIRSpecImage.h>
+#include <m2FsmSpectrumImage.h>
 #include <m2TestingConfig.h>
 #include <mitkTestFixture.h>
 #include <mitkTestingMacros.h>
@@ -67,14 +67,14 @@ public:
   void LoadTestData_shouldReturnTrue()
   {
     auto v = mitk::IOUtil::Load(GetTestDataFilePath("Markierung.fsm", M2AIA_DATA_DIR));
-    m2::FsmIRSpecImage::Pointer fsmImage = dynamic_cast<m2::FsmIRSpecImage *>(v.back().GetPointer());
+    m2::FsmSpectrumImage::Pointer fsmImage = dynamic_cast<m2::FsmSpectrumImage *>(v.back().GetPointer());
     CPPUNIT_ASSERT_ASSERTION_PASS(CPPUNIT_ASSERT(fsmImage != nullptr));
   }
 
   void InitializeImageAccess_shouldReturnTrue()
   {
     auto v = mitk::IOUtil::Load(GetTestDataFilePath("Markierung.fsm", M2AIA_DATA_DIR));
-    m2::FsmIRSpecImage::Pointer fsmImage = dynamic_cast<m2::FsmIRSpecImage *>(v.back().GetPointer());
+    m2::FsmSpectrumImage::Pointer fsmImage = dynamic_cast<m2::FsmSpectrumImage *>(v.back().GetPointer());
     fsmImage->SetNormalizationStrategy(m2::NormalizationStrategyType::None);
     fsmImage->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::None);
     fsmImage->SetSmoothingStrategy(m2::SmoothingType::None);

@@ -26,6 +26,7 @@ See LICENSE.txt for details.
 #include <mitkImageAccessByItk.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
+#include <mitkLabelSetImage.h>
 #include <mitkProperties.h>
 #include <mitkTimer.h>
 
@@ -68,11 +69,11 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
   // accessors
   mitk::ImagePixelWriteAccessor<DisplayImagePixelType, 3> imageAccess(destImage);
   mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
-  std::shared_ptr<mitk::ImagePixelReadAccessor<MaskImagePixelType, 3>> maskAccess;
+  std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>> maskAccess;
 
   if (mask)
   {
-    maskAccess.reset(new mitk::ImagePixelReadAccessor<MaskImagePixelType, 3>(mask));
+    maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>(mask));
     MITK_INFO << "> Use mask image";
   }
   p->SetProperty("mz", mitk::DoubleProperty::New(mz));
@@ -197,7 +198,8 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
             std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&norm](auto &v) { return v / norm; });
           }
 
-          auto val = Signal::RangePooling<IntensityType>(std::begin(ints), std::end(ints), p->GetRangePoolingStrategy());
+          auto val =
+            Signal::RangePooling<IntensityType>(std::begin(ints), std::end(ints), p->GetRangePoolingStrategy());
           imageAccess.SetPixelByIndex(spectrum.index + source._offset, val);
         }
       });
@@ -487,16 +489,20 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   }
 
   {
-    using LocalImageType = itk::Image<m2::MaskImagePixelType, 3>;
-    auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
-    caster->SetInput(itkIonImage);
-    caster->Update();
-    auto maskImage = mitk::Image::New();
-    imageArtifacts["mask"] = maskImage;
-    maskImage->InitializeByItk(caster->GetOutput());
+    auto image = mitk::LabelSetImage::New();
+    imageArtifacts["mask"] = image.GetPointer(); 
+    image->Initialize((mitk::Image *)p);
+    auto ls = image->GetActiveLabelSet();
 
-    mitk::ImagePixelWriteAccessor<m2::MaskImagePixelType, 3> acc(maskImage);
-    std::memset(acc.GetData(), 0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::MaskImagePixelType));
+    mitk::Color color;
+    color.Set(0.0, 1, 0.0);
+    auto label = mitk::Label::New();
+    label->SetColor(color);
+    label->SetName("Valid Spectrum");
+    label->SetOpacity(0.0);
+    label->SetLocked(true);
+    label->SetValue(1);
+    ls->AddLabel(label);
   }
 
   {
@@ -526,7 +532,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 {
   using namespace m2;
 
-  auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<m2::MaskImagePixelType, 3>>(p->GetMaskImage());
+  auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType, 3>>(p->GetMaskImage());
   auto accIndex = std::make_shared<mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3>>(p->GetIndexImage());
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
 
@@ -541,7 +547,6 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
   const bool _PreventInitMask = p->GetPreventMaskImageInitialization();
   const bool _PreventInitNorm = p->GetPreventNormalizationImageInitialization();
-
 
   unsigned long lenght;
   unsigned long long intsOffsetBytes = 0;
@@ -586,14 +591,12 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 		each spectrum, please resample the m/z axis and create one that is commonly
 		used for all spectra. Save it as continuous ImzML!)";
   }
-  
+
   if (any(importMode & (m2::SpectrumFormatType::ContinuousProfile)))
   {
     mitk::Timer t("Initialize image");
     for (const auto &source : p->GetSpectrumImageSourceList())
     {
-   
-
       m2::Process::Map(
         source._Spectra.size(), p->GetNumberOfThreads(), [&](unsigned int t, unsigned int a, unsigned int b) {
           std::vector<IntensityType> ints(mzs.size(), 0);
@@ -940,7 +943,7 @@ m2::ImzMLSpectrumImage::~ImzMLSpectrumImage()
   MITK_INFO << GetStaticNameOfClass() << " destroyed!";
 }
 
-m2::ImzMLSpectrumImage::ImzMLSpectrumImage()
+m2::ImzMLSpectrumImage::ImzMLSpectrumImage() : m2::SpectrumImageBase()
 {
   MITK_INFO << GetStaticNameOfClass() << " created!";
 

@@ -15,7 +15,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 
 #include <m2Baseline.h>
-#include <m2FsmIRSpecImage.h>
+#include <m2FsmSpectrumImage.h>
 #include <m2Normalization.h>
 #include <m2PeakDetection.h>
 #include <m2Pooling.h>
@@ -24,32 +24,33 @@ See LICENSE.txt for details.
 #include <m2Smoothing.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
+#include <mitkLabelSetImage.h>
 #include <mitkProperties.h>
 #include <mitkTimer.h>
 
-void m2::FsmIRSpecImage::GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
+void m2::FsmSpectrumImage::GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
   m2::SpectrumImageBase::GenerateImageData(mz, tol, mask, img);
 }
 
 template <class XAxisType, class IntensityType>
-void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabIonImagePrivate(double cmInv,
-                                                                                     double tol,
-                                                                                     const mitk::Image *mask,
-                                                                                     mitk::Image *destImage) const
+void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabIonImagePrivate(double cmInv,
+                                                                                       double tol,
+                                                                                       const mitk::Image *mask,
+                                                                                       mitk::Image *destImage) const
 {
   AccessByItk(destImage, [](auto itkImg) { itkImg->FillBuffer(0); });
   using namespace m2;
   // accessors
   mitk::ImagePixelWriteAccessor<DisplayImagePixelType, 3> imageAccess(destImage);
   mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
-  std::shared_ptr<mitk::ImagePixelReadAccessor<MaskImagePixelType, 3>> maskAccess;
-  
+  std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>> maskAccess;
+
   const auto _NormalizationStrategy = p->GetNormalizationStrategy();
-  
+
   if (mask)
   {
-    maskAccess.reset(new mitk::ImagePixelReadAccessor<MaskImagePixelType, 3>(mask));
+    maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>(mask));
     MITK_INFO << "> Use mask image";
   }
   p->SetProperty("cm^-1", mitk::DoubleProperty::New(cmInv));
@@ -122,12 +123,12 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabIonImagePri
   }
 }
 
-void m2::FsmIRSpecImage::InitializeProcessor()
+void m2::FsmSpectrumImage::InitializeProcessor()
 {
   this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new FsmProcessor<double, float>(this));
 }
 
-void m2::FsmIRSpecImage::InitializeGeometry()
+void m2::FsmSpectrumImage::InitializeGeometry()
 {
   if (!m_Processor)
     this->InitializeProcessor();
@@ -135,14 +136,14 @@ void m2::FsmIRSpecImage::InitializeGeometry()
   this->SetImageGeometryInitialized(true);
 }
 
-void m2::FsmIRSpecImage::InitializeImageAccess()
+void m2::FsmSpectrumImage::InitializeImageAccess()
 {
   this->m_Processor->InitializeImageAccess();
   this->SetImageAccessInitialized(true);
 }
 
 template <class XAxisType, class IntensityType>
-void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::InitializeGeometry()
+void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeGeometry()
 {
   auto &imageArtifacts = p->GetImageArtifacts();
 
@@ -211,16 +212,21 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::InitializeGeome
   }
 
   {
-    using LocalImageType = itk::Image<m2::MaskImagePixelType, 3>;
-    auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
-    caster->SetInput(itkIonImage);
-    caster->Update();
-    auto maskImage = mitk::Image::New();
-    imageArtifacts["mask"] = maskImage;
-    maskImage->InitializeByItk(caster->GetOutput());
+    mitk::LabelSetImage::Pointer image = mitk::LabelSetImage::New();
+    imageArtifacts["mask"] = image.GetPointer();
+    
+    image->Initialize((mitk::Image*)p);
+    auto ls = image->GetActiveLabelSet();
 
-    mitk::ImagePixelWriteAccessor<m2::MaskImagePixelType, 3> acc(maskImage);
-    std::memset(acc.GetData(), 0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::MaskImagePixelType));
+    mitk::Color color;
+    color.Set(0, 1, 0);
+    auto label = mitk::Label::New();
+    label->SetColor(color);
+    label->SetName("Valid Spectrum");
+    label->SetOpacity(0.0);
+    label->SetLocked(true);
+    label->SetValue(1);
+    ls->AddLabel(label);
   }
 
   {
@@ -246,11 +252,11 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::InitializeGeome
 }
 
 template <class XAxisType, class IntensityType>
-void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::InitializeImageAccess()
+void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeImageAccess()
 {
   using namespace m2;
 
-  auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<m2::MaskImagePixelType, 3>>(p->GetMaskImage());
+  auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType, 3>>(p->GetMaskImage());
   auto accIndex = std::make_shared<mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3>>(p->GetIndexImage());
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
 
@@ -266,7 +272,6 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::InitializeImage
   // shortcuts
   const auto _NormalizationStrategy = p->GetNormalizationStrategy();
 
-  
   const auto &source = p->GetSpectrumImageSourceList().front();
 
   if (any(source.ImportMode & m2::SpectrumFormatType::ContinuousProfile))
@@ -365,9 +370,9 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::InitializeImage
 }
 
 template <class XAxisType, class IntensityType>
-void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabIntensityPrivate(unsigned long int index,
-                                                                                      std::vector<double> &ints,
-                                                                                      unsigned int sourceIndex) const
+void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabIntensityPrivate(unsigned long int index,
+                                                                                        std::vector<double> &ints,
+                                                                                        unsigned int sourceIndex) const
 {
   mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> normAcc(p->GetNormalizationImage());
 
@@ -398,20 +403,20 @@ void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabIntensityPr
 }
 
 template <class XAxisType, class IntensityType>
-void m2::FsmIRSpecImage::FsmProcessor<XAxisType, IntensityType>::GrabMassPrivate(unsigned long int,
-                                                                                 std::vector<double> &mzs,
-                                                                                 unsigned int) const
+void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabMassPrivate(unsigned long int,
+                                                                                   std::vector<double> &mzs,
+                                                                                   unsigned int) const
 {
   mzs.clear();
   std::copy(std::begin(p->GetXAxis()), std::end(p->GetXAxis()), std::back_inserter(mzs));
 }
 
-m2::FsmIRSpecImage::~FsmIRSpecImage()
+m2::FsmSpectrumImage::~FsmSpectrumImage()
 {
   MITK_INFO << GetStaticNameOfClass() << " destroyed!";
 }
 
-m2::FsmIRSpecImage::FsmIRSpecImage()
+m2::FsmSpectrumImage::FsmSpectrumImage()
 {
   MITK_INFO << GetStaticNameOfClass() << " created!";
 }

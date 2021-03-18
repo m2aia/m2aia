@@ -93,7 +93,7 @@ void m2CombineImagesView::CombineImages()
 	std::string name = "Combines";
     {
       // now copy mask and normalization image content pixel-wise (due to equalization of image dimensions)
-      mitk::ImagePixelWriteAccessor<m2::MaskImagePixelType, 3> accMask(imageC->GetMaskImage());
+      mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType, 3> accMask(imageC->GetMaskImage());
       mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> accNorm(imageC->GetNormalizationImage());
 
       unsigned sourceIndex = 0;
@@ -103,7 +103,7 @@ void m2CombineImagesView::CombineImages()
         auto image = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData());
         auto source = imageC->GetSpectrumImageSourceList()[sourceIndex++];
         auto offset = source._offset;
-        mitk::ImagePixelReadAccessor<m2::MaskImagePixelType, 3> accMaskSource(image->GetMaskImage());
+        mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3> accMaskSource(image->GetMaskImage());
         mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> accNormSource(image->GetNormalizationImage());
         for (unsigned z = 0; z < image->GetDimensions()[2]; ++z)
           for (unsigned y = 0; y < image->GetDimensions()[1]; ++y)

@@ -28,7 +28,7 @@ See LICENSE.txt for details.
 #include <boost/format.hpp>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itksys/SystemTools.hxx>
-#include <m2FsmIRSpecImage.h>
+#include <m2FsmSpectrumImage.h>
 #include <m2OpenSlideImageIOHelperObject.h>
 #include <mitkCameraController.h>
 #include <mitkIOUtil.h>
@@ -456,7 +456,6 @@ void m2Data::ApplySettingsToNodes(m2Data::NodesVectorType::Pointer v)
   {
     if (auto data = dynamic_cast<m2::SpectrumImageBase *>(dataNode->GetData()))
       ApplySettingsToImage(data); // ImzML
-                                  
   }
 }
 
@@ -914,7 +913,7 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
 
     if (dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
       ImzMLImageNodeAdded(node);
-    else if (dynamic_cast<m2::FsmIRSpecImage *>(node->GetData()))
+    else if (dynamic_cast<m2::FsmSpectrumImage *>(node->GetData()))
       FsmImageNodeAdded(node);
 
     if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
@@ -924,7 +923,6 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
         controller->SetViewToCaudal();
       }
     }
-
   }
 }
 
@@ -982,7 +980,7 @@ void m2Data::ImzMLImageNodeAdded(const mitk::DataNode *node)
 
 void m2Data::FsmImageNodeAdded(const mitk::DataNode *node)
 {
-  if (auto image = dynamic_cast<m2::FsmIRSpecImage *>(node->GetData()))
+  if (auto image = dynamic_cast<m2::FsmSpectrumImage *>(node->GetData()))
   {
     this->ApplySettingsToImage(image);
     image->InitializeImageAccess();
@@ -1019,9 +1017,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
 
     // -------------- add Mask to datastorage --------------
     {
-      auto labelSetImag = mitk::ConvertImageToLabelSetImage(spectrumImage->GetMaskImage());
-      spectrumImage->GetImageArtifacts()["mask"] = labelSetImag;
-
+      
       auto helperNode = mitk::DataNode::New();
       helperNode->SetName(node->GetName() + "_mask");
       helperNode->SetVisibility(true);
@@ -1029,8 +1025,6 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
 
       this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
 
-      labelSetImag->GetLabel(1)->SetOpacity(0);
-      labelSetImag->GetActiveLabelSet()->UpdateLookupTable(1);
     }
 
     // -------------- add Index to datastorage --------------

@@ -6,7 +6,8 @@ set(H_FILES
 
   include/m2IonImageReference.h
   include/m2ImzMLSpectrumImage.h
-  include/m2ImzMLXMLParser.h  
+  include/m2ImzMLXMLParser.h
+  include/m2FsmSpectrumImage.h
 
   include/mitkMassSpecImageInteractor.h
 
@@ -15,7 +16,7 @@ set(H_FILES
   include/mitkImage2DToImage3DSliceFilter.h
   
   include/mitkTimer.h
-  include/m2FsmIRSpecImage.h
+
 )
 
 set(CPP_FILES
@@ -29,7 +30,7 @@ set(CPP_FILES
   m2ImzMLXMLParser.cpp
   m2ImzMLSpectrumImage.cpp
 
-  m2FsmIRSpecImage.cpp
+  m2FsmSpectrumImage.cpp
 
   mitkImage3DSliceToImage2DFilter.cpp
   mitkImage2DToImage3DSliceFilter.cpp

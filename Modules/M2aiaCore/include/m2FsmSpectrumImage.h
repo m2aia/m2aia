@@ -31,10 +31,10 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  class M2AIACORE_EXPORT FsmIRSpecImage final : public SpectrumImageBase
+  class M2AIACORE_EXPORT FsmSpectrumImage final : public SpectrumImageBase
   {
   public:
-    mitkClassMacro(FsmIRSpecImage, SpectrumImageBase);
+    mitkClassMacro(FsmSpectrumImage, SpectrumImageBase);
     itkNewMacro(Self);
 
     itkSetEnumMacro(ImageGeometryInitialized, bool);
@@ -103,19 +103,19 @@ namespace m2
     bool m_ImageAccessInitialized = false;
     bool m_ImageGeometryInitialized = false;
 
-    FsmIRSpecImage();
-    ~FsmIRSpecImage() override;
+    FsmSpectrumImage();
+    ~FsmSpectrumImage() override;
   };
 
   template <class MassAxisType, class IntensityType>
-  class FsmIRSpecImage::FsmProcessor : public m2::SpectrumImageBase::ProcessorBase
+  class FsmSpectrumImage::FsmProcessor : public m2::SpectrumImageBase::ProcessorBase
   {
   private:
-    friend class FsmIRSpecImage;
-    m2::FsmIRSpecImage *p;
+    friend class FsmSpectrumImage;
+    m2::FsmSpectrumImage *p;
 
   public:
-    explicit FsmProcessor(m2::FsmIRSpecImage *owner) : p(owner) {}
+    explicit FsmProcessor(m2::FsmSpectrumImage *owner) : p(owner) {}
     void GrabIonImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) const override;
     void GrabIntensityPrivate(unsigned long int index,
                               std::vector<double> &ints,

@@ -35,7 +35,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <functional>
 #include <itkOpenSlideImageIO.h>
 #include <m2FSMImageIO.h>
-#include <m2FsmIRSpecImage.h>
+#include <m2FsmSpectrumImage.h>
 #include <map>
 #include <mitkImageCast.h>
 
@@ -229,7 +229,7 @@ namespace m2
       }
     }
 
-    auto fsmImage = m2::FsmIRSpecImage::New();
+    auto fsmImage = m2::FsmSpectrumImage::New();
     fsmImage->SetPropertyValue<unsigned>("dim_x", dimensions[0]); // n_x
     fsmImage->SetPropertyValue<unsigned>("dim_y", dimensions[1]); // n_z
     fsmImage->SetPropertyValue<unsigned>("dim_z", 1);
@@ -272,12 +272,12 @@ namespace m2
     itk::ImageRegionIteratorWithIndex<itk::Image<m2::DisplayImagePixelType, 3>> it(
       ionImage, ionImage->GetLargestPossibleRegion());
     auto &source_list = fsmImage->GetSpectrumImageSourceList();
-    m2::FsmIRSpecImage::Source source;
+    m2::FsmSpectrumImage::Source source;
 
     unsigned long i = 0;
     while (!it.IsAtEnd())
     {
-      m2::FsmIRSpecImage::SpectrumData spectrum;
+      m2::FsmSpectrumImage::SpectrumData spectrum;
 
       if (inverse)
       {
@@ -297,7 +297,6 @@ namespace m2
       ++it;
     }
     source_list.emplace_back(source);
-    fsmImage->InitializeImageAccess();
     return {fsmImage.GetPointer()};
   } // namespace m2
 

@@ -191,7 +191,8 @@ namespace m2
     NormalizationStrategyType m_NormalizationStrategy = NormalizationStrategyType::TIC;
     RangePoolingStrategyType m_RangePoolingStrategy = RangePoolingStrategyType::Sum;
 
-    ~SpectrumImageBase() override;
+    SpectrumImageBase();
+	~SpectrumImageBase() override;
     bool m_IsDataAccessInitialized = false;
 
     /*
