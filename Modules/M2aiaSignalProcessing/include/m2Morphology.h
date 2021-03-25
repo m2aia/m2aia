@@ -19,7 +19,7 @@ See LICENSE.txt for details.
 #include <algorithm>
 #include <vector>
 #include <functional>
-
+#include <cstring>
 namespace m2
 {
   namespace Signal

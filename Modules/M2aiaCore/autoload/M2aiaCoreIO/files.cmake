@@ -3,5 +3,6 @@ set(CPP_FILES
   m2ImzMLImageIO.cpp
   m2ImzMLEngine.cpp
   m2OpenSlideIO.cpp
+  m2FSMImageIO.cpp
 )
 

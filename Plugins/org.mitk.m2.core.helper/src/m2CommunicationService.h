@@ -20,7 +20,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <org_mitk_m2_core_helper_Export.h>
 #include <qobject.h>
 #include <mitkDataNode.h>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 
 namespace m2
 {
@@ -39,10 +39,10 @@ namespace m2
 	using NodesVectorType = itk::VectorContainer<unsigned, mitk::DataNode::Pointer>;
   public:
   signals:
-	void MSImageNodeAdded(const mitk::DataNode *);
+	void SpectrumImageNodeAdded(const mitk::DataNode *);
     
-	void MassRangeChanged(qreal, qreal);
-    void GrabIonImage(qreal, qreal);
+	void RangeChanged(qreal, qreal);
+    void GenerateImageData(qreal, qreal);
 	
 	void OverviewSpectrumChanged(const mitk::DataNode *, m2::OverviewSpectrumType);
 	

@@ -33,6 +33,7 @@ See LICENSE.txt for details.
 #include <qpushbutton.h>
 #include <vtkLookupTable.h>
 #include <vtkMitkLevelWindowFilter.h>
+#include <itkRGBToLuminanceImageFilter.h>
 
 QPixmap GetPixmapFromImageNode(const mitk::Image *image, int height)
 {
@@ -238,6 +239,18 @@ std::vector<mitk::Image::Pointer> m2OpenSlideImageIOHelperDialog::GetData()
     mitk::Image::Pointer image;
     mitk::CastToMitkImage(componentImage, image);
     return {image};
+  }
+  else
+  {
+    using FilterType = itk::RGBToLuminanceImageFilter<ItkRGBAImageType, itk::Image<unsigned char, 3>>;
+    FilterType::Pointer filter = FilterType::New();
+    filter->SetInput(itkImage);
+    filter->Update();
+
+	mitk::Image::Pointer image;
+    mitk::CastToMitkImage(filter->GetOutput(), image);
+    return {image};
+  
   }
   return {};
 }

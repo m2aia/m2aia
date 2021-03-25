@@ -14,16 +14,14 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
+#include <m2CoreObjectFactory.h>
+#include <m2FSMImageIO.h>
+#include <m2ImzMLImageIO.h>
+#include <m2OpenSlideIO.h>
 #include <usGetModuleContext.h>
 #include <usModule.h>
 #include <usModuleActivator.h>
 #include <usModuleContext.h>
-
-#include <m2ImzMLImageIO.h>
-#include <m2OpenSlideIO.h>
-
-#include <m2CoreObjectFactory.h>
-
 
 namespace m2
 {
@@ -36,10 +34,11 @@ namespace m2
 
   public:
     void Load(us::ModuleContext * /*context*/) override
-    { 
-		//m_FileIOs.push_back(new IACovisImageIO());
-		m_FileIOs.push_back(new ImzMLImageIO());
-		m_FileIOs.push_back(new OpenSlideIO());
+    {
+      // m_FileIOs.push_back(new IACovisImageIO());
+      m_FileIOs.push_back(new ImzMLImageIO());
+      m_FileIOs.push_back(new OpenSlideIO());
+      m_FileIOs.push_back(new FSMImageIO());
     }
     void Unload(us::ModuleContext *) override
     {
@@ -49,6 +48,6 @@ namespace m2
       }
     }
   };
-}
+} // namespace m2
 
 US_EXPORT_MODULE_ACTIVATOR(m2::CoreIOActivator)

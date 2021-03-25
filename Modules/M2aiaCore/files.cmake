@@ -1,12 +1,13 @@
 set(H_FILES 
+  include/m2CoreCommon.h
   include/m2Process.hpp 
-  include/m2IMassSpecDataAccess.h
-  include/m2MSImageBase.h
-  
+  include/m2ISpectrumDataAccess.h
+  include/m2SpectrumImageBase.h
 
   include/m2IonImageReference.h
-  include/m2ImzMLMassSpecImage.h
-  include/m2ImzMLXMLParser.h  
+  include/m2ImzMLSpectrumImage.h
+  include/m2ImzMLXMLParser.h
+  include/m2FsmSpectrumImage.h
 
   include/mitkMassSpecImageInteractor.h
 
@@ -15,19 +16,21 @@ set(H_FILES
   include/mitkImage2DToImage3DSliceFilter.h
   
   include/mitkTimer.h
-  
+
 )
 
 set(CPP_FILES
   m2IonImageReference.cpp
-  m2MSImageBase.cpp
+  m2SpectrumImageBase.cpp
   m2CoreObjectFactory.cpp
   m2MassValue.cpp
   
   mitkTransformixMSDataObjectStack.cpp
 
   m2ImzMLXMLParser.cpp
-  m2ImzMLMassSpecImage.cpp 
+  m2ImzMLSpectrumImage.cpp
+
+  m2FsmSpectrumImage.cpp
 
   mitkImage3DSliceToImage2DFilter.cpp
   mitkImage2DToImage3DSliceFilter.cpp

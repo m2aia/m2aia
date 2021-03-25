@@ -26,11 +26,13 @@ m2::ChartView::ChartView(QtCharts::QChart *chart, QWidget *parent)
   : QtCharts::QChartView(chart, parent), m_isTouching(false)
 {
   setRubberBand(QtCharts::QChartView::NoRubberBand);
+  setCursor(Qt::CrossCursor);
 }
 
 m2::ChartView::ChartView(QWidget *parent) : QtCharts::QChartView(parent), m_isTouching(false)
 {
   setRubberBand(QtCharts::QChartView::NoRubberBand);
+  setCursor(Qt::CrossCursor);
 }
 
 //void m2::ChartView::OnResize()
@@ -202,7 +204,7 @@ void m2::ChartView::mouseReleaseEvent(QMouseEvent *event)
     emit(AlignSpectra(mz, tol));
   else if (mods.testFlag(Qt::AltModifier)) {
     emit(RangeSelectionUpdate(p.x()));
-    emit(GrabIonImage(mz, tol));
+    emit(GenerateImageData(mz, tol));
   }
   event->accept();
 }

@@ -32,7 +32,7 @@ namespace m2
   {
     if (AbstractFileIO::GetWriterConfidenceLevel() == Unsupported)
       return Unsupported;
-    const auto *input = static_cast<const m2::ImzMLMassSpecImage *>(this->GetInput());
+    const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
     if (input)
       return Supported;
     else

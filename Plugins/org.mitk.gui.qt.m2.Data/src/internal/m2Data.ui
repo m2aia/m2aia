@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>510</width>
-    <height>802</height>
+    <width>607</width>
+    <height>1206</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -33,6 +33,285 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
+    <widget class="QGroupBox" name="groupBox_2">
+     <property name="title">
+      <string>Normalization</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QRadioButton" name="radioButtonNoneNormalization">
+          <property name="maximumSize">
+           <size>
+            <width>1000</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>No normalization</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioButtonInFileNormalization">
+          <property name="maximumSize">
+           <size>
+            <width>1000</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>In-file</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioButtonTICNormalization">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>1000</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>TIC</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="radioButtonSumNormalization">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>1000</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Sum</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="SpectralProcessing">
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="title">
+      <string>Smoothing</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <property name="spacing">
+       <number>4</number>
+      </property>
+      <property name="leftMargin">
+       <number>8</number>
+      </property>
+      <property name="topMargin">
+       <number>4</number>
+      </property>
+      <property name="rightMargin">
+       <number>8</number>
+      </property>
+      <property name="bottomMargin">
+       <number>4</number>
+      </property>
+      <item>
+       <layout class="QGridLayout" name="gridLayout">
+        <item row="1" column="0">
+         <widget class="QRadioButton" name="rdBtnSmoothingSG">
+          <property name="text">
+           <string>Savitzky-Golay</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QRadioButton" name="rdBtnSmoothingGaussian">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Gaussian</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="0">
+         <widget class="QRadioButton" name="rdBtnSmoothingNone">
+          <property name="text">
+           <string>None</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QLabel" name="label">
+          <property name="text">
+           <string>Half window size</string>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QSpinBox" name="spnBxSmoothing">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>1000</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string/>
+          </property>
+          <property name="minimum">
+           <number>0</number>
+          </property>
+          <property name="maximum">
+           <number>100000</number>
+          </property>
+          <property name="value">
+           <number>2</number>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QLabel" name="label_10">
+          <property name="text">
+           <string>Sigma</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2">
+         <widget class="QDoubleSpinBox" name="spnBxSigma">
+          <property name="value">
+           <double>1.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_4">
+     <property name="title">
+      <string>Baseline correction</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_10">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QRadioButton" name="rdBtnBaselineCorrectionNone">
+          <property name="text">
+           <string>None</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="rdBtnBaselineCorrectionTopHat">
+          <property name="text">
+           <string>TopHat</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="rdBtnBaselineCorrectionMedian">
+          <property name="text">
+           <string>Median</string>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_8">
+        <item>
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Half window size</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spnBxBaseline">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>1000</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string/>
+          </property>
+          <property name="value">
+           <number>50</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QTabWidget" name="Tabs">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
@@ -43,7 +322,7 @@
      <property name="currentIndex">
       <number>1</number>
      </property>
-     <widget class="QWidget" name="TabsPage1">
+     <widget class="QWidget" name="Initialization">
       <attribute name="title">
        <string>Initialization</string>
       </attribute>
@@ -51,7 +330,7 @@
        <item>
         <widget class="QGroupBox" name="groupBox_7">
          <property name="title">
-          <string>Behaviour for interaction with multiple MS images</string>
+          <string>Behaviour for interaction with multiple spectrum images</string>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_13">
           <item>
@@ -155,7 +434,7 @@
                <string/>
               </property>
               <property name="text">
-               <string>Peak binning tol. (centroid imzML)</string>
+               <string>Binning tol. (centroid spectrum types)</string>
               </property>
              </widget>
             </item>
@@ -201,271 +480,15 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="TabsPage2">
+     <widget class="QWidget" name="Imaging">
       <attribute name="title">
        <string>Imaging</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_16">
        <item>
-        <widget class="QGroupBox" name="groupBox_2">
-         <property name="title">
-          <string>Normalization</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_4">
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout">
-            <item>
-             <widget class="QRadioButton" name="radioButtonNoneNormalization">
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>No normalization</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="radioButtonInFileNormalization">
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>In-file</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="radioButtonTICNormalization">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>TIC</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="radioButtonSumNormalization">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Sum</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="SpectralProcessing">
-         <property name="toolTip">
-          <string/>
-         </property>
-         <property name="title">
-          <string>Smoothing</string>
-         </property>
-         <property name="checkable">
-          <bool>false</bool>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_3">
-          <property name="spacing">
-           <number>4</number>
-          </property>
-          <property name="leftMargin">
-           <number>8</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>8</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_3">
-            <item>
-             <widget class="QRadioButton" name="rdBtnSmoothingNone">
-              <property name="text">
-               <string>None</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="rdBtnSmoothingSG">
-              <property name="text">
-               <string>Savitzky-Golay</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="rdBtnSmoothingGaussian">
-              <property name="enabled">
-               <bool>false</bool>
-              </property>
-              <property name="text">
-               <string>Gaussian</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_4">
-            <item>
-             <widget class="QLabel" name="label">
-              <property name="text">
-               <string>Half window size</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSpinBox" name="spnBxSmoothing">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string/>
-              </property>
-              <property name="minimum">
-               <number>0</number>
-              </property>
-              <property name="maximum">
-               <number>100000</number>
-              </property>
-              <property name="value">
-               <number>2</number>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="groupBox_4">
-         <property name="title">
-          <string>Baseline correction</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_10">
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_2">
-            <item>
-             <widget class="QRadioButton" name="rdBtnBaselineCorrectionNone">
-              <property name="text">
-               <string>None</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="rdBtnBaselineCorrectionTopHat">
-              <property name="text">
-               <string>TopHat</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="rdBtnBaselineCorrectionMedian">
-              <property name="text">
-               <string>Median</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_8">
-            <item>
-             <widget class="QLabel" name="label_4">
-              <property name="text">
-               <string>Half window size</string>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QSpinBox" name="spnBxBaseline">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="toolTip">
-               <string/>
-              </property>
-              <property name="value">
-               <number>50</number>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
         <widget class="QGroupBox" name="GrabIonImageStrategy">
          <property name="title">
-          <string>Ion imaging strategy</string>
+          <string>Imaging strategy</string>
          </property>
          <property name="checkable">
           <bool>false</bool>
@@ -581,7 +604,7 @@
           <string/>
          </property>
          <property name="title">
-          <string>Ion imaging</string>
+          <string>Imaging</string>
          </property>
          <property name="flat">
           <bool>false</bool>
@@ -592,142 +615,7 @@
          <layout class="QVBoxLayout" name="verticalLayout_2">
           <item>
            <layout class="QGridLayout" name="gridLayout_5">
-            <item row="2" column="0">
-             <widget class="QCommandLinkButton" name="btnGrabIonImage">
-              <property name="text">
-               <string>Create ion image</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QRadioButton" name="rbtnTolDa">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>180</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Daltons (Da)</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="1">
-             <widget class="Line" name="line_4">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0">
-             <widget class="QRadioButton" name="rbtnTolPPM">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>180</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Parts per million (ppm)</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QDoubleSpinBox" name="spnBxTol">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="buttonSymbols">
-               <enum>QAbstractSpinBox::UpDownArrows</enum>
-              </property>
-              <property name="suffix">
-               <string> ppm</string>
-              </property>
-              <property name="decimals">
-               <number>4</number>
-              </property>
-              <property name="maximum">
-               <double>9999.000000000000000</double>
-              </property>
-              <property name="value">
-               <double>75.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="3" column="0">
-             <widget class="Line" name="line_3">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="0">
-             <widget class="Line" name="line_5">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
-             <widget class="QDoubleSpinBox" name="spnBxMz">
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="suffix">
-               <string> m/z</string>
-              </property>
-              <property name="decimals">
-               <number>4</number>
-              </property>
-              <property name="maximum">
-               <double>999999.000000000000000</double>
-              </property>
-             </widget>
-            </item>
-            <item row="5" column="1">
-             <widget class="Line" name="line_6">
-              <property name="orientation">
-               <enum>Qt::Horizontal</enum>
-              </property>
-             </widget>
-            </item>
-            <item row="4" column="0">
+            <item row="8" column="0">
              <widget class="QCheckBox" name="chkBxInitNew">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -755,23 +643,14 @@
               </property>
              </widget>
             </item>
-            <item row="2" column="1">
-             <widget class="QCheckBox" name="chkBxUseMask">
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
+            <item row="5" column="0">
+             <widget class="QCommandLinkButton" name="btnGrabIonImage">
               <property name="text">
-               <string>Use mask (child node)</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
+               <string>Create image</string>
               </property>
              </widget>
             </item>
-            <item row="4" column="1">
+            <item row="8" column="1">
              <widget class="QComboBox" name="cmbBxType">
               <property name="currentIndex">
                <number>2</number>
@@ -798,6 +677,174 @@
               </item>
              </widget>
             </item>
+            <item row="9" column="0">
+             <widget class="Line" name="line_5">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLabel" name="label_9">
+              <property name="font">
+               <font>
+                <italic>false</italic>
+               </font>
+              </property>
+              <property name="text">
+               <string>Tolerance t(x)</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label_8">
+              <property name="font">
+               <font>
+                <italic>false</italic>
+               </font>
+              </property>
+              <property name="text">
+               <string>Position x</string>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="0">
+             <widget class="Line" name="line_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QRadioButton" name="rbtnTolPPM">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>180</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>1000</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Parts per million (ppm)</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="9" column="1">
+             <widget class="Line" name="line_6">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QRadioButton" name="rbtnTolDa">
+              <property name="enabled">
+               <bool>true</bool>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>180</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>1000</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Unit of measurment</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QDoubleSpinBox" name="spnBxTol">
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>1000</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="buttonSymbols">
+               <enum>QAbstractSpinBox::UpDownArrows</enum>
+              </property>
+              <property name="suffix">
+               <string/>
+              </property>
+              <property name="decimals">
+               <number>4</number>
+              </property>
+              <property name="maximum">
+               <double>9999.000000000000000</double>
+              </property>
+              <property name="value">
+               <double>75.000000000000000</double>
+              </property>
+             </widget>
+            </item>
+            <item row="6" column="1">
+             <widget class="Line" name="line_4">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item row="7" column="0">
+             <widget class="QCheckBox" name="chkBxUseMask">
+              <property name="maximumSize">
+               <size>
+                <width>1000</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Use mask (child node)</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QDoubleSpinBox" name="spnBxMz">
+              <property name="maximumSize">
+               <size>
+                <width>1000</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="suffix">
+               <string/>
+              </property>
+              <property name="decimals">
+               <number>4</number>
+              </property>
+              <property name="maximum">
+               <double>999999.000000000000000</double>
+              </property>
+             </widget>
+            </item>
            </layout>
           </item>
          </layout>
@@ -812,7 +859,7 @@
           <string/>
          </property>
          <property name="title">
-          <string>Ion image reference</string>
+          <string>Image reference</string>
          </property>
          <property name="flat">
           <bool>false</bool>
@@ -826,7 +873,7 @@
             <item row="0" column="0">
              <widget class="QLabel" name="labelIonImageInfo">
               <property name="text">
-               <string>&lt;mz +- tol&gt;</string>
+               <string>&lt;x±t(x)&gt;</string>
               </property>
              </widget>
             </item>
@@ -854,7 +901,7 @@
           <item>
            <widget class="QCommandLinkButton" name="btnAddIonImageReference">
             <property name="text">
-             <string>Add to Ions view</string>
+             <string>Add to image reference view</string>
             </property>
            </widget>
           </item>
@@ -899,7 +946,7 @@
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="TabsPage3">
+     <widget class="QWidget" name="Options">
       <attribute name="title">
        <string>Options</string>
       </attribute>
@@ -1159,31 +1206,52 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
+  <tabstop>radioButtonNoneNormalization</tabstop>
+  <tabstop>radioButtonInFileNormalization</tabstop>
+  <tabstop>radioButtonTICNormalization</tabstop>
+  <tabstop>radioButtonSumNormalization</tabstop>
+  <tabstop>rdBtnSmoothingNone</tabstop>
+  <tabstop>rdBtnSmoothingSG</tabstop>
+  <tabstop>spnBxSmoothing</tabstop>
+  <tabstop>rdBtnSmoothingGaussian</tabstop>
+  <tabstop>spnBxSigma</tabstop>
+  <tabstop>rdBtnBaselineCorrectionNone</tabstop>
+  <tabstop>rdBtnBaselineCorrectionTopHat</tabstop>
+  <tabstop>spnBxBaseline</tabstop>
+  <tabstop>rdBtnBaselineCorrectionMedian</tabstop>
+  <tabstop>Tabs</tabstop>
   <tabstop>radioButtonSum</tabstop>
   <tabstop>radioButtonMedian</tabstop>
   <tabstop>radioButtonMax</tabstop>
   <tabstop>radioButtonMean</tabstop>
-  <tabstop>rbtnTolPPM</tabstop>
-  <tabstop>rbtnTolDa</tabstop>
   <tabstop>spnBxMz</tabstop>
   <tabstop>spnBxTol</tabstop>
+  <tabstop>rbtnTolPPM</tabstop>
+  <tabstop>rbtnTolDa</tabstop>
   <tabstop>btnGrabIonImage</tabstop>
+  <tabstop>chkBxUseMask</tabstop>
+  <tabstop>chkBxInitNew</tabstop>
+  <tabstop>cmbBxType</tabstop>
   <tabstop>textIonName</tabstop>
   <tabstop>btnAddIonImageReference</tabstop>
   <tabstop>btnAddReferencepointSet</tabstop>
   <tabstop>btnOpenPointSetWidget</tabstop>
-  <tabstop>spnBxPeakBinning</tabstop>
   <tabstop>checkBoxOnlyVisible</tabstop>
   <tabstop>checkBoxOnlyComboBoxSelection</tabstop>
-  <tabstop>Tabs</tabstop>
+  <tabstop>spnBxPeakBinning</tabstop>
   <tabstop>scaleBarEnableIon</tabstop>
+  <tabstop>scaleBarOrientation</tabstop>
+  <tabstop>scaleBarLenght</tabstop>
   <tabstop>scaleBarEnableNormalization</tabstop>
   <tabstop>scaleBarFontSize</tabstop>
-  <tabstop>scaleBarLenght</tabstop>
-  <tabstop>scaleBarWidth</tabstop>
-  <tabstop>scaleBarOrientation</tabstop>
-  <tabstop>scaleBarForceUpdate</tabstop>
   <tabstop>groupBox_3</tabstop>
+  <tabstop>scaleBarWidth</tabstop>
+  <tabstop>scaleBarForceUpdate</tabstop>
+  <tabstop>mosaicRows</tabstop>
+  <tabstop>applyTiling</tabstop>
+  <tabstop>resetTiling</tabstop>
+  <tabstop>ScaleBar</tabstop>
+  <tabstop>btnEqualizeLW</tabstop>
  </tabstops>
  <resources/>
  <connections/>

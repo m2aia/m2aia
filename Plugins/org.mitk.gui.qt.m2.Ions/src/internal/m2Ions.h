@@ -26,7 +26,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryISelectionListener.h>
 #include <ctkRangeWidget.h>
 #include <m2CommunicationService.h>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkImage.h>
 #include <qaction.h>
 #include <qwidgetaction.h>
@@ -76,7 +76,7 @@ private:
   void PerformTsne(std::set<m2::IonImageReference *, m2::IonImageReference::Comp>,
                    itk::VectorContainer<unsigned int, mitk::DataNode::Pointer>::Pointer nodes);
   
-  m2::MSImageBase::Pointer MSImageBase;
+  m2::SpectrumImageBase::Pointer SpectrumImageBase;
   std::vector<std::array<ColorType, 4>> m_SelectedColors;
 
   // std::list<int> m_ValidVectorIndices;

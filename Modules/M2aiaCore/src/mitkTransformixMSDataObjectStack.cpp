@@ -17,7 +17,7 @@ See LICENSE.txt for details.
 #include <cstdlib>
 #include <itkSignedMaurerDistanceMapImageFilter.h>
 #include <itksys/SystemTools.hxx>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <mitkExtractSliceFilter.h>
 #include <mitkIOUtil.h>
 #include <mitkITKImageImport.h>
@@ -48,7 +48,8 @@ namespace m2
         auto filter = mitk::Image3DSliceToImage2DFilter::New();
         filter->SetInput(ionImage);
         filter->Update();
-        mitk::IOUtil::Save(filter->GetOutput(), SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "moving.nrrd"})));
+        mitk::IOUtil::Save(filter->GetOutput(),
+                           SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "moving.nrrd"})));
       }
 
       for (std::string trafo : transformations)
@@ -62,12 +63,13 @@ namespace m2
         f.close();
 
         std::stringstream ss;
-        std::vector<std::string> cmd{m_Transformix,
-                                     "-in",
+        std::vector<std::string> cmd{
+          m_Transformix,
+          "-in",
           SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "moving.nrrd"})),
-                                     "-out",
-                                     workdirPath,
-                                     "-tp",
+          "-out",
+          workdirPath,
+          "-tp",
           SystemTools::ConvertToOutputPath(SystemTools::JoinPath({workdirPath, "/", "Transform.txt"}))};
         for (auto s : cmd)
           ss << s << " ";
@@ -174,7 +176,7 @@ namespace m2
   }
 
   void TransformixMSDataObjectStack::Insert(unsigned i,
-                                            m2::MSImageBase::Pointer data,
+                                            m2::SpectrumImageBase::Pointer data,
                                             TransformixMSDataObjectStack::TransformationVector transformations)
   {
     /*
@@ -184,7 +186,7 @@ namespace m2
       this->SetPropertyValue<std::string>("ims.stack.transformation.t" + std::to_string(i) + "." + std::to_string(a++),
     t);
 
-    if (auto imzml = dynamic_cast<m2::ImzMLMassSpecImage *>(data.GetPointer()))
+    if (auto imzml = dynamic_cast<m2::ImzMLSpectrumImage *>(data.GetPointer()))
       this->SetPropertyValue<std::string>("ims.stack.transformation.t" + std::to_string(i) + ".imzml",
     imzml->GetImzMLDataPath());
 
@@ -226,20 +228,9 @@ namespace m2
       ReplaceParameter(trafo, "ResampleInterpolator", "\"FinalNearestNeighborInterpolator\"");
     };
 
-    //    auto outputLinearInterpolationLandmark = [this](std::string &trafo) {
-    //      ReplaceParameter(trafo, "ResultImagePixelType", "\"float\"");
-    //      ReplaceParameter(trafo, "ResampleInterpolator", "\"FinalLinearInterpolator\"");
-    //    };
-
     MITK_INFO << "Initialize Stack object";
     TransformationVector transformations = m_MSDataObjectTransformations[refIndex].front();
     auto refImage = Transform(m_MSDataObjectReferences[refIndex].front(), transformations, outputDouble);
-
-    // auto transformations = m_MSDataObjectTransformations[refIndex].front();
-    // auto refIndexImage =
-    // TransformImageUsingNNInterpolation(m_MSDataObjectReferences[refIndex].front()->GetIndexImage(), transformations);
-    // auto reMaskImage = TransformImageUsingNNInterpolation(m_MSDataObjectReferences[refIndex].front()->GetMaskImage(),
-    // transformations);
 
     unsigned int dims[3];
     std::memcpy(dims, refImage->GetDimensions(), 3 * sizeof(unsigned int));
@@ -249,7 +240,7 @@ namespace m2
     spacing[2] = zSpacing;
 
     {
-      this->Initialize(mitk::MakeScalarPixelType<m2::IonImagePixelType>(), 3, dims);
+      this->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), 3, dims);
       this->SetSpacing(spacing);
       this->SetOrigin(refImage->GetGeometry()->GetOrigin());
     }
@@ -263,7 +254,7 @@ namespace m2
 
     {
       GetImageArtifacts()["mask"] = mitk::Image::New();
-      GetMaskImage()->Initialize(mitk::MakeScalarPixelType<m2::MaskImagePixelType>(), 3, dims);
+      GetMaskImage()->Initialize(mitk::MakeScalarPixelType<mitk::LabelSetImage::PixelType>(), 3, dims);
       GetMaskImage()->SetSpacing(spacing);
       GetMaskImage()->SetOrigin(refImage->GetGeometry()->GetOrigin());
     }
@@ -275,13 +266,6 @@ namespace m2
       distanceImage->SetSpacing(spacing);
       distanceImage->SetOrigin(refImage->GetGeometry()->GetOrigin());
     }
-
-    // if (auto lmImage = dynamic_cast<mitk::Image *>(GetImageArtifacts()["landmarks"].GetPointer()))
-    //{
-    //  lmImage->Initialize(mitk::MakeScalarPixelType<m2::IndexImagePixelType>(), 3, dims);
-    //  lmImage->SetSpacing(spacing);
-    //  lmImage->SetOrigin(refImage->GetGeometry()->GetOrigin());
-    //}
 
     for (unsigned i = 0; i < m_MSDataObjectReferences.size(); ++i)
     {
@@ -295,15 +279,6 @@ namespace m2
       CopyWarpedImageToStack(warped, this, i);
       CopyWarpedImageToStack(warpedIndex, GetIndexImage(), i);
       CopyWarpedImageToStack(warpedMask, GetMaskImage(), i);
-
-      /* if (msImage->GetImageArtifacts().find("landmarks") != msImage->GetImageArtifacts().end())
-       {
-         auto lmImageSource = dynamic_cast<mitk::Image *>(msImage->GetImageArtifacts()["landmarks"].GetPointer());
-         auto lmImageTarget = dynamic_cast<mitk::Image *>(GetImageArtifacts()["landmarks"].GetPointer());
-
-         auto warpedLmImage = Transform(lmImageSource, transformations, outputNearestNeighborIndex);
-         CopyWarpedImageToStack(warpedLmImage, lmImageTarget, i);
-       }*/
 
       mitk::Image::Pointer distanceImage;
       AccessByItk(warpedMask, ([this, i, &distanceImage](auto itkImage) {
@@ -319,10 +294,14 @@ namespace m2
       CopyWarpedImageToStack(distanceImage, distanceTarget, i);
     }
 
+    
+    auto &xAxis = m_MSDataObjectReferences[0].front()->GetXAxis();
+    std::copy(std::begin(xAxis), std::end(xAxis), std::back_inserter(this->GetXAxis()));
+
     MITK_INFO << "Stacking complete!";
   }
 
-  // void TransformixMSDataObjectStack::GrabSpectrum(unsigned int /*index*/,
+  // void TransformixMSDataObjectStack::ReceiveSpectrum(unsigned int /*index*/,
   //                                                std::vector<double> & /*mzs*/,
   //                                                std::vector<double> & /*ints*/) const
   //{
@@ -348,16 +327,16 @@ namespace m2
                                        3);
   }
 
-  void TransformixMSDataObjectStack::GrabIonImage(double mz,
-                                                  double tol,
-                                                  const mitk::Image * /*mask*/,
-                                                  mitk::Image *img) const
+  void TransformixMSDataObjectStack::GenerateImageData(double mz,
+                                                       double tol,
+                                                       const mitk::Image * /*mask*/,
+                                                       mitk::Image *img) const
   {
     for (unsigned i = 0; i < m_MSDataObjectReferences.size(); ++i)
     {
       auto current = m_MSDataObjectReferences[i].front();
       auto transformations = m_MSDataObjectTransformations[i].front();
-      current->GrabIonImage(mz, tol, current->GetMaskImage(), current);
+      current->GenerateImageData(mz, tol, current->GetMaskImage(), current);
 
       MITK_INFO << "Grab ok";
 

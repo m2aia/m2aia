@@ -39,12 +39,9 @@ QRectF m2Crosshair::boundingRect() const
 void m2Crosshair::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
 {
   Q_UNUSED(option)
-  //Q_UNUSED(widget)
-  const auto x = m_anchor.x();
-  const auto y = m_anchor.y();
-
-  painter->setBrush(QColor(255, 255, 255));
+  Q_UNUSED(widget)
   
+  painter->setBrush(QColor(255, 255, 255));
   painter->drawText(m_textRect, m_text);
   
 }

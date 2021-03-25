@@ -21,7 +21,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkAbstractView.h>
 #include <berryISelectionListener.h>
 #include "m2Crosshair.h"
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <m2SelectionProvider.h>
 #include <qlegendmarker.h>
 #include <qscatterseries.h>
@@ -61,6 +61,7 @@ protected:
 
   void OnUpdateScatterSeries(const mitk::DataNode *);
   void UpdateLineSeriesWindow(const mitk::DataNode *);
+  void UpdateXAxisLabels(const mitk::DataNode *, bool remove = false);
   void UpdateZoomLevel(const mitk::DataNode *);
 
   void SetDefaultLineSeriesStyle(QtCharts::QLineSeries *);
@@ -71,7 +72,7 @@ protected:
 
   struct BiasedSereisContainer : public std::map<m2::OverviewSpectrumType, QtCharts::QXYSeries *>
   {
-    std::vector<double> MassAxis;
+    std::vector<double> GetXAxis;
     QColor Color = {0, 0, 0, 0};
   };
 
@@ -142,7 +143,7 @@ protected:
   double m_CurrentMousePosMz = 0;
   double m_CurrentVisibleDataPoints = 0;
 
-  m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Maximum;
+  m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Mean;
   bool m_CurrentOverviewSpectrumTypeChanged = false;
 
   // 20201023: custom selection service did not work as expected
@@ -189,7 +190,7 @@ protected:
   //	void GrabIonImages(qreal, qreal);
 
   // void OnAlignSpectra(qreal, qreal);
-  // void OnGrabIonImage(qreal, qreal);
+  // void OnGenerateImageData(qreal, qreal);
 private:
   QMenu *m_Menu;
   QAction *m_SpectrumSkyline;
@@ -203,6 +204,9 @@ private:
   QSlider *m_TickCountY;
   QtCharts::QValueAxis *m_xAxis;
   QtCharts::QValueAxis *m_yAxis;
+
+  QVector<QString> m_xAxisTitels;
+
 };
 
 // template <typename SeriesType>
@@ -211,7 +215,7 @@ private:
 //                              std::function<void(SeriesType *series)> seriesInitializer,
 //                              std::function<void(QList<QPointF> &, QPointF &p)> pointModifier)
 //{
-//  if (auto msiBase = dynamic_cast<m2::MSImageBase *>(source->GetData()))
+//  if (auto msiBase = dynamic_cast<m2::SpectrumImageBase *>(source->GetData()))
 //  {
 //    for (auto &&key_spec : msiBase->GetSpectraArtifacts())
 //    {
@@ -251,7 +255,7 @@ private:
 //                          std::function<void(SeriesType *series)> seriesInitializer,
 //                          std::function<void(QList<QPointF> &, QPointF &p)> pointModifier)
 //{
-//  if (auto msiBase = dynamic_cast<m2::MSImageBase *>(source->GetData()))
+//  if (auto msiBase = dynamic_cast<m2::SpectrumImageBase *>(source->GetData()))
 //  {
 //    auto &container = m_DataAssociatedSeriesMap[source];
 //
@@ -260,10 +264,10 @@ private:
 //
 //    SeriesType *series = new SeriesType();
 //    container[type] = series;
-//    container.MassAxis = msiBase->MassAxis();
+//    container.GetXAxis = msiBase->GetXAxis();
 //
 //    QList<QPointF> points;
-//    for (auto y = ints.cbegin(), x = msiBase->MassAxis().cbegin(); y != ints.end(); ++x, ++y)
+//    for (auto y = ints.cbegin(), x = msiBase->GetXAxis().cbegin(); y != ints.end(); ++x, ++y)
 //    {
 //      auto a = QPointF{*x, *y};
 //      pointModifier(points, a);

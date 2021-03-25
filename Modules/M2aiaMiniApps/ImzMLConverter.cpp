@@ -14,7 +14,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <mitkCommandLineParser.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
     MITK_INFO << kv.first << " " << kv.second.ToString();
   }
   auto image = mitk::IOUtil::Load(argsMap["image"].ToString()).front();
-  if (auto imzMLImage = dynamic_cast<m2::ImzMLMassSpecImage *>(image.GetPointer()))
+  if (auto imzMLImage = dynamic_cast<m2::ImzMLSpectrumImage *>(image.GetPointer()))
   {
     int bc_strategy, bc_hws, sm_strategy, sm_hws, int_type, mzs_type, imaging_strategy;
     float binning_tol, centroids_tol, mz, tol;
@@ -68,18 +68,18 @@ int main(int argc, char *argv[])
     imzMLImage->SetSmoothingHalfWindowSize(bc_hws);
 
     imzMLImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(sm_strategy));
-    imzMLImage->SetBaseLinecorrectionHalfWindowSize(sm_hws);
+    imzMLImage->SetBaseLineCorrectionHalfWindowSize(sm_hws);
 
-    imzMLImage->SetPeakPickingBinningTolerance(binning_tol);
-    imzMLImage->SetMassPickingTolerance(centroids_tol);
+    imzMLImage->SetBinningTolerance(binning_tol);
+    imzMLImage->SetTolerance(centroids_tol);
     imzMLImage->InitializeImageAccess();
 
-    imzMLImage->SetExportMode(m2::ImzMLFormatType::ContinuousProfile);
-    imzMLImage->SetIntsOutputType(static_cast<m2::NumericType>(int_type));
-    imzMLImage->SetMzsOutputType(static_cast<m2::NumericType>(mzs_type));
+    imzMLImage->SetExportMode(m2::SpectrumFormatType::ContinuousProfile);
+    imzMLImage->SetYOutputType(static_cast<m2::NumericType>(int_type));
+    imzMLImage->SetXOutputType(static_cast<m2::NumericType>(mzs_type));
 
     if (mz > 0)
-      imzMLImage->GrabIonImage(mz, 10e-6 * tol * mz, nullptr, imzMLImage);
+      imzMLImage->GenerateImageData(mz, 10e-6 * tol * mz, nullptr, imzMLImage);
 
     
 

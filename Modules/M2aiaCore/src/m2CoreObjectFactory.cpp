@@ -16,7 +16,7 @@ See LICENSE.txt for details.
 
 #include <m2CoreObjectFactory.h>
 
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 
 #include <mitkLevelWindowProperty.h>
 #include <mitkLookupTableProperty.h>

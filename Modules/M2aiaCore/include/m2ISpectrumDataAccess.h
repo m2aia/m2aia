@@ -15,27 +15,35 @@ See LICENSE.txt for details.
 #pragma once
 
 #include <M2aiaCoreExports.h>
-#include <mitkImage.h>
 #include <mitkMessage.h>
 #include <vector>
 
+namespace mitk
+{
+  class Image;
+}
+
 namespace m2
 {
-  class M2AIACORE_EXPORT IMSImageDataAccess
+  /**
+  *
+  *
+  */
+
+  class M2AIACORE_EXPORT ISpectrumDataAccess
   {
   public:
-    virtual void GrabIntensity(unsigned int index,
-                               std::vector<double> &ints,
-                               unsigned int sourceIndex = 0) const = 0;
-    virtual void GrabMass(unsigned int index,
-                          std::vector<double> &mzs,
-                          unsigned int sourceIndex = 0) const = 0;
-    virtual void GrabIonImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const = 0;
-    virtual void GrabSpectrum(unsigned int index,
-                              std::vector<double> &mzs,
-                              std::vector<double> &ints,
-                              unsigned int sourceIndex = 0) const = 0;
+    virtual void ReceiveIntensities(unsigned int index,
+                                    std::vector<double> &ints,
+                                    unsigned int sourceIndex = 0) const = 0;
+    virtual void ReceivePositions(unsigned int index, std::vector<double> &mzs, unsigned int sourceIndex = 0) const = 0;
+    
+	virtual void ReceiveSpectrum(unsigned int index,
+                                 std::vector<double> &xs,
+                                 std::vector<double> &ints,
+                                 unsigned int sourceIndex = 0) const = 0;
 
+    virtual void GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const = 0;
     /**
      * \brief Messages to emit
      *
@@ -47,10 +55,10 @@ namespace m2
      * member variable is not needed to be locked in multi-threaded scenarios since the LabelSetEvent is a typedef for
      * a Message1 object which is thread safe
      */
-    mutable mitk::Message<> GrabSpectrumEnd;
-    mutable mitk::Message<> GrabSpectrumStart;
-    mutable mitk::Message<> GrabImageStart;
-    mutable mitk::Message<> GrabImageEnd;
+    mutable mitk::Message<> ReceiveSpectrumEnd;
+    mutable mitk::Message<> ReceiveSpectrumStart;
+    mutable mitk::Message<> GenerateImageStart;
+    mutable mitk::Message<> GenerateImageEnd;
   };
 
-} // namespace mitk
+} // namespace m2

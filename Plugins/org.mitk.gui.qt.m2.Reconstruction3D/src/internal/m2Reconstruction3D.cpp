@@ -36,7 +36,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <itkNormalizeImageFilter.h>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itksys/SystemTools.hxx>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
 #include <mitkImage3DSliceToImage2DFilter.h>
@@ -111,7 +111,8 @@ void m2Reconstruction3D::WarpPoints(mitk::Image *ionImage,
   const auto baseDir = mitk::IOUtil::CreateTemporaryDirectory();
 
   auto baseDirPath = baseDir;
-  std::ofstream f(itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath,  "/", "points.txt"})));
+  std::ofstream f(
+    itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "points.txt"})));
   f << "index\n";
   f << std::to_string(inPoints->GetPointSetSeriesSize()) << "\n";
   for (auto it = inPoints->Begin(); it != inPoints->End(); ++it)
@@ -132,18 +133,20 @@ void m2Reconstruction3D::WarpPoints(mitk::Image *ionImage,
 
   for (std::string trafo : transformations)
   {
-    auto p = itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "Transform.txt"}));
+    auto p =
+      itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "Transform.txt"}));
     std::ofstream f(p.c_str());
     f << trafo;
     f.close();
 
     std::stringstream ss;
-    std::vector<std::string> cmd{transformix.toStdString(),
-                                 "-def",
+    std::vector<std::string> cmd{
+      transformix.toStdString(),
+      "-def",
       itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "points.txt"})),
-                                 "-out",
-                                 baseDirPath,
-                                 "-tp",
+      "-out",
+      baseDirPath,
+      "-tp",
       itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({baseDirPath, "/", "Transform.txt"}))};
     for (auto s : cmd)
       ss << s << " ";
@@ -176,7 +179,7 @@ void m2Reconstruction3D::WarpPoints(mitk::Image *ionImage,
           int v = std::stoi(word);
           p[i++] = v;
         }
-        catch (std::exception & e)
+        catch (std::exception &e)
         {
           MITK_INFO << e.what();
           break;
@@ -272,8 +275,8 @@ void m2Reconstruction3D::ExportSlice(mitk::Image *input,
   // AccessByItk_1(image, (ApplyGrayscaleErodeIntensityFilter), resultImage);
   // image = resultImage;
 
-  mitk::IOUtil::Save(image, itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({directory, "/", name})));
-
+  mitk::IOUtil::Save(image,
+                     itksys::SystemTools::ConvertToOutputPath(itksys::SystemTools::JoinPath({directory, "/", name})));
 }
 
 std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::WarpImage(const DataTuple &fixed,
@@ -386,8 +389,7 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
       << itksys::SystemTools::ConvertToOutputPath(
            itksys::SystemTools::JoinPath({rigidTransformDirPath, "/", "TransformParameters.0.txt"}))
            .c_str()
-      << "-out"
-      << rigidTransformDirPath.c_str();
+      << "-out" << rigidTransformDirPath.c_str();
     process.execute(transformix, v);
 
     // store image artifacts (rigid)
@@ -468,8 +470,7 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
       << itksys::SystemTools::ConvertToOutputPath(
            itksys::SystemTools::JoinPath({nlTransformDirPath, "/", "TransformParameters.0.txt"}))
            .c_str()
-      << "-out"
-      << nlTransformDirPath.c_str();
+      << "-out" << nlTransformDirPath.c_str();
     process.execute(transformix, v);
 
     // store image artifacts (rigid)
@@ -485,6 +486,7 @@ std::shared_ptr<m2Reconstruction3D::DataTupleWarpingResult> m2Reconstruction3D::
     warpedImages.push_back(tuple);
   }
 
+  itksys::SystemTools::RemoveADirectory(baseDirPath);
   // boost::filesystem::remove_all(baseDirPath);
   return std::make_shared<DataTupleWarpingResult>(transformations, warpedImages);
 }
@@ -548,7 +550,7 @@ void m2Reconstruction3D::OnStartStacking()
     bool UseSubsequentOrdering = m_Controls.chkBxUseConsecutiveSequence->isChecked();
 
     auto referenceData = getImageDataById(currentListRow, listWidged);
-    stack->Insert(currentListRow, dynamic_cast<m2::MSImageBase *>(referenceData.image.GetPointer()), {});
+    stack->Insert(currentListRow, dynamic_cast<m2::SpectrumImageBase *>(referenceData.image.GetPointer()), {});
 
     if (stack2)
     {
@@ -558,7 +560,7 @@ void m2Reconstruction3D::OnStartStacking()
       mitk::ProgressBar::GetInstance()->Progress();
 
       stack2->Insert(
-        currentListRow, dynamic_cast<m2::MSImageBase *>(ionImage2.image.GetPointer()), result->transformations());
+        currentListRow, dynamic_cast<m2::SpectrumImageBase *>(ionImage2.image.GetPointer()), result->transformations());
     }
 
     const auto registrationStep = [&](int movingIdx, int fixedIdx) {
@@ -566,7 +568,8 @@ void m2Reconstruction3D::OnStartStacking()
       auto moving = getImageDataById(movingIdx, listWidged);
       auto result = WarpImage(fixed, moving, UseNormalization);
 
-      stack->Insert(movingIdx, dynamic_cast<m2::MSImageBase *>(moving.image.GetPointer()), result->transformations());
+      stack->Insert(
+        movingIdx, dynamic_cast<m2::SpectrumImageBase *>(moving.image.GetPointer()), result->transformations());
       warpedIonImages[movingIdx] = result->images().back();
 
       mitk::ProgressBar::GetInstance()->Progress();
@@ -577,7 +580,7 @@ void m2Reconstruction3D::OnStartStacking()
         auto result = WarpImage(
           warpedIonImages[movingIdx], ionImage2, UseNormalization, UseInvertIntensities, OmitDeformableMultiModal);
         stack2->Insert(
-          movingIdx, dynamic_cast<m2::MSImageBase *>(ionImage2.image.GetPointer()), result->transformations());
+          movingIdx, dynamic_cast<m2::SpectrumImageBase *>(ionImage2.image.GetPointer()), result->transformations());
 
         mitk::ProgressBar::GetInstance()->Progress();
       }
@@ -618,46 +621,9 @@ void m2Reconstruction3D::OnStartStacking()
           node->SetName("Stack_" + std::to_string(i));
           node->SetData(s);
           this->GetDataStorage()->Add(node);
-
-          auto node2 = mitk::DataNode::New();
-          node2->SetName("Stack_Mask_" + std::to_string(i));
-          node2->SetData(s->GetMaskImage());
-          node2->SetVisibility(false);
-          this->GetDataStorage()->Add(node2, node);
-
-          auto node3 = mitk::DataNode::New();
-          node3->SetName("Stack_Distance_" + std::to_string(i));
-          node3->SetData(s->GetImageArtifacts()["distance"]);
-          node3->SetVisibility(false);
-          this->GetDataStorage()->Add(node3, node);
-
-          /* if (s->GetImageArtifacts().find("landmarks") != s->GetImageArtifacts().end())
-           {
-             auto node4 = mitk::DataNode::New();
-             node4->SetName("Stack_Landmarks_" + std::to_string(i));
-             node4->SetData(s->GetImageArtifacts()["landmarks"]);
-       node4->SetVisibility(false);
-             this->GetDataStorage()->Add(node4, node);
-
-             auto warpedPoints = mitk::PointSet::New();
-       auto landmarkImage = dynamic_cast<mitk::Image*>(s->GetImageArtifacts()["landmarks"].GetPointer());
-             m2::LandMarkEvaluation::ImageToPointSet(landmarkImage, warpedPoints);
-       warpedPoints->SetGeometry(s->GetGeometry());
-       m2::LandMarkEvaluation::EvaluatePointSet(warpedPoints, 7);
-
-             auto node5 = mitk::DataNode::New();
-             node5->SetName("Stack_Landmarks_Points" + std::to_string(i));
-             node5->SetData(warpedPoints);
-       node5->SetFloatProperty("point 2D size", 0.025);
-             this->GetDataStorage()->Add(node5, node);
-           }*/
-        }
+		}
         ++i;
 
-        // auto node2 = mitk::DataNode::New();
-        // node2->SetName("Stack_Index_" + std::to_string(i++));
-        // node2->SetData(s->GetIndexImage());
-        // this->GetDataStorage()->Add(node2);
       }
 
       // future release all connections and destroy itself
@@ -687,7 +653,7 @@ void m2Reconstruction3D::OnUpdateList()
   {
     if (node.IsNull())
       continue;
-    if (auto data = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
+    if (auto data = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
     {
       auto res = this->GetDataStorage()->GetDerivations(node, mitk::TNodePredicateDataType<mitk::PointSet>::New());
 

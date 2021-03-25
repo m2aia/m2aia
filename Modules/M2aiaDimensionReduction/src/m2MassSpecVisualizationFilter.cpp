@@ -1,8 +1,11 @@
 #include <m2MassSpecVisualizationFilter.h>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <mitkImage.h>
 #include <mitkImageCast.h>
 #include <mitkImagePixelReadAccessor.h>
+#include <mitkImageAccessByItk.h>
+#include <mitkImageCast.h>
+
 void m2::MassSpecVisualizationFilter::SetMaskImage(mitk::Image::Pointer mask)
 {
   m_MaskImage = mask;

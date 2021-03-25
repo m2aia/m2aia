@@ -26,7 +26,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 // m2
 #include <m2CommunicationService.h>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <m2IonImageReference.h>
 #include <m2MedianAbsoluteDeviation.h>
 #include <m2PeakDetection.h>
@@ -50,11 +50,11 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
 
-  // auto m_MassSpecPredicate = mitk::TNodePredicateDataType<m2::MSImageBase>::New();
+  // auto m_MassSpecPredicate = mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New();
   // m_MassSpecDataNodeSelectionWidget = new QmitkSingleNodeSelectionWidget();
   // m_MassSpecDataNodeSelectionWidget->SetDataStorage(GetDataStorage());
   // m_MassSpecDataNodeSelectionWidget->SetNodePredicate(
-  //  mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::MSImageBase>::New(),
+  //  mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
   //                              mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
   // m_MassSpecDataNodeSelectionWidget->SetSelectionIsOptional(true);
   // m_MassSpecDataNodeSelectionWidget->SetEmptyInfo(QString("Mass spectrometry image"));
@@ -80,9 +80,9 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
   m_ReceivedNodes = nodes;
 
   for (auto node : *m_ReceivedNodes)
-    if (auto imageBase = dynamic_cast<m2::ImzMLMassSpecImage *>(node->GetData()))
+    if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
-      if (imageBase->GetSourceList().front().ImportMode != m2::ImzMLFormatType::ContinuousProfile)
+      if (imageBase->GetImportMode() != m2::SpectrumFormatType::ContinuousProfile)
       {
         QMessageBox::warning(nullptr, "Warning", "Centroid data are not supported for peak picking operations!");
       }
@@ -96,7 +96,7 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
         if (m_Controls.cbOverviewSpectra->currentIndex() == 2) // sum
           s = imageBase->SumSpectrum();
 
-        m = imageBase->MassAxis();
+        m = imageBase->GetXAxis();
 
         auto mad = m2::Signal::mad(s);
         std::vector<m2::MassValue> peaks;
@@ -117,7 +117,7 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
 
         auto &outputvec = imageBase->PeakIndicators();
         outputvec.clear();
-        outputvec.resize(imageBase->MassAxis().size(), 0.0);
+        outputvec.resize(imageBase->GetXAxis().size(), 0.0);
 
         auto &maskIndices = imageBase->GetPeaks();
         maskIndices.clear();

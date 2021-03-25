@@ -17,16 +17,20 @@ See LICENSE.txt for details.
 #include <M2aiaSignalProcessingExports.h>
 #include <deque>
 #include <vector>
-//#include <algorithm>
+#include <m2SignalCommon.h>
+#include <algorithm>
+#include <functional>
 #include <numeric>
 #include <vnl/algo/vnl_matrix_inverse.h>
 #include <vnl/vnl_matrix.h>
 
 namespace m2
 {
-  struct M2AIASIGNALPROCESSING_EXPORT Smoothing
+
+
+  namespace Signal
   {
-    static vnl_matrix<double> savitzkyGolayCoefficients(int hws, int order)
+    inline vnl_matrix<double> savitzkyGolayCoefficients(int hws, int order)
     {
       std::vector<double> kk;
       for (int i = 0; i < order; i++)
@@ -79,9 +83,9 @@ namespace m2
       return F;
     }
 
-    static std::vector<double> savitzkyGolayKernel(int hws, int order)
+    inline std::vector<double> savitzkyGolayKernel(int hws, int order)
     {
-      auto sg_coef = m2::Smoothing::savitzkyGolayCoefficients(hws, order);
+      auto sg_coef = m2::Signal::savitzkyGolayCoefficients(hws, order);
       auto row = sg_coef.get_row(hws);
       auto b = row.data_block();
       auto e = row.data_block() + row.size();
@@ -150,5 +154,47 @@ namespace m2
         }
       }
     }
-  }; // namespace Smoothing
+
+    template <class ContainerValueType>
+    using SmootherFunction = std::function<void(typename std::vector<ContainerValueType> &)>;
+
+    template <class ContainerValueType>
+    inline SmootherFunction<ContainerValueType> CreateSmoother(SmoothingType strategy, int hws, bool extend = false)
+    {
+      std::vector<double> kernel;
+      switch (strategy)
+      {
+        case m2::SmoothingType::SavitzkyGolay:
+          kernel = m2::Signal::savitzkyGolayKernel(hws, 3);
+          return [kernel, extend](std::vector<ContainerValueType> &ints) -> void {
+            m2::Signal::filter(ints, kernel, extend);
+          };
+
+        case m2::SmoothingType::Gaussian:
+        {
+          kernel.resize(hws * 2 + 1);
+          double sigma = hws / 4.0;
+          double sigma2 = sigma * sigma;
+          for (int x = -hws; x < hws + 1; ++x)
+          {
+            kernel[x + hws] = std::exp(-0.5 / sigma2 * x * x);
+          }
+          auto sum = std::accumulate(std::begin(kernel), std::end(kernel), double(0));
+          std::transform(
+            std::begin(kernel), std::end(kernel), std::begin(kernel), [sum](const auto &v) { return v / sum; });
+          return [kernel, extend](std::vector<ContainerValueType> &ints) -> void {
+            m2::Signal::filter(ints, kernel, extend);
+          };
+        }
+        break;
+        case m2::SmoothingType::None:
+          break;
+        default:
+          break;
+      }
+
+      return [](std::vector<ContainerValueType> &) -> void {};
+    }
+
+  }; // namespace Signal
 } // namespace m2

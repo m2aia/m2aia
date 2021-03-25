@@ -104,7 +104,7 @@
              </property>
              <item>
               <property name="text">
-               <string>RGB(A)</string>
+               <string>RGBA Image (Default OpenSlide output format)</string>
               </property>
              </item>
              <item>
@@ -140,6 +140,11 @@
              <item>
               <property name="text">
                <string>Channel 3</string>
+              </property>
+             </item>
+             <item>
+              <property name="text">
+               <string>Luminance Image</string>
               </property>
              </item>
             </widget>

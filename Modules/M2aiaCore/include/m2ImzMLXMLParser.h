@@ -16,7 +16,7 @@ See LICENSE.txt for details.
 #pragma once
 
 #include <M2aiaCoreExports.h>
-#include <m2ImzMLMassSpecImage.h>
+#include <m2ImzMLSpectrumImage.h>
 
 namespace m2
 {
@@ -24,16 +24,16 @@ namespace m2
   {
   public:
     /*!
-     * Input: An ImzMLMassSpecImage object
+     * Input: An ImzMLSpectrumImage object
      *
      * \param data
      */
 
-    static void FastReadMetaData(m2::ImzMLMassSpecImage::Pointer data);
+    static void FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data);
 
-    static void SlowReadMetaData(m2::ImzMLMassSpecImage::Pointer data);
+    static void SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data);
 
-    //static std::string WriteMetaData(m2::ImzMLMassSpecImage::Pointer val, std::string &path);
+    //static std::string WriteMetaData(m2::ImzMLSpectrumImage::Pointer val, std::string &path);
 
     static auto findLine(std::ifstream &f, std::string name, std::string start_tag, bool eol = false)
       -> unsigned long long;
