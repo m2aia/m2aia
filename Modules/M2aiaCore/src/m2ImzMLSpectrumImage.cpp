@@ -838,15 +838,13 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
         {
           const auto &idx = peak.massAxisIndex;
           skyline[idx] = std::max(skyline[idx], peak.intensity);
-          sum[idx] += peak.intensitySum;
         }
       }
-      std::transform(std::cbegin(sum), std::cend(sum), std::begin(mean), [numberOfSpectra](const auto v) {
-        return v / double(numberOfSpectra);
-      });
-
-      p->SetPropertyValue<double>("min m/z", mzAxis.front());
-      p->SetPropertyValue<double>("max m/z", mzAxis.back());
+      
+      std::copy(std::begin(skyline), std::end(skyline), std::begin(sum));
+      std::copy(std::begin(skyline), std::end(skyline), std::begin(mean));
+      p->SetPropertyValue<double>("x_min", mzAxis.front());
+      p->SetPropertyValue<double>("x_max", mzAxis.back());
     }
   }
 
