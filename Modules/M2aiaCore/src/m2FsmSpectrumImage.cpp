@@ -359,7 +359,7 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
 template <class XAxisType, class IntensityType>
 void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabIntensityPrivate(unsigned long int index,
                                                                                         std::vector<double> &ys,
-                                                                                        unsigned int sourceIndex) const
+                                                                                        unsigned int) const
 {
   mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> normAcc(p->GetNormalizationImage());
 

@@ -545,8 +545,6 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   std::vector<std::vector<double>> skylineT;
   std::vector<std::vector<double>> sumT;
 
-  const bool _UseExternalMask = p->GetUseExternalMask();
-  const bool _UseExternalNormalization = p->GetUseExternalNormalization();
 
   unsigned long lenght;
   unsigned long long intsOffsetBytes = 0;
