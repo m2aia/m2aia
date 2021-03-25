@@ -564,8 +564,8 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
     massAxis.clear();
     std::copy(std::begin(mzs), std::end(mzs), std::back_inserter(massAxis));
     p->SetPropertyValue<unsigned>("spectral depth", mzs.size());
-    p->SetPropertyValue<double>("min m/z", mzs.front());
-    p->SetPropertyValue<double>("max m/z", mzs.back());
+    p->SetPropertyValue<double>("x_min", mzs.front());
+    p->SetPropertyValue<double>("x_max", mzs.back());
   }
 
   if (any(importMode & (m2::SpectrumFormatType::ContinuousProfile)))
@@ -740,8 +740,8 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
         skyline.emplace_back(p.intensity);
       }
 
-      p->SetPropertyValue<double>("min m/z", mzAxis.front());
-      p->SetPropertyValue<double>("max m/z", mzAxis.back());
+      p->SetPropertyValue<double>("x_min", mzAxis.front());
+      p->SetPropertyValue<double>("x_max", mzAxis.back());
     }
   }
 
