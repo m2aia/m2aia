@@ -62,7 +62,7 @@ const m2::ImzMLSpectrumImage::Source &m2::ImzMLSpectrumImage::GetSpectrumImageSo
 
 template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIonImagePrivate(
-  double mz, double tol, const mitk::Image *mask, mitk::Image *destImage) const
+  double xRangeCenter, double xRangeTol, const mitk::Image *mask, mitk::Image *destImage) const
 {
   AccessByItk(destImage, [](auto itkImg) { itkImg->FillBuffer(0); });
   using namespace m2;
@@ -76,14 +76,14 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
     maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>(mask));
     MITK_INFO << "> Use mask image";
   }
-  p->SetProperty("mz", mitk::DoubleProperty::New(mz));
-  p->SetProperty("tol", mitk::DoubleProperty::New(tol));
+  p->SetProperty("x_range_center", mitk::DoubleProperty::New(xRangeCenter));
+  p->SetProperty("x_range_tol", mitk::DoubleProperty::New(xRangeTol));
   auto mdMz = itk::MetaDataObject<double>::New();
-  mdMz->SetMetaDataObjectValue(mz);
+  mdMz->SetMetaDataObjectValue(xRangeCenter);
   auto mdTol = itk::MetaDataObject<double>::New();
-  mdTol->SetMetaDataObjectValue(tol);
-  p->GetMetaDataDictionary()["mz"] = mdMz;
-  p->GetMetaDataDictionary()["tol"] = mdTol;
+  mdTol->SetMetaDataObjectValue(xRangeTol);
+  p->GetMetaDataDictionary()["x_range_center"] = mdMz;
+  p->GetMetaDataDictionary()["x_range_tol"] = mdTol;
 
   std::vector<MassAxisType> mzs;
   std::vector<double> kernel;
@@ -92,9 +92,9 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
   const auto importMode = p->GetImportMode();
   if (any(importMode & SpectrumFormatType::ContinuousProfile))
   {
-    // mz subrange
+    // xRangeCenter subrange
     const auto mzs = p->GetXAxis();
-    auto subRes = m2::Signal::Subrange(mzs, mz - tol, mz + tol);
+    auto subRes = m2::Signal::Subrange(mzs, xRangeCenter - xRangeTol, xRangeCenter + xRangeTol);
     const auto _BaselineCorrectionHWS = p->GetBaseLineCorrectionHalfWindowSize();
     const auto _BaseLineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
     const unsigned int offset_right = (mzs.size() - (subRes.first + subRes.second));
@@ -184,7 +184,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::GrabIo
             continue;
           }
           binaryDataToVector(f, spectrum.mzOffset, spectrum.mzLength, mzs); // !! read mass axis for each spectrum
-          auto subRes = m2::Signal::Subrange(mzs, mz - tol, mz + tol);
+          auto subRes = m2::Signal::Subrange(mzs, xRangeCenter - xRangeTol, xRangeCenter + xRangeTol);
           if (subRes.second == 0)
           {
             imageAccess.SetPixelByIndex(spectrum.index + source._offset, 0);
@@ -540,7 +540,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
   // ----- PreProcess -----
 
-  // if the data are available as continuous data with equivalent mz axis for all
+  // if the data are available as continuous data with equivalent xRangeCenter axis for all
   // spectra, we can calculate the skyline, sum and mean spectrum over the image
   std::vector<std::vector<double>> skylineT;
   std::vector<std::vector<double>> sumT;

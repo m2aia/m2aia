@@ -393,7 +393,7 @@ void m2Data::EmitIonImageReference()
 
           MITK_INFO << "Add IonImageReference to ion list";
           MITK_INFO << "m/z\t" << current->mz;
-          MITK_INFO << "tol\t" << current->tol;
+          MITK_INFO << "xRangeTol\t" << current->tol;
           MITK_INFO << "name\t" << current->name;
         }
       }
@@ -662,7 +662,7 @@ void m2Data::UpdateColorBarAndRenderWindows()
   }
 }
 
-void m2Data::OnGenerateImageData(qreal mz, qreal tol)
+void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
 {
   const bool initializeNew = m2Data::Controls()->chkBxInitNew->isChecked();
 
@@ -671,22 +671,31 @@ void m2Data::OnGenerateImageData(qreal mz, qreal tol)
   if (nodesToProcess->empty())
     return;
 
-  if (tol < 0)
+  if (xRangeTol < 0)
   {
-    tol = Controls()->spnBxTol->value();
+    xRangeTol = Controls()->spnBxTol->value();
     bool isPpm = Controls()->rbtnTolPPM->isChecked();
-    tol = isPpm ? tol * 10e-6 * mz : tol;
+    xRangeTol = isPpm ? xRangeTol * 10e-6 * xRangeCenter : xRangeTol;
   }
-  emit m2::CommunicationService::Instance()->RangeChanged(mz, tol);
+  emit m2::CommunicationService::Instance()->RangeChanged(xRangeCenter, xRangeTol);
 
   auto flag = std::make_shared<std::atomic<bool>>(0);
-  QString labelText = str(boost::format("%.4f +/- %.2f") % mz % tol).c_str();
+  QString labelText = str(boost::format("%.4f +/- %.2f") % xRangeCenter % xRangeTol).c_str();
   if (nodesToProcess->size() == 1)
-    labelText = QString(nodesToProcess->front()->GetName().c_str()) + "\n" + labelText;
+  {
+    auto node = nodesToProcess->front();
+
+    if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    {
+      std::string xLabel = image->GetPropertyValue<std::string>("x_label");
+      labelText = "[" + QString(xLabel.c_str()) + "]" + labelText;
+    }
+    labelText = QString(node->GetName().c_str()) + "\n" + labelText;
+  }
 
   this->m_Controls.labelIonImageInfo->setWordWrap(true);
   this->m_Controls.labelIonImageInfo->setText(labelText);
-  this->m_Controls.spnBxMz->setValue(mz);
+  this->m_Controls.spnBxMz->setValue(xRangeCenter);
 
   this->UpdateTextAnnotations(labelText.toStdString());
   this->ApplySettingsToNodes(nodesToProcess);
@@ -696,7 +705,7 @@ void m2Data::OnGenerateImageData(qreal mz, qreal tol)
   // the object is set as the currentIonImageReference during the
   // OnIonImageGrab method call. An extra action is required to add this
   // current object to the permament ion image reference vector.
-  m_IonImageReference = m2::IonImageReference::New(mz, tol, "");
+  m_IonImageReference = m2::IonImageReference::New(xRangeCenter, xRangeTol, "");
 
   for (mitk::DataNode::Pointer dataNode : *nodesToProcess)
   {
@@ -705,7 +714,7 @@ void m2Data::OnGenerateImageData(qreal mz, qreal tol)
       if (!data->IsInitialized())
         mitkThrow() << "Trying to grab an ion image but data access was not initialized properly!";
 
-      if (mz > data->GetXAxis().back() || mz < data->GetXAxis().front())
+      if (xRangeCenter > data->GetXAxis().back() || xRangeCenter < data->GetXAxis().front())
         continue;
 
       mitk::Image::Pointer maskImage;
@@ -716,7 +725,7 @@ void m2Data::OnGenerateImageData(qreal mz, qreal tol)
 
       // if it is null, it's the first time an ion image is grabbed - disable visibility
       // so that the level window works fine for the ion image and not for the mask
-      if (maskNode && maskNode->GetProperty("m/z") == nullptr)
+      if (maskNode && maskNode->GetProperty("x_value") == nullptr)
         maskNode->SetVisibility(false);
 
       // The smartpointer will stay alive until all captured copies are relesed. Additional
@@ -787,8 +796,8 @@ void m2Data::OnGenerateImageData(qreal mz, qreal tol)
         {
           UpdateLevelWindow(dataNode);
         }
-        dataNode->SetProperty("mz", image->GetProperty("mz"));
-        dataNode->SetProperty("tol", image->GetProperty("tol"));
+        dataNode->SetProperty("x_range_center", image->GetProperty("x_range_center"));
+        dataNode->SetProperty("x_range_tol", image->GetProperty("x_range_tol"));
         mitk::LevelWindow lw;
         dataNode->GetLevelWindow(lw);
         lw.SetToImageRange(image);
@@ -801,19 +810,19 @@ void m2Data::OnGenerateImageData(qreal mz, qreal tol)
       };
 
       //*************** Worker Block******************//
-      const auto futureWorker = [mz, tol, data, maskImage, initializeNew, this]() {
-        mitk::Timer t("Create image @[" + std::to_string(mz) + " " + std::to_string(tol) + "]");
+      const auto futureWorker = [xRangeCenter, xRangeTol, data, maskImage, initializeNew, this]() {
+        mitk::Timer t("Create image @[" + std::to_string(xRangeCenter) + " " + std::to_string(xRangeTol) + "]");
         if (initializeNew)
         {
           auto geom = data->GetGeometry()->Clone();
           auto image = mitk::Image::New();
           image->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), *geom);
-          data->GenerateImageData(mz, tol, maskImage, image);
+          data->GenerateImageData(xRangeCenter, xRangeTol, maskImage, image);
           return image;
         }
         else
         {
-          data->GenerateImageData(mz, tol, maskImage, data);
+          data->GenerateImageData(xRangeCenter, xRangeTol, maskImage, data);
           mitk::Image::Pointer imagePtr = data.GetPointer();
           return imagePtr;
         }
