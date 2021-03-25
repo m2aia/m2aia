@@ -8,7 +8,7 @@ set(CPACK_PACKAGE_VERSION_MAJOR "2021")
 # Minor version is the month of release
 set(CPACK_PACKAGE_VERSION_MINOR "03")
 # Patch versioning
-set(CPACK_PACKAGE_VERSION_PATCH "01")
+set(CPACK_PACKAGE_VERSION_PATCH "00")
 
 # this should result in names like 2011.09, 2012.06, ...
 # version has to be set explicitly to avoid such things as CMake creating the install directory "MITK M2aia 2020.."
