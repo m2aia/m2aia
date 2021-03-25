@@ -87,8 +87,8 @@ void m2CombineImagesView::CombineImages()
 
     // we want to take over the mask and normalization images of the source images and prevent overriding during
     // initialization
-    imageC->PreventMaskImageInitializationOn();
-    imageC->PreventNormalizationImageInitializationOn();
+    imageC->UseExternalMaskOn();
+    imageC->UseExternalNormalizationOn();
 
 	std::string name = "Combines";
     {

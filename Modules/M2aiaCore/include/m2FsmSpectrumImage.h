@@ -43,8 +43,6 @@ namespace m2
     itkSetEnumMacro(ImageAccessInitialized, bool);
     itkGetEnumMacro(ImageAccessInitialized, bool);
 
-    void GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
-
     struct SpectrumData
     {
       uint32_t id;
@@ -59,47 +57,21 @@ namespace m2
     };
 
     using SpectrumVectorType = std::vector<SpectrumData>;
-    struct Source
-    {
-      /**
-       * @brief _Spectra
-       * Each single spectrum is represented as a BinarySpectrumMetaData object.
-       */
-      SpectrumVectorType _Spectra;
 
-      itk::Offset<3> _offset = {0, 0, 0};
-      m2::SpectrumFormatType ImportMode = m2::SpectrumFormatType::ContinuousProfile;
-    };
-    using SourceListType = std::vector<Source>;
+    itkGetMacro(Spectra, SpectrumVectorType &);
+    itkGetConstReferenceMacro(Spectra, SpectrumVectorType);
 
-    inline SourceListType &GetSpectrumImageSourceList() noexcept { return m_SourcesList; }
-    inline const SourceListType &GetSpectrumImageSourceList() const noexcept { return m_SourcesList; }
-    inline Source &GetSpectrumImageSource(unsigned int i = 0)
-    {
-      if (i >= m_SourcesList.size())
-        mitkThrow() << "No source exist for index " << i << " in the source list with size " << m_SourcesList.size();
-      return m_SourcesList[i];
-    }
-
-    inline const Source &GetSpectrumImageSource(unsigned int i = 0) const
-    {
-      if (i >= m_SourcesList.size())
-        mitkThrow() << "No source exist for index " << i << " in the source list with size " << m_SourcesList.size();
-      return m_SourcesList[i];
-    }
-
-    void InitializeImageAccess();
-    void InitializeGeometry();
+    void InitializeImageAccess() override;
+    void InitializeGeometry() override;
+    void InitializeProcessor() override;
 
   private:
+    SpectrumVectorType m_Spectra;
+    m2::SpectrumFormatType m_ImportMode = m2::SpectrumFormatType::ContinuousProfile;
     using m2::SpectrumImageBase::InternalClone;
     template <class MassAxisType, class IntensityType>
 
     class FsmProcessor;
-    void InitializeProcessor();
-
-    SourceListType m_SourcesList;
-
     bool m_ImageAccessInitialized = false;
     bool m_ImageGeometryInitialized = false;
 

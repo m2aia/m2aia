@@ -34,9 +34,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <functional>
 #include <itkOpenSlideImageIO.h>
+#include <itksys/SystemTools.hxx>
 #include <m2FSMImageIO.h>
 #include <m2FsmSpectrumImage.h>
 #include <map>
+#include <mitkIOUtil.h>
 #include <mitkImageCast.h>
 
 namespace m2
@@ -60,6 +62,28 @@ namespace m2
   }
 
   void FSMImageIO::Write() { ValidateOutputLocation(); }
+
+  void FSMImageIO::LoadAssociatedData(mitk::BaseData *object)
+  {
+    auto pathWithoutExtension = this->GetInputLocation();
+    itksys::SystemTools::ReplaceString(pathWithoutExtension, ".fsm", "");
+    auto image = dynamic_cast<m2::SpectrumImageBase *>(object);
+
+    if (itksys::SystemTools::FileExists(pathWithoutExtension + ".nrrd"))
+    {
+      auto maskPath = pathWithoutExtension + ".nrrd";
+      auto data = mitk::IOUtil::Load(maskPath).at(0);
+      image->GetImageArtifacts()["mask"] = data.GetPointer();
+      image->UseExternalMaskOn();
+    }
+
+    if (itksys::SystemTools::FileExists(pathWithoutExtension + ".mps"))
+    {
+      auto pointsDataPath = pathWithoutExtension + ".mps";
+      auto data = mitk::IOUtil::Load(pointsDataPath).at(0);
+      image->GetImageArtifacts()["references"] = data.GetPointer();
+    }
+  }
 
   mitk::IFileIO::ConfidenceLevel FSMImageIO::GetReaderConfidenceLevel() const
   {
@@ -143,7 +167,6 @@ namespace m2
 
       start_byte += read(start_byte, n_bytes, s);
       std::vector<float> data;
-      
 
       switch (block_id)
       {
@@ -264,15 +287,12 @@ namespace m2
 
     fsmImage->InitializeGeometry();
 
-
     itk::Image<m2::DisplayImagePixelType, 3>::Pointer ionImage;
     mitk::CastToItkImage(fsmImage, ionImage);
 
     auto sit = spectraDataVectors.begin();
     itk::ImageRegionIteratorWithIndex<itk::Image<m2::DisplayImagePixelType, 3>> it(
       ionImage, ionImage->GetLargestPossibleRegion());
-    auto &source_list = fsmImage->GetSpectrumImageSourceList();
-    m2::FsmSpectrumImage::Source source;
 
     unsigned long i = 0;
     while (!it.IsAtEnd())
@@ -290,13 +310,15 @@ namespace m2
 
       spectrum.id = i;
       spectrum.index = it.GetIndex();
-      source._Spectra.push_back(spectrum);
+      fsmImage->GetSpectra().push_back(spectrum);
 
       ++i;
       ++sit;
       ++it;
     }
-    source_list.emplace_back(source);
+
+    LoadAssociatedData(fsmImage);
+
     return {fsmImage.GetPointer()};
   } // namespace m2
 

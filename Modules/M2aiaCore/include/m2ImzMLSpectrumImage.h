@@ -26,14 +26,6 @@ namespace m2
     mitkClassMacro(ImzMLSpectrumImage, SpectrumImageBase);
     itkNewMacro(Self);
 
-    itkSetEnumMacro(PreventMaskImageInitialization, bool);
-    itkGetEnumMacro(PreventMaskImageInitialization, bool);
-    itkBooleanMacro(PreventMaskImageInitialization);
-
-    itkSetEnumMacro(PreventNormalizationImageInitialization, bool);
-    itkGetEnumMacro(PreventNormalizationImageInitialization, bool);
-    itkBooleanMacro(PreventNormalizationImageInitialization);
-
     itkSetEnumMacro(ImageGeometryInitialized, bool);
     itkGetEnumMacro(ImageGeometryInitialized, bool);
 
@@ -88,9 +80,7 @@ namespace m2
 
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
-
-    bool m_PreventMaskImageInitialization = false;
-    bool m_PreventNormalizationImageInitialization = false;
+    void InitializeProcessor() override;
 
     template <class T>
     static void binaryDataToVector(std::ifstream &f,
@@ -101,14 +91,11 @@ namespace m2
     static m2::ImzMLSpectrumImage::Pointer Combine(const m2::ImzMLSpectrumImage *A,
                                                    const m2::ImzMLSpectrumImage *B,
                                                    const char stackAxis = 'x');
-	
-    
 
   private:
     using m2::SpectrumImageBase::InternalClone;
     template <class MassAxisType, class IntensityType>
     class ImzMLProcessor;
-    void InitializeProcessor();
 
     SourceListType m_SourcesList;
 

@@ -75,8 +75,8 @@ int main(int argc, char *argv[])
     imzMLImage->InitializeImageAccess();
 
     imzMLImage->SetExportMode(m2::SpectrumFormatType::ContinuousProfile);
-    imzMLImage->SetIntsOutputType(static_cast<m2::NumericType>(int_type));
-    imzMLImage->SetMzsOutputType(static_cast<m2::NumericType>(mzs_type));
+    imzMLImage->SetYOutputType(static_cast<m2::NumericType>(int_type));
+    imzMLImage->SetXOutputType(static_cast<m2::NumericType>(mzs_type));
 
     if (mz > 0)
       imzMLImage->GenerateImageData(mz, 10e-6 * tol * mz, nullptr, imzMLImage);

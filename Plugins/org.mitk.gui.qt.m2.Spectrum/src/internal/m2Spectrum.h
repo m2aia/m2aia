@@ -61,6 +61,7 @@ protected:
 
   void OnUpdateScatterSeries(const mitk::DataNode *);
   void UpdateLineSeriesWindow(const mitk::DataNode *);
+  void UpdateXAxisLabels(const mitk::DataNode *, bool remove = false);
   void UpdateZoomLevel(const mitk::DataNode *);
 
   void SetDefaultLineSeriesStyle(QtCharts::QLineSeries *);
@@ -142,7 +143,7 @@ protected:
   double m_CurrentMousePosMz = 0;
   double m_CurrentVisibleDataPoints = 0;
 
-  m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Maximum;
+  m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Mean;
   bool m_CurrentOverviewSpectrumTypeChanged = false;
 
   // 20201023: custom selection service did not work as expected
@@ -203,6 +204,9 @@ private:
   QSlider *m_TickCountY;
   QtCharts::QValueAxis *m_xAxis;
   QtCharts::QValueAxis *m_yAxis;
+
+  QVector<QString> m_xAxisTitels;
+
 };
 
 // template <typename SeriesType>

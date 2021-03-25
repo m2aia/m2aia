@@ -28,11 +28,6 @@ See LICENSE.txt for details.
 #include <mitkProperties.h>
 #include <mitkTimer.h>
 
-void m2::FsmSpectrumImage::GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
-{
-  m2::SpectrumImageBase::GenerateImageData(mz, tol, mask, img);
-}
-
 template <class XAxisType, class IntensityType>
 void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabIonImagePrivate(double cmInv,
                                                                                        double tol,
@@ -62,65 +57,57 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabIonImageP
   p->GetMetaDataDictionary()["cm^-1"] = mdMz;
   p->GetMetaDataDictionary()["tol"] = mdTol;
 
-  std::vector<XAxisType> wavelenght = p->GetXAxis();
+  std::vector<XAxisType> xs = p->GetXAxis();
   std::vector<double> kernel;
 
   // Profile (continuous) spectrum
-  const auto &source = p->GetSpectrumImageSource();
-  if (any(source.ImportMode & SpectrumFormatType::ContinuousProfile))
-  {
-    const auto subRes = m2::Signal::Subrange(wavelenght, cmInv - tol, cmInv + tol);
 
-    for (auto &source : p->GetSpectrumImageSourceList())
+  const auto subRes = m2::Signal::Subrange(xs, cmInv - tol, cmInv + tol);
+  const auto n = p->GetSpectra().size();
+  // map all spectra to several threads for processing
+  const unsigned t = p->GetNumberOfThreads();
+
+  m2::Process::Map(n, t, [&](auto /*id*/, auto a, auto b) {
+    const auto Smoother =
+      m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
+
+    auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
+      p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
+
+    const auto Normalizor = m2::Signal::CreateNormalizor<IntensityType, XAxisType>(p->GetNormalizationStrategy());
+
+    std::vector<IntensityType> ys(xs.size());
+
+    const auto &_Spectra = p->GetSpectra();
+    for (unsigned int i = a; i < b; ++i)
     {
-      // map all spectra to several threads for processing
-      const unsigned long n = source._Spectra.size();
-      const unsigned t = p->GetNumberOfThreads();
+      const auto &spectrum = _Spectra[i];
+      std::copy(std::cbegin(spectrum.data), std::cend(spectrum.data), std::begin(ys));
 
-      m2::Process::Map(n, t, [&](auto /*id*/, auto a, auto b) {
-        const auto Smoother =
-          m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
+      auto s = std::next(std::begin(ys), subRes.first);
+      auto e = std::next(std::begin(ys), subRes.first + subRes.second);
 
-        auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
-          p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
+      if (maskAccess && maskAccess->GetPixelByIndex(spectrum.index) == 0)
+      {
+        imageAccess.SetPixelByIndex(spectrum.index, 0);
+        continue;
+      }
 
-        const auto Normalizor = m2::Signal::CreateNormalizor<IntensityType, XAxisType>(p->GetNormalizationStrategy());
+      // if a normalization image exist, apply normalization before any further calculations are performed
+      if (_NormalizationStrategy != m2::NormalizationStrategyType::None)
+      {
+        IntensityType norm = normAccess.GetPixelByIndex(spectrum.index);
+        std::transform(std::begin(ys), std::end(ys), std::begin(ys), [&norm](auto &v) { return v / norm; });
+      }
 
-        std::vector<IntensityType> ints(wavelenght.size());
-        std::vector<IntensityType> baseline(wavelenght.size());
+      Smoother(ys);
+      BaselineSubstractor(ys);
 
-        const auto &_Spectra = source._Spectra;
-        for (unsigned int i = a; i < b; ++i)
-        {
-          const auto &spectrum = _Spectra[i];
-          std::copy(std::cbegin(spectrum.data), std::cend(spectrum.data), std::begin(ints));
+      auto val = Signal::RangePooling<IntensityType>(s, e, p->GetRangePoolingStrategy());
 
-          auto s = std::next(std::begin(ints), subRes.first);
-          auto e = std::next(std::begin(ints), subRes.first + subRes.second);
-
-          if (maskAccess && maskAccess->GetPixelByIndex(spectrum.index + source._offset) == 0)
-          {
-            imageAccess.SetPixelByIndex(spectrum.index + source._offset, 0);
-            continue;
-          }
-
-          // if a normalization image exist, apply normalization before any further calculations are performed
-          if (_NormalizationStrategy != m2::NormalizationStrategyType::None)
-          {
-            IntensityType norm = normAccess.GetPixelByIndex(spectrum.index + source._offset);
-            std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&norm](auto &v) { return v / norm; });
-          }
-
-          Smoother(ints);
-          BaselineSubstractor(ints);
-
-          auto val = Signal::RangePooling<IntensityType>(s, e, p->GetRangePoolingStrategy());
-
-          imageAccess.SetPixelByIndex(spectrum.index + source._offset, val);
-        }
-      });
+      imageAccess.SetPixelByIndex(spectrum.index, val);
     }
-  }
+  });
 }
 
 void m2::FsmSpectrumImage::InitializeProcessor()
@@ -214,8 +201,8 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeGeo
   {
     mitk::LabelSetImage::Pointer image = mitk::LabelSetImage::New();
     imageArtifacts["mask"] = image.GetPointer();
-    
-    image->Initialize((mitk::Image*)p);
+
+    image->Initialize((mitk::Image *)p);
     auto ls = image->GetActiveLabelSet();
 
     mitk::Color color;
@@ -260,7 +247,7 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
   auto accIndex = std::make_shared<mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3>>(p->GetIndexImage());
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
 
-  std::vector<XAxisType> wavelength = p->GetXAxis();
+  std::vector<XAxisType> xs = p->GetXAxis();
 
   // ----- PreProcess -----
 
@@ -269,119 +256,118 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
   std::vector<std::vector<double>> skylineT;
   std::vector<std::vector<double>> sumT;
 
-  // shortcuts
-  const auto _NormalizationStrategy = p->GetNormalizationStrategy();
+  p->SetPropertyValue<unsigned>("spectral depth", xs.size());
+  p->SetPropertyValue<double>("xs_start", xs.front());
+  p->SetPropertyValue<double>("xs_end", xs.back());
 
-  const auto &source = p->GetSpectrumImageSourceList().front();
+  skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));
+  sumT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));
 
-  if (any(source.ImportMode & m2::SpectrumFormatType::ContinuousProfile))
-  {
-    p->SetPropertyValue<unsigned>("spectral depth", wavelength.size());
-    p->SetPropertyValue<double>("min cm^-1", wavelength.front());
-    p->SetPropertyValue<double>("max cm^-1", wavelength.back());
+  mitk::Timer t("Initialize image");
 
-    skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(wavelength.size(), 0));
-    sumT.resize(p->GetNumberOfThreads(), std::vector<double>(wavelength.size(), 0));
+  m2::Process::Map(
+    p->GetSpectra().size(), p->GetNumberOfThreads(), [&](unsigned int t, unsigned int a, unsigned int b) {
+      const auto Smoother =
+        m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
 
-    mitk::Timer t("Initialize image");
-    for (const auto &source : p->GetSpectrumImageSourceList())
-    {
-      m2::Process::Map(
-        source._Spectra.size(), p->GetNumberOfThreads(), [&](unsigned int t, unsigned int a, unsigned int b) {
-          const auto Smoother = m2::Signal::CreateSmoother<IntensityType>(
-            p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
+      auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
+        p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
-          auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
-            p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
+      const auto Normalizor = m2::Signal::CreateNormalizor<XAxisType, IntensityType>(p->GetNormalizationStrategy());
 
-          const auto Normalizor = m2::Signal::CreateNormalizor<XAxisType, IntensityType>(p->GetNormalizationStrategy());
+      IntensityType val = 1;
+      std::vector<IntensityType> ys(xs.size(), 0);
+      std::vector<IntensityType> baseline(xs.size(), 0);
 
-          IntensityType val = 1;
-          std::vector<IntensityType> ints(wavelength.size(), 0);
-          std::vector<IntensityType> baseline(wavelength.size(), 0);
+      const auto &spectra = p->GetSpectra();
 
-          const auto &spectra = source._Spectra;
+      const auto divides = [&val](const auto &a) { return a / val; };
+      const auto maximum = [](const auto &a, const auto &b) { return a > b ? a : b; };
+      const auto plus = std::plus<>();
 
-          const auto divides = [&val](const auto &a) { return a / val; };
-          const auto maximum = [](const auto &a, const auto &b) { return a > b ? a : b; };
-          const auto plus = std::plus<>();
-
-          for (unsigned long int i = a; i < b; i++)
-          {
-            const auto &spectrum = spectra[i];
-            std::copy(std::begin(spectra[i].data), std::end(spectra[i].data), std::begin(ints));
-
-            if (_NormalizationStrategy != NormalizationStrategyType::None)
-            {
-              val = Normalizor(wavelength, ints, accNorm->GetPixelByIndex(spectrum.index + source._offset));
-              accNorm->SetPixelByIndex(spectrum.index + source._offset, val); // Set normalization image pixel value
-            }
-            else
-            {
-              // Normalization-image content was set elsewhere
-              val = accNorm->GetPixelByIndex(spectrum.index + source._offset);
-              std::transform(std::begin(ints), std::end(ints), std::begin(ints), divides);
-            }
-
-            Smoother(ints);
-            BaselineSubstractor(ints);
-
-            std::transform(std::begin(ints), std::end(ints), sumT.at(t).begin(), sumT.at(t).begin(), plus);
-            std::transform(std::begin(ints), std::end(ints), skylineT.at(t).begin(), skylineT.at(t).begin(), maximum);
-          }
-        });
-    }
-    auto &skyline = p->SkylineSpectrum();
-    skyline.resize(wavelength.size(), 0);
-    for (unsigned int t = 0; t < p->GetNumberOfThreads(); ++t)
-      std::transform(skylineT[t].begin(), skylineT[t].end(), skyline.begin(), skyline.begin(), [](auto &a, auto &b) {
-        return a > b ? a : b;
-      });
-
-    auto &mean = p->MeanSpectrum();
-    auto &sum = p->SumSpectrum();
-
-    mean.resize(wavelength.size(), 0);
-    sum.resize(wavelength.size(), 0);
-
-    auto N = std::accumulate(std::begin(p->GetSpectrumImageSourceList()),
-                             std::end(p->GetSpectrumImageSourceList()),
-                             unsigned(0),
-                             [](const auto &a, const auto &source) { return a + source._Spectra.size(); });
-
-    for (unsigned int t = 0; t < p->GetNumberOfThreads(); ++t)
-      std::transform(sumT[t].begin(), sumT[t].end(), sum.begin(), sum.begin(), [](auto &a, auto &b) { return a + b; });
-    std::transform(sum.begin(), sum.end(), mean.begin(), [&](auto &a) { return a / double(N); });
-  }
-  //////////---------------------------
-  for (const auto &source : p->GetSpectrumImageSourceList())
-  {
-    const auto &spectra = source._Spectra;
-    m2::Process::Map(spectra.size(), p->GetNumberOfThreads(), [&](unsigned int /*t*/, unsigned int a, unsigned int b) {
-      for (unsigned int i = a; i < b; i++)
+      for (unsigned long int i = a; i < b; i++)
       {
         const auto &spectrum = spectra[i];
+        if (p->GetUseExternalMask())
+        {
+          auto v = accMask->GetPixelByIndex(spectrum.index);
+          if (v == 0)
+            continue;
+        }
 
-        accIndex->SetPixelByIndex(spectrum.index + source._offset, i);
-        accMask->SetPixelByIndex(spectrum.index + source._offset, 1);
+        std::copy(std::begin(spectra[i].data), std::end(spectra[i].data), std::begin(ys));
+
+        if (p->GetUseExternalNormalization())
+        {
+          // Normalization-image content was set elsewhere
+          val = accNorm->GetPixelByIndex(spectrum.index);
+          std::transform(std::begin(ys), std::end(ys), std::begin(ys), divides);
+        }
+        else
+        {
+          accNorm->SetPixelByIndex(spectrum.index, 1);
+          // val = Normalizor(xs, ys, accNorm->GetPixelByIndex(spectrum.index + source._offset));
+          // accNorm->SetPixelByIndex(spectrum.index + source._offset, val); // Set normalization image pixel value
+        }
+
+        Smoother(ys);
+        BaselineSubstractor(ys);
+
+        std::transform(std::begin(ys), std::end(ys), sumT.at(t).begin(), sumT.at(t).begin(), plus);
+        std::transform(std::begin(ys), std::end(ys), skylineT.at(t).begin(), skylineT.at(t).begin(), maximum);
       }
     });
-  }
+
+  auto &skyline = p->SkylineSpectrum();
+  skyline.resize(xs.size(), 0);
+  for (unsigned int t = 0; t < p->GetNumberOfThreads(); ++t)
+    std::transform(skylineT[t].begin(), skylineT[t].end(), skyline.begin(), skyline.begin(), [](auto &a, auto &b) {
+      return a > b ? a : b;
+    });
+
+  auto &mean = p->MeanSpectrum();
+  auto &sum = p->SumSpectrum();
+
+  mean.resize(xs.size(), 0);
+  sum.resize(xs.size(), 0);
+
+  // accumulate valid spectra defined by mask image
+  auto N = std::accumulate(accMask->GetData(),
+                           accMask->GetData() + p->GetSpectra().size(),
+                           mitk::LabelSetImage::PixelType(0),
+                           [](const auto & a, const auto & b) -> mitk::LabelSetImage::PixelType { return a + (b > 0); });
+
+  for (unsigned int t = 0; t < p->GetNumberOfThreads(); ++t)
+    std::transform(sumT[t].begin(), sumT[t].end(), sum.begin(), sum.begin(), [](const auto &a, const auto &b) { return a + b; });
+  std::transform(sum.begin(), sum.end(), mean.begin(), [&N](const auto &a) { return a / double(N); });
+
+  //////////---------------------------
+
+  const auto &spectra = p->GetSpectra();
+  m2::Process::Map(spectra.size(), p->GetNumberOfThreads(), [&](unsigned int /*t*/, unsigned int a, unsigned int b) {
+    for (unsigned int i = a; i < b; i++)
+    {
+      const auto &spectrum = spectra[i];
+
+      accIndex->SetPixelByIndex(spectrum.index, i);
+      if (p->GetUseExternalMask())
+        accMask->SetPixelByIndex(spectrum.index, 1);
+    }
+  });
 }
 
 template <class XAxisType, class IntensityType>
 void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabIntensityPrivate(unsigned long int index,
-                                                                                        std::vector<double> &ints,
+                                                                                        std::vector<double> &ys,
                                                                                         unsigned int sourceIndex) const
 {
   mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> normAcc(p->GetNormalizationImage());
 
-  const auto &source = p->GetSpectrumImageSourceList()[sourceIndex];
-  const auto &spectrum = source._Spectra[index];
+  const auto &spectrum = p->GetSpectra()[index];
   // const auto kernel = m2::Signal::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
 
-  ints.clear();
-  std::copy(std::begin(spectrum.data), std::end(spectrum.data), std::back_inserter(ints));
+  ys.clear();
+  std::copy(std::begin(spectrum.data), std::end(spectrum.data), std::back_inserter(ys));
 
   double d;
   auto divide = [&d](auto &val) { return val / d; };
@@ -389,17 +375,14 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabIntensity
   auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<double>(
     p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
-  if (any(source.ImportMode & (m2::SpectrumFormatType::ContinuousProfile)))
+  if (p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None)
   {
-    if (p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None)
-    {
-      d = normAcc.GetPixelByIndex(spectrum.index + source._offset);
-      std::transform(ints.begin(), ints.end(), ints.begin(), divide);
-    }
-
-    Smoother(ints);
-    BaselineSubstractor(ints);
+    d = normAcc.GetPixelByIndex(spectrum.index);
+    std::transform(ys.begin(), ys.end(), ys.begin(), divide);
   }
+
+  Smoother(ys);
+  BaselineSubstractor(ys);
 }
 
 template <class XAxisType, class IntensityType>
@@ -419,4 +402,6 @@ m2::FsmSpectrumImage::~FsmSpectrumImage()
 m2::FsmSpectrumImage::FsmSpectrumImage()
 {
   MITK_INFO << GetStaticNameOfClass() << " created!";
+  this->SetPropertyValue<std::string>("x_label", "cm^-1");
+  SetImportMode(m2::SpectrumFormatType::ContinuousProfile);
 }

@@ -81,17 +81,17 @@ namespace m2
     itkSetEnumMacro(ImportMode, SpectrumFormatType);
     itkGetEnumMacro(ImportMode, SpectrumFormatType);
 
-    itkSetEnumMacro(MzsOutputType, NumericType);
-    itkGetEnumMacro(MzsOutputType, NumericType);
+    itkSetEnumMacro(XOutputType, NumericType);
+    itkGetEnumMacro(XOutputType, NumericType);
 
-    itkSetEnumMacro(IntsOutputType, NumericType);
-    itkGetEnumMacro(IntsOutputType, NumericType);
+    itkSetEnumMacro(YOutputType, NumericType);
+    itkGetEnumMacro(YOutputType, NumericType);
 
-    itkSetEnumMacro(MzsInputType, NumericType);
-    itkGetEnumMacro(MzsInputType, NumericType);
+    itkSetEnumMacro(XInputType, NumericType);
+    itkGetEnumMacro(XInputType, NumericType);
 
-    itkSetEnumMacro(IntsInputType, NumericType);
-    itkGetEnumMacro(IntsInputType, NumericType);
+    itkSetEnumMacro(YInputType, NumericType);
+    itkGetEnumMacro(YInputType, NumericType);
 
     itkSetMacro(BinningTolerance, double);
     itkGetConstReferenceMacro(BinningTolerance, double);
@@ -122,8 +122,21 @@ namespace m2
     mitk::Image::Pointer GetMaskImage();
     mitk::Image::Pointer GetIndexImage();
 
+    itkGetConstMacro(UseExternalMask, bool);
+    itkSetMacro(UseExternalMask, bool);
+    itkBooleanMacro(UseExternalMask);
+
+    itkGetConstMacro(UseExternalIndices, bool);
+    itkSetMacro(UseExternalIndices, bool);
+    itkBooleanMacro(UseExternalIndices);
+
+    itkGetConstMacro(UseExternalNormalization, bool);
+    itkSetMacro(UseExternalNormalization, bool);
+    itkBooleanMacro(UseExternalNormalization);
+
     virtual void InitializeImageAccess(){};
     virtual void InitializeGeometry(){};
+    virtual void InitializeProcessor(){};
 
     SpectrumArtifactVectorType &SkylineSpectrum();
     SpectrumArtifactVectorType &SumSpectrum();
@@ -157,6 +170,10 @@ namespace m2
     double m_Tolerance = 10;
     double m_BinningTolerance = 50;
 
+    bool m_UseExternalMask = false;
+    bool m_UseExternalIndices = false;
+    bool m_UseExternalNormalization = false;
+
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
     unsigned int m_NumberOfThreads = 10;
@@ -169,10 +186,10 @@ namespace m2
     BaselineCorrectionType m_BaselineCorrectionStrategy;
     SmoothingType m_SmoothingStrategy;
 
-    NumericType m_IntsOutputType = NumericType::Float;
-    NumericType m_MzsOutputType = NumericType::Float;
-    NumericType m_IntsInputType;
-    NumericType m_MzsInputType;
+    NumericType m_YOutputType = NumericType::Float;
+    NumericType m_XOutputType = NumericType::Float;
+    NumericType m_YInputType;
+    NumericType m_XInputType;
     SpectrumFormatType m_ExportMode = SpectrumFormatType::ContinuousProfile;
     SpectrumFormatType m_ImportMode;
     /**
@@ -192,7 +209,7 @@ namespace m2
     RangePoolingStrategyType m_RangePoolingStrategy = RangePoolingStrategyType::Sum;
 
     SpectrumImageBase();
-	~SpectrumImageBase() override;
+    ~SpectrumImageBase() override;
     bool m_IsDataAccessInitialized = false;
 
     /*

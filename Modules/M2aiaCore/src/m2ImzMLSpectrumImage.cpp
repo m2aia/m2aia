@@ -213,50 +213,50 @@ void m2::ImzMLSpectrumImage::InitializeProcessor()
   auto mzValueTypeString = GetPropertyValue<std::string>("m/z array value type");
   if (mzValueTypeString.compare("32-bit float") == 0)
   {
-    SetMzsInputType(m2::NumericType::Float);
+    SetXInputType(m2::NumericType::Float);
     if (intensitiesDataTypeString.compare("32-bit float") == 0)
     {
       this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<float, float>(this));
-      SetIntsInputType(m2::NumericType::Float);
+      SetYInputType(m2::NumericType::Float);
     }
     else if (intensitiesDataTypeString.compare("64-bit float") == 0)
     {
-      SetIntsInputType(m2::NumericType::Double);
+      SetYInputType(m2::NumericType::Double);
       this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<float, double>(this));
     }
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
       this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<float, long int>(this));
-      // SetIntsInputType(m2::NumericType::Double);
+      // SetYInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
       this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<float, long long int>(this));
-      // SetIntsInputType(m2::NumericType::Double);
+      // SetYInputType(m2::NumericType::Double);
     }
   }
   else if (mzValueTypeString.compare("64-bit float") == 0)
   {
-    SetMzsInputType(m2::NumericType::Double);
+    SetXInputType(m2::NumericType::Double);
     if (intensitiesDataTypeString.compare("32-bit float") == 0)
     {
-      SetIntsInputType(m2::NumericType::Float);
+      SetYInputType(m2::NumericType::Float);
       this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<double, float>(this));
     }
     else if (intensitiesDataTypeString.compare("64-bit float") == 0)
     {
-      SetIntsInputType(m2::NumericType::Double);
+      SetYInputType(m2::NumericType::Double);
       this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<double, double>(this));
     }
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
       this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<double, long int>(this));
-      // SetIntsInputType(m2::NumericType::Double);
+      // SetYInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
       this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLProcessor<double, long long int>(this));
-      // SetIntsInputType(m2::NumericType::Double);
+      // SetYInputType(m2::NumericType::Double);
     }
   }
 }
@@ -545,8 +545,8 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   std::vector<std::vector<double>> skylineT;
   std::vector<std::vector<double>> sumT;
 
-  const bool _PreventInitMask = p->GetPreventMaskImageInitialization();
-  const bool _PreventInitNorm = p->GetPreventNormalizationImageInitialization();
+  const bool _UseExternalMask = p->GetUseExternalMask();
+  const bool _UseExternalNormalization = p->GetUseExternalNormalization();
 
   unsigned long lenght;
   unsigned long long intsOffsetBytes = 0;
@@ -631,7 +631,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
             // --------------------------------
 
-            if (!_PreventInitNorm)
+            if (!p->GetUseExternalNormalization())
             {
               auto val = Normalizator(mzs, ints, accNorm->GetPixelByIndex(spectrum.index + source._offset));
               accNorm->SetPixelByIndex(spectrum.index + source._offset, val); // Set normalization image pixel value
@@ -863,7 +863,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
         accIndex->SetPixelByIndex(spectrum.index + source._offset, i);
 
         // If mask content is generated elsewhere
-        if (!_PreventInitMask)
+        if (!p->GetUseExternalMask())
           accMask->SetPixelByIndex(spectrum.index + source._offset, 1);
 
         // If it is a processed file, normalization maps are set to 1 - assuming that spectra were already processed
@@ -874,8 +874,8 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   }
 
   // reset prevention flags
-  p->PreventMaskImageInitializationOff();
-  p->PreventNormalizationImageInitializationOff();
+  p->UseExternalMaskOff();
+  p->UseExternalNormalizationOff();
 }
 
 template <class MassAxisType, class IntensityType>
@@ -946,6 +946,6 @@ m2::ImzMLSpectrumImage::~ImzMLSpectrumImage()
 m2::ImzMLSpectrumImage::ImzMLSpectrumImage() : m2::SpectrumImageBase()
 {
   MITK_INFO << GetStaticNameOfClass() << " created!";
-
+  this->SetPropertyValue<std::string>("x_label","m/z");
   this->SetExportMode(m2::SpectrumFormatType::ContinuousProfile);
 }

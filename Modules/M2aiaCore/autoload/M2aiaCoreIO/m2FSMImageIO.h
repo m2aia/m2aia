@@ -68,6 +68,7 @@ namespace m2
     void Write() override;
 
     ConfidenceLevel GetWriterConfidenceLevel() const override;
+    void LoadAssociatedData(mitk::BaseData *object);
 
   private:
     FSMImageIO *IOClone() const override;

@@ -46,9 +46,9 @@ void m2ImzMLExportView::UpdateExportSettings(const mitk::DataNode *node)
     auto exportMode =
       static_cast<m2::SpectrumFormatType>(m_Controls.cmbBxOutputMode->currentData(Qt::UserRole).toUInt());
     image->SetExportMode(exportMode);
-    image->SetIntsOutputType(
+    image->SetYOutputType(
       static_cast<m2::NumericType>(m_Controls.cmbBxOutputDatatypeInt->currentData(Qt::UserRole).toUInt()));
-    image->SetMzsOutputType(
+    image->SetXOutputType(
       static_cast<m2::NumericType>(m_Controls.cmbBxOutputDatatypeMz->currentData(Qt::UserRole).toUInt()));
 
     switch (exportMode)

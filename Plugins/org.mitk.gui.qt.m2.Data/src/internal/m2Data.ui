@@ -1206,26 +1206,52 @@
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <tabstops>
+  <tabstop>radioButtonNoneNormalization</tabstop>
+  <tabstop>radioButtonInFileNormalization</tabstop>
+  <tabstop>radioButtonTICNormalization</tabstop>
+  <tabstop>radioButtonSumNormalization</tabstop>
+  <tabstop>rdBtnSmoothingNone</tabstop>
+  <tabstop>rdBtnSmoothingSG</tabstop>
+  <tabstop>spnBxSmoothing</tabstop>
+  <tabstop>rdBtnSmoothingGaussian</tabstop>
+  <tabstop>spnBxSigma</tabstop>
+  <tabstop>rdBtnBaselineCorrectionNone</tabstop>
+  <tabstop>rdBtnBaselineCorrectionTopHat</tabstop>
+  <tabstop>spnBxBaseline</tabstop>
+  <tabstop>rdBtnBaselineCorrectionMedian</tabstop>
+  <tabstop>Tabs</tabstop>
   <tabstop>radioButtonSum</tabstop>
   <tabstop>radioButtonMedian</tabstop>
   <tabstop>radioButtonMax</tabstop>
   <tabstop>radioButtonMean</tabstop>
+  <tabstop>spnBxMz</tabstop>
+  <tabstop>spnBxTol</tabstop>
+  <tabstop>rbtnTolPPM</tabstop>
+  <tabstop>rbtnTolDa</tabstop>
   <tabstop>btnGrabIonImage</tabstop>
+  <tabstop>chkBxUseMask</tabstop>
+  <tabstop>chkBxInitNew</tabstop>
+  <tabstop>cmbBxType</tabstop>
   <tabstop>textIonName</tabstop>
   <tabstop>btnAddIonImageReference</tabstop>
   <tabstop>btnAddReferencepointSet</tabstop>
   <tabstop>btnOpenPointSetWidget</tabstop>
-  <tabstop>spnBxPeakBinning</tabstop>
   <tabstop>checkBoxOnlyVisible</tabstop>
   <tabstop>checkBoxOnlyComboBoxSelection</tabstop>
+  <tabstop>spnBxPeakBinning</tabstop>
   <tabstop>scaleBarEnableIon</tabstop>
+  <tabstop>scaleBarOrientation</tabstop>
+  <tabstop>scaleBarLenght</tabstop>
   <tabstop>scaleBarEnableNormalization</tabstop>
   <tabstop>scaleBarFontSize</tabstop>
-  <tabstop>scaleBarLenght</tabstop>
-  <tabstop>scaleBarWidth</tabstop>
-  <tabstop>scaleBarOrientation</tabstop>
-  <tabstop>scaleBarForceUpdate</tabstop>
   <tabstop>groupBox_3</tabstop>
+  <tabstop>scaleBarWidth</tabstop>
+  <tabstop>scaleBarForceUpdate</tabstop>
+  <tabstop>mosaicRows</tabstop>
+  <tabstop>applyTiling</tabstop>
+  <tabstop>resetTiling</tabstop>
+  <tabstop>ScaleBar</tabstop>
+  <tabstop>btnEqualizeLW</tabstop>
  </tabstops>
  <resources/>
  <connections/>

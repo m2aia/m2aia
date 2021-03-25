@@ -161,7 +161,7 @@ namespace m2
       source._Spectra[0].mzOffset = 16;
       source._Spectra[0].mzLength = mzs.size();
 
-      switch (input->GetMzsOutputType())
+      switch (input->GetXOutputType())
       {
         case m2::NumericType::Float:
           writeData<float>(std::begin(mzs), std::end(mzs), b);
@@ -190,7 +190,7 @@ namespace m2
           s.intOffset = offset;
           s.intLength = ints.size();
 
-          switch (input->GetIntsOutputType())
+          switch (input->GetYOutputType())
           {
             case m2::NumericType::Float:
               writeData<float>(std::begin(ints), std::end(ints), b);
@@ -241,7 +241,7 @@ namespace m2
       source._Spectra[0].mzOffset = 16;
       source._Spectra[0].mzLength = mzs.size();
 
-      switch (input->GetMzsOutputType())
+      switch (input->GetXOutputType())
       {
         case m2::NumericType::Float:
           writeData<float>(std::begin(mzs), std::end(mzs), b);
@@ -293,7 +293,7 @@ namespace m2
           s.intOffset = offset;
           s.intLength = ints.size();
 
-          switch (input->GetIntsOutputType())
+          switch (input->GetYOutputType())
           {
             case m2::NumericType::Float:
               writeData<float>(std::begin(ints), std::end(ints), b);
@@ -415,7 +415,7 @@ namespace m2
       context["sha1sum"] = sha1string;
       unsigned mzBytes = 0;
       unsigned intBytes = 0;
-      switch (input->GetMzsOutputType())
+      switch (input->GetXOutputType())
       {
         case m2::NumericType::Double:
           context["mz_data_type"] = "64-bit float";
@@ -427,7 +427,7 @@ namespace m2
           break;
       }
 
-      switch (input->GetIntsOutputType())
+      switch (input->GetYOutputType())
       {
         case m2::NumericType::Double:
           context["int_data_type"] = "64-bit float";
@@ -605,7 +605,7 @@ namespace m2
       source._MaskDataPath = pathWithoutExtension + ".nrrd";
       auto data = mitk::IOUtil::Load(source._MaskDataPath).at(0);
       object->GetImageArtifacts()["mask"] = dynamic_cast<mitk::Image *>(data.GetPointer());
-      object->PreventMaskImageInitializationOn();
+      object->UseExternalMaskOn();
     }
 
     if (itksys::SystemTools::FileExists(pathWithoutExtension + ".mps"))

@@ -909,13 +909,12 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
   }
   else if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-    SpectrumImageNodeAdded(node);
-
     if (dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
       ImzMLImageNodeAdded(node);
     else if (dynamic_cast<m2::FsmSpectrumImage *>(node->GetData()))
       FsmImageNodeAdded(node);
 
+    SpectrumImageNodeAdded(node);
     if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
     {
       if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
@@ -1017,14 +1016,12 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
 
     // -------------- add Mask to datastorage --------------
     {
-      
       auto helperNode = mitk::DataNode::New();
       helperNode->SetName(node->GetName() + "_mask");
       helperNode->SetVisibility(true);
       helperNode->SetData(spectrumImage->GetMaskImage());
 
       this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-
     }
 
     // -------------- add Index to datastorage --------------

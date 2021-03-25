@@ -80,7 +80,7 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
   m_ReceivedNodes = nodes;
 
   for (auto node : *m_ReceivedNodes)
-    if (auto imageBase = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
+    if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
       if (imageBase->GetImportMode() != m2::SpectrumFormatType::ContinuousProfile)
       {
