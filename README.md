@@ -2,7 +2,10 @@ M<sup>2</sup>aia - MSI applications for interactive analysis in MITK
 =========================
 
 M<sup>2</sup>aia provides modules and plugins for viewing and analysing mass spectrometry images in MITK.
-You can download M<sup>2</sup>aia [here](https://github.com/jtfcordes/m2aia/releases).
+[You can download M²aia here](https://github.com/jtfcordes/m2aia/releases).
+
+Cite M²aia
+----------
 
 [![DOI](https://zenodo.org/badge/314852965.svg)](https://zenodo.org/badge/latestdoi/314852965)
 Please reference to [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324).
