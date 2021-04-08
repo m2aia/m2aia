@@ -19,7 +19,8 @@ found in the LICENSE file.
 
 #include <QFileDialog>
 #include <QMessageBox>
-
+#include <QmitkMultiNodeSelectionWidget.h>
+#include <m2CommunicationService.h>
 #include <m2MSImageBase.h>
 #include <m2MultiModalMaskExportHelper.h>
 #include <mitkImage.h>
@@ -38,6 +39,10 @@ void MultiModalMaskExport::SetFocus() {}
 void MultiModalMaskExport::CreateQtPartControl(QWidget *parent)
 {
   m_Controls.setupUi(parent);
+
+  m_Controls.exportPeaks->setVisible(false);
+  m_Controls.exportFullSpectra->setVisible(false);
+  m_Controls.exportOptionsLabel->setVisible(false);
   {
     auto m_MassSpecPredicate = mitk::TNodePredicateDataType<m2::MSImageBase>::New();
     m_MassSpecDataNodeSelectionWidget = new QmitkMultiNodeSelectionWidget();
@@ -65,6 +70,22 @@ void MultiModalMaskExport::CreateQtPartControl(QWidget *parent)
     m_MaskImageSelectionWidget->setMinimumHeight(20);
   }
 
+  connect(m_MassSpecDataNodeSelectionWidget,
+          &QmitkAbstractNodeSelectionWidget::CurrentSelectionChanged,
+          this,
+          [&](QList<mitk::DataNode::Pointer> nodesList) {
+            bool isPeakOptionVisible = true;
+            for (auto const &node : nodesList)
+            {
+              if (dynamic_cast<m2::MSImageBase *>(node->GetData())->GetPeaks().empty())
+              {
+                isPeakOptionVisible = false;
+                break;
+              }
+            }
+            this->SetSelectionVisibility(isPeakOptionVisible);
+          });
+
   connect(m_Controls.exportButton, &QPushButton::clicked, this, &MultiModalMaskExport::Export);
 }
 
@@ -76,7 +97,7 @@ void MultiModalMaskExport::Export()
 
   for (auto maskNode : maskNodes)
   {
-      helper->AddMaskNode(maskNode);
+    helper->AddMaskNode(maskNode);
   }
 
   for (auto node : selectedNodes)
@@ -86,6 +107,7 @@ void MultiModalMaskExport::Export()
 
   helper->SetLowerMzBound(m_Controls.lowerBoundSpinBox->value());
   helper->SetUpperMzBound(m_Controls.upperBoundSpinBox->value());
+  helper->SetExportOption(m_Controls.exportFullSpectra->isChecked());
 
   QString filename = QFileDialog::getSaveFileName(nullptr, tr("Save spectra"), "", tr("CSV (*.csv)"));
   helper->SetFilePath(filename.toStdString());
@@ -103,4 +125,11 @@ void MultiModalMaskExport::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*s
       return;
     }
   }
+}
+
+void MultiModalMaskExport::SetSelectionVisibility(bool isSelectionVisible)
+{
+  m_Controls.exportPeaks->setVisible(isSelectionVisible);
+  m_Controls.exportFullSpectra->setVisible(isSelectionVisible);
+  m_Controls.exportOptionsLabel->setVisible(isSelectionVisible);
 }

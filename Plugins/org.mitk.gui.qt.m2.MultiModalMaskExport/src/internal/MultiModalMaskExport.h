@@ -55,6 +55,7 @@ protected:
   QPushButton *m_ExportButton;
 
   void Export();
+  void SetSelectionVisibility(bool);
 };
 
 #endif // MultiModalMaskExport_h

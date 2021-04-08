@@ -3,7 +3,10 @@
 #include <algorithm>
 #include <eigen3/Eigen/Dense>
 #include <iterator>
+
 #include <m2ImzMLMassSpecImage.h>
+#include <m2PeakDetection.hpp>
+
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
 #include <mitkImageCast.h>
@@ -32,6 +35,11 @@ void m2::MultiModalMaskExportHelper::SetLowerMzBound(double lowerBound)
 void m2::MultiModalMaskExportHelper::SetUpperMzBound(double upperBound)
 {
   m_UpperMzBound = upperBound;
+}
+
+void m2::MultiModalMaskExportHelper::SetExportOption(bool isExportFullSpectra)
+{
+  m_ExportFullSpectra = isExportFullSpectra;
 }
 
 void m2::MultiModalMaskExportHelper::InitalizeLayerLabelMap(mitk::Image::Pointer labelImage,
@@ -70,15 +78,109 @@ void m2::MultiModalMaskExportHelper::InitalizeLayerLabelMap(mitk::Image::Pointer
                             3)
 }
 
-void m2::MultiModalMaskExportHelper::WriteSpectraToCsv(m2::MSImageBase::Pointer msImage,
-                                                       std::vector<unsigned int> indexValues,
-                                                       std::string intensitiesFileName,
-                                                       std::string massAxisFileName)
+void WriteSpectraPeaksToCsv(m2::MSImageBase::Pointer msImage,
+                       std::vector<unsigned int> indexValues,
+                       std::string intensitiesFileName,
+                       std::string massAxisFileName)
 {
   std::ofstream output(intensitiesFileName);
-  std::ostringstream oss;
 
-  std::vector<int> validVectorIndices;
+  auto massIndicesMask = msImage->GetPeaks();
+
+  for (auto imzlIndex : indexValues)
+  {
+    std::vector<double> intensities, mzs, intsMasked;
+    msImage->GrabSpectrum(imzlIndex, mzs, intensities);
+
+    for (auto p : massIndicesMask)
+    {
+      auto i = p.massAxisIndex;
+      double val = 0;
+      if (msImage->GetMassPickingTolerance() == 0)
+      {
+        val = intensities[i];
+      }
+      else
+      {
+        auto tol = msImage->GetMassPickingTolerance() * 10e-6 * mzs[i];
+        auto subRes = m2::Peaks::Subrange(mzs, mzs[i] - tol, mzs[i] + tol);
+        auto s = std::next(std::begin(intensities), subRes.first);
+        auto e = std::next(s, subRes.second);
+        switch (msImage->GetIonImageGrabStrategy())
+        {
+          case m2::IonImageGrabStrategyType::None:
+            break;
+          case m2::IonImageGrabStrategyType::Sum:
+            val = std::accumulate(s, e, double(0));
+            break;
+          case m2::IonImageGrabStrategyType::Mean:
+            val = std::accumulate(s, e, double(0)) / double(std::distance(s, e));
+            break;
+          case m2::IonImageGrabStrategyType::Maximum:
+            val = *std::max_element(s, e);
+            break;
+          case m2::IonImageGrabStrategyType::Median:
+          {
+            const unsigned int _N = std::distance(s, e);
+            double median = 0;
+            if ((_N % 2) == 0)
+            {
+              std::nth_element(s, s + _N * 0.5, e);
+              std::nth_element(s, s + _N * 0.5 + 1, e);
+              median = 0.5 * (*std::next(s, _N * 0.5) + *std::next(s, _N * 0.5 + 1));
+            }
+            else
+            {
+              std::nth_element(s, s + ((_N + 1) * 0.5), e);
+              median = 0.5 * (*std::next(s, _N * 0.5) + *std::next(s, _N * 0.5 + 1));
+            }
+            val = median;
+            break;
+          }
+        }
+      }
+      intsMasked.push_back(val);
+    }
+
+    auto intensitiesIt = intsMasked.begin();
+
+    std::string outputString = std::to_string(*intensitiesIt);
+    output.write(outputString.c_str(), outputString.size());
+    ++intensitiesIt;
+
+    while (intensitiesIt != intsMasked.end())
+    {
+      std::string outputString = "," + std::to_string(*intensitiesIt);
+      output.write(outputString.c_str(), outputString.size());
+
+      ++intensitiesIt;
+    }
+
+    output << '\n';
+  }
+  output.close();
+
+  std::ofstream mzOutput(massAxisFileName);
+
+  auto mzIt = massIndicesMask.begin();
+
+  std::string mzOutputStr = std::to_string(mzIt->mass);
+  mzOutput.write(mzOutputStr.c_str(), mzOutputStr.size());
+
+  ++mzIt;
+  while (mzIt != massIndicesMask.end())
+  {
+      std::string outputStr = "," + std::to_string(mzIt->mass);
+      mzOutput.write(outputStr.c_str(), outputStr.size());
+      ++mzIt;
+  }
+  mzOutput.close();
+}
+
+/*Get the indices of the mz values with respect to the mz bounds*/
+void m2::MultiModalMaskExportHelper::GetValidMzIndices(m2::MSImageBase::Pointer msImage,
+                                                       std::vector<unsigned int> *validIndices)
+{
   int counter = 0;
 
   if (m_UpperMzBound != m_LowerMzBound)
@@ -87,22 +189,29 @@ void m2::MultiModalMaskExportHelper::WriteSpectraToCsv(m2::MSImageBase::Pointer 
     {
       if (mz <= m_UpperMzBound && mz >= m_LowerMzBound)
       {
-        validVectorIndices.push_back(counter);
+        validIndices->push_back(counter);
       }
       ++counter;
     }
   }
   else
   {
-    validVectorIndices.resize(msImage->MassAxis().size());
-    int i = 0;
-
+    validIndices->resize(msImage->MassAxis().size());
     for (auto it = msImage->MassAxis().begin(); it < msImage->MassAxis().end(); ++it)
     {
-      validVectorIndices.push_back(i);
-      ++i;
+      validIndices->push_back(counter);
+      ++counter;
     }
   }
+}
+
+void m2::MultiModalMaskExportHelper::WriteSpectraToCsv(m2::MSImageBase::Pointer msImage,
+                                                       std::vector<unsigned int> indexValues,
+                                                       std::vector<unsigned int> validMzIndices,
+                                                       std::string intensitiesFileName,
+                                                       std::string massAxisFileName)
+{
+  std::ofstream output(intensitiesFileName);
 
   std::vector<double> intensities;
 
@@ -110,20 +219,20 @@ void m2::MultiModalMaskExportHelper::WriteSpectraToCsv(m2::MSImageBase::Pointer 
   {
     msImage->GrabIntensity(imzlIndex, intensities);
 
-    auto indicesIt = validVectorIndices.begin();
+    auto indicesIt = validMzIndices.begin();
 
     std::string outputString = std::to_string(intensities.at(*indicesIt));
     output.write(outputString.c_str(), outputString.size());
     ++indicesIt;
 
-    while (indicesIt != validVectorIndices.end())
+    while (indicesIt != validMzIndices.end())
     {
       std::string outputString = "," + std::to_string(intensities.at(*indicesIt));
       output.write(outputString.c_str(), outputString.size());
 
       ++indicesIt;
     }
-    output.write(std::string(" \n").c_str(), 2);
+    output.write(std::string("\n").c_str(), 1);
   }
 
   output.close();
@@ -131,13 +240,12 @@ void m2::MultiModalMaskExportHelper::WriteSpectraToCsv(m2::MSImageBase::Pointer 
   std::ofstream massAxisOutput(massAxisFileName);
   std::vector<double> massAxis = msImage->MassAxis();
 
-  auto mzIt = validVectorIndices.begin();
+  auto mzIt = validMzIndices.begin();
   std::string outputString = std::to_string(massAxis.at(*mzIt));
   massAxisOutput.write(outputString.c_str(), outputString.size());
 
   ++mzIt;
-
-  while (mzIt != validVectorIndices.end())
+  while (mzIt != validMzIndices.end())
   {
     std::string outputString = "," + std::to_string(massAxis.at(*mzIt));
     massAxisOutput.write(outputString.c_str(), outputString.size());
@@ -181,7 +289,7 @@ void m2::MultiModalMaskExportHelper::Export()
         for (const auto &layer : m_LayerLabelMap)
         {
           std::vector<unsigned int> indexValues;
-          unsigned int labelCounter = 0;
+          unsigned int labelCounter = 1;
           for (const auto &labelWordlCoordPair : layer.second)
           {
             AccessFixedDimensionByItk(indexImage,
@@ -202,7 +310,17 @@ void m2::MultiModalMaskExportHelper::Export()
 
             std::string massAxisFileName = m_FilePath + "_" + nodeName + "_Mass-axis.csv";
 
-            WriteSpectraToCsv(msiImage, indexValues, intensitiesFileName, massAxisFileName);
+            std::vector<unsigned int> validMzIndices;
+
+            GetValidMzIndices(msiImage, &validMzIndices);
+            if (m_ExportFullSpectra)
+            {
+              WriteSpectraToCsv(msiImage, indexValues, validMzIndices, intensitiesFileName, massAxisFileName);
+            }
+            else
+            {
+              WriteSpectraPeaksToCsv(msiImage, indexValues, intensitiesFileName, massAxisFileName);
+            }
             ++labelCounter;
           }
           ++layerCounter;

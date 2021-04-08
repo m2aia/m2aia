@@ -17,23 +17,21 @@ See LICENSE.txt for details.
 
 #include <MitkM2aiaCoreExports.h>
 
-#include <mitkImage.h>
-#include <mitkLabelSetImage.h>
 #include <itkIndex.h>
 #include <m2MSImageBase.h>
 #include <mitkDataNode.h>
+#include <mitkImage.h>
+#include <mitkLabelSetImage.h>
 
 namespace m2
 {
   class MITKM2AIACORE_EXPORT MultiModalMaskExportHelper : public itk::LightObject
   {
   public:
-    mitkClassMacroItkParent(MultiModalMaskExportHelper,  itk::LightObject);
+    mitkClassMacroItkParent(MultiModalMaskExportHelper, itk::LightObject);
 
     itkFactorylessNewMacro(Self);
     itkCloneMacro(Self);
-
-
 
     void AddMaskNode(mitk::DataNode::Pointer);
     void Export();
@@ -41,6 +39,7 @@ namespace m2
     void SetFilePath(std::string);
     void SetLowerMzBound(double);
     void SetUpperMzBound(double);
+    void SetExportOption(bool);
 
   protected:
     using ImageType = itk::Image<double, 3>;
@@ -51,10 +50,14 @@ namespace m2
     std::vector<mitk::DataNode::Pointer> m_MsiDataNodes;
     std::string m_FilePath;
     std::map<unsigned int, std::map<unsigned int, std::vector<mitk::Vector3D>>> m_LayerLabelMap;
+    bool m_ExportFullSpectra = true;
+
     double m_LowerMzBound;
     double m_UpperMzBound;
 
+    void GetValidMzIndices(m2::MSImageBase::Pointer, std::vector<unsigned int> *);
     void InitalizeLayerLabelMap(mitk::Image::Pointer, mitk::LabelSetImage::Pointer, unsigned int);
-    void WriteSpectraToCsv(m2::MSImageBase::Pointer, std::vector<unsigned int>, std::string, std::string);
+    void WriteSpectraToCsv(
+      m2::MSImageBase::Pointer, std::vector<unsigned int>, std::vector<unsigned int>, std::string, std::string);
   };
-} // namespace mitk
+} // namespace m2
