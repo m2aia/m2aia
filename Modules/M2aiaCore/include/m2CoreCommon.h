@@ -17,40 +17,60 @@ See LICENSE.txt for details.
 
 #include <mitkLabelSetImage.h>
 
-
 namespace m2
 {
-  enum class SpectrumFormatType : unsigned
+  enum class SpectrumFormatType : unsigned int
   {
-    NotSet = 0,
+    None = 0,
     ContinuousProfile = 1,
-    ProcessedProfile = 2,  
+    ProcessedProfile = 2,
     ContinuousCentroid = 4,
     ProcessedCentroid = 8
   };
 
-
-
-
-
-  enum class OverviewSpectrumType
+  enum class OverviewSpectrumType : unsigned int
   {
-    Sum,
-    Mean,
-    Maximum,
-    Variance,
-    Median,
-    PeakIndicators,    
-    None
+    None = 0,
+    Mean = 1,
+    Median = 2,
+    Maximum = 3,
+    Sum = 4,
+    Variance = 5,
+    PeakIndicators = 6
   };
 
-
-
-  enum class NumericType
+  enum class NumericType : unsigned int
   {
-    Float,
-    Double
+    Float = 0,
+    Double = 1
   };
+
+  //////////////////////////////////////////////////////////////////////
+  /////////////////// ATTENTION ////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+  // If you have added a new enum value to the list.
+  // Ensure that all enum values are well defined in the m2::CORE_MAPPINGS.
+  // m2::CORE_MAPPINGS is defined in <m2CoreCommon.h>.
+  // m2::CORE_MAPPINGS is used to transform strings into unsigned int values.
+  // A compiler error will be thrown if you enabled Testing and not added the
+  // new enum value to the test. <m2CoreMappingsTest.cpp>
+  //
+  //////////////////////////////////////////////////////////////////////
+  /////////////////// ATTENTION ////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////
+  const std::map<const std::string, unsigned int> CORE_MAPPINGS{{"None", 0},
+                                                                {"ContinuousProfile", 1},
+                                                                {"ProcessedProfile", 2},
+                                                                {"ContinuousCentroid", 4},
+                                                                {"ProcessedCentroid", 8},
+                                                                {"Mean", 1},
+                                                                {"Median", 2},
+                                                                {"Maximum", 3},
+                                                                {"Sum", 4},
+                                                                {"Variance", 5},
+                                                                {"PeakIndicators", 6},
+                                                                {"Float", 0},
+                                                                {"Double", 1}};
 
   using DisplayImagePixelType = double;
   using NormImagePixelType = double;
@@ -64,12 +84,34 @@ namespace m2
     Transformix
   };
 
+
+
+  /// m2Utils
+
+ const auto Find = [](const auto &str, const auto &searchString, auto defaultValue) {
+    if (str.find("(") != std::string::npos && str.find(searchString) != std::string::npos)
+    {
+      auto s = str.find(" ");
+      auto e = str.find(")");
+      auto val = str.substr(s + 1, e - s - 1);
+      std::istringstream buffer(val);
+      decltype(defaultValue) converted;
+      buffer >> converted;
+      return converted;
+    }
+    return defaultValue;
+  };
+
+
+
+
+
 } // namespace m2
 
 inline m2::SpectrumFormatType operator|(m2::SpectrumFormatType lhs, m2::SpectrumFormatType rhs)
 {
   return static_cast<m2::SpectrumFormatType>(static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(lhs) |
-                                          static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(rhs));
+                                             static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(rhs));
 }
 
 inline m2::SpectrumFormatType operator|=(m2::SpectrumFormatType lhs, m2::SpectrumFormatType rhs)
@@ -80,7 +122,7 @@ inline m2::SpectrumFormatType operator|=(m2::SpectrumFormatType lhs, m2::Spectru
 inline m2::SpectrumFormatType operator&(m2::SpectrumFormatType lhs, m2::SpectrumFormatType rhs)
 {
   return static_cast<m2::SpectrumFormatType>(static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(lhs) &
-                                          static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(rhs));
+                                             static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(rhs));
 }
 
 inline bool any(m2::SpectrumFormatType lhs)

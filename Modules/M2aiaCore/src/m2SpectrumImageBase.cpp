@@ -110,7 +110,7 @@ mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage()
 void m2::SpectrumImageBase::GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
   GenerateImageStart.Send();
-  m_Processor->GrabIonImagePrivate(mz, tol, mask, img);
+  m_Processor->CreateIonImagePrivate(mz, tol, mask, img);
   GenerateImageEnd.Send();
 }
 

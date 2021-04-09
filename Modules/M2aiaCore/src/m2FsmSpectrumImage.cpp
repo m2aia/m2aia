@@ -29,7 +29,7 @@ See LICENSE.txt for details.
 #include <mitkTimer.h>
 
 template <class XAxisType, class IntensityType>
-void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabIonImagePrivate(double cmInv,
+void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::CreateIonImagePrivate(double cmInv,
                                                                                        double tol,
                                                                                        const mitk::Image *mask,
                                                                                        mitk::Image *destImage) const
@@ -78,10 +78,10 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabIonImageP
 
     std::vector<IntensityType> ys(xs.size());
 
-    const auto &_Spectra = p->GetSpectra();
+    const auto &m_Spectra = p->GetSpectra();
     for (unsigned int i = a; i < b; ++i)
     {
-      const auto &spectrum = _Spectra[i];
+      const auto &spectrum = m_Spectra[i];
       std::copy(std::cbegin(spectrum.data), std::cend(spectrum.data), std::begin(ys));
 
       auto s = std::next(std::begin(ys), subRes.first);

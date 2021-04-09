@@ -88,7 +88,7 @@ namespace m2
 
   public:
     explicit FsmProcessor(m2::FsmSpectrumImage *owner) : p(owner) {}
-    void GrabIonImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) const override;
+    void CreateIonImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) const override;
     void GrabIntensityPrivate(unsigned long int index,
                               std::vector<double> &ints,
                               unsigned int sourceIndex = 0) const override;

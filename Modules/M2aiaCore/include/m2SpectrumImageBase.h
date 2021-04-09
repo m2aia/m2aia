@@ -78,6 +78,7 @@ namespace m2
 
     itkSetEnumMacro(ExportMode, SpectrumFormatType);
     itkGetEnumMacro(ExportMode, SpectrumFormatType);
+
     itkSetEnumMacro(ImportMode, SpectrumFormatType);
     itkGetEnumMacro(ImportMode, SpectrumFormatType);
 
@@ -95,6 +96,9 @@ namespace m2
 
     itkSetMacro(BinningTolerance, double);
     itkGetConstReferenceMacro(BinningTolerance, double);
+    
+	itkSetMacro(NumberOfBins, int);
+    itkGetConstReferenceMacro(NumberOfBins, int);
 
     itkSetMacro(Tolerance, double);
     itkGetConstReferenceMacro(Tolerance, double);
@@ -169,6 +173,7 @@ namespace m2
     bool mutable m_InSaveMode = false;
     double m_Tolerance = 10;
     double m_BinningTolerance = 50;
+    int m_NumberOfBins = 2000;
 
     bool m_UseExternalMask = false;
     bool m_UseExternalIndices = false;
@@ -262,7 +267,7 @@ inline const T m2::SpectrumImageBase::GetPropertyValue(const std::string &key) c
 class m2::SpectrumImageBase::ProcessorBase
 {
 public:
-  virtual void GrabIonImagePrivate(double mz, double tol, const Image *mask, Image *image) const = 0;
+  virtual void CreateIonImagePrivate(double mz, double tol, const Image *mask, Image *image) const = 0;
   virtual void GrabIntensityPrivate(unsigned long int index,
                                     std::vector<double> &ints,
                                     unsigned int sourceIndex = 0) const = 0;

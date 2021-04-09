@@ -80,7 +80,7 @@ void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
   for (auto &source : data->GetSpectrumImageSourceList())
   {
-    f.open((source._ImzMLDataPath), std::ios_base::binary);
+    f.open((source.m_ImzMLDataPath), std::ios_base::binary);
 
     std::map<std::string, unsigned> precisionDict = {{"32-bit float", sizeof(float)},
                                                      {"64-bit float", sizeof(double)},
@@ -482,7 +482,7 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
   std::unordered_map<std::string, std::function<void(const std::string &)>> context_map;
   for (auto &source : data->GetSpectrumImageSourceList())
   {
-    f.open((source._ImzMLDataPath), std::ios_base::binary);
+    f.open((source.m_ImzMLDataPath), std::ios_base::binary);
 
     std::map<std::string, unsigned> precisionDict = {{"32-bit float", sizeof(float)},
                                                      {"64-bit float", sizeof(double)},
@@ -538,7 +538,7 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
       accession_map.clear();
       context_map.clear();
 
-      auto &spectra = source._Spectra;
+      auto &spectra = source.m_Spectra;
 
       context_map["spectrumList"] = [&](auto line) {
         unsigned count = std::stoul(attributValue(line, "count", value));

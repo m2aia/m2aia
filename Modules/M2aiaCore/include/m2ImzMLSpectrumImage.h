@@ -55,6 +55,7 @@ namespace m2
       } world;
       // In imzML-file defined normalization constant
       m2::NormImagePixelType normalize = -1.0;
+      std::vector<m2::MassValue> peaks;
     };
 
     using SpectrumVectorType = std::vector<BinarySpectrumMetaData>;
@@ -64,11 +65,11 @@ namespace m2
      */
     struct Source
     {
-      std::string _ImzMLDataPath;
-      std::string _BinaryDataPath;
+      std::string m_ImzMLDataPath;
+      std::string m_BinaryDataPath;
       std::string _MaskDataPath;
       std::string _PointsDataPath;
-      SpectrumVectorType _Spectra;
+      SpectrumVectorType m_Spectra;
       itk::Offset<3> _offset = {0, 0, 0};
     };
     using SourceListType = std::vector<Source>;
@@ -115,7 +116,7 @@ namespace m2
 
   public:
     explicit ImzMLProcessor(m2::ImzMLSpectrumImage *owner) : p(owner) {}
-    void GrabIonImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) const override;
+    void CreateIonImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) const override;
     void GrabIntensityPrivate(unsigned long int index,
                               std::vector<double> &ints,
                               unsigned int sourceIndex = 0) const override;
@@ -123,6 +124,12 @@ namespace m2
                          std::vector<double> &mzs,
                          unsigned int sourceIndex = 0) const override;
     void InitializeImageAccess() override;
+
+    void InitializeImageAccessContinuousProfile();
+    void InitializeImageAccessProcessedProfile() {}
+    void InitializeImageAccessContinuousCentroid();
+    void InitializeImageAccessProcessedCentroid();
+
     void InitializeGeometry() override;
   };
 

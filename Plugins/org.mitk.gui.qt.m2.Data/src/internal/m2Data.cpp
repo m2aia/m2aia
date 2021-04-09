@@ -477,6 +477,7 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
     data->SetBaseLineCorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
 
     data->SetBinningTolerance(m_Controls.spnBxPeakBinning->value());
+    data->SetNumberOfBins(m_Controls.spnBxNumberOfBins->value());
     data->SetTolerance(m_Controls.spnBxPeakBinning->value());
   }
 }

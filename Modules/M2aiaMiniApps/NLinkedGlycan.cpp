@@ -51,7 +51,7 @@ int main(int /*argc*/, char *argv[])
   {
     m2::ImzMLXMLParser::SlowReadMetaData(I);
     const auto &source = I->GetSpectrumImageSource();
-    auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source._BinaryDataPath);
+    auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source.m_BinaryDataPath);
     I->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::TopHat);
     I->SetSmoothingStrategy(m2::SmoothingType::SavitzkyGolay);
 
@@ -79,7 +79,7 @@ int main(int /*argc*/, char *argv[])
     });
 
     imagePeaks[I.GetPointer()] = m2::Signal::monoisotopic(peaks, {3, 4, 5, 6, 7, 8, 9, 10}, 0.40);
-    MITK_INFO << I->GetSpectrumImageSource()._ImzMLDataPath << " monoisotopic peaks found "
+    MITK_INFO << I->GetSpectrumImageSource().m_ImzMLDataPath << " monoisotopic peaks found "
               << imagePeaks[I.GetPointer()].size();
   }
 
@@ -95,7 +95,7 @@ int main(int /*argc*/, char *argv[])
   for (auto &I : {imagePNG1, imagePNG2, imageControl})
   {
     const auto &source = I->GetSpectrumImageSource();
-    auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source._BinaryDataPath);
+    auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source.m_BinaryDataPath);
     for (const auto &p : binPeaks)
       I->GetPeaks().push_back(p);
     I->SetExportMode(m2::SpectrumFormatType::ContinuousCentroid);
