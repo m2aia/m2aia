@@ -30,10 +30,10 @@ int main(int argc, char *argv[])
 {
   auto argsMap = CommandlineParsing(argc, argv);
 
-  auto image = mitk::IOUtil::Load(argsMap["input"].ToString()).front();
-
   auto ifs = std::ifstream(argsMap["parameterfile"].ToString());
-  const std::string params(std::istreambuf_iterator<char>{ifs}, {}); // read whole file
+  std::string params(std::istreambuf_iterator<char>{ifs}, {}); // read whole file
+    
+  auto image = mitk::IOUtil::Load(argsMap["input"].ToString()).front();
 
   for (auto kv : argsMap)
   {
@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
     const auto threads = m2::Find(params, "threads", int(1));
     const auto binning_tol = m2::Find(params, "binning-tolerance", double(50));
     const auto SNR = m2::Find(params, "SNR", double(10));
-    const auto peakpicking_hw = m2::Find(params, "peakpicking-hw", int(10));
+    const auto peakpicking_hw = m2::Find(params, "peakpicking-hw", int(5));
     const auto monoisotopick = m2::Find(params, "monoisotopic", bool(false));
     const auto y_output_type = m2::Find(params, "y-type", "Float"s);
     const auto x_output_type = m2::Find(params, "x-type", "Float"s);

@@ -84,27 +84,23 @@ namespace m2
     Transformix
   };
 
-
-
   /// m2Utils
 
- const auto Find = [](const auto &str, const auto &searchString, auto defaultValue) {
-    if (str.find("(") != std::string::npos && str.find(searchString) != std::string::npos)
+  const auto Find = [](const auto &str, const auto &searchString, auto defaultValue) {
+    auto p = str.find(searchString);
+    if (p != std::string::npos)
     {
-      auto s = str.find(" ");
-      auto e = str.find(")");
+      auto s = str.find(" ",p);
+      auto e = str.find(")",p);
       auto val = str.substr(s + 1, e - s - 1);
       std::istringstream buffer(val);
       decltype(defaultValue) converted;
       buffer >> converted;
+      MITK_INFO << searchString << " " << converted;
       return converted;
     }
     return defaultValue;
   };
-
-
-
-
 
 } // namespace m2
 
