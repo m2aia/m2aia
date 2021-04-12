@@ -30,9 +30,9 @@ See LICENSE.txt for details.
 
 template <class XAxisType, class IntensityType>
 void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::CreateIonImagePrivate(double cmInv,
-                                                                                       double tol,
-                                                                                       const mitk::Image *mask,
-                                                                                       mitk::Image *destImage) const
+                                                                                         double tol,
+                                                                                         const mitk::Image *mask,
+                                                                                         mitk::Image *destImage) const
 {
   AccessByItk(destImage, [](auto itkImg) { itkImg->FillBuffer(0); });
   using namespace m2;
@@ -318,6 +318,18 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
       }
     });
 
+  const auto &spectra = p->GetSpectra();
+  m2::Process::Map(spectra.size(), p->GetNumberOfThreads(), [&](unsigned int /*t*/, unsigned int a, unsigned int b) {
+    for (unsigned int i = a; i < b; i++)
+    {
+      const auto &spectrum = spectra[i];
+
+      accIndex->SetPixelByIndex(spectrum.index, i);
+      if (!p->GetUseExternalMask())
+        accMask->SetPixelByIndex(spectrum.index, 1);
+    }
+  });
+
   auto &skyline = p->SkylineSpectrum();
   skyline.resize(xs.size(), 0);
   for (unsigned int t = 0; t < p->GetNumberOfThreads(); ++t)
@@ -335,25 +347,12 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
   auto N = std::accumulate(accMask->GetData(),
                            accMask->GetData() + p->GetSpectra().size(),
                            mitk::LabelSetImage::PixelType(0),
-                           [](const auto & a, const auto & b) -> mitk::LabelSetImage::PixelType { return a + (b > 0); });
+                           [](const auto &a, const auto &b) -> mitk::LabelSetImage::PixelType { return a + (b > 0); });
 
   for (unsigned int t = 0; t < p->GetNumberOfThreads(); ++t)
-    std::transform(sumT[t].begin(), sumT[t].end(), sum.begin(), sum.begin(), [](const auto &a, const auto &b) { return a + b; });
+    std::transform(
+      sumT[t].begin(), sumT[t].end(), sum.begin(), sum.begin(), [](const auto &a, const auto &b) { return a + b; });
   std::transform(sum.begin(), sum.end(), mean.begin(), [&N](const auto &a) { return a / double(N); });
-
-  //////////---------------------------
-
-  const auto &spectra = p->GetSpectra();
-  m2::Process::Map(spectra.size(), p->GetNumberOfThreads(), [&](unsigned int /*t*/, unsigned int a, unsigned int b) {
-    for (unsigned int i = a; i < b; i++)
-    {
-      const auto &spectrum = spectra[i];
-
-      accIndex->SetPixelByIndex(spectrum.index, i);
-      if (p->GetUseExternalMask())
-        accMask->SetPixelByIndex(spectrum.index, 1);
-    }
-  });
 }
 
 template <class XAxisType, class IntensityType>

@@ -50,9 +50,10 @@ namespace m2
     const std::string m_Transformix;
     itkNewMacro(Self);
 
-    auto Transform(const mitk::Image *const inImage,
-                   const std::vector<std::string> &transformations,
-                   std::function<void(std::string &)> adaptor = [](std::string &) {}) const -> mitk::Image::Pointer;
+    auto Transform(
+      const mitk::Image *const inImage,
+      const std::vector<std::string> &transformations,
+      std::function<void(std::string &)> adaptor = [](std::string &) {}) const -> mitk::Image::Pointer;
 
     void CopyWarpedImageToStack(mitk::Image *warped, mitk::Image *stack, unsigned i) const;
 
@@ -69,6 +70,10 @@ namespace m2
                 m2::SpectrumImageBase::Pointer data,
                 TransformixMSDataObjectStack::TransformationVector transformations);
     void InitializeImages(unsigned i, double zSpacing);
+
+    void InitializeGeometry() override {}
+    void InitializeProcessor() override {}
+    void InitializeImageAccess() override {}
 
     // Inherited via IMSImageDataAccess
     // virtual void ReceiveSpectrum(unsigned int index, std::vector<double> &mzs, std::vector<double> &ints) const

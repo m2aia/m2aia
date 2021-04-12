@@ -464,7 +464,7 @@ void m2Spectrum::UpdateSeriesMinMaxValues()
 
   for (auto &kv : m_LineTypeLevelData)
   {
-    auto ppp = kv.second[m_CurrentOverviewSpectrumType].front();
+    const auto & ppp = kv.second[m_CurrentOverviewSpectrumType].front();
     auto m = std::max_element(ppp.begin(), ppp.end(), [](auto largest, auto p) { return p.y() > largest.y(); });
     if (m->y() > m_CurrentMaxIntensity)
       m_CurrentMaxIntensity = m->y();

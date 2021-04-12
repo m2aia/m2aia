@@ -56,7 +56,7 @@ namespace m2
     using PeaksVectorType = std::vector<m2::MassValue>;
 
     mitkClassMacro(SpectrumImageBase, mitk::Image);
-    itkNewMacro(Self);
+    //itkNewMacro(Self);
 
     itkSetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
     itkGetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
@@ -138,9 +138,9 @@ namespace m2
     itkSetMacro(UseExternalNormalization, bool);
     itkBooleanMacro(UseExternalNormalization);
 
-    virtual void InitializeImageAccess(){};
-    virtual void InitializeGeometry(){};
-    virtual void InitializeProcessor(){};
+    virtual void InitializeImageAccess() = 0;
+    virtual void InitializeGeometry() = 0;
+    virtual void InitializeProcessor() = 0;
 
     SpectrumArtifactVectorType &SkylineSpectrum();
     SpectrumArtifactVectorType &SumSpectrum();
