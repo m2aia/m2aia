@@ -15,12 +15,14 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #include <algorithm>
+#include <boost/progress.hpp>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2PeakDetection.h>
 #include <m2Process.hpp>
 #include <mitkCommandLineParser.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
+#include <mutex>
 #include <numeric>
 #include <stdlib.h>
 
@@ -32,7 +34,7 @@ int main(int argc, char *argv[])
 
   auto ifs = std::ifstream(argsMap["parameterfile"].ToString());
   std::string params(std::istreambuf_iterator<char>{ifs}, {}); // read whole file
-    
+
   auto image = mitk::IOUtil::Load(argsMap["input"].ToString()).front();
 
   for (auto kv : argsMap)
@@ -55,10 +57,10 @@ int main(int argc, char *argv[])
     const auto sm_hw = m2::Find(params, "smoothing-hw", int(2));
     const auto norm = m2::Find(params, "normalization", "None"s);
     const auto pool = m2::Find(params, "pooling", "Maximum"s);
-    const auto tol = m2::Find(params, "tolerance", double(50));
-    const auto threads = m2::Find(params, "threads", int(1));
-    const auto binning_tol = m2::Find(params, "binning-tolerance", double(50));
-    const auto SNR = m2::Find(params, "SNR", double(10));
+    const auto tol = m2::Find(params, "tolerance", double(0));
+    const auto threads = m2::Find(params, "threads", int(10));
+    const auto binning_tol = m2::Find(params, "binning-tolerance", double(0));
+    const auto SNR = m2::Find(params, "SNR", double(1.5));
     const auto peakpicking_hw = m2::Find(params, "peakpicking-hw", int(5));
     const auto monoisotopick = m2::Find(params, "monoisotopic", bool(false));
     const auto y_output_type = m2::Find(params, "y-type", "Float"s);
@@ -85,9 +87,12 @@ int main(int argc, char *argv[])
     {
       const auto &xValues = imzMLImage->GetXAxis();
       int sourceId = 0;
+
       for (auto &source : imzMLImage->GetSpectrumImageSourceList())
       {
-        MITK_INFO << "Number of spectra " << source.m_Spectra.size();
+        MITK_INFO << "Start peak picking for " << source.m_Spectra.size() << " spectra...";
+        boost::progress_display show_progress(source.m_Spectra.size());
+
         m2::Process::Map(source.m_Spectra.size(), threads, [&](const auto tId, const auto s, const auto e) {
           std::vector<double> yValues(xValues.size());
           for (unsigned int spectrumId = s; spectrumId < e; ++spectrumId)
@@ -95,12 +100,20 @@ int main(int argc, char *argv[])
             imzMLImage->ReceiveIntensities(spectrumId, yValues, sourceId);
             source.m_Spectra[spectrumId].peaks =
               m2::Signal::PickPeaks(xValues, yValues, SNR, peakpicking_hw, binning_tol, monoisotopick);
+            ++show_progress;
           }
         });
         ++sourceId;
+
+        float sumPeaks = 0;
+        for (const auto &p : source.m_Spectra)
+          sumPeaks += p.peaks.size();
+
+		MITK_INFO << "Average number of peaks " << sumPeaks / double(source.m_Spectra.size());
       }
     }
-    mitk::IOUtil::Save(sImage, "D://test.imzML");
+
+    mitk::IOUtil::Save(sImage, argsMap["output"].ToString());
   }
 }
 

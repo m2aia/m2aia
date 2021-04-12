@@ -338,6 +338,9 @@ namespace m2
       unsigned int sourceId = 0;
       for (auto &source : sourceList)
       {
+        MITK_INFO << "Write binary data ...";
+        boost::progress_display show_progress(source.m_Spectra.size());
+
         for (unsigned int spectrumId = 0; spectrumId < source.m_Spectra.size(); ++spectrumId)
         {
           const auto &peaks = source.m_Spectra[spectrumId].peaks;
@@ -397,6 +400,7 @@ namespace m2
           }
           offset += offsetDelta;
           b.flush();
+          ++show_progress;
         }
         ++sourceId;
       }
@@ -573,6 +577,8 @@ namespace m2
       unsigned long id = 0;
       for (const auto &source : sourceCopy)
       {
+        MITK_INFO << "Write imzML data ...";
+        boost::progress_display show_progress(source.m_Spectra.size());
         for (auto &s : source.m_Spectra)
         {
           auto x = s.index[0] + source._offset[0] + 1; // start by 1
@@ -598,7 +604,7 @@ namespace m2
           }
           f << m2::TemplateEngine::render(view, context);
           f.flush();
-          //++show_progress;
+          ++show_progress;
         }
       }
 

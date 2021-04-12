@@ -99,6 +99,7 @@ namespace m2
       MITK_INFO << searchString << " " << converted;
       return converted;
     }
+    MITK_INFO << searchString << " " << defaultValue;
     return defaultValue;
   };
 

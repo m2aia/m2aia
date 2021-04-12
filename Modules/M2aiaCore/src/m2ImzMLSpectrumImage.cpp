@@ -537,6 +537,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   const auto importMode = p->GetImportMode();
   if (importMode == m2::SpectrumFormatType::ProcessedProfile)
   {
+    MITK_INFO << "Processed Profile";
     mitkThrow() << R"(
 		This ImzML file seems to contain profile spectra in a processed memory order. 
 		This is not supported in M2aia! If there are really individual m/z axis for
@@ -546,7 +547,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
   }
   else if (importMode == m2::SpectrumFormatType::ContinuousProfile)
   {
-    MITK_INFO << "Processed Profile";
+    MITK_INFO << "Continuous Profile";
     InitializeImageAccessContinuousProfile();
   }
   else if (importMode == m2::SpectrumFormatType::ProcessedCentroid)
@@ -856,7 +857,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
       std::vector<IntensityType> ints;
 
       std::list<m2::MassValue> peaks, tempList;
-	  // find x min/max
+      // find x min/max
       for (unsigned i = a; i < b; i++)
       {
         const auto &mzO = spectra[i].mzOffset;
@@ -870,7 +871,7 @@ void m2::ImzMLSpectrumImage::ImzMLProcessor<MassAxisType, IntensityType>::Initia
 
       if (t == 0)
       {
-		// find overall min/max
+        // find overall min/max
         max = *std::max_element(std::begin(xMax), std::end(xMax));
         min = *std::min_element(std::begin(xMin), std::end(xMin));
         binSize = (max - min) / double(binsN);
