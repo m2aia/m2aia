@@ -15,9 +15,8 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-
 #include <mitkLabelSetImage.h>
-
+#include <type_traits>
 
 namespace m2
 {
@@ -87,7 +86,6 @@ namespace m2
   };
 
   /// m2Utils
-  
 
   const auto Find = [](const auto &str, const auto &searchString, auto defaultValue) {
     auto p = str.find(searchString);
@@ -98,7 +96,11 @@ namespace m2
       auto val = str.substr(s + 1, e - s - 1);
       std::istringstream buffer(val);
       decltype(defaultValue) converted;
-      buffer >> converted;
+      if (std::is_same<decltype(defaultValue), bool>::value)
+        buffer >> std::boolalpha >> converted;      
+      else
+        buffer >> converted;
+      
       MITK_INFO << searchString << " " << converted;
       return converted;
     }
