@@ -16,6 +16,7 @@ if(BUILD_M2aiaCLI_Export OR MITK_BUILD_ALL_APPS)
     NLinkedGlycan^^
     ImzMLConverter^^
     PeakPicking^^
+    MsImageRegistration^^MitkMatchPointRegistration
     )
 
   foreach(m2cli_export_app ${m2cli_export_apps})
