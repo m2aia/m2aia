@@ -107,10 +107,13 @@ mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage()
   return nullptr;
 }
 
-void m2::SpectrumImageBase::GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
+void m2::SpectrumImageBase::UpdateImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
   GenerateImageStart.Send();
-  m_Processor->CreateIonImagePrivate(mz, tol, mask, img);
+  m_Processor->UpdateImagePrivate(mz, tol, mask, img);
+
+  // transform
+
   GenerateImageEnd.Send();
 }
 

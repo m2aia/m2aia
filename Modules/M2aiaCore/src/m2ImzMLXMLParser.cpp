@@ -78,7 +78,7 @@ void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
   std::unordered_map<std::string, std::function<void(const std::string &)>> accession_map;
   std::unordered_map<std::string, std::function<void(const std::string &)>> context_map;
 
-  for (auto &source : data->GetSpectrumImageSourceList())
+  for (auto &source : data->GetImzMLSpectrumImageSourceList())
   {
     f.open((source.m_ImzMLDataPath), std::ios_base::binary);
 
@@ -480,7 +480,7 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
   std::unordered_map<std::string, std::function<void(const std::string &)>> accession_map;
   std::unordered_map<std::string, std::function<void(const std::string &)>> context_map;
-  for (auto &source : data->GetSpectrumImageSourceList())
+  for (auto &source : data->GetImzMLSpectrumImageSourceList())
   {
     f.open((source.m_ImzMLDataPath), std::ios_base::binary);
 

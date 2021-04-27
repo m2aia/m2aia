@@ -69,17 +69,15 @@ namespace m2
     SpectrumVectorType m_Spectra;
     m2::SpectrumFormatType m_ImportMode = m2::SpectrumFormatType::ContinuousProfile;
     using m2::SpectrumImageBase::InternalClone;
-    template <class MassAxisType, class IntensityType>
-
-    class FsmProcessor;
     bool m_ImageAccessInitialized = false;
     bool m_ImageGeometryInitialized = false;
 
     FsmSpectrumImage();
     ~FsmSpectrumImage() override;
+    class FsmProcessor;
   };
 
-  template <class MassAxisType, class IntensityType>
+  
   class FsmSpectrumImage::FsmProcessor : public m2::SpectrumImageBase::ProcessorBase
   {
   private:
@@ -88,7 +86,7 @@ namespace m2
 
   public:
     explicit FsmProcessor(m2::FsmSpectrumImage *owner) : p(owner) {}
-    void CreateIonImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) const override;
+    void UpdateImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) const override;
     void GrabIntensityPrivate(unsigned long int index,
                               std::vector<double> &ints,
                               unsigned int sourceIndex = 0) const override;

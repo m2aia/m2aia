@@ -42,7 +42,7 @@ namespace m2
 	void SpectrumImageNodeAdded(const mitk::DataNode *);
     
 	void RangeChanged(qreal, qreal);
-    void GenerateImageData(qreal, qreal);
+    void UpdateImage(qreal, qreal);
 	
 	void OverviewSpectrumChanged(const mitk::DataNode *, m2::OverviewSpectrumType);
 	

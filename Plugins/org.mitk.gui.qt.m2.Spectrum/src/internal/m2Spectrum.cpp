@@ -394,7 +394,7 @@ void m2Spectrum::OnMouseRelease(QPoint pos, qreal mz, qreal intValue, Qt::MouseB
     const auto mz = (m_SelectedAreaEndX + m_SelectedAreaStartX) * 0.5;
     const auto tol = std::abs(m_SelectedAreaEndX - m_SelectedAreaStartX) * 0.5;
 
-    emit m2::CommunicationService::Instance()->GenerateImageData(mz, tol);
+    emit m2::CommunicationService::Instance()->UpdateImage(mz, tol);
   }
   m_RangeSelectionStarted = false;
   m_Controls.chartView->setRubberBand(QtCharts::QChartView::RubberBand::NoRubberBand);
@@ -420,7 +420,7 @@ void m2Spectrum::OnMouseDoubleClick(
   }
   else
   {
-    emit m2::CommunicationService::Instance()->GenerateImageData(mz, -1);
+    emit m2::CommunicationService::Instance()->UpdateImage(mz, -1);
   }
 }
 

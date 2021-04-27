@@ -35,8 +35,6 @@ namespace m2
     using BinaryDataOffsetType = unsigned long long;
     using BinaryDataLengthType = unsigned long;
 
-    void GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
-
     /**
      * @brief The BinarySpectrumMetaData structure holds meta data for a single spectrum.
      *
@@ -57,27 +55,34 @@ namespace m2
       m2::NormImagePixelType normalize = -1.0;
       std::vector<m2::MassValue> peaks;
     };
-
     using SpectrumVectorType = std::vector<BinarySpectrumMetaData>;
 
     /**
-     * @brief The Source structure represent the meta information of an imzML-file.
+     * @brief The ImzMLImageSource structure represent the meta information of an imzML-file.
      */
-    struct Source
+    struct ImzMLImageSource
     {
-      std::string m_ImzMLDataPath;
+      std::string m_ImzMLDataPath; 
       std::string m_BinaryDataPath;
-      std::string _MaskDataPath;
-      std::string _PointsDataPath;
+      std::string m_MaskDataPath;
+      std::string m_PointsDataPath;
+	  
+	  // For each spectrum in the image exists a meta data object
       SpectrumVectorType m_Spectra;
-      itk::Offset<3> _offset = {0, 0, 0};
-    };
-    using SourceListType = std::vector<Source>;
 
-    SourceListType &GetSpectrumImageSourceList() noexcept { return m_SourcesList; }
-    const SourceListType &GetSpectrumImageSourceList() const noexcept { return m_SourcesList; }
-    Source &GetSpectrumImageSource(unsigned int i = 0);
-    const Source &GetSpectrumImageSource(unsigned int i = 0) const;
+	  // Pixel data of each image source is placed with respect to this offset
+	  // Currentlz it is used by the Combine method
+      itk::Offset<3> m_Offset = {0, 0, 0};
+
+	  // Transformations are applied if available using elastix transformix
+      std::vector<std::string> m_Transformations;
+    };
+    using SourceListType = std::vector<ImzMLImageSource>;
+
+    SourceListType &GetImzMLSpectrumImageSourceList() noexcept { return m_SourcesList; }
+    const SourceListType &GetImzMLSpectrumImageSourceList() const noexcept { return m_SourcesList; }
+    ImzMLImageSource &GetImzMLSpectrumImageSource(unsigned int i = 0);
+    const ImzMLImageSource &GetImzMLSpectrumImageSource(unsigned int i = 0) const;
 
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
@@ -96,7 +101,7 @@ namespace m2
   private:
     using m2::SpectrumImageBase::InternalClone;
     template <class MassAxisType, class IntensityType>
-    class ImzMLProcessor;
+    class ImzMLImageProcessor;
 
     SourceListType m_SourcesList;
 
@@ -108,15 +113,15 @@ namespace m2
   };
 
   template <class MassAxisType, class IntensityType>
-  class ImzMLSpectrumImage::ImzMLProcessor : public ImzMLSpectrumImage::ProcessorBase
+  class ImzMLSpectrumImage::ImzMLImageProcessor : public ImzMLSpectrumImage::ProcessorBase
   {
   private:
     friend class ImzMLSpectrumImage;
     m2::ImzMLSpectrumImage *p;
 
   public:
-    explicit ImzMLProcessor(m2::ImzMLSpectrumImage *owner) : p(owner) {}
-    void CreateIonImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) const override;
+    explicit ImzMLImageProcessor(m2::ImzMLSpectrumImage *owner) : p(owner) {}
+    void UpdateImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) const override;
     void GrabIntensityPrivate(unsigned long int index,
                               std::vector<double> &ints,
                               unsigned int sourceIndex = 0) const override;

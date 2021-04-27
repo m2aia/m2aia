@@ -66,7 +66,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
   // 20201023: use communciation service
   auto serviceRef = m2::CommunicationService::Instance();
-  connect(serviceRef, SIGNAL(GenerateImageData(qreal, qreal)), this, SLOT(OnGenerateImageData(qreal, qreal)));
+  connect(serviceRef, SIGNAL(UpdateImage(qreal, qreal)), this, SLOT(OnGenerateImageData(qreal, qreal)));
   connect(serviceRef,
           SIGNAL(RequestProcessingNodes(const QString &)),
           this,
@@ -818,12 +818,12 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
           auto geom = data->GetGeometry()->Clone();
           auto image = mitk::Image::New();
           image->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), *geom);
-          data->GenerateImageData(xRangeCenter, xRangeTol, maskImage, image);
+          data->UpdateImage(xRangeCenter, xRangeTol, maskImage, image);
           return image;
         }
         else
         {
-          data->GenerateImageData(xRangeCenter, xRangeTol, maskImage, data);
+          data->UpdateImage(xRangeCenter, xRangeTol, maskImage, data);
           mitk::Image::Pointer imagePtr = data.GetPointer();
           return imagePtr;
         }

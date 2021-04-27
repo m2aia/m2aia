@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
       const auto &xValues = imzMLImage->GetXAxis();
       int sourceId = 0;
 
-      for (auto &source : imzMLImage->GetSpectrumImageSourceList())
+      for (auto &source : imzMLImage->GetImzMLSpectrumImageSourceList())
       {
         MITK_INFO << "Start peak picking for " << source.m_Spectra.size() << " spectra...";
         boost::progress_display show_progress(source.m_Spectra.size());

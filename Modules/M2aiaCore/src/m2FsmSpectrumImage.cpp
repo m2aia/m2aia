@@ -28,11 +28,10 @@ See LICENSE.txt for details.
 #include <mitkProperties.h>
 #include <mitkTimer.h>
 
-template <class XAxisType, class IntensityType>
-void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::CreateIonImagePrivate(double cmInv,
-                                                                                         double tol,
-                                                                                         const mitk::Image *mask,
-                                                                                         mitk::Image *destImage) const
+void m2::FsmSpectrumImage::FsmProcessor::UpdateImagePrivate(double cmInv,
+                                                               double tol,
+                                                               const mitk::Image *mask,
+                                                               mitk::Image *destImage) const
 {
   AccessByItk(destImage, [](auto itkImg) { itkImg->FillBuffer(0); });
   using namespace m2;
@@ -57,7 +56,7 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::CreateIonImag
   p->GetMetaDataDictionary()["cm^-1"] = mdMz;
   p->GetMetaDataDictionary()["tol"] = mdTol;
 
-  std::vector<XAxisType> xs = p->GetXAxis();
+  const auto &xs = p->GetXAxis();
   std::vector<double> kernel;
 
   // Profile (continuous) spectrum
@@ -68,22 +67,11 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::CreateIonImag
   const unsigned t = p->GetNumberOfThreads();
 
   m2::Process::Map(n, t, [&](auto /*id*/, auto a, auto b) {
-    const auto Smoother =
-      m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
-
-    auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
-      p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
-
-    const auto Normalizor = m2::Signal::CreateNormalizor<IntensityType, XAxisType>(p->GetNormalizationStrategy());
-
-    std::vector<IntensityType> ys(xs.size());
-
-    const auto &m_Spectra = p->GetSpectra();
+    auto &spectra = p->GetSpectra();
     for (unsigned int i = a; i < b; ++i)
     {
-      const auto &spectrum = m_Spectra[i];
-      std::copy(std::cbegin(spectrum.data), std::cend(spectrum.data), std::begin(ys));
-
+      auto &spectrum = spectra[i];
+      auto &ys = spectrum.data;
       auto s = std::next(std::begin(ys), subRes.first);
       auto e = std::next(std::begin(ys), subRes.first + subRes.second);
 
@@ -93,18 +81,7 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::CreateIonImag
         continue;
       }
 
-      // if a normalization image exist, apply normalization before any further calculations are performed
-      if (_NormalizationStrategy != m2::NormalizationStrategyType::None)
-      {
-        IntensityType norm = normAccess.GetPixelByIndex(spectrum.index);
-        std::transform(std::begin(ys), std::end(ys), std::begin(ys), [&norm](auto &v) { return v / norm; });
-      }
-
-      Smoother(ys);
-      BaselineSubstractor(ys);
-
-      auto val = Signal::RangePooling<IntensityType>(s, e, p->GetRangePoolingStrategy());
-
+      const auto val = Signal::RangePooling<float>(s, e, p->GetRangePoolingStrategy());
       imageAccess.SetPixelByIndex(spectrum.index, val);
     }
   });
@@ -112,7 +89,7 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::CreateIonImag
 
 void m2::FsmSpectrumImage::InitializeProcessor()
 {
-  this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new FsmProcessor<double, float>(this));
+  this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new FsmProcessor(this));
 }
 
 void m2::FsmSpectrumImage::InitializeGeometry()
@@ -129,8 +106,7 @@ void m2::FsmSpectrumImage::InitializeImageAccess()
   this->SetImageAccessInitialized(true);
 }
 
-template <class XAxisType, class IntensityType>
-void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeGeometry()
+void m2::FsmSpectrumImage::FsmProcessor::InitializeGeometry()
 {
   auto &imageArtifacts = p->GetImageArtifacts();
 
@@ -238,8 +214,7 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeGeo
   acc.SetPixelByIndex({max_dim0 - 1, max_dim1 - 1, 0}, max_dim1 + max_dim0);
 }
 
-template <class XAxisType, class IntensityType>
-void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeImageAccess()
+void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
 {
   using namespace m2;
 
@@ -247,7 +222,7 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
   auto accIndex = std::make_shared<mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3>>(p->GetIndexImage());
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
 
-  std::vector<XAxisType> xs = p->GetXAxis();
+  auto &xs = p->GetXAxis();
 
   // ----- PreProcess -----
 
@@ -267,19 +242,17 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
 
   m2::Process::Map(
     p->GetSpectra().size(), p->GetNumberOfThreads(), [&](unsigned int t, unsigned int a, unsigned int b) {
-      const auto Smoother =
-        m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
+      auto Smoother =
+        m2::Signal::CreateSmoother<float>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
 
-      auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
+      auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<float>(
         p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
-      const auto Normalizor = m2::Signal::CreateNormalizor<XAxisType, IntensityType>(p->GetNormalizationStrategy());
+      auto Normalizor = m2::Signal::CreateNormalizor<double, float>(p->GetNormalizationStrategy());
 
-      IntensityType val = 1;
-      std::vector<IntensityType> ys(xs.size(), 0);
-      std::vector<IntensityType> baseline(xs.size(), 0);
+      float val = 1;
 
-      const auto &spectra = p->GetSpectra();
+      auto &spectra = p->GetSpectra();
 
       const auto divides = [&val](const auto &a) { return a / val; };
       const auto maximum = [](const auto &a, const auto &b) { return a > b ? a : b; };
@@ -287,7 +260,8 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
 
       for (unsigned long int i = a; i < b; i++)
       {
-        const auto &spectrum = spectra[i];
+        auto &spectrum = spectra[i];
+        auto &ys = spectrum.data;
         if (p->GetUseExternalMask())
         {
           auto v = accMask->GetPixelByIndex(spectrum.index);
@@ -295,7 +269,7 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
             continue;
         }
 
-        std::copy(std::begin(spectra[i].data), std::end(spectra[i].data), std::begin(ys));
+        // std::copy(std::begin(spectra[i].data), std::end(spectra[i].data), std::begin(ys));
 
         if (p->GetUseExternalNormalization())
         {
@@ -306,8 +280,8 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
         else
         {
           accNorm->SetPixelByIndex(spectrum.index, 1);
-          // val = Normalizor(xs, ys, accNorm->GetPixelByIndex(spectrum.index + source._offset));
-          // accNorm->SetPixelByIndex(spectrum.index + source._offset, val); // Set normalization image pixel value
+          // val = Normalizor(xs, ys, accNorm->GetPixelByIndex(spectrum.index + source.m_Offset));
+          // accNorm->SetPixelByIndex(spectrum.index + source.m_Offset, val); // Set normalization image pixel value
         }
 
         Smoother(ys);
@@ -355,39 +329,20 @@ void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::InitializeIma
   std::transform(sum.begin(), sum.end(), mean.begin(), [&N](const auto &a) { return a / double(N); });
 }
 
-template <class XAxisType, class IntensityType>
-void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabIntensityPrivate(unsigned long int index,
-                                                                                        std::vector<double> &ys,
-                                                                                        unsigned int) const
+void m2::FsmSpectrumImage::FsmProcessor::GrabIntensityPrivate(unsigned long int index,
+                                                              std::vector<double> &ys,
+                                                              unsigned int) const
 {
   mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> normAcc(p->GetNormalizationImage());
 
   const auto &spectrum = p->GetSpectra()[index];
-  // const auto kernel = m2::Signal::savitzkyGolayKernel(p->m_SmoothingHalfWindowSize, 3);
-
   ys.clear();
   std::copy(std::begin(spectrum.data), std::end(spectrum.data), std::back_inserter(ys));
-
-  double d;
-  auto divide = [&d](auto &val) { return val / d; };
-  auto Smoother = m2::Signal::CreateSmoother<double>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
-  auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<double>(
-    p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
-
-  if (p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None)
-  {
-    d = normAcc.GetPixelByIndex(spectrum.index);
-    std::transform(ys.begin(), ys.end(), ys.begin(), divide);
-  }
-
-  Smoother(ys);
-  BaselineSubstractor(ys);
 }
 
-template <class XAxisType, class IntensityType>
-void m2::FsmSpectrumImage::FsmProcessor<XAxisType, IntensityType>::GrabMassPrivate(unsigned long int,
-                                                                                   std::vector<double> &mzs,
-                                                                                   unsigned int) const
+void m2::FsmSpectrumImage::FsmProcessor::GrabMassPrivate(unsigned long int,
+                                                         std::vector<double> &mzs,
+                                                         unsigned int) const
 {
   mzs.clear();
   std::copy(std::begin(p->GetXAxis()), std::end(p->GetXAxis()), std::back_inserter(mzs));

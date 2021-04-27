@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     imzMLImage->SetXOutputType(static_cast<m2::NumericType>(mzs_type));
 
     if (mz > 0)
-      imzMLImage->GenerateImageData(mz, 10e-6 * tol * mz, nullptr, imzMLImage);
+      imzMLImage->UpdateImage(mz, 10e-6 * tol * mz, nullptr, imzMLImage);
 
     
 

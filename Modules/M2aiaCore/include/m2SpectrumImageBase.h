@@ -54,9 +54,10 @@ namespace m2
     using SpectrumArtifactMapType = std::map<m2::OverviewSpectrumType, SpectrumArtifactVectorType>;
     using IonImageReferenceVectorType = std::vector<IonImageReference::Pointer>;
     using PeaksVectorType = std::vector<m2::MassValue>;
+    using TransformParameterVectorType = std::vector<std::string>;
 
     mitkClassMacro(SpectrumImageBase, mitk::Image);
-    //itkNewMacro(Self);
+    // itkNewMacro(Self);
 
     itkSetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
     itkGetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
@@ -96,8 +97,8 @@ namespace m2
 
     itkSetMacro(BinningTolerance, double);
     itkGetConstReferenceMacro(BinningTolerance, double);
-    
-	itkSetMacro(NumberOfBins, int);
+
+    itkSetMacro(NumberOfBins, int);
     itkGetConstReferenceMacro(NumberOfBins, int);
 
     itkSetMacro(Tolerance, double);
@@ -117,6 +118,10 @@ namespace m2
 
     itkGetMacro(IonImageReferenceVector, IonImageReferenceVectorType &);
     itkGetConstReferenceMacro(IonImageReferenceVector, IonImageReferenceVectorType);
+
+    itkGetMacro(Transformations, TransformParameterVectorType &);
+    itkGetConstReferenceMacro(Transformations, TransformParameterVectorType);
+    itkSetMacro(Transformations, TransformParameterVectorType);
 
     itkGetObjectMacro(CurrentIonImageReference, IonImageReference);
     itkGetConstObjectMacro(CurrentIonImageReference, IonImageReference);
@@ -155,7 +160,7 @@ namespace m2
                          std::vector<double> &mzs,
                          std::vector<double> &ints,
                          unsigned int sourceIndex = 0) const override;
-    void GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
+    void UpdateImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
 
     template <class T>
     void SetPropertyValue(const std::string &key, const T &value);
@@ -182,7 +187,7 @@ namespace m2
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
     unsigned int m_NumberOfThreads = 10;
-
+    TransformParameterVectorType m_Transformations;
     PeaksVectorType m_Peaks;
 
     ImageArtifactMapType m_ImageArtifacts;
@@ -205,7 +210,7 @@ namespace m2
 
     /**
      * @brief Information about the represented ion image distribution captured by this image instance.
-     * This property is updated by GenerateImageData.
+     * This property is updated by UpdateImage.
      *
      */
     IonImageReference::Pointer m_CurrentIonImageReference;
@@ -267,7 +272,7 @@ inline const T m2::SpectrumImageBase::GetPropertyValue(const std::string &key) c
 class m2::SpectrumImageBase::ProcessorBase
 {
 public:
-  virtual void CreateIonImagePrivate(double mz, double tol, const Image *mask, Image *image) const = 0;
+  virtual void UpdateImagePrivate(double mz, double tol, const Image *mask, Image *image) const = 0;
   virtual void GrabIntensityPrivate(unsigned long int index,
                                     std::vector<double> &ints,
                                     unsigned int sourceIndex = 0) const = 0;

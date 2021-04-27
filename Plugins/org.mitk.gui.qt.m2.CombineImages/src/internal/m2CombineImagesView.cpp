@@ -101,8 +101,8 @@ void m2CombineImagesView::CombineImages()
       {
 		  name += "\n" + node->GetName();
         auto image = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData());
-        auto source = imageC->GetSpectrumImageSourceList()[sourceIndex++];
-        auto offset = source._offset;
+        auto source = imageC->GetImzMLSpectrumImageSourceList()[sourceIndex++];
+        auto offset = source.m_Offset;
         mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3> accMaskSource(image->GetMaskImage());
         mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> accNormSource(image->GetNormalizationImage());
         for (unsigned z = 0; z < image->GetDimensions()[2]; ++z)
