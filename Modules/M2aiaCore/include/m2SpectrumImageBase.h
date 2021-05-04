@@ -121,7 +121,7 @@ namespace m2
 
     itkGetMacro(Transformations, TransformParameterVectorType &);
     itkGetConstReferenceMacro(Transformations, TransformParameterVectorType);
-    itkSetMacro(Transformations, TransformParameterVectorType);
+    void SetTransformations(const TransformParameterVectorType &v) { m_Transformations = v; }
 
     itkGetObjectMacro(CurrentIonImageReference, IonImageReference);
     itkGetConstObjectMacro(CurrentIonImageReference, IonImageReference);
@@ -184,10 +184,13 @@ namespace m2
     bool m_UseExternalIndices = false;
     bool m_UseExternalNormalization = false;
 
+    // if UseTransformationsOn()
+    bool m_UseTransformations = true;
+    TransformParameterVectorType m_Transformations;
+
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
     unsigned int m_NumberOfThreads = 10;
-    TransformParameterVectorType m_Transformations;
     PeaksVectorType m_Peaks;
 
     ImageArtifactMapType m_ImageArtifacts;

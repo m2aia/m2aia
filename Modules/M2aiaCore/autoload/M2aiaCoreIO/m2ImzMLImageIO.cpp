@@ -140,7 +140,7 @@ namespace m2
   {
     const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
 
-    MITK_INFO << "Source list size " << sourceList.size();
+    MITK_INFO << "ImzMLImageSource list size " << sourceList.size();
     std::vector<double> mzs;
     std::vector<double> ints;
 
@@ -442,7 +442,7 @@ namespace m2
       // updated based on the save mode.
       // mz and ints meta data is manipuulated to write a correct imzML xml structure
       // copy of sources is discared after writing
-      m2::ImzMLSpectrumImage::SourceListType sourceCopy(input->GetSpectrumImageSourceList());
+      m2::ImzMLSpectrumImage::SourceListType sourceCopy(input->GetImzMLSpectrumImageSourceList());
       std::string sha1;
       switch (input->GetExportMode())
       {
@@ -559,7 +559,7 @@ namespace m2
       context["origin z"] = std::to_string(input->GetGeometry()->GetOrigin()[2] * 1e3);
 
       context["run_id"] = std::to_string(0);
-      const auto &sources = input->GetSpectrumImageSourceList();
+      const auto &sources = input->GetImzMLSpectrumImageSourceList();
       auto N = std::accumulate(
         std::begin(sources), std::end(sources), unsigned(0), [](auto s, auto v) { return s + v.m_Spectra.size(); });
       context["num_spectra"] = std::to_string(N);
@@ -581,9 +581,9 @@ namespace m2
         boost::progress_display show_progress(source.m_Spectra.size());
         for (auto &s : source.m_Spectra)
         {
-          auto x = s.index[0] + source._offset[0] + 1; // start by 1
-          auto y = s.index[1] + source._offset[1] + 1; // start by 1
-          auto z = s.index[2] + source._offset[2] + 1; // start by 1
+          auto x = s.index[0] + source.m_Offset[0] + 1; // start by 1
+          auto y = s.index[1] + source.m_Offset[1] + 1; // start by 1
+          auto z = s.index[2] + source.m_Offset[2] + 1; // start by 1
 
           context = {{"index", std::to_string(id++)},
                      {"x", std::to_string(x)},
@@ -598,9 +598,9 @@ namespace m2
 
           auto nonConst_input = const_cast<m2::ImzMLSpectrumImage *>(input);
           mitk::ImagePixelReadAccessor<m2::NormImagePixelType> nacc(nonConst_input->GetNormalizationImage());
-          if (nacc.GetPixelByIndex(s.index + source._offset) != 1)
+          if (nacc.GetPixelByIndex(s.index + source.m_Offset) != 1)
           {
-            context["tic"] = std::to_string(nacc.GetPixelByIndex(s.index + source._offset));
+            context["tic"] = std::to_string(nacc.GetPixelByIndex(s.index + source.m_Offset));
           }
           f << m2::TemplateEngine::render(view, context);
           f.flush();
@@ -640,10 +640,10 @@ namespace m2
     if (!itksys::SystemTools::FileExists(pathWithoutExtension + ".ibd"))
       mitkThrow() << "No such file " << pathWithoutExtension;
 
-    m2::ImzMLSpectrumImage::Source source;
+    m2::ImzMLSpectrumImage::ImzMLImageSource source;
     source.m_ImzMLDataPath = this->GetInputLocation();
     source.m_BinaryDataPath = pathWithoutExtension + ".ibd";
-    object->GetSpectrumImageSourceList().emplace_back(source);
+    object->GetImzMLSpectrumImageSourceList().emplace_back(source);
 
     object->SetImportMode(SpectrumFormatType::None);
     {
@@ -692,20 +692,20 @@ namespace m2
     auto pathWithoutExtension = this->GetInputLocation();
     itksys::SystemTools::ReplaceString(pathWithoutExtension, ".imzML", "");
 
-    auto source = object->GetSpectrumImageSource();
+    auto source = object->GetImzMLSpectrumImageSource();
 
     if (itksys::SystemTools::FileExists(pathWithoutExtension + ".nrrd"))
     {
-      source._MaskDataPath = pathWithoutExtension + ".nrrd";
-      auto data = mitk::IOUtil::Load(source._MaskDataPath).at(0);
+      source.m_MaskDataPath = pathWithoutExtension + ".nrrd";
+      auto data = mitk::IOUtil::Load(source.m_MaskDataPath).at(0);
       object->GetImageArtifacts()["mask"] = dynamic_cast<mitk::Image *>(data.GetPointer());
       object->UseExternalMaskOn();
     }
 
     if (itksys::SystemTools::FileExists(pathWithoutExtension + ".mps"))
     {
-      source._PointsDataPath = pathWithoutExtension + ".mps";
-      auto data = mitk::IOUtil::Load(source._PointsDataPath).at(0);
+      source.m_PointsDataPath = pathWithoutExtension + ".mps";
+      auto data = mitk::IOUtil::Load(source.m_PointsDataPath).at(0);
       object->GetImageArtifacts()["references"] = dynamic_cast<mitk::PointSet *>(data.GetPointer());
     }
   }

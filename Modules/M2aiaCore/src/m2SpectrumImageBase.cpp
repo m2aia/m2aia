@@ -111,9 +111,6 @@ void m2::SpectrumImageBase::UpdateImage(double mz, double tol, const mitk::Image
 {
   GenerateImageStart.Send();
   m_Processor->UpdateImagePrivate(mz, tol, mask, img);
-
-  // transform
-
   GenerateImageEnd.Send();
 }
 
