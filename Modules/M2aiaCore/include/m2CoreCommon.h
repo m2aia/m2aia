@@ -91,8 +91,19 @@ namespace m2
     auto p = str.find(searchString);
     if (p != std::string::npos)
     {
-      auto s = str.find(" ", p);
-      auto e = str.find(")", p);
+      char begin = '"';
+      char end = '"';
+      auto s = p;
+      s = str.find(begin, p);
+      if (s == std::string::npos)
+      {
+        begin = ' ';
+        end = ')';
+        s = str.find(begin, p);
+      }
+
+      
+      auto e = str.find(end, p);
       auto val = str.substr(s + 1, e - s - 1);
       std::istringstream buffer(val);
       decltype(defaultValue) converted;
