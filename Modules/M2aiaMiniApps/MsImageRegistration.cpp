@@ -16,14 +16,25 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <algorithm>
 #include <boost/progress.hpp>
+#include <itksys/SystemTools.hxx>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2Process.hpp>
+#include <mapDeploymentDLLAccess.h>
+#include <mapDeploymentDLLDirectoryBrowser.h>
+#include <mapDeploymentDLLHandle.h>
+#include <mapDeploymentDLLInfo.h>
+#include <mapRegistration.h>
 #include <mitkCommandLineParser.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
+#include <mitkImage3DSliceToImage2DFilter.h>
+#include <mitkImageMappingHelper.h>
+#include <mitkMAPAlgorithmHelper.h>
+#include <mitkMAPRegistrationWrapper.h>
 #include <mutex>
 #include <numeric>
 #include <stdlib.h>
+
 
 std::map<std::string, us::Any> CommandlineParsing(int argc, char *argv[]);
 
@@ -34,21 +45,7 @@ int main(int argc, char *argv[])
   auto ifs = std::ifstream(argsMap["parameterfile"].ToString());
   std::string params(std::istreambuf_iterator<char>{ifs}, {}); // read whole file
 
-  auto image = mitk::IOUtil::Load(argsMap["fixed"].ToString()).front();
-
-  for (auto kv : argsMap)
-  {
-    MITK_INFO << kv.first << " " << kv.second.ToString();
-  }
-  if (auto sImage = dynamic_cast<m2::SpectrumImageBase *>(image.GetPointer()))
-  {
-    if (sImage->GetImportMode() != m2::SpectrumFormatType::ContinuousProfile)
-    {
-      MITK_ERROR << "Only imzML files in continuous profile mode are accepted!";
-      return 1;
-    }
-    /*int bc_strategy, bc_hws, sm_strategy, sm_hws, int_type, mzs_type;
-    float binning_tol, centroids_tol, mz, tol;*/
+  auto GetIonImage = [&params](auto sImage) -> mitk::Image::Pointer {
     using namespace std::string_literals;
     const auto bsc_s = m2::Find(params, "baseline-correction", "None"s);
     const auto bsc_hw = m2::Find(params, "baseline-correction-hw", int(50));
@@ -87,8 +84,70 @@ int main(int argc, char *argv[])
     auto i1 = sImage->Clone();
     sImage->UpdateImage(x_center, x_tol, nullptr, i1);
 
-   
-    mitk::IOUtil::Save(i1, argsMap["output"].ToString()+"/test.nrrd");
+    auto filter = mitk::Image3DSliceToImage2DFilter::New();
+    filter->SetInput(i1);
+    filter->Update();
+
+    return filter->GetOutput();
+  };
+
+  mitk::Image::Pointer f =
+    dynamic_cast<mitk::Image *>(mitk::IOUtil::Load(argsMap["fixed"].ToString()).front().GetPointer());
+  mitk::Image::Pointer m =
+    dynamic_cast<mitk::Image *>(mitk::IOUtil::Load(argsMap["moving"].ToString()).front().GetPointer());
+
+  if (f && m)
+  {
+    /*auto f = GetIonImage(fixed);
+    auto m = GetIonImage(moving);
+    auto s = f->GetGeometry()->GetSpacing();
+    s[0] = 1.0;
+    s[1] = 1.0;
+    s[2] = 1.0;
+    f->GetGeometry()->SetSpacing(s);
+
+    s = m->GetGeometry()->GetSpacing();
+    s[0] = 1.0;
+    s[1] = 1.0;
+    s[2] = 1.0;
+    m->GetGeometry()->SetSpacing(s);
+
+    mitk::IOUtil::Save(f, argsMap["output"].ToString() + "/tfixed.nrrd");
+    mitk::IOUtil::Save(m, argsMap["output"].ToString() + "/tmoving.nrrd");*/
+    MITK_INFO << itksys::SystemTools::GetCurrentWorkingDirectory();
+    const auto searchPath = itksys::SystemTools::GetParentDirectory(argv[0]);
+    auto browser = map::deployment::DLLDirectoryBrowser::New();
+    for (std::string path : {searchPath})
+    {
+      browser->addDLLSearchLocation(path);
+    }
+
+    browser->update();
+    auto list = browser->getLibraryInfos();
+    auto algo = std::find_if(std::begin(list), std::end(list), [](decltype(list)::value_type v) {
+      return v->getAlgorithmUID().getName().find("MultiModal") != std::string::npos &&
+             v->getAlgorithmUID().getName().find("rigid") != std::string::npos;
+    });
+
+    MITK_INFO << (*algo)->getAlgorithmUID();
+
+    ::map::deployment::DLLHandle::Pointer tempDLLHandle =
+      ::map::deployment::openDeploymentDLL((*algo)->getLibraryFilePath());
+    ::map::algorithm::RegistrationAlgorithmBase::Pointer tempAlgorithm =
+      ::map::deployment::getRegistrationAlgorithm(tempDLLHandle);
+
+    mitk::MAPAlgorithmHelper helper(tempAlgorithm);
+    mitk::MAPAlgorithmHelper::CheckError::Type err;
+    if (helper.CheckData(m, f, err))
+    {
+      MITK_INFO << "Valid data! Start registration ...";
+      helper.SetData(m, f);
+      auto res = helper.GetMITKRegistrationWrapper();
+
+      auto resImage = mitk::ImageMappingHelper::map(m, res, false, 0, f->GetGeometry());
+      mitk::IOUtil::Save(resImage, argsMap["output"].ToString() + "warped.nrrd");
+      mitk::IOUtil::Save(res, argsMap["output"].ToString() + "warped.mapr");
+    }
   }
 }
 
