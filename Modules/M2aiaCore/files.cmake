@@ -16,6 +16,7 @@ set(H_FILES
   include/mitkImage2DToImage3DSliceFilter.h
   
   include/mitkTimer.h
+  include/m2TransformUtil.h
 
 )
 
