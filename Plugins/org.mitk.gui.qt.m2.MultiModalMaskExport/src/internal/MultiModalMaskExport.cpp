@@ -107,7 +107,7 @@ void MultiModalMaskExport::Export()
 
   helper->SetLowerMzBound(m_Controls.lowerBoundSpinBox->value());
   helper->SetUpperMzBound(m_Controls.upperBoundSpinBox->value());
-  helper->SetExportOption(m_Controls.exportFullSpectra->isChecked());
+  helper->SetExportOption(m_Controls.exportFullSpectra->isChecked(), m_Controls.exportBackground->isChecked());
 
   QString filename = QFileDialog::getSaveFileName(nullptr, tr("Save spectra"), "", tr("CSV (*.csv)"));
   helper->SetFilePath(filename.toStdString());
