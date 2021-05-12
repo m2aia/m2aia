@@ -1,0 +1,6 @@
+MITK_CREATE_MODULE_TESTS()
+
+
+#if(TARGET ${TESTDRIVER})
+#  mitk_use_modules(TARGET ${TESTDRIVER} PACKAGES Boost)
+#endif()

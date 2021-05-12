@@ -26,11 +26,13 @@ m2::ChartView::ChartView(QtCharts::QChart *chart, QWidget *parent)
   : QtCharts::QChartView(chart, parent), m_isTouching(false)
 {
   setRubberBand(QtCharts::QChartView::NoRubberBand);
+  setCursor(Qt::CrossCursor);
 }
 
 m2::ChartView::ChartView(QWidget *parent) : QtCharts::QChartView(parent), m_isTouching(false)
 {
   setRubberBand(QtCharts::QChartView::NoRubberBand);
+  setCursor(Qt::CrossCursor);
 }
 
 //void m2::ChartView::OnResize()
@@ -89,7 +91,7 @@ void m2::ChartView::mouseDoubleClickEvent(QMouseEvent *event)
   auto mods = QGuiApplication::keyboardModifiers();
 
   auto p = this->chart()->mapToValue(event->pos());
-  emit(mouseDoubleClick(p.x(), p.y(), event->button(), mods));
+  emit(mouseDoubleClick(event->pos(), p.x(), p.y(), event->button(), mods));
   event->accept();
 }
 
@@ -98,7 +100,7 @@ void m2::ChartView::wheelEvent(QWheelEvent *event)
   auto mods = QGuiApplication::keyboardModifiers();
 
   auto p = this->chart()->mapToValue(event->pos());
-  emit(mouseWheel(p.x(), p.y(), event->angleDelta().y(), mods));
+  emit(mouseWheel(event->pos(), p.x(), p.y(), event->angleDelta().y(), mods));
   QChartView::wheelEvent(event);
   event->accept();
 }
@@ -120,7 +122,7 @@ void m2::ChartView::mouseMoveEvent(QMouseEvent *event)
 //  QRectF plotArea = chart()->plotArea();
 
   auto p = this->chart()->mapToValue(event->pos());
-  emit(mouseMove(p.x(), p.y(), event->button(), mods));
+  emit(mouseMove(event->pos(), p.x(), p.y(), event->button(), mods));
 
   QChartView::mouseMoveEvent(event);
   event->accept();
@@ -131,7 +133,7 @@ void m2::ChartView::mousePressEvent(QMouseEvent *event)
 
   auto mods = QGuiApplication::keyboardModifiers();
   auto p = this->chart()->mapToValue(event->pos());
-  emit(mousePress(p.x(), p.y(), event->button(), mods));
+  emit(mousePress(event->pos(), p.x(), p.y(), event->button(), mods));
   QChartView::mousePressEvent(event);
   // event->accept();
 }
@@ -141,7 +143,7 @@ void m2::ChartView::mouseReleaseEvent(QMouseEvent *event)
   auto mods = QGuiApplication::keyboardModifiers();
 
   auto p = this->chart()->mapToValue(event->pos());
-  emit(mouseRelease(p.x(), p.y(), event->button(), mods));
+  emit(mouseRelease(event->pos(), p.x(), p.y(), event->button(), mods));
 
   QChartView::mouseReleaseEvent(event);
   event->accept();
@@ -202,7 +204,7 @@ void m2::ChartView::mouseReleaseEvent(QMouseEvent *event)
     emit(AlignSpectra(mz, tol));
   else if (mods.testFlag(Qt::AltModifier)) {
     emit(RangeSelectionUpdate(p.x()));
-    emit(GrabIonImage(mz, tol));
+    emit(GenerateImageData(mz, tol));
   }
   event->accept();
 }

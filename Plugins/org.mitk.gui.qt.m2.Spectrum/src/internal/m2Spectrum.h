@@ -20,7 +20,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "ui_m2Spectrum.h"
 #include <QmitkAbstractView.h>
 #include <berryISelectionListener.h>
-#include <m2MSImageBase.h>
+#include "m2Crosshair.h"
+#include <m2SpectrumImageBase.h>
 #include <m2SelectionProvider.h>
 #include <qlegendmarker.h>
 #include <qscatterseries.h>
@@ -42,37 +43,36 @@ class m2Spectrum : public QmitkAbstractView
 public:
   static const std::string VIEW_ID;
 
-
 protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
   void CreateQChartView();
   void CreateQchartViewMenu();
+  m2Crosshair *m_Crosshair;
 
   std::map<const mitk::DataNode *, QtCharts::QLineSeries *> m_PeakSeries;
   std::map<const mitk::DataNode *, std::map<m2::OverviewSpectrumType, QVector<QPointF>>> m_PeakTypeData;
 
   std::map<const mitk::DataNode *, QtCharts::QLineSeries *> m_LineSeries;
-  std::map<const mitk::DataNode *, std::map<m2::OverviewSpectrumType, std::vector<QVector<QPointF>>>> m_LineTypeLevelData;
+  std::map<const mitk::DataNode *, std::map<m2::OverviewSpectrumType, std::vector<QVector<QPointF>>>>
+    m_LineTypeLevelData;
   std::map<const mitk::DataNode *, unsigned> m_Level;
-  
+
   std::map<const mitk::DataNode *, QtCharts::QScatterSeries *> m_ScatterSeries;
-  
 
   void OnUpdateScatterSeries(const mitk::DataNode *);
   void UpdateLineSeriesWindow(const mitk::DataNode *);
+  void UpdateXAxisLabels(const mitk::DataNode *, bool remove = false);
   void UpdateZoomLevel(const mitk::DataNode *);
-  
 
   void SetDefaultLineSeriesStyle(QtCharts::QLineSeries *);
   void SetDefaultScatterSeriesStyle(QtCharts::QScatterSeries *);
 
   void CreateLevelData(const mitk::DataNode *node);
-  void CreatePeakData(const mitk::DataNode * node);
-  
+  void CreatePeakData(const mitk::DataNode *node);
 
   struct BiasedSereisContainer : public std::map<m2::OverviewSpectrumType, QtCharts::QXYSeries *>
   {
-    std::vector<double> MassAxis;
+    std::vector<double> GetXAxis;
     QColor Color = {0, 0, 0, 0};
   };
 
@@ -87,43 +87,41 @@ protected slots:
   void OnAxisXTicksChanged(int v);
   void OnAxisYTicksChanged(int v);
 
-  void OnMousePress(qreal x, qreal y, Qt::MouseButton button, Qt::KeyboardModifiers mod);
-  void OnMouseMove(qreal x, qreal y, Qt::MouseButton button, Qt::KeyboardModifiers mod);
-  void OnMouseRelease(qreal x, qreal y, Qt::MouseButton button, Qt::KeyboardModifiers mod);
-  void OnMouseDoubleClick(qreal x, qreal y, Qt::MouseButton button, Qt::KeyboardModifiers mod);
-  void OnMouseWheel(qreal x, qreal y, int angle, Qt::KeyboardModifiers mod);
+  void OnMousePress(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod);
+  void OnMouseMove(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod);
+  void OnMouseRelease(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod);
+  void OnMouseDoubleClick(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod);
+  void OnMouseWheel(QPoint pos, qreal mz, qreal intValue, int angle, Qt::KeyboardModifiers mod);
   void OnOverviewSpectrumChanged(const mitk::DataNode *node, m2::OverviewSpectrumType specType);
 
   void OnRangeChangedAxisX(qreal min, qreal max);
   void OnRangeChangedAxisY(qreal min, qreal max);
 
-
 protected:
-
-	unsigned int m_yAxisTicks = 4;
-	unsigned int m_xAxisTicks = 9;
+  unsigned int m_yAxisTicks = 4;
+  unsigned int m_xAxisTicks = 9;
 
   const std::unordered_map<mitk::DataNode *, BiasedSereisContainer> &GetDataAssociatedSeries()
   {
     return m_DataAssociatedSeriesMap;
   }
 
-  //template <typename SeriesType>
-  //inline void AddSerie(
+  // template <typename SeriesType>
+  // inline void AddSerie(
   //  mitk::DataNode *source,
   //  m2::OverviewSpectrumType spectrumType,
   //  bool reinitAxes,
   //  std::function<void(SeriesType *series)> seriesInitializer = [](SeriesType *) {},
   //  std::function<void(QList<QPointF> &, QPointF &p)> pointModifier = [](QList<QPointF> &v, QPointF &p) { v << p; });
 
-  //template <typename SeriesType>
-  //inline void AddAllSeries(
+  // template <typename SeriesType>
+  // inline void AddAllSeries(
   //  mitk::DataNode *source,
   //  bool reinitAxes,
   //  std::function<void(SeriesType *series)> seriesInitializer = [](SeriesType *) {},
   //  std::function<void(QList<QPointF> &, QPointF &p)> pointModifier = [](QList<QPointF> &v, QPointF &p) { v << p; });
 
-  //void ExclusiveShow(m2::OverviewSpectrumType type);
+  // void ExclusiveShow(m2::OverviewSpectrumType type);
   // void RemoveSeries(mitk::DataNode *source);
   // void UpdateSeries(mitk::DataNode *source);
 
@@ -143,11 +141,10 @@ protected:
 
   char m_StatusBarTextBuffer[500];
   double m_CurrentMousePosMz = 0;
-  double m_CurrentVisibleDataPoints=  0;
+  double m_CurrentVisibleDataPoints = 0;
 
-  m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Maximum;
+  m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Mean;
   bool m_CurrentOverviewSpectrumTypeChanged = false;
-
 
   // 20201023: custom selection service did not work as expected
   // m2::SelectionProvider::Pointer m_SelectionProvider;
@@ -193,7 +190,7 @@ protected:
   //	void GrabIonImages(qreal, qreal);
 
   // void OnAlignSpectra(qreal, qreal);
-  // void OnGrabIonImage(qreal, qreal);
+  // void OnGenerateImageData(qreal, qreal);
 private:
   QMenu *m_Menu;
   QAction *m_SpectrumSkyline;
@@ -207,15 +204,18 @@ private:
   QSlider *m_TickCountY;
   QtCharts::QValueAxis *m_xAxis;
   QtCharts::QValueAxis *m_yAxis;
+
+  QVector<QString> m_xAxisTitels;
+
 };
 
-//template <typename SeriesType>
-//void m2Spectrum::AddAllSeries(mitk::DataNode *source,
+// template <typename SeriesType>
+// void m2Spectrum::AddAllSeries(mitk::DataNode *source,
 //                              bool reinitAxes,
 //                              std::function<void(SeriesType *series)> seriesInitializer,
 //                              std::function<void(QList<QPointF> &, QPointF &p)> pointModifier)
 //{
-//  if (auto msiBase = dynamic_cast<m2::MSImageBase *>(source->GetData()))
+//  if (auto msiBase = dynamic_cast<m2::SpectrumImageBase *>(source->GetData()))
 //  {
 //    for (auto &&key_spec : msiBase->GetSpectraArtifacts())
 //    {
@@ -248,14 +248,14 @@ private:
 //  }
 //}
 //
-//template <typename SeriesType>
-//void m2Spectrum::AddSerie(mitk::DataNode *source,
+// template <typename SeriesType>
+// void m2Spectrum::AddSerie(mitk::DataNode *source,
 //                          m2::OverviewSpectrumType spectrumType,
 //                          bool reinitAxes,
 //                          std::function<void(SeriesType *series)> seriesInitializer,
 //                          std::function<void(QList<QPointF> &, QPointF &p)> pointModifier)
 //{
-//  if (auto msiBase = dynamic_cast<m2::MSImageBase *>(source->GetData()))
+//  if (auto msiBase = dynamic_cast<m2::SpectrumImageBase *>(source->GetData()))
 //  {
 //    auto &container = m_DataAssociatedSeriesMap[source];
 //
@@ -264,10 +264,10 @@ private:
 //
 //    SeriesType *series = new SeriesType();
 //    container[type] = series;
-//    container.MassAxis = msiBase->MassAxis();
+//    container.GetXAxis = msiBase->GetXAxis();
 //
 //    QList<QPointF> points;
-//    for (auto y = ints.cbegin(), x = msiBase->MassAxis().cbegin(); y != ints.end(); ++x, ++y)
+//    for (auto y = ints.cbegin(), x = msiBase->GetXAxis().cbegin(); y != ints.end(); ++x, ++y)
 //    {
 //      auto a = QPointF{*x, *y};
 //      pointModifier(points, a);

@@ -1,14 +1,16 @@
+set(MITK_MODULE_NAME_PREFIX "")
+
 MITK_CREATE_MODULE(
-  DEPENDS MitkCore MitkSegmentation
-  PACKAGE_DEPENDS
-    PRIVATE Boost Eigen
-)
+  DEPENDS MitkCore M2aiaSignalProcessing MitkMultilabel
+  )
 
-add_subdirectory(autoload/IO)
-
-#if(BUILD_TESTING)
-# add_subdirectory(Testing)
-#endif()
-
-
-configure_file(mitkM2aiaVersion.h.in ${MITK_BINARY_DIR}/mitkM2aiaVersion.h)
+  
+  add_subdirectory(autoload/M2aiaCoreIO)
+  
+  if(BUILD_TESTING)
+   add_subdirectory(Testing)
+  endif()
+  
+  
+  configure_file(mitkM2aiaVersion.h.in ${MITK_BINARY_DIR}/mitkM2aiaVersion.h)
+  

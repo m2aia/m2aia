@@ -24,8 +24,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryISelectionListener.h>
 #include <itkVectorContainer.h>
 #include <m2CommunicationService.h>
-#include <m2ImzMLMassSpecImage.h>
-#include <m2MSImageBase.h>
+#include <m2ImzMLSpectrumImage.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkColorBarAnnotation.h>
 #include <mitkColorSequenceRainbow.h>
 #include <mitkDataNode.h>
@@ -42,7 +42,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 */
 namespace mitk
 {
-  class ImzMLMassSpecImage;
+  class ImzMLSpectrumImage;
 }
 
 class QmitkMultiNodeSelectionWidget;
@@ -60,7 +60,7 @@ public:
   /**
    * @brief Get the Overview Spectrum Type object
    *
-   * @return MSImageBase::OverviewSpectrumType
+   * @return SpectrumImageBase::OverviewSpectrumType
    */
   m2::OverviewSpectrumType GetOverviewSpectrumType() { return m_CurrentOverviewSpectrumType; }
 
@@ -93,10 +93,10 @@ public:
    * Configures the I/O strategy state of a single MS image.
    * @param image A mass spectrometry image.
    */
-  void ApplySettingsToImage(m2::ImzMLMassSpecImage *image);
+  void ApplySettingsToImage(m2::SpectrumImageBase *image);
 
   m2::NormalizationStrategyType GuiToNormalizationStrategyType();
-  m2::IonImageGrabStrategyType GuiToIonImageGrabStrategyType();
+  m2::RangePoolingStrategyType GuiToRangePoolingStrategyType();
 
   m2::SmoothingType GuiToSmoothingStrategyType();
 
@@ -107,8 +107,8 @@ public slots:
   void OnEqualizeLW();
   void OnApplyTiling();
   void OnResetTiling();
-  void OnNextIonImage();
-  void OnPrevIonImage();
+  void OnCreateNextImage();
+  void OnCreatePrevImage();
   void OnProcessingNodesRequested(const QString &);
   void EmitIonImageReference();
 
@@ -120,7 +120,7 @@ public slots:
    * @param mz Center of the mass range window
    * @param tol Tolerance (tol) to control mass range window that is concidred.
    */
-  void OnGrabIonImage(qreal mz, qreal tol);
+  void OnGenerateImageData(qreal mz, qreal tol);
   void OnGrabIonImageFinished(mitk::DataNode * parent, mitk::Image * image);
 
 signals:
@@ -135,6 +135,10 @@ protected:
                                   const QList<mitk::DataNode::Pointer> &nodes) override;
   void UpdateLevelWindow(const mitk::DataNode *node);
   virtual void NodeAdded(const mitk::DataNode *node) override;
+  void OpenSlideImageNodeAdded(const mitk::DataNode *node);
+  void ImzMLImageNodeAdded(const mitk::DataNode *node);
+  void FsmImageNodeAdded(const mitk::DataNode *node);
+  void SpectrumImageNodeAdded(const mitk::DataNode *node);
   virtual void NodeRemoved(const mitk::DataNode *node) override;
   virtual void CreateQtPartControl(QWidget *parent) override;
   virtual void SetFocus() override {}
@@ -149,12 +153,12 @@ protected:
                                         const berry::ISelection::ConstPointer &selection);*/
 
   Ui::imsDataControls m_Controls;
+  QWidget * m_Parent = nullptr;
+
   QThreadPool m_pool;
   m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Maximum;
 
   m2::IonImageReference::Pointer m_IonImageReference;
-
-  mitk::ColorSequenceRainbow m_ColorSequence;
 
   /*!
    * Main element holding a list of DataNodes containing MassSpecBaseData objects.

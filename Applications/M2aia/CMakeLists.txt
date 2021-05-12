@@ -26,6 +26,7 @@ set(_plugins
   org.mitk.gui.qt.common
   org.mitk.gui.qt.stdmultiwidgeteditor
   org.mitk.gui.qt.datamanager
+  org.mitk.gui.qt.imagecropper
   org.mitk.gui.qt.measurementtoolbox
   org.mitk.gui.qt.segmentation
   org.mitk.gui_qt.multilabelsegmentation

@@ -2,11 +2,11 @@
 
 set(CPACK_PACKAGE_EXECUTABLES "MitkM2aia;M2aia")
 set(CPACK_PACKAGE_NAME "M2aia")
-set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "M2aia - Mass spectrometry imaging applications for interactive analysis in MITK.")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "M²aia - Mass spectrometry imaging applications for interactive analysis in MITK.")
 # Major version is the year of release
 set(CPACK_PACKAGE_VERSION_MAJOR "2021")
 # Minor version is the month of release
-set(CPACK_PACKAGE_VERSION_MINOR "01")
+set(CPACK_PACKAGE_VERSION_MINOR "03")
 # Patch versioning
 set(CPACK_PACKAGE_VERSION_PATCH "00")
 

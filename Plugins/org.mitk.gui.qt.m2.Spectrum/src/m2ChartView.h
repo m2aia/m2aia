@@ -43,11 +43,11 @@ namespace m2
 
   
   signals:
-    void mousePress(qreal x, qreal y, Qt::MouseButton button, Qt::KeyboardModifiers);
-    void mouseMove(qreal x, qreal y, Qt::MouseButton button, Qt::KeyboardModifiers);
-    void mouseRelease(qreal x, qreal y, Qt::MouseButton button, Qt::KeyboardModifiers);
-    void mouseDoubleClick(qreal x, qreal y, Qt::MouseButton button, Qt::KeyboardModifiers);
-    void mouseWheel(qreal x, qreal y, int angle, Qt::KeyboardModifiers);
+    void mousePress(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers);
+    void mouseMove(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers);
+    void mouseRelease(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers);
+    void mouseDoubleClick(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers);
+    void mouseWheel(QPoint pos, qreal mz, qreal intValue, int angle, Qt::KeyboardModifiers);
 
   protected:
 

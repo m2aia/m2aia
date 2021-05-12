@@ -15,13 +15,13 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <mitkImageToImageFilter.h>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 
 namespace mitk
 {
-  class MITKM2AIACORE_EXPORT Image3DSliceToImage2DFilter : public mitk::ImageToImageFilter
+  class M2AIACORE_EXPORT Image3DSliceToImage2DFilter : public mitk::ImageToImageFilter
   {
   public:
     mitkClassMacro(Image3DSliceToImage2DFilter, ImageToImageFilter);

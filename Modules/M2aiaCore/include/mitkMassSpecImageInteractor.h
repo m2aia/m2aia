@@ -20,7 +20,7 @@ See LICENSE.txt for details.
 #include "itkSmartPointer.h"
 #include "mitkCommon.h"
 #include "mitkDataInteractor.h"
-#include <MitkM2aiaCoreExports.h>
+#include <M2aiaCoreExports.h>
 #include <mitkDisplayInteractor.h>
 #include <mitkInteractionEvent.h>
 #include <mitkPointSet.h>
@@ -29,7 +29,7 @@ See LICENSE.txt for details.
 namespace mitk
 {
   // Inherit from DataInteratcor, this provides functionality of a state machine and configurable inputs.
-  class MITKM2AIACORE_EXPORT MSDataObjectInteractor : public DataInteractor
+  class M2AIACORE_EXPORT MSDataObjectInteractor : public DataInteractor
   {
   public:
     mitkClassMacro(MSDataObjectInteractor, DataInteractor) itkFactorylessNewMacro(Self) itkCloneMacro(Self)

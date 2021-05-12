@@ -17,6 +17,7 @@ See LICENSE.txt for details.
 #include <mitkImageAccessByItk.h>
 #include <mitkImageCast.h>
 
+
 void mitk::Image2DToImage3DSliceFilter::GenerateData()
 {
   auto input = this->GetInput();
@@ -63,5 +64,16 @@ void mitk::Image2DToImage3DSliceFilter::GenerateData()
     mitk::CastToMitkImage(outItk, out);
   };
 
-  AccessByItk_1(input, slice2Dto3DImageSlice, output);
+  auto pixelTypeName = input->GetPixelType().GetTypeAsString();
+  MITK_INFO << pixelTypeName;
+  if (pixelTypeName.compare("rgba (unsigned_char)") == 0)
+  {
+    itk::Image<itk::RGBAPixel<unsigned char>, 2>::Pointer in;
+    mitk::CastToItkImage(input, in);
+    slice2Dto3DImageSlice(in.GetPointer(), output);
+  }
+  else
+  {
+    AccessByItk_1(input, slice2Dto3DImageSlice, output);
+  }
 }
