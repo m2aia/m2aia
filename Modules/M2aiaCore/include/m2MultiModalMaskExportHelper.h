@@ -15,10 +15,9 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <MitkM2aiaCoreExports.h>
-
+#include <M2aiaCoreExports.h>
 #include <itkIndex.h>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkDataNode.h>
 #include <mitkImage.h>
 #include <mitkLabelSetImage.h>
@@ -26,16 +25,15 @@ See LICENSE.txt for details.
 #include <eigen3/Eigen/Dense>
 #include <iterator>
 #include <itkMacro.h>
-#include <m2ImzMLMassSpecImage.h>
-#include <m2PeakDetection.hpp>
-
-#include <mitkIOUtil.h>
+#include <m2ImzMLSpectrumImage.h>
+#include <m2PeakDetection.h>
+#include <mitkImageAccessByItk.h>
 #include <mitkImage.h>
 #include <mitkImageCast.h>
 #include <mitkImagePixelReadAccessor.h>
 namespace m2
 {
-  class MITKM2AIACORE_EXPORT MultiModalMaskExportHelper : public itk::LightObject
+  class M2AIACORE_EXPORT MultiModalMaskExportHelper : public itk::LightObject
   {
   public:
     mitkClassMacroItkParent(MultiModalMaskExportHelper, itk::LightObject);
@@ -68,11 +66,11 @@ namespace m2
     double m_LowerMzBound;
     double m_UpperMzBound;
 
-    void GetValidMzIndices(m2::MSImageBase::Pointer, std::vector<unsigned int> *);
+    void GetValidMzIndices(m2::SpectrumImageBase::Pointer, std::vector<unsigned int> *);
     void InitalizeLayerLabelMap(mitk::Image::Pointer, mitk::LabelSetImage::Pointer, unsigned int);
     void WriteSpectraToCsv(
-      m2::MSImageBase::Pointer, std::vector<unsigned int>, std::vector<unsigned int>, std::string, std::string);
-    void ExportMaskImage(mitk::Image::Pointer, m2::MSImageBase::Pointer);
+      m2::SpectrumImageBase::Pointer, std::vector<unsigned int>, std::vector<unsigned int>, std::string, std::string);
+    void ExportMaskImage(mitk::Image::Pointer, m2::SpectrumImageBase::Pointer);
 
     template <typename T, typename F>
     void IterateImageApplyLambda(F &&lambda, mitk::Image::Pointer mask, std::vector<T> * vector)

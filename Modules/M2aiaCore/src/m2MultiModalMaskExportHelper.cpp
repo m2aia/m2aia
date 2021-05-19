@@ -3,10 +3,11 @@
 #include <algorithm>
 #include <eigen3/Eigen/Dense>
 #include <iterator>
+#include <mitkImageAccessByItk.h>
 
-#include <m2ImzMLMassSpecImage.h>
-#include <m2PeakDetection.hpp>
-
+#include <m2ImzMLSpectrumImage.h>
+#include <m2PeakDetection.h>
+#include <m2Pooling.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
 #include <mitkImageCast.h>
@@ -79,7 +80,7 @@ void m2::MultiModalMaskExportHelper::InitalizeLayerLabelMap(mitk::Image::Pointer
                             3)
 }
 
-void WriteSpectraPeaksToCsv(m2::MSImageBase::Pointer msImage,
+void WriteSpectraPeaksToCsv(m2::SpectrumImageBase::Pointer msImage,
                             std::vector<unsigned int> indexValues,
                             std::string intensitiesFileName,
                             std::string massAxisFileName)
@@ -91,54 +92,24 @@ void WriteSpectraPeaksToCsv(m2::MSImageBase::Pointer msImage,
   for (auto imzlIndex : indexValues)
   {
     std::vector<double> intensities, mzs, intsMasked;
-    msImage->GrabSpectrum(imzlIndex, mzs, intensities);
+    msImage->ReceiveSpectrum(imzlIndex, mzs, intensities);
 
     for (auto p : massIndicesMask)
     {
       auto i = p.massAxisIndex;
       double val = 0;
-      if (msImage->GetMassPickingTolerance() == 0)
+      if (msImage->GetTolerance() == 0)
       {
         val = intensities[i];
       }
       else
       {
-        auto tol = msImage->GetMassPickingTolerance() * 10e-6 * mzs[i];
-        auto subRes = m2::Peaks::Subrange(mzs, mzs[i] - tol, mzs[i] + tol);
-        auto s = std::next(std::begin(intensities), subRes.first);
-        auto e = std::next(s, subRes.second);
-        switch (msImage->GetIonImageGrabStrategy())
-        {
-          case m2::IonImageGrabStrategyType::None:
-            break;
-          case m2::IonImageGrabStrategyType::Sum:
-            val = std::accumulate(s, e, double(0));
-            break;
-          case m2::IonImageGrabStrategyType::Mean:
-            val = std::accumulate(s, e, double(0)) / double(std::distance(s, e));
-            break;
-          case m2::IonImageGrabStrategyType::Maximum:
-            val = *std::max_element(s, e);
-            break;
-          case m2::IonImageGrabStrategyType::Median:
-          {
-            const unsigned int _N = std::distance(s, e);
-            double median = 0;
-            if ((_N % 2) == 0)
-            {
-              std::nth_element(s, s + _N * 0.5, e);
-              std::nth_element(s, s + _N * 0.5 + 1, e);
-              median = 0.5 * (*std::next(s, _N * 0.5) + *std::next(s, _N * 0.5 + 1));
-            }
-            else
-            {
-              std::nth_element(s, s + ((_N + 1) * 0.5), e);
-              median = 0.5 * (*std::next(s, _N * 0.5) + *std::next(s, _N * 0.5 + 1));
-            }
-            val = median;
-            break;
-          }
-        }
+        auto tol = msImage->GetTolerance() * 10e-6 * mzs[i];
+        auto subRes = m2::Signal::Subrange(mzs, mzs[i] - tol, mzs[i] + tol);
+        std::vector<double>::iterator s = std::next(std::begin(intensities), subRes.first);
+        std::vector<double>::iterator e = std::next(s, subRes.second);
+        auto poolingStrategy = msImage->GetRangePoolingStrategy();
+        val = m2::Signal::RangePooling<double>(s, e, poolingStrategy);
       }
       intsMasked.push_back(val);
     }
@@ -188,14 +159,14 @@ void WriteSpectraPeaksToCsv(m2::MSImageBase::Pointer msImage,
 }
 
 /*Get the indices of the mz values with respect to the mz bounds*/
-void m2::MultiModalMaskExportHelper::GetValidMzIndices(m2::MSImageBase::Pointer msImage,
+void m2::MultiModalMaskExportHelper::GetValidMzIndices(m2::SpectrumImageBase::Pointer msImage,
                                                        std::vector<unsigned int> *validIndices)
 {
   unsigned int counter = 0;
 
   if (m_UpperMzBound != m_LowerMzBound)
   {
-    for (auto mz : msImage->MassAxis())
+    for (auto mz : msImage->GetXAxis())
     {
       if (mz <= m_UpperMzBound && mz >= m_LowerMzBound)
       {
@@ -206,7 +177,7 @@ void m2::MultiModalMaskExportHelper::GetValidMzIndices(m2::MSImageBase::Pointer 
   }
   else
   {
-    for (auto it = msImage->MassAxis().begin(); it < msImage->MassAxis().end(); ++it)
+    for (auto it = msImage->GetXAxis().begin(); it < msImage->GetXAxis().end(); ++it)
     {
       validIndices->push_back(counter);
       ++counter;
@@ -222,7 +193,7 @@ void m2::MultiModalMaskExportHelper::GetValidMzIndices(m2::MSImageBase::Pointer 
  * @param intensitiesFileName, the name of the csv file for the intensities
  * @param massAxisFileName, the name of the csv file for the mass axis/
  * */
-void m2::MultiModalMaskExportHelper::WriteSpectraToCsv(m2::MSImageBase::Pointer msImage,
+void m2::MultiModalMaskExportHelper::WriteSpectraToCsv(m2::SpectrumImageBase::Pointer msImage,
                                                        std::vector<unsigned int> indexValues,
                                                        std::vector<unsigned int> validMzIndices,
                                                        std::string intensitiesFileName,
@@ -234,7 +205,7 @@ void m2::MultiModalMaskExportHelper::WriteSpectraToCsv(m2::MSImageBase::Pointer 
 
   for (auto imzlIndex : indexValues)
   {
-    msImage->GrabIntensity(imzlIndex, intensities);
+    msImage->ReceiveIntensities(imzlIndex, intensities);
 
     auto indicesIt = validMzIndices.begin();
 
@@ -260,7 +231,7 @@ void m2::MultiModalMaskExportHelper::WriteSpectraToCsv(m2::MSImageBase::Pointer 
   output.close();
 
   std::ofstream massAxisOutput(massAxisFileName);
-  std::vector<double> massAxis = msImage->MassAxis();
+  std::vector<double> massAxis = msImage->GetXAxis();
 
   auto mzIt = validMzIndices.begin();
   std::string intialOutputString = std::to_string(massAxis.at(*mzIt));
@@ -308,7 +279,7 @@ void m2::MultiModalMaskExportHelper::Export()
       for (const mitk::DataNode::Pointer &msiDataNode : m_MsiDataNodes)
       {
         std::string nodeName = msiDataNode->GetName();
-        const m2::MSImageBase::Pointer msiImage = dynamic_cast<m2::MSImageBase *>(msiDataNode->GetData());
+        const m2::SpectrumImageBase::Pointer msiImage = dynamic_cast<m2::SpectrumImageBase *>(msiDataNode->GetData());
         const mitk::Image::Pointer indexImage = msiImage->GetIndexImage();
 
         ExportMaskImage(dynamic_cast<mitk::Image *>(maskNode->GetData()), msiImage);
@@ -326,11 +297,12 @@ void m2::MultiModalMaskExportHelper::Export()
                                       ([&, this](auto input) {
                                         for (const auto &vectorWoldCord : labelWordlCoordPair.second)
                                         {
-                                          itk::Index<3> vectorIndex;
+                                          mitk::Vector3D vectorIndex;
                                           dynamic_cast<mitk::Image *>(msiDataNode->GetData())
                                             ->GetGeometry()
                                             ->WorldToIndex(vectorWoldCord, vectorIndex);
-                                          indexValues.push_back(input->GetPixel(vectorIndex));
+
+                                          indexValues.push_back(input->GetPixel({(long int) vectorIndex[0], (long int)vectorIndex[1], (long int)vectorIndex[2]}));
                                         }
                                       }),
                                       3);
@@ -361,7 +333,7 @@ void m2::MultiModalMaskExportHelper::Export()
   }
 }
 
-void m2::MultiModalMaskExportHelper::ExportMaskImage(mitk::Image::Pointer mask, m2::MSImageBase::Pointer msImage)
+void m2::MultiModalMaskExportHelper::ExportMaskImage(mitk::Image::Pointer mask, m2::SpectrumImageBase::Pointer msImage)
 {
   std::vector<unsigned int> maskValues;
   auto maskI = msImage->GetMaskImage();

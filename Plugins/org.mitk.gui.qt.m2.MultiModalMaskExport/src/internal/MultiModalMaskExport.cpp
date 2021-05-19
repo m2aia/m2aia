@@ -21,7 +21,7 @@ found in the LICENSE file.
 #include <QMessageBox>
 #include <QmitkMultiNodeSelectionWidget.h>
 #include <m2CommunicationService.h>
-#include <m2MSImageBase.h>
+#include <m2SpectrumImageBase.h>
 #include <m2MultiModalMaskExportHelper.h>
 #include <mitkImage.h>
 #include <mitkLabelSetImage.h>
@@ -44,11 +44,11 @@ void MultiModalMaskExport::CreateQtPartControl(QWidget *parent)
   m_Controls.exportFullSpectra->setVisible(false);
   m_Controls.exportOptionsLabel->setVisible(false);
   {
-    auto m_MassSpecPredicate = mitk::TNodePredicateDataType<m2::MSImageBase>::New();
+    auto m_MassSpecPredicate = mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New();
     m_MassSpecDataNodeSelectionWidget = new QmitkMultiNodeSelectionWidget();
     m_MassSpecDataNodeSelectionWidget->SetDataStorage(GetDataStorage());
     m_MassSpecDataNodeSelectionWidget->SetNodePredicate(
-      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::MSImageBase>::New(),
+      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
                                   mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
     m_MassSpecDataNodeSelectionWidget->SetSelectionIsOptional(true);
     m_MassSpecDataNodeSelectionWidget->SetEmptyInfo(QString("MS image selection"));
@@ -77,7 +77,7 @@ void MultiModalMaskExport::CreateQtPartControl(QWidget *parent)
             bool isPeakOptionVisible = true;
             for (auto const &node : nodesList)
             {
-              if (dynamic_cast<m2::MSImageBase *>(node->GetData())->GetPeaks().empty())
+              if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData())->GetPeaks().empty())
               {
                 isPeakOptionVisible = false;
                 break;

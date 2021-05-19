@@ -16,6 +16,7 @@ set(H_FILES
   include/mitkImage2DToImage3DSliceFilter.h
   
   include/mitkTimer.h
+  include/m2MultiModalMaskExportHelper.h
 
 )
 
@@ -34,6 +35,8 @@ set(CPP_FILES
 
   mitkImage3DSliceToImage2DFilter.cpp
   mitkImage2DToImage3DSliceFilter.cpp
+  m2MultiModalMaskExportHelper.cpp
+  
 )
 
 set(RESOURCE_FILES
