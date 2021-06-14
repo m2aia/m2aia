@@ -1,37 +1,9 @@
-## Welcome to GitHub Pages
+## M²aia
 
-You can use the [editor on GitHub](https://github.com/jtfcordes/m2aia/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
+M²aia (MSI applications for interactive analysis in MITK) is a software tool enabling interactive signal processing and visualisation of mass spectrometry imaging (MSI) datasets. M²aia extends the open source Medical Imaging and Interaction Toolkit (MITK) [1] and provides powerful methods that the MSI community can adopt, exploit and improve further. In it's current state, it is designet to enable multi-modal 2D registration and 3D MSI reconstruction.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+In addition, M²aia provides features for image segmentation, dimensionality reduction, elastix-based image registration [2], read/write access to the open standard imzML, spectral/signal processing (smoothing, basline correction, normalization)
 
-### Markdown
+[1] Nolden et al., Journal of Computer Assisted Radiology and Surgery. 2013 Jul.
+[2] Klein et al., IEEE Transactions on Medical Imaging, 2012 Jan.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/jtfcordes/m2aia/settings/pages). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://support.github.com/contact) and we’ll help you sort it out.
