@@ -25,7 +25,7 @@ Downloads
 More Information
 ----------------
 
-More information, including protocols and build instructions, can be found [here](www.m2aia.de).
+More information, including protocols and build instructions, can be found [here](http://m2aia.de).
 
 Contact:
 -------
