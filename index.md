@@ -3,23 +3,21 @@ M²aia (MSI applications for interactive analysis in MITK) is a software tool en
 In addition, M²aia provides features for 
 
 <ul>
-  <li> Read/write access to the open standard imzML
-  <li> Image interaction and visualization
-  <li> Signal processing: Normalization, baseline correction, smoothing and peak picking 
-  <li> Image segmentation
-  <li> Multi-modal 3D reconstruction of MSI images
+  <li> Read/write access to the open standard imzML </li>
+  <li> Image interaction and visualization </li>
+  <li> Signal processing: Normalization, baseline correction, smoothing and peak picking </li>
+  <li> Image segmentation </li>
+  <li> Multi-modal 3D reconstruction of MSI images </li>
   <li> Image registration of 2D multi-modal images 
 </ul>
 
 
-[1] Nolden et al., Journal of Computer Assisted Radiology and Surgery. 2013 Jul.
-
-[2] Klein et al., IEEE Transactions on Medical Imaging, 2012 Jan.
+[1] Nolden et al., Journal of Computer Assisted Radiology and Surgery. 2013 Jul., [2] Klein et al., IEEE Transactions on Medical Imaging, 2012 Jan.
 
 Downloads
 ---------
 
-| Version       | M²aia             |  elastix v5.0.0   |
+| Version       | M²aia             |   [https://github.com/SuperElastix/elastix (v5.0.0)](https://github.com/SuperElastix/elastix)  |
 |:--------------|:------------------|:------------------|
 | v2021.03     | [\[Linux\]](https://github.com/jtfcordes/M2aia/releases/download/v2021.03.00/M2aia-2021.03.00-linux-x86_64.tar.gz)[\[Windows\]](https://github.com/jtfcordes/M2aia/releases/download/v2021.03.00/M2aia-2021.03.00-windows-x86_64.exe)|[\[Linux\]](https://github.com/SuperElastix/elastix/releases/download/5.0.1/elastix-5.0.1-linux.tar.bz2)[\[Windows\]](https://github.com/SuperElastix/elastix/releases/download/5.0.1/elastix-5.0.1-win64.zip)|
 | v2021.01     | [\[Linux\]](https://github.com/jtfcordes/M2aia/releases/download/v2021.01.01/M2aia-2021.01.01-linux-x86_64.tar.gz)[\[Windows\]](https://github.com/jtfcordes/M2aia/releases/download/v2021.01.01/M2aia-2021.01.01-windows-x86_64.exe)|[\[Linux\]](https://github.com/SuperElastix/elastix/releases/download/5.0.1/elastix-5.0.1-linux.tar.bz2)[\[Windows\]](https://github.com/SuperElastix/elastix/releases/download/5.0.1/elastix-5.0.1-win64.zip)|
