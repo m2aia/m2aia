@@ -12,9 +12,6 @@ In addition, M²aia provides features for
 </ul>
 
 
-
-**image segmentation**, **dimensionality reduction**, **elastix-based image registration** [2], ****, **spectral/signal processing (smoothing, basline correction, normalization)**.
-
 [1] Nolden et al., Journal of Computer Assisted Radiology and Surgery. 2013 Jul.
 
 [2] Klein et al., IEEE Transactions on Medical Imaging, 2012 Jan.
