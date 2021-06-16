@@ -1,17 +1,23 @@
 /**
-\page org_mitk_gui_qt_m2_MultiModalMaskExport The MultiModalMaskExport
+\page org_mitk_gui_qt_m2_MultiModalMaskExport The MultiModalMaskExport View
 
-\imageMacro{icon.png,"Icon of MultiModalMaskExport",2.00}
+\imageMacro{noun_CSV_252780.svg,"Icon of the M2aia MultiModalMaskExport View", 1}
 
 \tableofcontents
 
-\section org_mitk_gui_qt_m2_MultiModalMaskExportOverview Overview
-Describe the features of your awesome plugin here
+Available features:
 <ul>
-<li>Increases productivity
-<li>Creates beautiful images
-<li>Generates PhD thesis
-<li>Brings world peace
+<li>Export mass spectra as CSV file
+<li>Export peaks of a mass spectra as CSV File
+<li>Export of mass spectra with a mask consisting of multiple labels
+<li>Export of mass spectra in a certain mz range
 </ul>
 
+\section m2_MultiModalMaskExportOverview Introduction
+This plugin can be used to export a mass spectra as a CSV file. To do this, one needs to defin a mask, only the foreground pixels of the mask are taken into consideration during the export.
+
+\section m2_MultiModalMaskExportUsage Usage
+For the export of the mass spectra one need to define a mask, e.g. with the MultiLabel segmentation tool. The mask can consist of multiple layers or labels, for each label/layer a CSV file is created.
+Whenever the mass spectra was peak picked, it is possible to only export the peaks of the mass spectra. This speed ups the export process significantly. Caution, exporting the whole mass spectra can take serveral minutes.
+Furthermore, it is possible to define boundaries for the mz values. Mz values that are not included in the defined mz range, will be omitted and not exported.
 */
