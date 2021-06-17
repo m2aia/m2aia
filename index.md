@@ -38,6 +38,14 @@ Supporting capsule for use-case 1: R-based processing in "M²aia - Interactive, 
 Supporting capsule for use-case 1: Command-line application based pre-processing in "M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data" [doi.org/10.24433/CO.7662658.v1](https://doi.org/10.24433/CO.7662658.v1)
 
 
+Contact
+--------------
+
+Report a [issues here](https://github.com/jtfcordes/M2aia/issues/new)
+
+Author: j.cordes@hs-mannheim.de
+
+
 
 [1] Nolden et al., Journal of Computer Assisted Radiology and Surgery. 2013 Jul.
 
