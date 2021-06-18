@@ -1,4 +1,4 @@
-M²aia (MSI applications for interactive analysis in MITK) is a software tool enabling interactive signal processing and visualisation of mass spectrometry imaging (MSI) datasets. M²aia extends the open source Medical Imaging and Interaction Toolkit (MITK) [1] and provides powerful methods that the MSI community can adopt, exploit and improve further. In it's current state, it is designet to enable multi-modal 2D registration and 3D MSI reconstruction.
+M²aia (MSI applications for interactive analysis in MITK) is a software tool enabling interactive signal processing and visualisation of [mass spectrometry imaging (MSI)](https://en.wikipedia.org/wiki/Mass_spectrometry_imaging) datasets. M²aia extends the open source [Medical Imaging and Interaction Toolkit (MITK)](https://www.mitk.org) [1,2] and provides powerful methods that the MSI community can adopt, exploit and improve further. In it's current state, it is designet to enable multi-modal 2D registration and 3D MSI reconstruction.
 
 In addition, M²aia provides features for 
 
@@ -13,7 +13,7 @@ In addition, M²aia provides features for
 Downloads
 ---------
 
-| Version       | M²aia             |   elastix [2]  |
+| Version       | M²aia             |   elastix [3]  |
 |:--------------|:------------------|:------------------|
 | v2021.03     | [\[Linux\]](https://github.com/jtfcordes/M2aia/releases/download/v2021.03.00/M2aia-2021.03.00-linux-x86_64.tar.gz)[\[Windows\]](https://github.com/jtfcordes/M2aia/releases/download/v2021.03.00/M2aia-2021.03.00-windows-x86_64.exe)|[\[Linux\]](https://github.com/SuperElastix/elastix/releases/download/5.0.1/elastix-5.0.1-linux.tar.bz2)[\[Windows\]](https://github.com/SuperElastix/elastix/releases/download/5.0.1/elastix-5.0.1-win64.zip)|
 | v2021.01     | [\[Linux\]](https://github.com/jtfcordes/M2aia/releases/download/v2021.01.01/M2aia-2021.01.01-linux-x86_64.tar.gz)[\[Windows\]](https://github.com/jtfcordes/M2aia/releases/download/v2021.01.01/M2aia-2021.01.01-windows-x86_64.exe)|[\[Linux\]](https://github.com/SuperElastix/elastix/releases/download/5.0.1/elastix-5.0.1-linux.tar.bz2)[\[Windows\]](https://github.com/SuperElastix/elastix/releases/download/5.0.1/elastix-5.0.1-win64.zip)|
@@ -40,6 +40,8 @@ Supporting capsule for use-case 1: Command-line application based pre-processing
 
 
 
-[1] Nolden et al., Journal of Computer Assisted Radiology and Surgery. 2013 Jul.
+[1] Nolden, M., et al. 2013. “The Medical Imaging Interaction Toolkit: Challenges and Advances.” International Journal of Computer Assisted Radiology and Surgery 8 (4): 607–20. doi:10.1007/s11548-013-0840-8.
 
-[2] [https://github.com/SuperElastix/elastix (v5.0.0)](https://github.com/SuperElastix/elastix)
+[2] Wolf, I., et al. 2005. “The Medical Imaging Interaction Toolkit.” Medical Image Analysis 9 (6): 594–604. doi:10.1016/j.media.2005.04.005.
+
+[3] [https://github.com/SuperElastix/elastix (v5.0.0)](https://github.com/SuperElastix/elastix)
