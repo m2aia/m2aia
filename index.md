@@ -1,4 +1,4 @@
-M²aia (MSI applications for interactive analysis in MITK) is a software tool enabling interactive signal processing and visualisation of [mass spectrometry imaging (MSI)](https://en.wikipedia.org/wiki/Mass_spectrometry_imaging) datasets. M²aia extends the open source [Medical Imaging and Interaction Toolkit (MITK)](https://www.mitk.org) [1,2] and provides powerful methods that the MSI community can adopt, exploit and improve further. In it's current state, it is designet to enable multi-modal 2D registration and 3D MSI reconstruction.
+M²aia (MSI applications for interactive analysis in MITK) is a software tool enabling interactive signal processing and visualisation of [mass spectrometry imaging (MSI)](https://en.wikipedia.org/wiki/Mass_spectrometry_imaging) datasets. M²aia extends the open source [Medical Imaging and Interaction Toolkit (MITK)](https://www.mitk.org) [1,2] and provides powerful methods that the MSI community can adopt, exploit and improve further. In it's current state, it is designed to enable multi-modal 2D registration and 3D MSI reconstruction.
 
 In addition, M²aia provides features for 
 
