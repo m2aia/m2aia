@@ -8,11 +8,6 @@ M²aia in app preferences
 Supported Platforms:
 - System requirments: https://docs.mitk.org/nightly/SupportedPlatformsPage.html
 
-Projects that use M<sup>2</sup>aia:
------------------------------------
-
-Enzlein, Thomas, Jonas Cordes, Bogdan Munteanu, Wojciech Michno, Lutgarde Serneels, Bart De Strooper, Jörg Hanrieder, Ivo Wolf, Lucía Chávez-Gutiérrez, und Carsten Hopf. „Computational Analysis of Alzheimer Amyloid Plaque Composition in 2D- and Elastically Reconstructed 3D-MALDI MS Images“. Analytical Chemistry, 14. Oktober 2020, acs.analchem.0c02585. https://doi.org/10.1021/acs.analchem.0c02585.
-
 
 Build Instructions:
 -------------------
