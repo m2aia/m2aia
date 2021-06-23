@@ -22,10 +22,25 @@ Downloads
 Cite M²aia
 ----------
 
-[![DOI](https://zenodo.org/badge/314852965.svg)](https://zenodo.org/badge/latestdoi/314852965)
-Please reference to [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324).
+**Main publication**
 
-Manuscript submitted. M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data
+M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data ___pending___
+
+[![DOI](https://zenodo.org/badge/314852965.svg)](https://zenodo.org/badge/latestdoi/314852965)
+
+**Tool ID**
+
+SciCrunch.org: [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324)
+
+bio.tools: [biotools:m2aia](https://bio.tools/m2aia)
+
+
+
+
+Muli-modal 3D mouse brain data
+------------------------------
+
+Cordes J; Enzlein T; Marsching C; Hinze M; Engelhardt S; Hopf C; Wolf I (2021): Supporting data for "M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data" GigaScience Database. [http://dx.doi.org/10.5524/100909](http://dx.doi.org/10.5524/100909)
 
 
 Supporting Material
@@ -37,8 +52,8 @@ Supporting capsule for use-case 1: R-based processing in "M²aia - Interactive, 
 
 Supporting capsule for use-case 1: Command-line application based pre-processing in "M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data" [doi.org/10.24433/CO.7662658.v1](https://doi.org/10.24433/CO.7662658.v1)
 
-
-
+External references
+-------------------
 
 [1] Nolden, M., et al. 2013. “The Medical Imaging Interaction Toolkit: Challenges and Advances.” International Journal of Computer Assisted Radiology and Surgery 8 (4): 607–20. doi:10.1007/s11548-013-0840-8.
 
