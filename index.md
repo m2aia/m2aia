@@ -1,4 +1,4 @@
-M²aia (MSI applications for interactive analysis in MITK) is a software tool enabling interactive signal processing and visualisation of [mass spectrometry imaging (MSI)](https://en.wikipedia.org/wiki/Mass_spectrometry_imaging) datasets. M²aia extends the open source [Medical Imaging and Interaction Toolkit (MITK)](https://www.mitk.org) [1,2] and provides powerful methods that the MSI community can adopt, exploit and improve further. In it's current state, it is designed to enable multi-modal 2D registration and 3D MSI reconstruction.
+M²aia (MSI applications for interactive analysis in MITK, [biotools:m2aia](https://bio.tools/m2aia), [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324)) is a software tool enabling interactive signal processing and visualisation of [mass spectrometry imaging (MSI)](https://en.wikipedia.org/wiki/Mass_spectrometry_imaging) datasets. M²aia extends the open source [Medical Imaging and Interaction Toolkit (MITK)](https://www.mitk.org) [1,2] and provides powerful methods that the MSI community can adopt, exploit and improve further. In it's current state, it is designed to enable multi-modal 2D registration and 3D MSI reconstruction.
 
 In addition, M²aia provides features for 
 
@@ -22,19 +22,13 @@ Downloads
 Cite M²aia
 ----------
 
-**Main publication**
+[biotools:m2aia](https://bio.tools/m2aia) 
 
-M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data ___pending___
+[RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324)
 
-[![DOI](https://zenodo.org/badge/314852965.svg)](https://zenodo.org/badge/latestdoi/314852965)
-
-**Tool ID**
-
-SciCrunch.org: [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324)
-
-bio.tools: [biotools:m2aia](https://bio.tools/m2aia)
-
-
+Cordes J; Enzlein T; Marsching C; Hinze M; Engelhardt S; Hopf C; Wolf
+I (2021): M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging
+data ___pending___
 
 
 Muli-modal 3D mouse brain data
