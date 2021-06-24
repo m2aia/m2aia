@@ -1,7 +1,10 @@
+More information, including protocols and build instructions, can be found [here](http://m2aia.de).
+
+
 [![DOI](https://zenodo.org/badge/314852965.svg)](https://zenodo.org/badge/latestdoi/314852965)
 
 
-M²aia (MSI applications for interactive analysis in MITK) is a software tool enabling interactive signal processing and visualisation of mass spectrometry imaging (MSI) datasets. M²aia extends the open source Medical Imaging and Interaction Toolkit (MITK) [1] and provides powerful methods that the MSI community can adopt, exploit and improve further. In it's current state, it is designet to enable multi-modal 2D registration and 3D MSI reconstruction.
+M²aia (MSI applications for interactive analysis in MITK, [biotools:m2aia](https://bio.tools/m2aia), [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324)) is a software tool enabling interactive signal processing and visualisation of mass spectrometry imaging (MSI) datasets. M²aia extends the open source Medical Imaging and Interaction Toolkit ([MITK](https://mitk.org)) and provides powerful methods that the MSI community can adopt, exploit and improve further. In it's current state, it is designet to enable multi-modal 2D registration and 3D MSI reconstruction.
 
 In addition, M²aia provides features for 
 
@@ -15,18 +18,8 @@ In addition, M²aia provides features for
 </ul>
 
 
-[1] Nolden et al., Journal of Computer Assisted Radiology and Surgery. 2013 Jul., [2] Klein et al., IEEE Transactions on Medical Imaging, 2012 Jan.
-
 Downloads
 ---------
 
 [You can download M²aia here](https://github.com/jtfcordes/m2aia/releases).
 
-More Information
-----------------
-
-More information, including protocols and build instructions, can be found [here](http://m2aia.de).
-
-Contact:
--------
-If you have questions about M<sup>2</sup>aia or if you would like to give feedback, write an e-mail at j.cordes@hs-mannheim.de.
