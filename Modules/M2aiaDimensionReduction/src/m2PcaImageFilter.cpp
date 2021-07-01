@@ -17,12 +17,13 @@
 #include <mitkImagePixelReadAccessor.h>
 #include <numeric> // std::iota
 #include <vnl/vnl_matrix.h>
+#include <boost/progress.hpp>
 
 void m2::PcaImageFilter::initMatrix()
 {
-  this->GetValidIndices();
+  // this->GetValidIndices();
   auto input = this->GetIndexedInputs();
-  mitk::Image::Pointer mitkImage = dynamic_cast<mitk::Image *>(input.front().GetPointer());
+  auto mitkImage = dynamic_cast<mitk::Image *>(input.front().GetPointer());
   size_t pixels = 1;
   for (unsigned int i = 0; i < mitkImage->GetDimension(); ++i)
     pixels *= mitkImage->GetDimensions()[i];
@@ -31,13 +32,15 @@ void m2::PcaImageFilter::initMatrix()
 
   this->m_DataMatrix.resize(numberOfrow, numberOfcolumn);
   unsigned int c = 0;
-
+  boost::progress_display p(numberOfcolumn);
+  
   /*Fill matrix with image values one column includes values of one image*/
   for (auto it = input.begin(); it != input.end(); ++it, ++c)
   {
     mitkImage = dynamic_cast<mitk::Image *>(it->GetPointer());
     mitk::ImagePixelReadAccessor<m2::DisplayImagePixelType, 3> access(mitkImage);
     std::copy(access.GetData(), access.GetData() + pixels, m_DataMatrix.col(c).data());
+    ++p;
   }
 
   // auto maxCoeffs = m_DataMatrix.colwise().maxCoeff();
@@ -53,14 +56,22 @@ void m2::PcaImageFilter::initMatrix()
   // m_DataMatrix.col(c) = m_DataMatrix.col(c) / stdDevs[c];
 }
 
-void m2::PcaImageFilter ::GenerateData()
+Eigen::MatrixXf m2::PcaImageFilter::GetEigenImageMatrix(){
+  return m_EigenImageMatrix;
+}
+
+Eigen::VectorXf m2::PcaImageFilter::GetMeanImage(){
+  return m_MeanImage;
+}
+
+void m2::PcaImageFilter::GenerateData()
 {
-  auto timer = m2::Timer("Eigen Calculation");
+  auto timer = m2::Timer("PCA - Generate data ...");
   this->initMatrix();
 
   // eigenionimages
-  Eigen::VectorXf meanImage = m_DataMatrix.rowwise().mean();
-  Eigen::MatrixXf eigenionData = m_DataMatrix.colwise() - meanImage;
+  m_MeanImage = m_DataMatrix.rowwise().mean();
+  Eigen::MatrixXf eigenionData = m_DataMatrix.colwise() - m_MeanImage;
 
   Eigen::JacobiSVD<Eigen::MatrixXf> svd(eigenionData, Eigen::ComputeThinU | Eigen::ComputeThinV);
   MITK_INFO << "S size: " << svd.singularValues().rows() << " " << svd.singularValues().cols();
@@ -69,12 +80,13 @@ void m2::PcaImageFilter ::GenerateData()
   MITK_INFO << "m_DataMatrix: " << m_DataMatrix.rows() << " " << m_DataMatrix.cols();
 
   const Eigen::MatrixXf &U = svd.matrixU();
+  m_EigenImageMatrix = U;
 
   auto eigenIonVectorImage = initializeItkVectorImage(m_NumberOfComponents);
   m2::DisplayImagePixelType *data;
   data = eigenIonVectorImage->GetBufferPointer();
 
-  for (unsigned int c = 0; c < U.cols(); ++c)
+  for (unsigned int c = 0; c < m_NumberOfComponents; ++c)
   {
     const auto &col = U.col(c);
     for (unsigned int p = 0; p < U.rows(); ++p)
@@ -105,7 +117,7 @@ void m2::PcaImageFilter ::GenerateData()
   auto pcVectorImage = initializeItkVectorImage(m_NumberOfComponents);
   data = pcVectorImage->GetBufferPointer();
 
-  for (unsigned int c = 0; c < pc.cols(); ++c)
+  for (unsigned int c = 0; c < m_NumberOfComponents; ++c)
   {
     const auto &col = pc.col(c);
     for (unsigned int p = 0; p < pc.rows(); ++p)

@@ -33,9 +33,13 @@ namespace m2
     itkFactorylessNewMacro(Self);
     itkCloneMacro(Self);
     void initMatrix();
+    Eigen::MatrixXf GetEigenImageMatrix();
+    Eigen::VectorXf GetMeanImage();
 
   protected:
     Eigen::MatrixXf m_DataMatrix;
+    Eigen::MatrixXf m_EigenImageMatrix;
+    Eigen::VectorXf m_MeanImage;
     PcaImageFilter()
     {
       OutputImageType::Pointer output0 = static_cast<OutputImageType *>(this->MakeOutput(0).GetPointer());
