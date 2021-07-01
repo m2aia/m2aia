@@ -250,10 +250,10 @@ void m2Spectrum::CreatePeakData(const mitk::DataNode *node)
   }
 }
 
-void m2Spectrum::OnMassRangeChanged(qreal mz, qreal tol)
+void m2Spectrum::OnMassRangeChanged(qreal x, qreal tol)
 {
-  SetSelectedAreaStartX(mz - tol);
-  SetSelectedAreaEndX(mz + tol);
+  SetSelectedAreaStartX(x - tol);
+  SetSelectedAreaEndX(x + tol);
   DrawSelectedArea();
 }
 

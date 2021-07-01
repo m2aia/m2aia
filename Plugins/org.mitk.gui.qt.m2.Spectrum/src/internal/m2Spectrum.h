@@ -79,7 +79,7 @@ protected:
 protected slots:
   void OnDataNodeReceived(const mitk::DataNode *node);
 
-  void OnMassRangeChanged(qreal, qreal);
+  void OnMassRangeChanged(qreal x, qreal tol);
   void OnSerieFocused(const mitk::DataNode *node);
   void OnLegnedHandleMarkerClicked();
   void OnResetView();
