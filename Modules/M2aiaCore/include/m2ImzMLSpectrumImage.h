@@ -45,7 +45,7 @@ namespace m2
       BinaryDataOffsetType intOffset;
       BinaryDataLengthType mzLength;
       BinaryDataLengthType intLength;
-      uint32_t id;
+      size_t id;
       itk::Index<3> index;
       struct
       {
