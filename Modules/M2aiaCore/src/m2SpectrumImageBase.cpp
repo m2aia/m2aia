@@ -20,6 +20,14 @@ See LICENSE.txt for details.
 #include <mitkLookupTableProperty.h>
 #include <mitkOperation.h>
 
+double m2::SpectrumImageBase::ApplyTolerance(double x)
+{
+  if (this->GetUseToleranceInPPM())
+    return this->GetTolerance() * 10e-6 * x;
+  else
+    return this->GetTolerance();
+}
+
 void m2::SpectrumImageBase::ApplyMoveOriginOperation(const std::array<int, 2> &v)
 {
   auto geometry = this->GetGeometry();

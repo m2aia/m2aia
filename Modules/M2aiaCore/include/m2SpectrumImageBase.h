@@ -104,6 +104,9 @@ namespace m2
     itkSetMacro(Tolerance, double);
     itkGetConstReferenceMacro(Tolerance, double);
 
+    itkSetMacro(UseToleranceInPPM, bool);
+    itkGetConstReferenceMacro(UseToleranceInPPM, bool);
+    
     itkGetMacro(Peaks, PeaksVectorType &);
     itkGetConstReferenceMacro(Peaks, PeaksVectorType);
 
@@ -173,6 +176,7 @@ namespace m2
 
     inline void SaveModeOn() const { this->m_InSaveMode = true; }
     inline void SaveModeOff() const { this->m_InSaveMode = false; }
+    double ApplyTolerance(double);
 
   protected:
     bool mutable m_InSaveMode = false;
@@ -183,6 +187,7 @@ namespace m2
     bool m_UseExternalMask = false;
     bool m_UseExternalIndices = false;
     bool m_UseExternalNormalization = false;
+    bool m_UseToleranceInPPM = false;
 
     // if UseTransformationsOn()
     bool m_UseTransformations = true;

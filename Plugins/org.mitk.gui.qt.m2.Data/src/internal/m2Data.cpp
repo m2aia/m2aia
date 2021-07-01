@@ -506,6 +506,7 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
     data->SetBinningTolerance(m_Controls.spnBxPeakBinning->value());
     data->SetNumberOfBins(m_Controls.spnBxNumberOfBins->value());
     data->SetTolerance(m_Controls.spnBxPeakBinning->value());
+    data->SetUseToleranceInPPM(m_Controls.rbtnTolPPM->isChecked());
   }
 }
 
