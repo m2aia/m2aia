@@ -10,7 +10,6 @@ set(INTERNAL_CPP_FILES
 set(UI_FILES
   src/internal/OpticalImageRegistrationControls.ui
   src/internal/ParameterFileEditorDialog.ui
-  src/internal/NewModalityDialog.ui
   src/internal/MovingModalityWidgetControls.ui
 )
 

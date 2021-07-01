@@ -58,7 +58,7 @@ protected:
 
   Ui::OpticalImageRegistrationControls m_Controls;
   std::map<char, Ui::MovingModalityWidgetControls> m_MovingModalitiesControls;
-  std::map<char, std::shared_ptr<m2::DualGeometryImageWrapper>> m_MovingModalitiesDualRepresentation;
+  std::map<char, mitk::DataNode::Pointer> m_MovingModalitiesImageDataNode;
 
   QmitkSingleNodeSelectionWidget *m_FixedImageSingleNodeSelection;
   QmitkSingleNodeSelectionWidget *m_FixedPointSetSingleNodeSelection;

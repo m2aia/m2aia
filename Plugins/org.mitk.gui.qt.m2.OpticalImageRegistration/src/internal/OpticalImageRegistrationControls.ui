@@ -103,44 +103,26 @@
            </sizepolicy>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>-1</number>
           </property>
-          <widget class="QWidget" name="tab">
-           <attribute name="title">
-            <string>Manual</string>
-           </attribute>
-           <layout class="QVBoxLayout" name="verticalLayout_2">
-            <item>
-             <widget class="QLabel" name="label">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string>This plugin allows the image based registration of multiple modalities.
-1. Select an image serving as fixed image.
-2. Click &quot;Add new moving image for registration&quot;.
-3. Select an image serving as moving image.
-4. Repeat step 2. and 3.
-</string>
-              </property>
-              <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-              </property>
-              <property name="wordWrap">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </widget>
          </widget>
         </item>
        </layout>
       </item>
      </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCommandLinkButton" name="btnOpenPontSetInteractionView">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Open point set interaction view</string>
+     </property>
     </widget>
    </item>
    <item>
@@ -149,78 +131,6 @@
       <string>Controls</string>
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_6">
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_2">
-        <item>
-         <widget class="QRadioButton" name="radioButton_2">
-          <property name="text">
-           <string>Initial</string>
-          </property>
-          <property name="checked">
-           <bool>true</bool>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QRadioButton" name="radioButton">
-          <property name="enabled">
-           <bool>false</bool>
-          </property>
-          <property name="text">
-           <string>Registered</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnStartRegistration">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Start registration (deformable)</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="btnReset">
-        <property name="text">
-         <string>Reset registration</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="groupBox">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="title">
-      <string>Settings</string>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_3">
-      <item>
-       <widget class="QPushButton" name="btnOpenPontSetInteractionView">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Open point set interaction view</string>
-        </property>
-       </widget>
-      </item>
       <item>
        <widget class="QCheckBox" name="chkBxReinitOnSelectionChanged">
         <property name="sizePolicy">
@@ -243,9 +153,66 @@
          </sizepolicy>
         </property>
         <property name="text">
-         <string>Edit elastix parameter file (rigid/deformable)</string>
+         <string>Edit</string>
         </property>
        </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnStartRegistration">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Start</string>
+        </property>
+        <property name="icon">
+         <iconset resource="../../../../../mitk/Plugins/org.mitk.gui.qt.ext/resources/org_mitk_icons.qrc">
+          <normaloff>:/org_mitk_icons/icons/tango/scalable/actions/go-next.svg</normaloff>:/org_mitk_icons/icons/tango/scalable/actions/go-next.svg</iconset>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QDialogButtonBox" name="buttonBoxLeft">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="standardButtons">
+           <set>QDialogButtonBox::NoButton</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QDialogButtonBox" name="buttonBox">
+          <property name="standardButtons">
+           <set>QDialogButtonBox::Open|QDialogButtonBox::Save</set>
+          </property>
+          <property name="centerButtons">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
      </layout>
     </widget>
@@ -266,6 +233,15 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <tabstops>
+  <tabstop>addFixedPointSet</tabstop>
+  <tabstop>btnAddModality</tabstop>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>chkBxReinitOnSelectionChanged</tabstop>
+  <tabstop>btnEditParameterFiles</tabstop>
+ </tabstops>
+ <resources>
+  <include location="../../../../../mitk/Plugins/org.mitk.gui.qt.ext/resources/org_mitk_icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

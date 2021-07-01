@@ -41,7 +41,7 @@
    <item>
     <widget class="QPushButton" name="btnRemove">
      <property name="text">
-      <string>Remove moving image</string>
+      <string>Remove</string>
      </property>
     </widget>
    </item>
