@@ -66,7 +66,6 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
           this,
           &m2PeakPickingView::OnProcessingNodesReceived);
 
-  
   const auto itemHandler = [this](QTableWidgetItem *item)
   {
     const size_t idx = m_Controls.imageSource->currentIndex();
@@ -185,7 +184,7 @@ void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int idx)
     for (auto &p : peaks)
     {
       auto item = new QTableWidgetItem(std::to_string(p.mass).c_str());
-      item->setCheckState(Qt::CheckState::Checked);
+      item->setCheckState(Qt::CheckState::Unchecked);
       m_Controls.tableWidget->setItem(row++, 0, item);
     }
     m_Controls.tableWidget->blockSignals(false);
@@ -194,37 +193,44 @@ void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int idx)
 
 void m2PeakPickingView::OnStartPCA()
 {
-  for (auto node : *m_ReceivedNodes)
+  if (!m_Controls.imageSource->count())
+    return;
+  const auto idx = m_Controls.imageSource->currentIndex();
+  auto node = m_ReceivedNodes->at(idx);
+
+  if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-    if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    auto filter = m2::PcaImageFilter::New();
+    filter->SetNumberOfComponents(3);
+    filter->SetMaskImage(imageBase->GetMaskImage());
+
+    const auto &peakList = m_PeakLists[idx];
+    std::vector<mitk::Image::Pointer> bufferedImages;
+
+    size_t inputIdx = 0;
+    for (size_t row = 0; row < peakList.size(); ++row)
     {
-      auto filter = m2::PcaImageFilter::New();
-      filter->SetNumberOfComponents(3);
-      filter->SetMaskImage(imageBase->GetMaskImage());
-      const auto &peakList = imageBase->GetPeaks();
-      size_t index = 0;
+      if (m_Controls.tableWidget->item(row, 0)->checkState() != Qt::CheckState::Checked)
+        continue;
 
-      std::vector<mitk::Image::Pointer> bufferedImages(peakList.size());
-      for (auto &p : peakList)
-      {
-        bufferedImages[index] = mitk::Image::New();
-        bufferedImages[index]->Initialize(imageBase);
+      bufferedImages.push_back(mitk::Image::New());
+      bufferedImages.back()->Initialize(imageBase);
 
-        imageBase->UpdateImage(
-          p.mass, imageBase->ApplyTolerance(p.mass), imageBase->GetMaskImage(), bufferedImages[index]);
-        filter->SetInput(index, bufferedImages[index]);
-        ++index;
-      }
-      filter->Update();
-
-      auto outputNode = mitk::DataNode::New();
-      auto data = m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(filter->GetOutput());
-      outputNode->SetData(data);
-
-      outputNode->SetName("PCA");
-      node->SetVisibility(false);
-      this->GetDataStorage()->Add(outputNode, node.GetPointer());
+      imageBase->UpdateImage(
+        peakList[row].mass, imageBase->ApplyTolerance(peakList[row].mass), imageBase->GetMaskImage(), bufferedImages.back());
+      filter->SetInput(inputIdx, bufferedImages.back());
+      ++inputIdx;
     }
+    
+    filter->Update();
+
+    auto outputNode = mitk::DataNode::New();
+    auto data = m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(filter->GetOutput());
+    outputNode->SetData(data);
+
+    outputNode->SetName("PCA");
+    node->SetVisibility(false);
+    this->GetDataStorage()->Add(outputNode, node.GetPointer());
   }
 }
 
