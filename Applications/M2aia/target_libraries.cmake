@@ -27,6 +27,7 @@ set(target_libraries
   org_mitk_gui_qt_m2_PeakPicking
   org_mitk_gui_qt_m2_ImzMLExport
   org_mitk_gui_qt_m2_Reconstruction3D
+  org_mitk_gui_qt_m2_OpticalImageRegistration
   org_mitk_gui_qt_m2_Position
   org_mitk_m2_core_helper
 )
