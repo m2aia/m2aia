@@ -205,6 +205,7 @@ void m2PeakPickingView::OnStartPCA()
     filter->SetMaskImage(imageBase->GetMaskImage());
 
     const auto &peakList = m_PeakLists[idx];
+    
     std::vector<mitk::Image::Pointer> bufferedImages;
 
     size_t inputIdx = 0;
@@ -220,6 +221,11 @@ void m2PeakPickingView::OnStartPCA()
         peakList[row].mass, imageBase->ApplyTolerance(peakList[row].mass), imageBase->GetMaskImage(), bufferedImages.back());
       filter->SetInput(inputIdx, bufferedImages.back());
       ++inputIdx;
+    }
+
+    if(bufferedImages.size() == 0){
+      QMessageBox::warning(nullptr, "Select images first!", "Select at least three peaks!",QMessageBox::StandardButton::NoButton,QMessageBox::StandardButton::Ok);
+      return;
     }
     
     filter->Update();
