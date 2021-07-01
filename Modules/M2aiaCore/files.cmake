@@ -14,14 +14,10 @@ set(H_FILES
   include/m2ElxRegistrationHelper.h
 
   include/mitkMassSpecImageInteractor.h
-
   include/mitkTransformixMSDataObjectStack.h
   include/mitkImage3DSliceToImage2DFilter.h
   include/mitkImage2DToImage3DSliceFilter.h
   
-  include/mitkTimer.h
-  include/m2ElxUtil.h
-  include/m2ElxRegistrationHelper.h
 
 )
 
