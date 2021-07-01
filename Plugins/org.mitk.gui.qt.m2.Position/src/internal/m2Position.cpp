@@ -85,7 +85,6 @@ void m2Position::CreateQtPartControl(QWidget *parent)
   connect(scDown, &QShortcut::activated, down);
   connect(scLeft, &QShortcut::activated, left);
   connect(scRight, &QShortcut::activated, right);
-
 }
 
 void m2Position::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*/,
@@ -189,28 +188,37 @@ void m2Position::Rotate(int angleDeg)
     if (data)
     {
       // test if this data item is an image or not (could also be a surface or something totally different)
-      m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data);
+      
       std::unique_ptr<mitk::RotationOperation> op;
       mitk::ScalarType rotAx[3] = {0, 0, 1};
-      op.reset(new mitk::RotationOperation(
-        mitk::EOperations::OpROTATE, image->GetGeometry()->GetCenter(), mitk::Vector3D(rotAx), angleDeg));
-      if (image)
+      
+      if (auto image = dynamic_cast<mitk::Image *>(data))
       {
+        op.reset(new mitk::RotationOperation(
+        mitk::EOperations::OpROTATE, image->GetGeometry()->GetCenter(), mitk::Vector3D(rotAx), angleDeg));
+        auto manipulated = image->GetGeometry()->Clone();
+        manipulated->ExecuteOperation(op.get());
+        image->GetGeometry()->SetIdentity();
+        image->GetGeometry()->Compose(manipulated->GetIndexToWorldTransform());
+        RequestRenderWindowUpdate();
+      }else if (m2::SpectrumImageBase *image = dynamic_cast<m2::SpectrumImageBase *>(data))
+      {
+        op.reset(new mitk::RotationOperation(
+        mitk::EOperations::OpROTATE, image->GetGeometry()->GetCenter(), mitk::Vector3D(rotAx), angleDeg));
         image->ApplyGeometryOperation(op.get());
         RequestRenderWindowUpdate();
-        // actually do something here...
-      }
-      auto deriv = GetDataStorage()->GetDerivations(node, mitk::TNodePredicateDataType<mitk::PointSet>::New());
-      if (deriv->Size())
-      {
-        for (auto p : *deriv)
+        auto deriv = GetDataStorage()->GetDerivations(node, mitk::TNodePredicateDataType<mitk::PointSet>::New());
+        if (deriv->Size())
         {
-          auto manipulatedGeometry = p->GetData()->GetGeometry()->Clone();
-          manipulatedGeometry->ExecuteOperation(op.get());
-          p->GetData()->GetGeometry()->SetIdentity();
-          p->GetData()->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
+          for (auto p : *deriv)
+          {
+            auto manipulatedGeometry = p->GetData()->GetGeometry()->Clone();
+            manipulatedGeometry->ExecuteOperation(op.get());
+            p->GetData()->GetGeometry()->SetIdentity();
+            p->GetData()->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
+          }
+          RequestRenderWindowUpdate();
         }
-        RequestRenderWindowUpdate();
       }
     }
   }
