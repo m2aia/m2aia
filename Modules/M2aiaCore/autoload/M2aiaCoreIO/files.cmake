@@ -4,5 +4,6 @@ set(CPP_FILES
   m2ImzMLEngine.cpp
   m2OpenSlideIO.cpp
   m2FSMImageIO.cpp
+  m2ImzMLImageSerializer.cpp
 )
 
