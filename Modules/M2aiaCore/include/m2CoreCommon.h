@@ -87,8 +87,10 @@ namespace m2
 
   /// m2Utils
 
-  const auto Find = [](const auto &str, const auto &searchString, auto defaultValue) {
+  const auto Find = [](const auto &str, const auto &searchString, auto defaultValue, auto & map) {
     auto p = str.find(searchString);
+    decltype(defaultValue) converted;
+
     if (p != std::string::npos)
     {
       char begin = '"';
@@ -105,8 +107,9 @@ namespace m2
       
       auto e = str.find(end, p);
       auto val = str.substr(s + 1, e - s - 1);
-      std::istringstream buffer(val);
-      decltype(defaultValue) converted;
+      std::stringstream buffer(val);
+      
+      
       if (std::is_same<decltype(defaultValue), bool>::value)
         buffer >> std::boolalpha >> converted;      
       else
@@ -115,7 +118,15 @@ namespace m2
       MITK_INFO << searchString << " " << converted;
       return converted;
     }
-    MITK_INFO << searchString << " " << defaultValue;
+
+    std::stringstream buffer;
+    if (std::is_same<decltype(defaultValue), bool>::value)
+        buffer << std::boolalpha << defaultValue;      
+      else
+        buffer << defaultValue;
+
+    
+    map[searchString] = buffer.str();
     return defaultValue;
   };
 
