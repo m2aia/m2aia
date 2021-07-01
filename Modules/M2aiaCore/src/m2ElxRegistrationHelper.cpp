@@ -180,6 +180,9 @@ void m2::ElxRegistrationHelper::GetRegistration()
 
   CreateWorkingDirectory();
 
+  if(m_RegistrationParameters.empty())
+    m_RegistrationParameters.push_back(DEFAULT_PARAMETER_FILE);
+
   // Write parameter files
   for (unsigned int i = 0; i < m_RegistrationParameters.size(); ++i)
   {

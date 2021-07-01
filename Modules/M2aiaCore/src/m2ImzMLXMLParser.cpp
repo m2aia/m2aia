@@ -18,7 +18,7 @@ See LICENSE.txt for details.
 #include <math.h>
 //#include <mitkImzMLXMLTemplate.h>
 #include <iterator>
-#include <mitkTimer.h>
+#include <m2Timer.h>
 #include <numeric>
 #include <unordered_map>
 

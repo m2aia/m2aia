@@ -24,12 +24,12 @@ See LICENSE.txt for details.
 #include <m2Process.hpp>
 #include <m2RunningMedian.h>
 #include <m2Smoothing.h>
+#include <m2Timer.h>
 #include <mitkImageAccessByItk.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
 #include <mitkLabelSetImage.h>
 #include <mitkProperties.h>
-#include <mitkTimer.h>
 #include <mutex>
 
 template <class T>
@@ -50,7 +50,8 @@ m2::ImzMLSpectrumImage::ImzMLImageSource &m2::ImzMLSpectrumImage::GetImzMLSpectr
   return m_SourcesList[i];
 }
 
-const m2::ImzMLSpectrumImage::ImzMLImageSource &m2::ImzMLSpectrumImage::GetImzMLSpectrumImageSource(unsigned int i) const
+const m2::ImzMLSpectrumImage::ImzMLImageSource &m2::ImzMLSpectrumImage::GetImzMLSpectrumImageSource(
+  unsigned int i) const
 {
   if (i >= m_SourcesList.size())
     mitkThrow() << "No source exist for index " << i << " in the source list with size " << m_SourcesList.size();
@@ -111,53 +112,57 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::U
       const unsigned long n = source.m_Spectra.size();
       const unsigned t = p->GetNumberOfThreads();
       const auto _NormalizationStrategy = p->GetNormalizationStrategy();
-      m2::Process::Map(n, t, [&](auto /*id*/, auto a, auto b) {
-        std::ifstream f(source.m_BinaryDataPath, std::iostream::binary);
-        std::vector<IntensityType> ints(length);
-        std::vector<IntensityType> baseline(length);
-        auto s = std::next(std::begin(ints), padding_left);
-        auto e = std::prev(std::end(ints), padding_right);
-
-        const auto Smoother =
-          m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), true);
-
-        const auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
-          p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
-
-        double d;
-        const auto divide = [&d](const auto &v) { return v / d; };
-
-        const auto &m_Spectra = source.m_Spectra;
-        for (unsigned int i = a; i < b; ++i)
+      m2::Process::Map(
+        n,
+        t,
+        [&](auto /*id*/, auto a, auto b)
         {
-          const auto &spectrum = m_Spectra[i];
-          if (maskAccess && maskAccess->GetPixelByIndex(spectrum.index + source.m_Offset) == 0)
+          std::ifstream f(source.m_BinaryDataPath, std::iostream::binary);
+          std::vector<IntensityType> ints(length);
+          std::vector<IntensityType> baseline(length);
+          auto s = std::next(std::begin(ints), padding_left);
+          auto e = std::prev(std::end(ints), padding_right);
+
+          const auto Smoother =
+            m2::Signal::CreateSmoother<IntensityType>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), true);
+
+          const auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<IntensityType>(
+            p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
+
+          double d;
+          const auto divide = [&d](const auto &v) { return v / d; };
+
+          const auto &m_Spectra = source.m_Spectra;
+          for (unsigned int i = a; i < b; ++i)
           {
-            imageAccess.SetPixelByIndex(spectrum.index + source.m_Offset, 0);
-            continue;
+            const auto &spectrum = m_Spectra[i];
+            if (maskAccess && maskAccess->GetPixelByIndex(spectrum.index + source.m_Offset) == 0)
+            {
+              imageAccess.SetPixelByIndex(spectrum.index + source.m_Offset, 0);
+              continue;
+            }
+
+            // ints container represents a extended region over which a accumulation is performed
+            binaryDataToVector(
+              f, source.m_Spectra[i].intOffset + (subRes.first - padding_left) * sizeof(IntensityType), length, ints);
+
+            // if a normalization image exist, apply normalization before any further calculations are performed
+            if (_NormalizationStrategy != NormalizationStrategyType::None)
+            {
+              d = normAccess.GetPixelByIndex(spectrum.index + source.m_Offset);
+              std::transform(std::begin(ints), std::end(ints), std::begin(ints), divide);
+            }
+
+            // smooth signal
+            Smoother(ints);
+
+            // substract basline
+            BaselineSubstractor(ints);
+
+            const auto val = Signal::RangePooling<IntensityType>(s, e, p->GetRangePoolingStrategy());
+            imageAccess.SetPixelByIndex(spectrum.index + source.m_Offset, val);
           }
-
-          // ints container represents a extended region over which a accumulation is performed
-          binaryDataToVector(
-            f, source.m_Spectra[i].intOffset + (subRes.first - padding_left) * sizeof(IntensityType), length, ints);
-
-          // if a normalization image exist, apply normalization before any further calculations are performed
-          if (_NormalizationStrategy != NormalizationStrategyType::None)
-          {
-            d = normAccess.GetPixelByIndex(spectrum.index + source.m_Offset);
-            std::transform(std::begin(ints), std::end(ints), std::begin(ints), divide);
-          }
-
-          // smooth signal
-          Smoother(ints);
-
-          // substract basline
-          BaselineSubstractor(ints);
-
-          const auto val = Signal::RangePooling<IntensityType>(s, e, p->GetRangePoolingStrategy());
-          imageAccess.SetPixelByIndex(spectrum.index + source.m_Offset, val);
-        }
-      });
+        });
     }
   }
   else if (any(importMode & (m2::SpectrumFormatType::ContinuousCentroid | m2::SpectrumFormatType::ProcessedCentroid)))
@@ -168,38 +173,42 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::U
       const unsigned long n = source.m_Spectra.size();
       const unsigned t = p->GetNumberOfThreads();
       const auto _NormalizationStrategy = p->GetNormalizationStrategy();
-      m2::Process::Map(n, t, [&](auto /*id*/, auto a, auto b) {
-        std::ifstream f(source.m_BinaryDataPath, std::iostream::binary);
-        std::vector<IntensityType> ints;
-        std::vector<MassAxisType> mzs;
-        for (unsigned int i = a; i < b; ++i)
+      m2::Process::Map(
+        n,
+        t,
+        [&](auto /*id*/, auto a, auto b)
         {
-          auto &spectrum = source.m_Spectra[i];
-          if (maskAccess && maskAccess->GetPixelByIndex(spectrum.index + source.m_Offset) == 0)
+          std::ifstream f(source.m_BinaryDataPath, std::iostream::binary);
+          std::vector<IntensityType> ints;
+          std::vector<MassAxisType> mzs;
+          for (unsigned int i = a; i < b; ++i)
           {
-            imageAccess.SetPixelByIndex(spectrum.index + source.m_Offset, 0);
-            continue;
-          }
-          binaryDataToVector(f, spectrum.mzOffset, spectrum.mzLength, mzs); // !! read mass axis for each spectrum
-          auto subRes = m2::Signal::Subrange(mzs, xRangeCenter - xRangeTol, xRangeCenter + xRangeTol);
-          if (subRes.second == 0)
-          {
-            imageAccess.SetPixelByIndex(spectrum.index + source.m_Offset, 0);
-            continue;
-          }
+            auto &spectrum = source.m_Spectra[i];
+            if (maskAccess && maskAccess->GetPixelByIndex(spectrum.index + source.m_Offset) == 0)
+            {
+              imageAccess.SetPixelByIndex(spectrum.index + source.m_Offset, 0);
+              continue;
+            }
+            binaryDataToVector(f, spectrum.mzOffset, spectrum.mzLength, mzs); // !! read mass axis for each spectrum
+            auto subRes = m2::Signal::Subrange(mzs, xRangeCenter - xRangeTol, xRangeCenter + xRangeTol);
+            if (subRes.second == 0)
+            {
+              imageAccess.SetPixelByIndex(spectrum.index + source.m_Offset, 0);
+              continue;
+            }
 
-          binaryDataToVector(f, spectrum.intOffset + subRes.first * sizeof(IntensityType), subRes.second, ints);
-          if (_NormalizationStrategy != m2::NormalizationStrategyType::None)
-          {
-            IntensityType norm = normAccess.GetPixelByIndex(spectrum.index + source.m_Offset);
-            std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&norm](auto &v) { return v / norm; });
-          }
+            binaryDataToVector(f, spectrum.intOffset + subRes.first * sizeof(IntensityType), subRes.second, ints);
+            if (_NormalizationStrategy != m2::NormalizationStrategyType::None)
+            {
+              IntensityType norm = normAccess.GetPixelByIndex(spectrum.index + source.m_Offset);
+              std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&norm](auto &v) { return v / norm; });
+            }
 
-          auto val =
-            Signal::RangePooling<IntensityType>(std::begin(ints), std::end(ints), p->GetRangePoolingStrategy());
-          imageAccess.SetPixelByIndex(spectrum.index + source.m_Offset, val);
-        }
-      });
+            auto val =
+              Signal::RangePooling<IntensityType>(std::begin(ints), std::end(ints), p->GetRangePoolingStrategy());
+            imageAccess.SetPixelByIndex(spectrum.index + source.m_Offset, val);
+          }
+        });
     }
   }
 }
@@ -228,7 +237,8 @@ void m2::ImzMLSpectrumImage::InitializeProcessor()
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
-      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<float, long long int>(this));
+      this->m_Processor.reset(
+        (m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<float, long long int>(this));
       // SetYInputType(m2::NumericType::Double);
     }
   }
@@ -252,7 +262,8 @@ void m2::ImzMLSpectrumImage::InitializeProcessor()
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
-      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<double, long long int>(this));
+      this->m_Processor.reset(
+        (m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<double, long long int>(this));
       // SetYInputType(m2::NumericType::Double);
     }
   }
@@ -388,15 +399,19 @@ m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLS
   C_sources = A_sources;
   MITK_INFO << "Merge sources";
 
-  std::transform(std::begin(B_sources), std::end(B_sources), std::back_inserter(C_sources), [&](ImzMLImageSource s) {
-    if (stackAxis == 'x')
-      s.m_Offset[0] += A_x; // shift along x-axis
-    if (stackAxis == 'y')
-      s.m_Offset[1] += A_y; // shift along y-axis
-    if (stackAxis == 'z')
-      s.m_Offset[2] += A_z; // shift along z-axis
-    return s;
-  });
+  std::transform(std::begin(B_sources),
+                 std::end(B_sources),
+                 std::back_inserter(C_sources),
+                 [&](ImzMLImageSource s)
+                 {
+                   if (stackAxis == 'x')
+                     s.m_Offset[0] += A_x; // shift along x-axis
+                   if (stackAxis == 'y')
+                     s.m_Offset[1] += A_y; // shift along y-axis
+                   if (stackAxis == 'z')
+                     s.m_Offset[2] += A_z; // shift along z-axis
+                   return s;
+                 });
 
   C->InitializeGeometry();
   std::set<m2::MassValue> set;
@@ -432,9 +447,8 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 
   using ImageType = itk::Image<m2::DisplayImagePixelType, 3>;
   auto itkIonImage = ImageType::New();
-  
-  
-  itkIonImage->SetRegions({{0,0,0}, {imageSize[0],imageSize[1],imageSize[2]}});
+
+  itkIonImage->SetRegions({{0, 0, 0}, {imageSize[0], imageSize[1], imageSize[2]}});
   itkIonImage->Allocate();
   itkIonImage->FillBuffer(0);
 
@@ -558,22 +572,26 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
   for (const auto &source : p->GetImzMLSpectrumImageSourceList())
   {
     const auto &spectra = source.m_Spectra;
-    m2::Process::Map(spectra.size(), p->GetNumberOfThreads(), [&](unsigned int /*t*/, unsigned int a, unsigned int b) {
-      for (unsigned int i = a; i < b; i++)
+    m2::Process::Map(
+      spectra.size(),
+      p->GetNumberOfThreads(),
+      [&](unsigned int /*t*/, unsigned int a, unsigned int b)
       {
-        const auto &spectrum = spectra[i];
+        for (unsigned int i = a; i < b; i++)
+        {
+          const auto &spectrum = spectra[i];
 
-        accIndex->SetPixelByIndex(spectrum.index + source.m_Offset, i);
+          accIndex->SetPixelByIndex(spectrum.index + source.m_Offset, i);
 
-        // If mask content is generated elsewhere
-        if (!p->GetUseExternalMask())
-          accMask->SetPixelByIndex(spectrum.index + source.m_Offset, 1);
+          // If mask content is generated elsewhere
+          if (!p->GetUseExternalMask())
+            accMask->SetPixelByIndex(spectrum.index + source.m_Offset, 1);
 
-        // If it is a processed file, normalization maps are set to 1 - assuming that spectra were already processed
-        if (any(importMode & (m2::SpectrumFormatType::ProcessedCentroid | m2::SpectrumFormatType::ProcessedProfile)))
-          accNorm->SetPixelByIndex(spectrum.index + source.m_Offset, 1);
-      }
-    });
+          // If it is a processed file, normalization maps are set to 1 - assuming that spectra were already processed
+          if (any(importMode & (m2::SpectrumFormatType::ProcessedCentroid | m2::SpectrumFormatType::ProcessedProfile)))
+            accNorm->SetPixelByIndex(spectrum.index + source.m_Offset, 1);
+        }
+      });
   }
 
   // reset prevention flags
@@ -616,13 +634,16 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
   const auto Maximum = [](const auto &a, const auto &b) { return a > b ? a : b; };
   const auto plus = std::plus<>();
 
-  mitk::Timer t("Initialize image");
+  m2::Timer t("Initialize image");
   for (const auto &source : p->GetImzMLSpectrumImageSourceList())
   {
     const auto &spectra = source.m_Spectra;
 
     m2::Process::Map(
-      source.m_Spectra.size(), p->GetNumberOfThreads(), [&](unsigned int t, unsigned int a, unsigned int b) {
+      source.m_Spectra.size(),
+      p->GetNumberOfThreads(),
+      [&](unsigned int t, unsigned int a, unsigned int b)
+      {
         std::vector<IntensityType> ints(mzs.size(), 0);
         std::vector<IntensityType> baseline(mzs.size(), 0);
 
@@ -666,9 +687,11 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
   auto &skyline = p->SkylineSpectrum();
   skyline.resize(mzs.size(), 0);
   for (unsigned int t = 0; t < p->GetNumberOfThreads(); ++t)
-    std::transform(skylineT[t].begin(), skylineT[t].end(), skyline.begin(), skyline.begin(), [](auto &a, auto &b) {
-      return a > b ? a : b;
-    });
+    std::transform(skylineT[t].begin(),
+                   skylineT[t].end(),
+                   skyline.begin(),
+                   skyline.begin(),
+                   [](auto &a, auto &b) { return a > b ? a : b; });
 
   auto &mean = p->MeanSpectrum();
   auto &sum = p->SumSpectrum();
@@ -718,61 +741,65 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
   {
     const auto &spectra = source.m_Spectra;
 
-    m2::Process::Map(spectra.size(), p->GetNumberOfThreads(), [&](unsigned int t, unsigned int a, unsigned int b) {
-      std::ifstream f;
-      f.open(source.m_BinaryDataPath, std::ios::binary);
-
-      std::vector<IntensityType> ints;
-
-      peaksT[t].resize(mzs.size());
-      auto pIt = std::begin(peaksT[t]);
-      unsigned int index = 0;
-      for (const auto &mz : mzs)
+    m2::Process::Map(
+      spectra.size(),
+      p->GetNumberOfThreads(),
+      [&](unsigned int t, unsigned int a, unsigned int b)
       {
-        pIt->mass = mz;
-        (pIt++)->massAxisIndex = index++;
-      }
+        std::ifstream f;
+        f.open(source.m_BinaryDataPath, std::ios::binary);
 
-      auto iO = spectra[0].intOffset;
-      auto iL = spectra[0].intLength;
+        std::vector<IntensityType> ints;
 
-      for (unsigned i = a; i < b; i++)
-      {
-        iO = spectra[i].intOffset;
-        binaryDataToVector(f, iO, iL, ints);
-
-        double val = 1;
-        if (p->GetNormalizationStrategy() == m2::NormalizationStrategyType::InFile)
-        {
-          if (spectra[i].normalize != 0)
-          {
-            val = spectra[i].normalize;
-            std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&val](auto &v) { return v / val; });
-          }
-        }
-        accNorm->SetPixelByIndex(spectra[i].index + source.m_Offset, val); // Set normalization image pixel value
-
-        auto intsIt = std::cbegin(ints);
-        auto mzsIt = std::cbegin(mzs);
+        peaksT[t].resize(mzs.size());
         auto pIt = std::begin(peaksT[t]);
-
-        while (intsIt != std::cend(ints))
+        unsigned int index = 0;
+        for (const auto &mz : mzs)
         {
-          const auto &i = *intsIt;
-          if (i > pIt->intensity)
-          {
-            pIt->intensity = i;
-          }
-          pIt->intensitySum += i;
-
-          ++intsIt;
-          ++mzsIt;
-          ++pIt;
+          pIt->mass = mz;
+          (pIt++)->massAxisIndex = index++;
         }
-      }
 
-      f.close();
-    });
+        auto iO = spectra[0].intOffset;
+        auto iL = spectra[0].intLength;
+
+        for (unsigned i = a; i < b; i++)
+        {
+          iO = spectra[i].intOffset;
+          binaryDataToVector(f, iO, iL, ints);
+
+          double val = 1;
+          if (p->GetNormalizationStrategy() == m2::NormalizationStrategyType::InFile)
+          {
+            if (spectra[i].normalize != 0)
+            {
+              val = spectra[i].normalize;
+              std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&val](auto &v) { return v / val; });
+            }
+          }
+          accNorm->SetPixelByIndex(spectra[i].index + source.m_Offset, val); // Set normalization image pixel value
+
+          auto intsIt = std::cbegin(ints);
+          auto mzsIt = std::cbegin(mzs);
+          auto pIt = std::begin(peaksT[t]);
+
+          while (intsIt != std::cend(ints))
+          {
+            const auto &i = *intsIt;
+            if (i > pIt->intensity)
+            {
+              pIt->intensity = i;
+            }
+            pIt->intensitySum += i;
+
+            ++intsIt;
+            ++mzsIt;
+            ++pIt;
+          }
+        }
+
+        f.close();
+      });
 
     auto &mzAxis = p->GetXAxis();
     mzAxis.clear();
@@ -836,63 +863,66 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
     double binSize = 1;
 
     // MAP
-    m2::Process::Map(spectra.size(), T, [&](unsigned int t, unsigned int a, unsigned int b) {
-      std::ifstream f(source.m_BinaryDataPath, std::ios::binary);
+    m2::Process::Map(spectra.size(),
+                     T,
+                     [&](unsigned int t, unsigned int a, unsigned int b)
+                     {
+                       std::ifstream f(source.m_BinaryDataPath, std::ios::binary);
 
-      std::vector<MassAxisType> mzs;
-      std::vector<IntensityType> ints;
+                       std::vector<MassAxisType> mzs;
+                       std::vector<IntensityType> ints;
 
-      std::list<m2::MassValue> peaks, tempList;
-      // find x min/max
-      for (unsigned i = a; i < b; i++)
-      {
-        const auto &mzO = spectra[i].mzOffset;
-        const auto &mzL = spectra[i].mzLength;
-        binaryDataToVector(f, mzO, mzL, mzs);
-        xMin[t] = std::min(xMin[t], (double)mzs.front());
-        xMax[t] = std::max(xMax[t], (double)mzs.back());
-      }
+                       std::list<m2::MassValue> peaks, tempList;
+                       // find x min/max
+                       for (unsigned i = a; i < b; i++)
+                       {
+                         const auto &mzO = spectra[i].mzOffset;
+                         const auto &mzL = spectra[i].mzLength;
+                         binaryDataToVector(f, mzO, mzL, mzs);
+                         xMin[t] = std::min(xMin[t], (double)mzs.front());
+                         xMax[t] = std::max(xMax[t], (double)mzs.back());
+                       }
 
-      barrier->Wait();
+                       barrier->Wait();
 
-      if (t == 0)
-      {
-        // find overall min/max
-        max = *std::max_element(std::begin(xMax), std::end(xMax));
-        min = *std::min_element(std::begin(xMin), std::end(xMin));
-        binSize = (max - min) / double(binsN);
-      }
+                       if (t == 0)
+                       {
+                         // find overall min/max
+                         max = *std::max_element(std::begin(xMax), std::end(xMax));
+                         min = *std::min_element(std::begin(xMin), std::end(xMin));
+                         binSize = (max - min) / double(binsN);
+                       }
 
-      barrier->Wait();
+                       barrier->Wait();
 
-      for (unsigned i = a; i < b; i++)
-      {
-        const auto &mzO = spectra[i].mzOffset;
-        const auto &mzL = spectra[i].mzLength;
-        binaryDataToVector(f, mzO, mzL, mzs);
+                       for (unsigned i = a; i < b; i++)
+                       {
+                         const auto &mzO = spectra[i].mzOffset;
+                         const auto &mzL = spectra[i].mzLength;
+                         binaryDataToVector(f, mzO, mzL, mzs);
 
-        const auto &intO = spectra[i].intOffset;
-        const auto &intL = spectra[i].intLength;
-        binaryDataToVector(f, intO, intL, ints);
+                         const auto &intO = spectra[i].intOffset;
+                         const auto &intL = spectra[i].intLength;
+                         binaryDataToVector(f, intO, intL, ints);
 
-        for (unsigned int k = 0; k < mzs.size(); ++k)
-        {
-          auto j = (long)((mzs[k] - min) / binSize);
+                         for (unsigned int k = 0; k < mzs.size(); ++k)
+                         {
+                           auto j = (long)((mzs[k] - min) / binSize);
 
-          if (j >= binsN)
-            j = binsN - 1;
-          else if (j < 0)
-            j = 0;
+                           if (j >= binsN)
+                             j = binsN - 1;
+                           else if (j < 0)
+                             j = 0;
 
-          xT[t][j] += mzs[k];                                   // mass sum
-          yT[t][j] += ints[k];                                  // intensitiy sum
-          yMaxT[t][j] = std::max(yMaxT[t][j], double(ints[k])); // intensitiy max
-          hT[t][j]++;                                           // hits
-        }
-      }
+                           xT[t][j] += mzs[k];                                   // mass sum
+                           yT[t][j] += ints[k];                                  // intensitiy sum
+                           yMaxT[t][j] = std::max(yMaxT[t][j], double(ints[k])); // intensitiy max
+                           hT[t][j]++;                                           // hits
+                         }
+                       }
 
-      f.close();
-    });
+                       f.close();
+                     });
 
     // REDUCE
     for (unsigned int i = 1; i < T; ++i)
@@ -923,7 +953,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
         sum.push_back(yT[0][k]);
         mean.push_back(yT[0][k] / (double)hT[0][k]);
         skyline.push_back(yMaxT[0][k]);
-        //std::cout << mzAxis.back() << " " << hT[0][k] << ", ";
+        // std::cout << mzAxis.back() << " " << hT[0][k] << ", ";
       }
     }
 
@@ -960,9 +990,10 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::G
     if (p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None)
     {
       const auto normalization = normAcc.GetPixelByIndex(spectrum.index + source.m_Offset);
-      std::transform(ints_get.begin(), ints_get.end(), ints_get.begin(), [&normalization](auto &val) {
-        return val / normalization;
-      });
+      std::transform(ints_get.begin(),
+                     ints_get.end(),
+                     ints_get.begin(),
+                     [&normalization](auto &val) { return val / normalization; });
     }
 
     Smoother(ints_get);

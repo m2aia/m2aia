@@ -43,6 +43,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 // itk
 #include <itksys/SystemTools.hxx>
 #include <m2ElxRegistrationHelper.h>
+#include <m2ElxUtil.h>
 
 const std::string OpticalImageRegistration::VIEW_ID = "org.mitk.views.opticalimageregistration";
 
@@ -54,7 +55,6 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
   m_Controls.setupUi(parent);
 
   connect(m_Controls.btnStartRegistration, &QPushButton::clicked, this, &OpticalImageRegistration::StartRegistration);
-  connect(m_Controls.btnAlignImages, &QPushButton::clicked, this, &OpticalImageRegistration::AlignImages);
 
   m_FixedImageSingleNodeSelection = new QmitkSingleNodeSelectionWidget();
   m_FixedImageSingleNodeSelection->SetDataStorage(GetDataStorage());
@@ -127,14 +127,16 @@ void OpticalImageRegistration::AddNewModalityTab()
 {
   auto widget = new QWidget();
   m_MovingModalitiesControls[m_ModalityId].setupUi(widget);
-  const auto tab_ID = m_Controls.tabWidget->addTab(widget, QString(m_ModalityId));
-
+  const auto modalityId = m_ModalityId;
+  const auto tabId = m_Controls.tabWidget->addTab(widget, QString(m_ModalityId));
+  m_Controls.tabWidget->setCurrentIndex(tabId);
   auto &controls = m_MovingModalitiesControls[m_ModalityId];
-  controls.lineEditName->setText(QString(m_ModalityId));
+
+  controls.lineEditName->setPlaceholderText("Type in a new name for this a modality here.");
   connect(controls.lineEditName,
           &QLineEdit::textChanged,
           this,
-          [tab_ID, this](const QString text) { m_Controls.tabWidget->setTabText(tab_ID, text); });
+          [tabId, this](const QString text) { m_Controls.tabWidget->setTabText(tabId, text); });
 
   auto imageSelection = new QmitkSingleNodeSelectionWidget();
   imageSelection->SetDataStorage(GetDataStorage());
@@ -145,7 +147,24 @@ void OpticalImageRegistration::AddNewModalityTab()
   imageSelection->SetEmptyInfo(QString("Please select a moving image"));
   imageSelection->SetPopUpTitel(QString("Select moving image node"));
   // m_Controls.movingImageData->insertWidget(0, m_MovingImageSingleNodeSelection);
-  controls.verticalLayout->insertWidget(1, imageSelection);
+  controls.widgetList->insertWidget(1, imageSelection);
+
+  connect(imageSelection,
+          &QmitkSingleNodeSelectionWidget::CurrentSelectionChanged,
+          this,
+          [tabId, modalityId, this](QList<mitk::DataNode::Pointer> nodeList)
+          {
+            if (nodeList.size() != 1)
+            {
+              MITK_ERROR << "Not clear what to do!";
+              return;
+            }
+            const auto node = nodeList.back();
+            if (auto image = dynamic_cast<mitk::Image *>(node->GetData()))
+            {
+              m_MovingModalitiesDualRepresentation[modalityId].reset(new m2::DualGeometryImageWrapper(image));
+            }
+          });
 
   auto pointSetSelection = new QmitkSingleNodeSelectionWidget();
   pointSetSelection->SetDataStorage(GetDataStorage());
@@ -165,14 +184,23 @@ void OpticalImageRegistration::AddNewModalityTab()
             auto node = mitk::DataNode::New();
             node->SetData(mitk::PointSet::New());
             node->SetName("MovingPointSet");
-            auto movingNode = m_MovingImageSingleNodeSelection->GetSelectedNode();
+            auto movingNode = imageSelection->GetSelectedNode();
             if (movingNode)
               this->GetDataStorage()->Add(node, movingNode);
             else
               this->GetDataStorage()->Add(node);
             node->SetFloatProperty("point 2D size", 0.5);
             node->SetProperty("color", mitk::ColorProperty::New(0.0f, 1.0f, 1.0f));
-            this->m_MovingPointSetSingleNodeSelection->SetCurrentSelection({node});
+            pointSetSelection->SetCurrentSelection({node});
+          });
+
+  connect(controls.btnRemove,
+          &QPushButton::clicked,
+          this,
+          [this, tabId, modalityId]()
+          {
+            this->m_Controls.tabWidget->removeTab(tabId);
+            // this->m_MovingModalitiesControls[]
           });
 
   ++m_ModalityId;
@@ -208,47 +236,71 @@ QString OpticalImageRegistration::GetElastixPath() const
   return preferences.IsNotNull() ? preferences->Get("elastix", "") : "";
 }
 
-void OpticalImageRegistration::AlignImages() {}
-
 void OpticalImageRegistration::StartRegistration()
 {
-  auto elastix = GetElastixPath();
-  if (elastix.isEmpty())
+  // check if
+  auto elastix = m2::ElxUtil::Executable("elastix");
+  if (elastix.empty())
   {
-    QMessageBox::information(nullptr, "Error", "No elastix executable specified in the MITK properties!");
-    return;
+    elastix = GetElastixPath().toStdString();
+    if (elastix.empty())
+    {
+      QMessageBox::information(nullptr, "Error", "No elastix executable specified in the MITK properties!");
+      return;
+    }
   }
 
-  mitk::PointSet::Pointer fixedPointSet, movingPointSet;
-  mitk::Image::Pointer fixedImage, movingImage;
+  mitk::PointSet::Pointer fixedPointSet;
+  mitk::Image::Pointer fixedImage;
 
   if (auto node = m_FixedImageSingleNodeSelection->GetSelectedNode())
     fixedImage = dynamic_cast<mitk::Image *>(node->GetData());
 
-  if (auto node = m_MovingImageSingleNodeSelection->GetSelectedNode())
-    movingImage = dynamic_cast<mitk::Image *>(node->GetData());
-
   if (auto node = m_FixedPointSetSingleNodeSelection->GetSelectedNode())
     fixedPointSet = dynamic_cast<mitk::PointSet *>(node->GetData());
-
-  if (auto node = m_MovingPointSetSingleNodeSelection->GetSelectedNode())
-    movingPointSet = dynamic_cast<mitk::PointSet *>(node->GetData());
 
   // const auto rigid = m_Controls.rigidText->toPlainText().toStdString();
   // const auto deformable = m_Controls.deformableText->toPlainText().toStdString();
 
-  try
+  for (const auto kv : m_MovingModalitiesDualRepresentation)
   {
-    m2::ElxRegistrationHelper helper;
-    helper.SetImageData(fixedImage, movingImage);
-    helper.SetPointData(fixedPointSet, movingPointSet);
-    // helper.SetRegistrationParameters({rigid, deformable});
-    helper.GetRegistration();
+    MITK_INFO << "Process modality with ID [" << kv.first << "] ";
+    auto dualRepresentation = kv.second.get();
+    mitk::Image::Pointer movingImage = dualRepresentation->GetWrappedImage();
+    mitk::PointSet::Pointer movingPointSet;
+    auto movingNode = dynamic_cast<QmitkSingleNodeSelectionWidget *>(
+                        m_MovingModalitiesControls[kv.first].widgetList->itemAt(1)->widget())
+                        ->GetSelectedNode();
+
+    if (auto pointSetNodeSelection = dynamic_cast<QmitkSingleNodeSelectionWidget *>(
+          m_MovingModalitiesControls[kv.first].movingPointSetData->itemAt(1)->widget()))
+    {
+      if(auto pointSetNode = pointSetNodeSelection->GetSelectedNode())
+        movingPointSet = dynamic_cast<mitk::PointSet *>(pointSetNode->GetData());
+    }
+
+    try
+    {
+      m2::ElxRegistrationHelper helper;
+      helper.SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
+      helper.SetImageData(fixedImage, movingImage);
+      helper.SetPointData(fixedPointSet, movingPointSet);
+      // helper.SetRegistrationParameters({rigid, deformable});
+      helper.GetRegistration();
+
+      auto warpedImage = helper.WarpImage(movingImage);
+      auto node = mitk::DataNode::New();
+      node->SetData(warpedImage);
+      node->SetName("Warped Image");
+      GetDataStorage()->Add(node, movingNode);
+    }
+    catch (std::exception &e)
+    {
+      MITK_ERROR << e.what();
+    }
   }
-  catch (std::exception &e)
-  {
-    MITK_ERROR << e.what();
-  }
+
+
 
   // auto resultPath = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "result.1.nrrd"}));
   // MITK_INFO << "Result image path: " << resultPath;
@@ -264,3 +316,4 @@ void OpticalImageRegistration::StartRegistration()
 
   // filesystem::remove(path);
 }
+

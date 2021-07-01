@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Form</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="widgetList">
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
@@ -39,7 +39,7 @@
     </layout>
    </item>
    <item>
-    <widget class="QPushButton" name="pushButton">
+    <widget class="QPushButton" name="btnRemove">
      <property name="text">
       <string>Remove moving image</string>
      </property>

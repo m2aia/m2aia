@@ -11,7 +11,7 @@
 #include <mitkImageAccessByItk.h>
 #include <mitkImageCast.h>
 #include <mitkImagePixelReadAccessor.h>
-#include <mitkTimer.h>
+#include <m2Timer.h>
 #include <vnl/vnl_matrix.h>
 
 void m2::PcaImageFilter::EqualizePcAxesEigen(MatrixXd *PcComponents)
@@ -68,7 +68,7 @@ void m2::PcaImageFilter::initMatrix()
 
 void m2::PcaImageFilter ::GenerateData()
 {
-  auto timer = mitk::Timer("Eigen Calculation");
+  auto timer = m2::Timer("Eigen Calculation");
 
   this->initMatrix();
   

@@ -34,17 +34,20 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkImagePixelWriteAccessor.h>
 #include <mitkLocaleSwitch.h>
 #include <mitkProgressBar.h>
-#include <mitkTimer.h>
+#include <m2Timer.h>
 #include <numeric>
 #include <thread>
 
 template <class ConversionType, class ItFirst, class ItLast, class OStreamType>
 void writeData(ItFirst itFirst, ItLast itLast, OStreamType &os)
 {
-  std::for_each(itFirst, itLast, [&os](const auto &v) {
-    const ConversionType c(v);
-    os.write((char *)(&c), sizeof(ConversionType));
-  });
+  std::for_each(itFirst,
+                itLast,
+                [&os](const auto &v)
+                {
+                  const ConversionType c(v);
+                  os.write((char *)(&c), sizeof(ConversionType));
+                });
 }
 
 namespace m2
@@ -325,7 +328,7 @@ namespace m2
     // Output file stream for ibd
     std::ofstream b(GetIBDOutputPath(), std::ofstream::binary | std::ofstream::app);
 
-    //unsigned sourceId = 0;
+    // unsigned sourceId = 0;
     unsigned long long offset = 16;
     unsigned long long offsetDelta = 0;
     b.seekp(offset);
@@ -647,14 +650,21 @@ namespace m2
 
     object->SetImportMode(SpectrumFormatType::None);
     {
-      mitk::Timer t("Parsing imzML");
+      m2::Timer t("Parsing imzML");
       m2::ImzMLXMLParser::FastReadMetaData(object);
       m2::ImzMLXMLParser::SlowReadMetaData(object);
     }
-    object->InitializeGeometry();
 
-    EvaluateSpectrumFormatType(object);
-    LoadAssociatedData(object);
+    {
+      m2::Timer t("Initialize placeholder images and spectra");
+      object->InitializeGeometry();
+    }
+    {
+       m2::Timer t("Load external data");
+      EvaluateSpectrumFormatType(object);
+      LoadAssociatedData(object);
+    }
+
 
     return {object.GetPointer()};
   }

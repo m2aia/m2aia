@@ -190,7 +190,7 @@ namespace m2
 
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
-    unsigned int m_NumberOfThreads = 10;
+    unsigned int m_NumberOfThreads = itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
     PeaksVectorType m_Peaks;
 
     ImageArtifactMapType m_ImageArtifacts;

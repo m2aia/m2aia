@@ -26,7 +26,7 @@ See LICENSE.txt for details.
 #include <mitkImagePixelWriteAccessor.h>
 #include <mitkLabelSetImage.h>
 #include <mitkProperties.h>
-#include <mitkTimer.h>
+#include <m2Timer.h>
 
 void m2::FsmSpectrumImage::FsmProcessor::UpdateImagePrivate(double cmInv,
                                                                double tol,
@@ -238,7 +238,7 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
   skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));
   sumT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));
 
-  mitk::Timer t("Initialize image");
+  m2::Timer t("Initialize image");
 
   m2::Process::Map(
     p->GetSpectra().size(), p->GetNumberOfThreads(), [&](unsigned int t, unsigned int a, unsigned int b) {

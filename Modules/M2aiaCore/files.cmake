@@ -8,6 +8,10 @@ set(H_FILES
   include/m2ImzMLSpectrumImage.h
   include/m2ImzMLXMLParser.h
   include/m2FsmSpectrumImage.h
+  include/m2Timer.h
+
+  include/m2ElxUtil.h
+  include/m2ElxRegistrationHelper.h
 
   include/mitkMassSpecImageInteractor.h
 
