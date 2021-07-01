@@ -59,8 +59,6 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
 
   m_Controls.buttonBoxLeft->addButton(m_Controls.btnEditParameterFiles, QDialogButtonBox::NoRole);
   m_Controls.buttonBoxLeft->addButton(m_Controls.btnStartRegistration, QDialogButtonBox::NoRole);
-  
-
 
   m_ParameterFileEditor = new QDialog(parent);
   m_ParameterFileEditorControls.setupUi(m_ParameterFileEditor);
@@ -164,38 +162,37 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
                                 m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
           });
 
+  connect(m_Controls.buttonBox->button(QDialogButtonBox::Save),
+          &QAbstractButton::clicked,
+          this,
+          []()
+          {
+            mitk::SceneIO::Pointer sceneIO = mitk::SceneIO::New();
+            auto setOfObjects = mitk::DataStorage::SetOfObjects::New();
 
-  connect(m_Controls.buttonBox->button(QDialogButtonBox::Save), &QAbstractButton::clicked, this, [](){
-    mitk::SceneIO::Pointer sceneIO = mitk::SceneIO::New();
-    auto setOfObjects = mitk::DataStorage::SetOfObjects::New();
+            // if ( !sceneIO->SaveScene( setOfObjects, storage, fileName.toStdString() ) )
+            // {
+            //   QMessageBox::information(nullptr,
+            //                            "Scene saving",
+            //                            "Scene could not be written completely. Please check the log.",
+            //                            QMessageBox::Ok);
 
-
-    // if ( !sceneIO->SaveScene( setOfObjects, storage, fileName.toStdString() ) )
-    // {
-    //   QMessageBox::information(nullptr,
-    //                            "Scene saving",
-    //                            "Scene could not be written completely. Please check the log.",
-    //                            QMessageBox::Ok);
-
-    // }
-
-  });
-
-
+            // }
+          });
 }
 
 void OpticalImageRegistration::AddNewModalityTab()
 {
   auto widget = new QWidget();
-  m_MovingModalitiesControls[m_ModalityId].setupUi(widget);
+  Ui::MovingModalityWidgetControls controls;
+  controls.setupUi(widget);
   const auto modalityId = m_ModalityId;
   const auto tabId = m_Controls.tabWidget->addTab(widget, QString(m_ModalityId));
-  auto page =m_Controls.tabWidget->widget(tabId);
+  auto page = m_Controls.tabWidget->widget(tabId);
   page->setObjectName(QString(m_ModalityId));
   m_Controls.tabWidget->setCurrentIndex(tabId);
-  auto &controls = m_MovingModalitiesControls[m_ModalityId];
 
-  QWidget::setTabOrder(m_Controls.btnAddModality,controls.lineEditName);
+  QWidget::setTabOrder(m_Controls.btnAddModality, controls.lineEditName);
 
   controls.lineEditName->setPlaceholderText(QString(modalityId) + ": new name for this modality.");
   connect(controls.lineEditName,
@@ -213,20 +210,7 @@ void OpticalImageRegistration::AddNewModalityTab()
   imageSelection->SetPopUpTitel(QString("Select image node"));
   // m_Controls.movingImageData->insertWidget(0, m_MovingImageSingleNodeSelection);
   controls.widgetList->insertWidget(1, imageSelection);
-
-  connect(imageSelection,
-          &QmitkSingleNodeSelectionWidget::CurrentSelectionChanged,
-          this,
-          [tabId, modalityId, this](QList<mitk::DataNode::Pointer> nodeList)
-          {
-            if (nodeList.size() != 1)
-            {
-              MITK_ERROR << "Not clear what to do!";
-              return;
-            }
-            const auto node = nodeList.back();
-            m_MovingModalitiesImageDataNode[modalityId] = node;
-          });
+  m_MovingModalities[modalityId].push_back(imageSelection);
 
   auto pointSetSelection = new QmitkSingleNodeSelectionWidget();
   pointSetSelection->SetDataStorage(GetDataStorage());
@@ -237,6 +221,7 @@ void OpticalImageRegistration::AddNewModalityTab()
   pointSetSelection->SetEmptyInfo(QString("Select point set"));
   pointSetSelection->SetPopUpTitel(QString("Select point set node"));
   controls.movingPointSetData->addWidget(pointSetSelection);
+  m_MovingModalities[modalityId].push_back(pointSetSelection);
 
   connect(controls.addMovingPointSet,
           &QPushButton::clicked,
@@ -265,7 +250,6 @@ void OpticalImageRegistration::AddNewModalityTab()
             auto widget = this->m_Controls.tabWidget->findChild<QWidget *>(QString(modalityId));
             auto id = m_Controls.tabWidget->indexOf(widget);
             this->m_Controls.tabWidget->removeTab(id);
-            
           });
 
   ++m_ModalityId;
@@ -327,21 +311,18 @@ void OpticalImageRegistration::StartRegistration()
   // const auto rigid = m_Controls.rigidText->toPlainText().toStdString();
   // const auto deformable = m_Controls.deformableText->toPlainText().toStdString();
 
-  for (const auto kv : m_MovingModalitiesControls)
+  for (const auto kv : m_MovingModalities)
   {
     MITK_INFO << "Process modality with ID [" << kv.first << "] ";
-    auto pointSetSelectionWidget = kv.second.movingPointSetData->itemAt(1);
-    auto imageSelectionWidget = kv.second.widgetList->itemAt(1);
     mitk::Image::Pointer movingImage;
     mitk::PointSet::Pointer movingPointSet;
 
-    if (auto movingPointSetNode =
-          dynamic_cast<QmitkSingleNodeSelectionWidget *>(pointSetSelectionWidget)->GetSelectedNode())
+    if (auto movingPointSetNode = kv.second.at(1)->GetSelectedNode())
     {
       movingPointSet = dynamic_cast<mitk::PointSet *>(movingPointSetNode->GetData());
     }
 
-    auto movingImageNode = dynamic_cast<QmitkSingleNodeSelectionWidget *>(imageSelectionWidget)->GetSelectedNode();
+    auto movingImageNode = kv.second.at(0)->GetSelectedNode();
     if (movingImageNode)
     {
       movingImage = dynamic_cast<mitk::Image *>(movingImageNode->GetData());

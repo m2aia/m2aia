@@ -22,7 +22,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkAbstractView.h>
 #include <QDialog>
 #include <berryISelectionListener.h>
-#include <m2DualGeometryImageWrapper.h>
 #include <map>
 #include <mitkPointSet.h>
 #include <ui_ParameterFileEditorDialog.h>
@@ -57,8 +56,7 @@ protected:
   char m_ModalityId = 'A';
 
   Ui::OpticalImageRegistrationControls m_Controls;
-  std::map<char, Ui::MovingModalityWidgetControls> m_MovingModalitiesControls;
-  std::map<char, mitk::DataNode::Pointer> m_MovingModalitiesImageDataNode;
+  std::map<char, std::vector<QmitkSingleNodeSelectionWidget *>> m_MovingModalities;
 
   QmitkSingleNodeSelectionWidget *m_FixedImageSingleNodeSelection;
   QmitkSingleNodeSelectionWidget *m_FixedPointSetSingleNodeSelection;
