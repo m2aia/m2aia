@@ -32,19 +32,19 @@ namespace m2
     mitkClassMacro(PcaImageFilter, MassSpecVisualizationFilter);
     itkFactorylessNewMacro(Self);
     itkCloneMacro(Self);
-    vnl_matrix<double> PcCalculation();
     void initMatrix();
 
   protected:
-    using MatrixXd = Eigen::Matrix<PixelType, Eigen::Dynamic, Eigen::Dynamic>;
-    MatrixXd m_DataMatrix;
-    PcaImageFilter() = default;
+    Eigen::MatrixXf m_DataMatrix;
+    PcaImageFilter()
+    {
+      OutputImageType::Pointer output0 = static_cast<OutputImageType *>(this->MakeOutput(0).GetPointer());
+      OutputImageType::Pointer output1 = static_cast<OutputImageType *>(this->MakeOutput(1).GetPointer());
+      Superclass::SetNumberOfRequiredOutputs(2);
+      Superclass::SetNthOutput(0, output0.GetPointer());
+      Superclass::SetNthOutput(1, output1.GetPointer());
+    };
     void GenerateData() override;
-
-    /*This method is used to equalize the directions of the principal components. This allows the visualization of
-     * m2PcaImageFilter, m2PcaVnlSvdImageFilter and m2PcaEigenImageFilter to be the same for all*/
-    void EqualizePcAxesEigen(MatrixXd *);
-    //virtual ~m2PcaImageFilter() override;
 
   private:
   };

@@ -1,113 +1,128 @@
 
 //#include <Eigen/SVD>
+#include <algorithm> // std::sort, std::stable_sort
+#include <eigen3/Eigen/SVD>
 #include <itkDataObject.h>
 #include <itkImageRegionIterator.h>
 #include <itkIndex.h>
 #include <itkVariableLengthVector.h>
 #include <itkVectorImage.h>
+#include <m2CoreCommon.h>
 #include <m2PcaImageFilter.h>
+#include <m2Timer.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
 #include <mitkImageAccessByItk.h>
 #include <mitkImageCast.h>
 #include <mitkImagePixelReadAccessor.h>
-#include <m2Timer.h>
+#include <numeric> // std::iota
 #include <vnl/vnl_matrix.h>
-
-void m2::PcaImageFilter::EqualizePcAxesEigen(MatrixXd *PcComponents)
-{
-  for (unsigned int col = 0; col < PcComponents->cols(); ++col)
-  {
-    if (PcComponents->coeffRef(0, col) < 0)
-    {
-      PcComponents->col(col) = PcComponents->col(col) * -1;
-    }
-  }
-}
 
 void m2::PcaImageFilter::initMatrix()
 {
   this->GetValidIndices();
-
-  const unsigned long numberOfrow = this->m_ValidIndices.size();
-  const unsigned long numberOfcolumn = this->GetIndexedInputs().size();
   auto input = this->GetIndexedInputs();
+  mitk::Image::Pointer mitkImage = dynamic_cast<mitk::Image *>(input.front().GetPointer());
+  size_t pixels = 1;
+  for (unsigned int i = 0; i < mitkImage->GetDimension(); ++i)
+    pixels *= mitkImage->GetDimensions()[i];
+  const unsigned long numberOfrow = pixels;
+  const unsigned long numberOfcolumn = this->GetIndexedInputs().size();
 
-  this->m_DataMatrix = MatrixXd(numberOfrow, numberOfcolumn);
-  unsigned int column = 0;
+  this->m_DataMatrix.resize(numberOfrow, numberOfcolumn);
+  unsigned int c = 0;
 
   /*Fill matrix with image values one column includes values of one image*/
-  for (auto it = input.begin(); it != input.end(); ++it, ++column)
+  for (auto it = input.begin(); it != input.end(); ++it, ++c)
   {
-    mitk::Image::Pointer mitkImage = dynamic_cast<mitk::Image *>(it->GetPointer());
-    AccessFixedDimensionByItk(mitkImage,
-                              ([&column, this](auto input) {
-                                unsigned int row = 0;
-
-                                for (auto index : this->m_ValidIndices)
-                                {
-                                  this->m_DataMatrix(row, column) = input->GetPixel(index);
-                                  ++row;
-                                }
-                              }),
-                              3);
+    mitkImage = dynamic_cast<mitk::Image *>(it->GetPointer());
+    mitk::ImagePixelReadAccessor<m2::DisplayImagePixelType, 3> access(mitkImage);
+    std::copy(access.GetData(), access.GetData() + pixels, m_DataMatrix.col(c).data());
   }
 
-  auto maxCoeffs = m_DataMatrix.colwise().maxCoeff();
-  auto minCoeffs = m_DataMatrix.colwise().minCoeff();
-  auto scalingFactors = maxCoeffs - minCoeffs;
-  m_DataMatrix = ((m_DataMatrix.rowwise() - minCoeffs).array().rowwise() / scalingFactors.array()).matrix();
+  // auto maxCoeffs = m_DataMatrix.colwise().maxCoeff();
+  // auto minCoeffs = m_DataMatrix.colwise().minCoeff();
+  // auto scalingFactors = maxCoeffs - minCoeffs;
+  // m_DataMatrix = ((m_DataMatrix.rowwise() - minCoeffs).array().rowwise() / scalingFactors.array()).matrix();
 
-  auto means = m_DataMatrix.colwise().mean();
-  m_DataMatrix = m_DataMatrix.rowwise() - means;
-  auto stdDevs = m_DataMatrix.cwiseProduct(m_DataMatrix).colwise().sum() / (m_DataMatrix.rows()-1);
-  
-  for (unsigned int c = 0; c < m_DataMatrix.cols(); ++c)
-	m_DataMatrix.col(c) = m_DataMatrix.col(c) / stdDevs[c];
+  // auto means = m_DataMatrix.colwise().mean();
+  // m_DataMatrix = m_DataMatrix.rowwise() - means;
+  // m_DataMatrix /= (m_DataMatrix.rows() - 1);
+
+  // for (unsigned int c = 0; c < m_DataMatrix.cols(); ++c)
+  // m_DataMatrix.col(c) = m_DataMatrix.col(c) / stdDevs[c];
 }
 
 void m2::PcaImageFilter ::GenerateData()
 {
   auto timer = m2::Timer("Eigen Calculation");
-
   this->initMatrix();
-  
-  MatrixXd coMatrix = (m_DataMatrix.transpose() * m_DataMatrix);
-  coMatrix = coMatrix / (m_DataMatrix.rows() - 1);
 
-  Eigen::EigenSolver<MatrixXd> eigenSolver(coMatrix);
-  auto result = this->m_DataMatrix * eigenSolver.eigenvectors().rightCols(m_NumberOfComponents).real();
+  // eigenionimages
+  Eigen::VectorXf meanImage = m_DataMatrix.rowwise().mean();
+  Eigen::MatrixXf eigenionData = m_DataMatrix.colwise() - meanImage;
 
+  Eigen::JacobiSVD<Eigen::MatrixXf> svd(eigenionData, Eigen::ComputeThinU | Eigen::ComputeThinV);
+  MITK_INFO << "S size: " << svd.singularValues().rows() << " " << svd.singularValues().cols();
+  MITK_INFO << "U size: " << svd.matrixU().rows() << " " << svd.matrixU().cols();
+  MITK_INFO << "V size: " << svd.matrixV().rows() << " " << svd.matrixV().cols();
+  MITK_INFO << "m_DataMatrix: " << m_DataMatrix.rows() << " " << m_DataMatrix.cols();
 
-  /*auto min = result.colwise().minCoeff();
-  auto max = result.colwise().maxCoeff();
-  result = ((result.rowwise() - min).array().rowwise() / ((max - min) * 255)).array();*/
-  
-  auto maxCoeffs = result.colwise().maxCoeff();
-  auto minCoeffs = result.colwise().minCoeff();
-  auto scalingFactors = maxCoeffs - minCoeffs;
-  auto scaledResult = ((result.rowwise() - minCoeffs).array().rowwise() / scalingFactors.array() * 255).matrix();
+  const Eigen::MatrixXf &U = svd.matrixU();
 
-  
-  auto vectorImage = itk::VectorImage<PixelType, 3>::New();
-  initializeItkVectorImage(vectorImage);
-  
-  unsigned int row = 0;
-  for (auto index : m_ValidIndices)
+  auto eigenIonVectorImage = initializeItkVectorImage(m_NumberOfComponents);
+  m2::DisplayImagePixelType *data;
+  data = eigenIonVectorImage->GetBufferPointer();
+
+  for (unsigned int c = 0; c < U.cols(); ++c)
   {
-    itk::VariableLengthVector<PixelType> pixelValue;
-    pixelValue.SetSize(m_NumberOfComponents);
-    for (unsigned int i = 0; i < result.cols(); ++i)
+    const auto &col = U.col(c);
+    for (unsigned int p = 0; p < U.rows(); ++p)
     {
-      pixelValue[i] = scaledResult(row, i);
+      data[p * m_NumberOfComponents + c] = col(p);
     }
-    vectorImage->SetPixel(index, pixelValue);
-    ++row;
   }
 
-  mitk::Image::Pointer output = this->GetOutput();
-  mitk::CastToMitkImage(vectorImage, output);
+  // feature pca
+  Eigen::MatrixXf pcaData = m_DataMatrix.rowwise() - m_DataMatrix.colwise().mean();
+  Eigen::MatrixXf cov = (pcaData.transpose() * pcaData) / (pcaData.rows() - 1);
 
-  output->SetSpacing(this->GetInput()->GetGeometry()->GetSpacing());
-  output->SetOrigin(this->GetInput()->GetGeometry()->GetOrigin());
+  Eigen::EigenSolver<Eigen::MatrixXf> solver(cov);
+  Eigen::VectorXf values = solver.eigenvalues().real();
+  Eigen::MatrixXf vectors = solver.eigenvectors().real();
+  Eigen::MatrixXf vectorsSorted(vectors);
+  // fill indices
+  std::vector<unsigned int> indices(values.size());
+  std::iota(indices.begin(), indices.end(), 0);
+  // sort indices according to
+  std::stable_sort(indices.begin(), indices.end(), [&values](auto i1, auto i2) { return values[i1] > values[i2]; });
+
+  unsigned int i = 0;
+  for (auto u : indices)
+    vectorsSorted.col(i++) = vectors.col(u);
+
+  Eigen::MatrixXf pc = pcaData * vectorsSorted;
+  auto pcVectorImage = initializeItkVectorImage(m_NumberOfComponents);
+  data = pcVectorImage->GetBufferPointer();
+
+  for (unsigned int c = 0; c < pc.cols(); ++c)
+  {
+    const auto &col = pc.col(c);
+    for (unsigned int p = 0; p < pc.rows(); ++p)
+    {
+      data[p * m_NumberOfComponents + c] = col(p);
+    }
+  }
+  
+
+  mitk::Image::Pointer eigenIonImage = this->GetOutput(0);
+  mitk::CastToMitkImage(eigenIonVectorImage, eigenIonImage);
+  eigenIonImage->SetSpacing(this->GetInput()->GetGeometry()->GetSpacing());
+  eigenIonImage->SetOrigin(this->GetInput()->GetGeometry()->GetOrigin());
+
+  mitk::Image::Pointer pcImage = this->GetOutput(1);
+  mitk::CastToMitkImage(pcVectorImage, pcImage);
+  pcImage->SetSpacing(this->GetInput()->GetGeometry()->GetSpacing());
+  pcImage->SetOrigin(this->GetInput()->GetGeometry()->GetOrigin());
+ 
 }
