@@ -16,6 +16,7 @@ See LICENSE.txt for details.
 #pragma once
 #include <M2aiaSignalProcessingExports.h>
 #include <map>
+#include <string>
 
 namespace m2
 {

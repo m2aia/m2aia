@@ -40,7 +40,7 @@ void m2::FsmSpectrumImage::FsmProcessor::UpdateImagePrivate(double cmInv,
   mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
   std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>> maskAccess;
 
-  const auto _NormalizationStrategy = p->GetNormalizationStrategy();
+  // const auto _NormalizationStrategy = p->GetNormalizationStrategy();
 
   if (mask)
   {

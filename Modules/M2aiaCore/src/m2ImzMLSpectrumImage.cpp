@@ -594,7 +594,6 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
   unsigned long long intsOffsetBytes = 0;
 
   const auto &source = p->GetImzMLSpectrumImageSourceList().front();
-  const auto importMode = p->GetImportMode();
   std::vector<std::vector<double>> skylineT;
   std::vector<std::vector<double>> sumT;
   std::vector<MassAxisType> mzs;
@@ -697,10 +696,8 @@ template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::InitializeImageAccessContinuousCentroid()
 {
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
-  unsigned long long intsOffsetBytes = 0;
 
   const auto &source = p->GetImzMLSpectrumImageSourceList().front();
-  const auto importMode = p->GetImportMode();
   std::vector<std::vector<double>> skylineT;
   std::vector<std::vector<double>> sumT;
   std::vector<MassAxisType> mzs;

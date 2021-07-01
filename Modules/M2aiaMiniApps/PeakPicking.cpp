@@ -93,7 +93,7 @@ int main(int argc, char *argv[])
         MITK_INFO << "Start peak picking for " << source.m_Spectra.size() << " spectra...";
         boost::progress_display show_progress(source.m_Spectra.size());
 
-        m2::Process::Map(source.m_Spectra.size(), threads, [&](const auto tId, const auto s, const auto e) {
+        m2::Process::Map(source.m_Spectra.size(), threads, [&](const auto /*tId*/, const auto s, const auto e) {
           std::vector<double> yValues(xValues.size());
           for (unsigned int spectrumId = s; spectrumId < e; ++spectrumId)
           {
