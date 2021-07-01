@@ -70,10 +70,8 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::U
   std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>> maskAccess;
 
   if (mask)
-  {
     maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>(mask));
-    MITK_INFO << "> Use mask image";
-  }
+  
   p->SetProperty("x_range_center", mitk::DoubleProperty::New(xRangeCenter));
   p->SetProperty("x_range_tol", mitk::DoubleProperty::New(xRangeTol));
   auto mdMz = itk::MetaDataObject<double>::New();
