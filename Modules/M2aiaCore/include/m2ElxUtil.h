@@ -38,6 +38,24 @@ namespace m2
   {
   public:
     /**
+     * @brief Search an elastix parameter file string for the specific entry and replaces it (or if not found appends
+     * the string) by "(" + what + " " + by + ")
+     *
+     * @param paramFileString
+     * @param what
+     * @param by
+     */
+    static void ReplaceParameter(std::string &paramFileString, std::string what, std::string by)
+    {
+      auto pos1 = paramFileString.find("(" + what);
+      auto pos2 = paramFileString.find(')', pos1);
+      if (pos1 == std::string::npos || pos2 == std::string::npos)
+        paramFileString += "(" + what + " " + by + ")\n";
+      else
+        paramFileString.replace(pos1, pos2 - pos1 + 1, "(" + what + " " + by + ")\n");
+    }
+
+    /**
      * @brief Search the system for elastix executables (name)
      * 1) additional search path
      * 2) check ELASTIX_PATH
@@ -88,35 +106,30 @@ namespace m2
       bool removeProcessDir = true,
       std::function<void(std::string &)> transformationModifier = [](std::string &) {});
 
-    /**
-     * @brief Get the Registration object
-     *
-     * @param fixed
-     * @param moving
-     * @param processDir
-     * @param removeProcessDir
-     * @param transformationModifier
-     * @return std::vector<std::string>
-     */
-    static std::vector<std::string> GetRegistration(
-      mitk::Image::Pointer inputFixed,
-      mitk::Image::Pointer inputMoving,
-      const std::vector<std::string> & parameters,
-      const std::string &processDir = "",
-      bool removeProcessDir = true,
-      std::function<void(std::string &)> transformationModifier = [](std::string &) {});
-
-
-    static std::string GetShape(const mitk::Image *  img){
+    static std::string GetShape(const mitk::Image *img)
+    {
       std::string shape;
-      for(unsigned int i = 0 ; i < img->GetDimension(); ++i){
+      for (unsigned int i = 0; i < img->GetDimension(); ++i)
+      {
         shape += std::to_string(img->GetDimensions()[i]);
-        if(i < img->GetDimension() - 1)
-        shape += ", ";
+        if (i < img->GetDimension() - 1)
+          shape += ", ";
       }
       return shape;
     }
 
+    static void SavePointSet(const mitk::PointSet::Pointer & pnts, const std::string & path)
+    {
+      std::ofstream f(path);
+      f << "point\n";
+      f << std::to_string(pnts->GetSize()) << "\n";
+      for (auto it = pnts->Begin(); it != pnts->End(); ++it)
+      {
+        const auto &p = it->Value();
+        f << p[0] << " " << p[1] << "\n";
+      }
 
+      f.close();
+    }
   };
 } // namespace m2

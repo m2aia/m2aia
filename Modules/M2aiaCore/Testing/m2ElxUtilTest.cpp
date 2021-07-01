@@ -14,6 +14,7 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 
+#include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
 #include <m2TestingConfig.h>
 #include <mitkImageCast.h>
@@ -39,94 +40,85 @@ public:
   using ItkType3D = itk::Image<unsigned short, 3>;
   using ItkType2D = itk::Image<unsigned short, 2>;
 
-  const std::array<unsigned short, 100> data = {
-    0,  0, 0, 0, 10, 10, 0, 0, 0, 0,  0,  0, 0, 0, 10, 10, 0, 0, 0, 0,  0,  0, 0, 0, 10,
-    10, 0, 0, 0, 0,  0,  0, 0, 0, 10, 10, 0, 0, 0, 0,  0,  0, 0, 0, 10, 10, 0, 0, 0, 0,
-    0,  0, 0, 0, 10, 10, 0, 0, 0, 0,  0,  0, 0, 0, 10, 10, 0, 0, 0, 0,  0,  0, 0, 0, 10,
-    10, 0, 0, 0, 0,  0,  0, 0, 0, 10, 10, 0, 0, 0, 0,  0,  0, 0, 0, 10, 10, 0, 0, 0, 0,
-  };
-
-  const std::array<unsigned short, 100> data2 = {
-    0,  0,  10, 10, 0, 0, 0, 0, 0, 0, 0, 0,  0,  10, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0,  10, 10, 0, 0, 0, 0, 0, 0, 0, 0,
-    0,  10, 10, 0,  0, 0, 0, 0, 0, 0, 0, 0,  10, 10, 0,  0, 0, 0, 0, 0, 0, 0, 0, 10, 10, 0,  0, 0, 0, 0, 0, 0, 0, 0,
-    10, 10, 0,  0,  0, 0, 0, 0, 0, 0, 0, 10, 0,  0,  0,  0, 0, 0, 0, 0, 0, 0, 0, 0,  0,  0,  0, 0, 0, 0, 0, 0,
-  };
-
   void FindElastixExecutables() { m2::ElxUtil::Executable("elastix"); }
 
   void CheckGetRegistrationInputs_10x10x10_ThrowException()
   {
     auto itkNoSlice3D = ItkType3D::New();
-    itkNoSlice3D->SetLargestPossibleRegion({{0, 0, 0}, {10, 10, 10}});
+    itkNoSlice3D->SetRegions({{0, 0, 0}, {10, 10, 10}});
     itkNoSlice3D->Allocate(0);
     itkNoSlice3D->Initialize();
     auto mitkNoSlice3D = mitk::Image::New();
     mitkNoSlice3D->InitializeByItk(itkNoSlice3D.GetPointer());
 
-    CPPUNIT_ASSERT_THROW(m2::ElxUtil::GetRegistration(mitkNoSlice3D, mitkNoSlice3D, {""}), mitk::Exception);
+    m2::ElxRegistrationHelper helper;
+    CPPUNIT_ASSERT_THROW(helper.SetImageData(mitkNoSlice3D, mitkNoSlice3D), mitk::Exception);
   }
 
   void CheckGetRegistrationInputs_10x10x10x1_ThrowException()
   {
     auto itkNoSlice4D = ItkType4D::New();
-    itkNoSlice4D->SetLargestPossibleRegion({{0, 0, 0, 0}, {10, 10, 10, 1}});
+    itkNoSlice4D->SetRegions({{0, 0, 0, 0}, {10, 10, 10, 1}});
     itkNoSlice4D->Allocate(0);
     itkNoSlice4D->Initialize();
     auto mitkNoSlice4D = mitk::Image::New();
     mitkNoSlice4D->InitializeByItk(itkNoSlice4D.GetPointer());
 
-    CPPUNIT_ASSERT_THROW(m2::ElxUtil::GetRegistration(mitkNoSlice4D, mitkNoSlice4D, {""}), mitk::Exception);
+    m2::ElxRegistrationHelper helper;
+    CPPUNIT_ASSERT_THROW(helper.SetImageData(mitkNoSlice4D, mitkNoSlice4D), mitk::Exception);
   }
 
   void CheckGetRegistrationInputs_10x10x1_NoThrowException()
   {
-    auto itkNoSlice3D = ItkType3D::New();
-    itkNoSlice3D->SetLargestPossibleRegion({{0, 0, 0}, {10, 10, 1}});
-    itkNoSlice3D->Allocate(0);
-    itkNoSlice3D->Initialize();
-    auto mitkNoSlice3D = mitk::Image::New();
-    mitkNoSlice3D->InitializeByItk(itkNoSlice3D.GetPointer());
+    auto itkSlice3D = ItkType3D::New();
+    itkSlice3D->SetRegions({{0, 0, 0}, {10, 10, 1}});
+    itkSlice3D->Allocate(0);
+    itkSlice3D->Initialize();
+    auto mitkSlice3D = mitk::Image::New();
+    mitkSlice3D->InitializeByItk(itkSlice3D.GetPointer());
 
-    CPPUNIT_ASSERT_NO_THROW(m2::ElxUtil::GetRegistration(mitkNoSlice3D, mitkNoSlice3D, {""}));
+    m2::ElxRegistrationHelper helper;
+    CPPUNIT_ASSERT_NO_THROW(helper.SetImageData(mitkSlice3D, mitkSlice3D));
   }
 
   void CheckGetRegistrationInputs_10x10_NoThrowException()
   {
     auto itkSlice2D = ItkType2D::New();
-    itkSlice2D->SetLargestPossibleRegion({{0, 0}, {10, 10}});
+    itkSlice2D->SetRegions({{0, 0}, {10, 10}});
     itkSlice2D->Allocate(0);
     itkSlice2D->Initialize();
     auto mitkSlice2D = mitk::Image::New();
     mitkSlice2D->InitializeByItk(itkSlice2D.GetPointer());
 
-    CPPUNIT_ASSERT_NO_THROW(m2::ElxUtil::GetRegistration(mitkSlice2D, mitkSlice2D, {""}));
+    m2::ElxRegistrationHelper helper;
+    CPPUNIT_ASSERT_NO_THROW(helper.SetImageData(mitkSlice2D, mitkSlice2D));
   }
 
   void CheckGetRegistrationOutput_10x10_NoThrowException()
   {
-    auto itkFixed = ItkType2D::New();
-    itkFixed->SetLargestPossibleRegion({{0, 0}, {10, 10}});
-    itkFixed->Allocate();
-    auto itkMoving = ItkType2D::New();
-    itkMoving->SetLargestPossibleRegion({{0, 0}, {10, 10}});
-    itkMoving->Allocate();
+    mitk::Image::Pointer fixed, fixedMask, moving, movingMask;
+    auto data = mitk::IOUtil::Load({GetTestDataFilePath("fixed.nrrd", M2AIA_DATA_DIR),
+                                    GetTestDataFilePath("fixedMask.nrrd", M2AIA_DATA_DIR),
+                                    GetTestDataFilePath("moving.nrrd", M2AIA_DATA_DIR),
+                                    GetTestDataFilePath("movingMask.nrrd", M2AIA_DATA_DIR)});
 
-    auto fixed = mitk::Image::New();
-    fixed->InitializeByItk(itkFixed.GetPointer());
-    auto moving = mitk::Image::New();
-    moving->InitializeByItk(itkMoving.GetPointer());
+    fixed = dynamic_cast<mitk::Image *>(data.at(0).GetPointer());
+    fixedMask = dynamic_cast<mitk::Image *>(data.at(1).GetPointer());
+    // fixedMask = nullptr;
+    moving = dynamic_cast<mitk::Image *>(data.at(2).GetPointer());
+    movingMask = dynamic_cast<mitk::Image *>(data.at(3).GetPointer());
+    // movingMask = nullptr;
+    const auto rigid = GetTestDataFilePath("rigid.txt", M2AIA_DATA_DIR);
+    const auto deformable = GetTestDataFilePath("deformable.txt", M2AIA_DATA_DIR);
 
-    {
-      mitk::ImagePixelWriteAccessor<unsigned short, 2> fixedAcc(fixed);
-      mitk::ImagePixelWriteAccessor<unsigned short, 2> movingAcc(moving);
-      std::copy(data.begin(), data.end(), fixedAcc.GetData());
-      std::copy(data2.begin(), data2.end(), movingAcc.GetData());
-    }
-
-    auto path = GetTestDataFilePath("rigid.txt", M2AIA_DATA_DIR);
-
-    auto transformations = m2::ElxUtil::GetRegistration(fixed, moving, {path, path});
-    // CPPUNIT_ASSERT_EQUAL(, transformations.empty());
+    m2::ElxRegistrationHelper helper;
+    helper.SetImageData(fixed, moving);
+    helper.SetMaskData(fixedMask, movingMask);
+    helper.SetRegistrationParameters({rigid, deformable});
+    // helper.SetRemoveWorkingdirectory(false);
+    // helper.SetDirectory("/tmp/ElastixTest2/");
+    auto result = helper.GetRegistration();
+    CPPUNIT_ASSERT_EQUAL(size_t(2), result.size());
   }
 };
 

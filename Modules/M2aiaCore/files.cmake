@@ -17,6 +17,7 @@ set(H_FILES
   
   include/mitkTimer.h
   include/m2ElxUtil.h
+  include/m2ElxRegistrationHelper.h
 
 )
 
@@ -26,6 +27,7 @@ set(CPP_FILES
   m2CoreObjectFactory.cpp
   m2MassValue.cpp
   m2ElxUtil.cpp
+  m2ElxRegistrationHelper.cpp
   
   mitkTransformixMSDataObjectStack.cpp
 
