@@ -1,7 +1,8 @@
-M<sup>2</sup>aia - MSI applications for interactive analysis in MITK
+M²aia - MSI applications for interactive analysis in MITK
 =========================
 
-M<sup>2</sup>aia provides modules and plugins for viewing and analysing mass spectrometry images in MITK.
+M²aia provides modules and plugins for viewing and analysing mass spectrometry images in MITK.
+
 [You can download M²aia here](https://github.com/jtfcordes/m2aia/releases).
 
 Cite M²aia
@@ -10,7 +11,7 @@ Cite M²aia
 [![DOI](https://zenodo.org/badge/314852965.svg)](https://zenodo.org/badge/latestdoi/314852965)
 Please reference to [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324).
 
-Manuscript submitted. M<sup>2</sup>aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data
+Manuscript submitted. M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data
 
 Features
 --------
@@ -37,7 +38,7 @@ Supporting capsule for use-case 1: Command-line application based pre-processing
 Setup for development
 -----------
 
-M<sup>2</sup>aia in app preferences
+M²aia in app preferences
 - add path to local installation of elastix and transformix executabels (https://github.com/SuperElastix/elastix/releases)
 
 Supported Platforms:
