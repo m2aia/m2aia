@@ -159,7 +159,7 @@ namespace m2
     {
       auto &source = sourceList.front();
       // write mass axis
-      input->ReceivePositions(source.m_Spectra[0].id, mzs, sourceId);
+      input->ReceivePositions(0, mzs, sourceId);
 
       source.m_Spectra[0].mzOffset = 16;
       source.m_Spectra[0].mzLength = mzs.size();
@@ -180,15 +180,17 @@ namespace m2
 
     for (auto &source : sourceList)
     {
-      for (auto &s : source.m_Spectra)
+      ;
+      for (size_t id = 0; id < source.m_Spectra.size(); ++id)
       {
+        auto &s = source.m_Spectra[id];
         // update mz axis info
         s.mzLength = sourceList.front().m_Spectra[0].mzLength;
         s.mzOffset = sourceList.front().m_Spectra[0].mzOffset;
 
         // write ints
         {
-          input->ReceiveIntensities(s.id, ints, sourceId);
+          input->ReceiveIntensities(id, ints, sourceId);
 
           s.intOffset = offset;
           s.intLength = ints.size();
@@ -233,7 +235,7 @@ namespace m2
     {
       auto &source = sourceList.front();
       // write mass axis
-      input->ReceivePositions(source.m_Spectra[0].id, mzs, sourceId);
+      input->ReceivePositions(0, mzs, sourceId);
       for (auto i : massIndicesMask)
       {
         mzsMasked.push_back(mzs[i.massAxisIndex]);
@@ -260,15 +262,16 @@ namespace m2
 
     for (auto &source : sourceList)
     {
-      for (auto &s : source.m_Spectra)
+      for (size_t id = 0 ; id < source.m_Spectra.size(); ++id)
       {
+        auto &s = source.m_Spectra[id];
         // update mz axis info
         s.mzLength = sourceList.front().m_Spectra[0].mzLength;
         s.mzOffset = sourceList.front().m_Spectra[0].mzOffset;
 
         // write ints
         {
-          input->ReceiveSpectrum(s.id, mzs, ints, sourceId);
+          input->ReceiveSpectrum(id, mzs, ints, sourceId);
 
           for (auto p : massIndicesMask)
           {
