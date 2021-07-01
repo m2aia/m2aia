@@ -35,6 +35,7 @@ set(MITK_CONFIG_PLUGINS
 )
 
 set(MITK_VTK_DEBUG_LEAKS OFF CACHE BOOL "Enable VTK Debug Leaks" FORCE)
+set(MITK_BUILD_MatchPoint ON CACHE BOOL "Enable MatchPoint Leaks" FORCE)
 
 find_package(Doxygen REQUIRED)
 
