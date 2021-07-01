@@ -18,9 +18,11 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #define OpticalImageRegistration_h
 
 #include "ui_OpticalImageRegistrationControls.h"
+#include "ui_MovingModalityWidgetControls.h"
 #include <QmitkAbstractView.h>
 #include <berryISelectionListener.h>
 #include <mitkPointSet.h>
+#include <map>
 
 class QmitkSingleNodeSelectionWidget;
 
@@ -42,23 +44,29 @@ public:
   static const std::string VIEW_ID;
 
 protected:
-  void Save(mitk::PointSet::Pointer pnts, std::string path) const;
+
   virtual void CreateQtPartControl(QWidget *parent) override;
   virtual void OnSelectionChanged(berry::IWorkbenchPart::Pointer part,
                                   const QList<mitk::DataNode::Pointer> &nodes) override;
   virtual void SetFocus() override;
 
   QString GetElastixPath() const;
-  /// \brief Called when the user clicks the GUI button
-  void DoImageProcessing();
-  void DoSetOrigin();
+  
+  
+  char m_ModalityId = 'A';
 
   Ui::OpticalImageRegistrationControls m_Controls;
+  std::map<char, Ui::MovingModalityWidgetControls> m_MovingModalitiesControls;
 
   QmitkSingleNodeSelectionWidget *m_FixedImageSingleNodeSelection;
   QmitkSingleNodeSelectionWidget *m_MovingImageSingleNodeSelection;
   QmitkSingleNodeSelectionWidget *m_FixedPointSetSingleNodeSelection;
   QmitkSingleNodeSelectionWidget *m_MovingPointSetSingleNodeSelection;
+
+
+  void AlignImages();  
+  void StartRegistration();  
+  void AddNewModalityTab();
 };
 
 #endif // OpticalImageRegistration_h

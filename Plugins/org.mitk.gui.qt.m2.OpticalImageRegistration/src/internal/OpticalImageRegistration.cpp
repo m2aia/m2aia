@@ -18,6 +18,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryISelectionService.h>
 #include <berryIWorkbenchWindow.h>
 #include <berryPlatform.h>
+#include <berryPlatformUI.h>
 
 // Qmitk
 #include "OpticalImageRegistration.h"
@@ -52,8 +53,8 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
 
-  //  connect(m_Controls.btnSetOrigin, &QPushButton::clicked, this, &OpticalImageRegistration::DoSetOrigin);
-  connect(m_Controls.btnStartProcess, &QPushButton::clicked, this, &OpticalImageRegistration::DoImageProcessing);
+  connect(m_Controls.btnStartRegistration, &QPushButton::clicked, this, &OpticalImageRegistration::StartRegistration);
+  connect(m_Controls.btnAlignImages, &QPushButton::clicked, this, &OpticalImageRegistration::AlignImages);
 
   m_FixedImageSingleNodeSelection = new QmitkSingleNodeSelectionWidget();
   m_FixedImageSingleNodeSelection->SetDataStorage(GetDataStorage());
@@ -77,30 +78,32 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
 
   m_Controls.fixedPointSetData->insertWidget(1, m_FixedPointSetSingleNodeSelection);
 
-  m_MovingImageSingleNodeSelection = new QmitkSingleNodeSelectionWidget();
-  m_MovingImageSingleNodeSelection->SetDataStorage(GetDataStorage());
-  m_MovingImageSingleNodeSelection->SetNodePredicate(
-    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::Image>::New(),
-                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
-  m_MovingImageSingleNodeSelection->SetSelectionIsOptional(true);
-  m_MovingImageSingleNodeSelection->SetEmptyInfo(QString("Please select a moving image"));
-  m_MovingImageSingleNodeSelection->SetPopUpTitel(QString("Select moving image node"));
-
-  m_Controls.movingImageData->insertWidget(0, m_MovingImageSingleNodeSelection);
-
-  m_MovingPointSetSingleNodeSelection = new QmitkSingleNodeSelectionWidget();
-  m_MovingPointSetSingleNodeSelection->SetDataStorage(GetDataStorage());
-  m_MovingPointSetSingleNodeSelection->SetNodePredicate(
-    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::PointSet>::New(),
-                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
-  m_MovingPointSetSingleNodeSelection->SetSelectionIsOptional(true);
-  m_MovingPointSetSingleNodeSelection->SetEmptyInfo(QString("Please select a moving point set"));
-  m_MovingPointSetSingleNodeSelection->SetPopUpTitel(QString("Select moving point set node"));
-
-  m_Controls.movingPointSetData->insertWidget(1, m_MovingPointSetSingleNodeSelection);
+  // m_Controls.movingPointSetData->insertWidget(1, m_MovingPointSetSingleNodeSelection);
 
   m_Controls.addFixedPointSet->setToolTip("Add point set for the fixed image reference points");
   m_Controls.addFixedPointSet->setToolTip("Add point set for the moving image reference points");
+
+  connect(m_Controls.btnAddModality, &QPushButton::clicked, this, [this]() { AddNewModalityTab(); });
+
+  connect(m_Controls.btnOpenPontSetInteractionView,
+          &QPushButton::clicked,
+          this,
+          []()
+          {
+            try
+            {
+              if (auto platform = berry::PlatformUI::GetWorkbench())
+                if (auto workbench = platform->GetActiveWorkbenchWindow())
+                  if (auto page = workbench->GetActivePage())
+                    if (page.IsNotNull())
+                      page->ShowView("org.mitk.views.pointsetinteraction", "", 1);
+            }
+            catch (berry::PartInitException &e)
+            {
+              BERRY_ERROR << "Error: " << e.what() << std::endl;
+            }
+          });
+
   connect(m_Controls.addFixedPointSet,
           &QPushButton::clicked,
           this,
@@ -118,7 +121,43 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
             node->SetProperty("color", mitk::ColorProperty::New(1.0f, 0.0f, 0.0f));
             this->m_FixedPointSetSingleNodeSelection->SetCurrentSelection({node});
           });
-  connect(m_Controls.addMovingPointSet,
+}
+
+void OpticalImageRegistration::AddNewModalityTab()
+{
+  auto widget = new QWidget();
+  m_MovingModalitiesControls[m_ModalityId].setupUi(widget);
+  const auto tab_ID = m_Controls.tabWidget->addTab(widget, QString(m_ModalityId));
+
+  auto &controls = m_MovingModalitiesControls[m_ModalityId];
+  controls.lineEditName->setText(QString(m_ModalityId));
+  connect(controls.lineEditName,
+          &QLineEdit::textChanged,
+          this,
+          [tab_ID, this](const QString text) { m_Controls.tabWidget->setTabText(tab_ID, text); });
+
+  auto imageSelection = new QmitkSingleNodeSelectionWidget();
+  imageSelection->SetDataStorage(GetDataStorage());
+  imageSelection->SetNodePredicate(
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::Image>::New(),
+                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+  imageSelection->SetSelectionIsOptional(true);
+  imageSelection->SetEmptyInfo(QString("Please select a moving image"));
+  imageSelection->SetPopUpTitel(QString("Select moving image node"));
+  // m_Controls.movingImageData->insertWidget(0, m_MovingImageSingleNodeSelection);
+  controls.verticalLayout->insertWidget(1, imageSelection);
+
+  auto pointSetSelection = new QmitkSingleNodeSelectionWidget();
+  pointSetSelection->SetDataStorage(GetDataStorage());
+  pointSetSelection->SetNodePredicate(
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::PointSet>::New(),
+                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+  pointSetSelection->SetSelectionIsOptional(true);
+  pointSetSelection->SetEmptyInfo(QString("Please select a moving point set"));
+  pointSetSelection->SetPopUpTitel(QString("Select moving point set node"));
+  controls.movingPointSetData->addWidget(pointSetSelection);
+
+  connect(controls.addMovingPointSet,
           &QPushButton::clicked,
           this,
           [&]()
@@ -136,15 +175,7 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
             this->m_MovingPointSetSingleNodeSelection->SetCurrentSelection({node});
           });
 
-  connect(m_Controls.btnSelectDir,
-          &QPushButton::clicked,
-          this,
-          [&, this]()
-          {
-            auto result =
-              QFileDialog::getExistingDirectory(nullptr, "Select the working directory for image registration");
-            m_Controls.workingDirectory->setText(result);
-          });
+  ++m_ModalityId;
 }
 
 void OpticalImageRegistration::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
@@ -177,35 +208,9 @@ QString OpticalImageRegistration::GetElastixPath() const
   return preferences.IsNotNull() ? preferences->Get("elastix", "") : "";
 }
 
-void OpticalImageRegistration::DoSetOrigin()
-{
-  auto fixedNode = m_FixedImageSingleNodeSelection->GetSelectedNode();
-  auto movingNode = m_MovingImageSingleNodeSelection->GetSelectedNode();
-  if (fixedNode.IsNull() || movingNode.IsNull())
-  {
-    QMessageBox::information(nullptr, "Warning", "Both, fixed and moving image, must be specified!");
-    return;
-  }
+void OpticalImageRegistration::AlignImages() {}
 
-  mitk::Point3D p;
-  p.Fill(0);
-  if (auto image = dynamic_cast<mitk::Image *>(fixedNode->GetData()))
-    image->SetOrigin(p);
-
-  if (auto image = dynamic_cast<mitk::Image *>(movingNode->GetData()))
-    image->SetOrigin(p);
-
-  mitk::DataStorage::SetOfObjects::Pointer nodes = mitk::DataStorage::SetOfObjects::New();
-  nodes->InsertElement(nodes->Size(), fixedNode);
-
-  auto boundingGeometry = GetDataStorage()->ComputeBoundingGeometry3D(nodes, "visible", nullptr);
-  mitk::RenderingManager::GetInstance()->InitializeViews(boundingGeometry);
-
-  fixedNode->SetVisibility(true);
-  movingNode->SetVisibility(false);
-}
-
-void OpticalImageRegistration::DoImageProcessing()
+void OpticalImageRegistration::StartRegistration()
 {
   auto elastix = GetElastixPath();
   if (elastix.isEmpty())
@@ -229,20 +234,16 @@ void OpticalImageRegistration::DoImageProcessing()
   if (auto node = m_MovingPointSetSingleNodeSelection->GetSelectedNode())
     movingPointSet = dynamic_cast<mitk::PointSet *>(node->GetData());
 
-  const auto rigid = m_Controls.rigidText->toPlainText().toStdString();
-  const auto deformable = m_Controls.deformableText->toPlainText().toStdString();
+  // const auto rigid = m_Controls.rigidText->toPlainText().toStdString();
+  // const auto deformable = m_Controls.deformableText->toPlainText().toStdString();
 
   try
   {
     m2::ElxRegistrationHelper helper;
     helper.SetImageData(fixedImage, movingImage);
     helper.SetPointData(fixedPointSet, movingPointSet);
-    helper.SetRegistrationParameters({rigid, deformable});
+    // helper.SetRegistrationParameters({rigid, deformable});
     helper.GetRegistration();
-
-
-
-    
   }
   catch (std::exception &e)
   {
@@ -262,18 +263,4 @@ void OpticalImageRegistration::DoImageProcessing()
   // }
 
   // filesystem::remove(path);
-}
-
-void OpticalImageRegistration::Save(mitk::PointSet::Pointer pnts, std::string path) const
-{
-  std::ofstream f(path);
-  f << "point\n";
-  f << std::to_string(pnts->GetSize()) << "\n";
-  for (auto it = pnts->Begin(); it != pnts->End(); ++it)
-  {
-    const auto &p = it->Value();
-    f << p[0] << " " << p[1] << "\n";
-  }
-
-  f.close();
 }
