@@ -91,7 +91,7 @@ public:
     mitkSlice2D->InitializeByItk(itkSlice2D.GetPointer());
 
     m2::ElxRegistrationHelper helper;
-    CPPUNIT_ASSERT_NO_THROW(helper.SetImageData(mitkSlice2D, mitkSlice2D));
+    CPPUNIT_ASSERT_THROW(helper.SetImageData(mitkSlice2D, mitkSlice2D), mitk::Exception);
   }
 
   void CheckGetRegistrationOutput_10x10_NoThrowException()
@@ -114,11 +114,23 @@ public:
     m2::ElxRegistrationHelper helper;
     helper.SetImageData(fixed, moving);
     helper.SetMaskData(fixedMask, movingMask);
-    helper.SetRegistrationParameters({rigid, deformable});
-    // helper.SetRemoveWorkingdirectory(false);
-    // helper.SetDirectory("/tmp/ElastixTest2/");
-    auto result = helper.GetRegistration();
-    CPPUNIT_ASSERT_EQUAL(size_t(2), result.size());
+    
+    {
+      helper.SetRegistrationParameters({rigid, deformable});
+      helper.GetRegistration();
+      CPPUNIT_ASSERT_EQUAL(size_t(2), helper.GetTransformation().size());
+    }
+
+    {
+      mitk::Image::Pointer d = helper.WarpImage(moving);
+      const auto actualSpacing = d->GetGeometry()->GetSpacing()[2];
+      CPPUNIT_ASSERT_DOUBLES_EQUAL(0.01, actualSpacing, mitk::eps);
+    }
+    {
+      mitk::Image::Pointer dm = helper.WarpImage(movingMask, "unsigned short", 0);
+      const auto actualSpacing = dm->GetGeometry()->GetSpacing()[2];
+      CPPUNIT_ASSERT_DOUBLES_EQUAL(0.01, actualSpacing, mitk::eps);
+    }
   }
 };
 

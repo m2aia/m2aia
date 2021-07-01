@@ -25,8 +25,7 @@ See LICENSE.txt for details.
 #include <m2CoreCommon.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
-#include <mitkImage2DToImage3DSliceFilter.h>
-#include <mitkImage3DSliceToImage2DFilter.h>
+
 #include <mitkLabelSetImage.h>
 #include <mitkPointSet.h>
 #include <regex>
@@ -88,23 +87,6 @@ namespace m2
      * @return std::string
      */
     static std::string JoinPath(std::vector<std::string> &&args);
-
-    /**
-     * @brief
-     *
-     * @param image
-     * @param transformations
-     * @param processDir
-     * @param removeProcessDir
-     * @param transformationModifier
-     * @return mitk::Image::Pointer
-     */
-    static mitk::Image::Pointer WarpImage(
-      const mitk::Image *image,
-      const std::vector<std::string> &transformations,
-      const std::string &processDir = "",
-      bool removeProcessDir = true,
-      std::function<void(std::string &)> transformationModifier = [](std::string &) {});
 
     static std::string GetShape(const mitk::Image *img)
     {
