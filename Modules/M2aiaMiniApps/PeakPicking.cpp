@@ -51,20 +51,21 @@ int main(int argc, char *argv[])
     /*int bc_strategy, bc_hws, sm_strategy, sm_hws, int_type, mzs_type;
     float binning_tol, centroids_tol, mz, tol;*/
     using namespace std::string_literals;
-    const auto bsc_s = m2::Find(params, "baseline-correction", "None"s);
-    const auto bsc_hw = m2::Find(params, "baseline-correction-hw", int(50));
-    const auto sm_s = m2::Find(params, "smoothing", "None"s);
-    const auto sm_hw = m2::Find(params, "smoothing-hw", int(2));
-    const auto norm = m2::Find(params, "normalization", "None"s);
-    const auto pool = m2::Find(params, "pooling", "Maximum"s);
-    const auto tol = m2::Find(params, "tolerance", double(0));
-    const auto threads = m2::Find(params, "threads", int(10));
-    const auto binning_tol = m2::Find(params, "binning-tolerance", double(0));
-    const auto SNR = m2::Find(params, "SNR", double(1.5));
-    const auto peakpicking_hw = m2::Find(params, "peakpicking-hw", int(5));
-    const auto monoisotopick = m2::Find(params, "monoisotopic", bool(false));
-    const auto y_output_type = m2::Find(params, "y-type", "Float"s);
-    const auto x_output_type = m2::Find(params, "x-type", "Float"s);
+    std::map<std::string, std::string> pMap;
+    const auto bsc_s = m2::Find(params, "baseline-correction", "None"s, pMap);
+    const auto bsc_hw = m2::Find(params, "baseline-correction-hw", int(50), pMap);
+    const auto sm_s = m2::Find(params, "smoothing", "None"s, pMap);
+    const auto sm_hw = m2::Find(params, "smoothing-hw", int(2), pMap);
+    const auto norm = m2::Find(params, "normalization", "None"s, pMap);
+    const auto pool = m2::Find(params, "pooling", "Maximum"s, pMap);
+    const auto tol = m2::Find(params, "tolerance", double(0), pMap);
+    const auto threads = m2::Find(params, "threads", int(10), pMap);
+    const auto binning_tol = m2::Find(params, "binning-tolerance", double(0), pMap);
+    const auto SNR = m2::Find(params, "SNR", double(1.5), pMap);
+    const auto peakpicking_hw = m2::Find(params, "peakpicking-hw", int(5), pMap);
+    const auto monoisotopick = m2::Find(params, "monoisotopic", bool(false), pMap);
+    const auto y_output_type = m2::Find(params, "y-type", "Float"s, pMap);
+    const auto x_output_type = m2::Find(params, "x-type", "Float"s, pMap);
 
     sImage->SetBaselineCorrectionStrategy(static_cast<m2::BaselineCorrectionType>(m2::SIGNAL_MAPPINGS.at(bsc_s)));
     sImage->SetBaseLineCorrectionHalfWindowSize(bsc_hw);
