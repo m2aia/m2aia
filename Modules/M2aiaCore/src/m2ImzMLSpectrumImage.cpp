@@ -432,15 +432,9 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 
   using ImageType = itk::Image<m2::DisplayImagePixelType, 3>;
   auto itkIonImage = ImageType::New();
-  ImageType::IndexType idx;
-  ImageType::SizeType size;
-
-  idx.Fill(0);
-
-  for (unsigned int i = 0; i < imageSize.size(); i++)
-    size[i] = imageSize[i];
-  ImageType::RegionType region(idx, size);
-  itkIonImage->SetRegions(region);
+  
+  
+  itkIonImage->SetRegions({{0,0,0}, {imageSize[0],imageSize[1],imageSize[2]}});
   itkIonImage->Allocate();
   itkIonImage->FillBuffer(0);
 
