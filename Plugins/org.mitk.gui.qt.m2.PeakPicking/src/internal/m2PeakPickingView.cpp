@@ -61,6 +61,30 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   connect(m_Controls.btnPCA, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPCA);
   connect(m_Controls.btnTSNE, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartTSNE);
 
+  if (auto button = m_Controls.tableWidget->findChild<QAbstractButton *>(QString(), Qt::FindDirectChildrenOnly))
+  {
+    // this button is not a normal button, it doesn't paint text or icon
+    // so it is not easy to show text on it, the simplest way is tooltip
+    button->setToolTip("Select/deselect all");
+       
+    // disconnect the connected slots to the tableview (the "selectAll" slot)
+    disconnect(button, Q_NULLPTR, m_Controls.tableWidget, Q_NULLPTR);
+    // connect "clear" slot to it, here I use QTableWidget's clear, you can connect your own
+    auto tableWidget = m_Controls.tableWidget;
+    bool status = true;
+    connect(button,
+            &QAbstractButton::clicked,
+            m_Controls.tableWidget,
+            [tableWidget, status]() mutable
+            {
+              for (int i = 0; i < tableWidget->rowCount(); ++i)
+              {
+                tableWidget->item(i, 0)->setCheckState(status ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+              }
+              status = !status;
+            });
+  }
+
   connect(m2::CommunicationService::Instance(),
           &m2::CommunicationService::SendProcessingNodes,
           this,
@@ -201,11 +225,10 @@ void m2PeakPickingView::OnStartPCA()
   if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     auto filter = m2::PcaImageFilter::New();
-    filter->SetNumberOfComponents(3);
     filter->SetMaskImage(imageBase->GetMaskImage());
 
     const auto &peakList = m_PeakLists[idx];
-    
+
     std::vector<mitk::Image::Pointer> bufferedImages;
 
     size_t inputIdx = 0;
@@ -217,26 +240,38 @@ void m2PeakPickingView::OnStartPCA()
       bufferedImages.push_back(mitk::Image::New());
       bufferedImages.back()->Initialize(imageBase);
 
-      imageBase->UpdateImage(
-        peakList[row].mass, imageBase->ApplyTolerance(peakList[row].mass), imageBase->GetMaskImage(), bufferedImages.back());
+      imageBase->UpdateImage(peakList[row].mass,
+                             imageBase->ApplyTolerance(peakList[row].mass),
+                             imageBase->GetMaskImage(),
+                             bufferedImages.back());
       filter->SetInput(inputIdx, bufferedImages.back());
       ++inputIdx;
     }
 
-    if(bufferedImages.size() == 0){
-      QMessageBox::warning(nullptr, "Select images first!", "Select at least three peaks!",QMessageBox::StandardButton::NoButton,QMessageBox::StandardButton::Ok);
+    if (bufferedImages.size() == 0)
+    {
+      QMessageBox::warning(nullptr,
+                           "Select images first!",
+                           "Select at least three peaks!",
+                           QMessageBox::StandardButton::NoButton,
+                           QMessageBox::StandardButton::Ok);
       return;
     }
-    
+
+    filter->SetNumberOfComponents(bufferedImages.size());
     filter->Update();
 
     auto outputNode = mitk::DataNode::New();
-    auto data = m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(filter->GetOutput());
+    mitk::Image::Pointer data = filter->GetOutput(0);
     outputNode->SetData(data);
-
-    outputNode->SetName("PCA");
-    node->SetVisibility(false);
+    outputNode->SetName("eigenionimages");
     this->GetDataStorage()->Add(outputNode, node.GetPointer());
+
+    auto outputNode2 = mitk::DataNode::New();
+    mitk::Image::Pointer data2 = filter->GetOutput(1);
+    outputNode2->SetData(data2);
+    outputNode2->SetName("pcs");
+    this->GetDataStorage()->Add(outputNode2, node.GetPointer());
   }
 }
 
