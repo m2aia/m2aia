@@ -1,0 +1,10 @@
+/*
+  m2ElxConfig.h
+  this file is generated. Do not change!
+*/
+#ifndef M2AIAELXCONFIG_H
+#define M2AIAELXCONFIG_H
+
+#define ELASTIX_DIR "@ElastixBinaries_DIR@"
+
+#endif // M2AIATESTINGCONFIG_H
