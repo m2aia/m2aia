@@ -25,6 +25,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include "ui_m2PeakPickingViewControls.h"
 #include <m2CommunicationService.h>
+#include <m2SpectrumImageBase.h>
+#include <QMetaObject>
 
 /**
   \brief m2PeakPickingView
@@ -46,16 +48,21 @@ public:
 protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
 
+
   virtual void SetFocus() override;
-
-  /// \brief Called when the user clicks the GUI button
-  void StartPeakPicking();
-
   Ui::m2PeakPickingViewControls m_Controls;
   QmitkSingleNodeSelectionWidget * m_MassSpecDataNodeSelectionWidget;
   m2::CommunicationService::NodesVectorType::Pointer m_ReceivedNodes = nullptr;
+  using PeakVectorType = m2::SpectrumImageBase::PeaksVectorType;
+  std::vector<PeakVectorType> m_PeakLists;
+  QMetaObject::Connection m_Connection;
+
 protected slots:
 	void OnProcessingNodesReceived(const QString &, m2::CommunicationService::NodesVectorType::Pointer);
+  void OnStartPCA();
+  void OnStartTSNE();
+  void OnRequestProcessingNodes();
+  void OnImageSelectionChangedUpdatePeakList(int idx);
 };
 
 #endif // m2PeakPickingView_h

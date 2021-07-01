@@ -30,7 +30,10 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLSpectrumImage.h>
 #include <m2IonImageReference.h>
 #include <m2MedianAbsoluteDeviation.h>
+#include <m2MultiSliceFilter.h>
+#include <m2PcaImageFilter.h>
 #include <m2PeakDetection.h>
+#include <m2TSNEImageFilter.h>
 
 // mitk image
 #include <mitkImage.h>
@@ -50,51 +53,45 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
 {
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
-
-  // auto m_MassSpecPredicate = mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New();
-  // m_MassSpecDataNodeSelectionWidget = new QmitkSingleNodeSelectionWidget();
-  // m_MassSpecDataNodeSelectionWidget->SetDataStorage(GetDataStorage());
-  // m_MassSpecDataNodeSelectionWidget->SetNodePredicate(
-  //  mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
-  //                              mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
-  // m_MassSpecDataNodeSelectionWidget->SetSelectionIsOptional(true);
-  // m_MassSpecDataNodeSelectionWidget->SetEmptyInfo(QString("Mass spectrometry image"));
-  // m_MassSpecDataNodeSelectionWidget->SetPopUpTitel(QString("Select a mass spec. image node"));
-  // m_MassSpecDataNodeSelectionWidget->SetAutoSelectNewNodes(true);
-
-  //((QVBoxLayout *)(parent->layout()))->insertWidget(0, m_MassSpecDataNodeSelectionWidget);
-
   m_Controls.cbOverviewSpectra->addItems({"Skyline", "Mean", "Sum"});
-  connect(m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this, &m2PeakPickingView::StartPeakPicking);
+
+  connect(
+    m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnRequestProcessingNodes);
+
+  connect(m_Controls.btnPCA, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPCA);
+  connect(m_Controls.btnTSNE, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartTSNE);
 
   connect(m2::CommunicationService::Instance(),
           &m2::CommunicationService::SendProcessingNodes,
           this,
           &m2PeakPickingView::OnProcessingNodesReceived);
 
-  connect(m_Controls.btnExport,
-          &QPushButton::clicked,
-          this,
-          [this]()
-          {
-            const auto res = QFileDialog::getExistingDirectory(nullptr, "Export directory");
-            for (auto n : *m_ReceivedNodes)
-            {
-              if (auto image = dynamic_cast<m2::SpectrumImageBase *>(n->GetData()))
-              {
-                const auto dir = m2::ElxUtil::JoinPath({res.toStdString(), "/", n->GetName()});
-                itksys::SystemTools::MakeDirectory(dir);
-                for (auto & p : image->GetPeaks())
-                {
-                  auto file = m2::ElxUtil::JoinPath({dir,"/",std::to_string(p.mass) + ".nrrd"});
-                  auto r = mitk::Image::New();
-                  r->Initialize(image);
-                  image->UpdateImage(p.mass,image->GetTolerance(),nullptr,r);
-                  mitk::IOUtil::Save(r, file);
-                }
-              }
-            }
-          });
+  
+  const auto itemHandler = [this](QTableWidgetItem *item)
+  {
+    const size_t idx = m_Controls.imageSource->currentIndex();
+
+    if (m_ReceivedNodes->empty())
+      return;
+    if (idx >= m_ReceivedNodes->size())
+      return;
+
+    auto node = m_ReceivedNodes->at(idx);
+    if (auto spImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    {
+      auto mz = std::stod(item->text().toStdString());
+      emit m2::CommunicationService::Instance()->UpdateImage(mz, spImage->ApplyTolerance(mz));
+    }
+  };
+
+  connect(m_Controls.tableWidget, &QTableWidget::itemActivated, this, itemHandler);
+
+  connect(m_Controls.tableWidget, &QTableWidget::itemDoubleClicked, this, itemHandler);
+}
+
+void m2PeakPickingView::OnRequestProcessingNodes()
+{
+  emit m2::CommunicationService::Instance()->RequestProcessingNodes(QString::fromStdString(VIEW_ID));
 }
 
 void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
@@ -104,9 +101,15 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
     return;
   m_ReceivedNodes = nodes;
 
+  if (m_Connection)
+    disconnect(m_Connection);
+  m_Controls.imageSource->clear();
+  m_PeakLists.clear();
+
   for (auto node : *m_ReceivedNodes)
     if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
+      m_Controls.imageSource->addItem(node->GetName().c_str());
       if (imageBase->GetImportMode() != m2::SpectrumFormatType::ContinuousProfile)
       {
         QMessageBox::warning(nullptr, "Warning", "Centroid data are not supported for peak picking operations!");
@@ -140,10 +143,12 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
                                            m_Controls.sbDistance->value());
         }
 
+        // visualization
         auto &outputvec = imageBase->PeakIndicators();
         outputvec.clear();
         outputvec.resize(imageBase->GetXAxis().size(), 0.0);
 
+        // true peak list
         auto &peakList = imageBase->GetPeaks();
         peakList.clear();
 
@@ -151,16 +156,110 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
         {
           outputvec[p.massAxisIndex] = 0.0005;
           peakList.push_back(p);
+
+          // m_Controls.tableWidget->setItem()
         }
+
+        m_PeakLists.push_back(peakList);
 
         emit m2::CommunicationService::Instance()->OverviewSpectrumChanged(node.GetPointer(),
                                                                            m2::OverviewSpectrumType::PeakIndicators);
       }
     }
+  OnImageSelectionChangedUpdatePeakList(0);
+  m_Connection = connect(
+    m_Controls.imageSource, SIGNAL(currentIndexChanged(int)), this, SLOT(OnImageSelectionChangedUpdatePeakList(int)));
   emit m2::CommunicationService::Instance()->SendProcessingNodes("", m_ReceivedNodes);
 }
 
-void m2PeakPickingView::StartPeakPicking()
+void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int idx)
 {
-  emit m2::CommunicationService::Instance()->RequestProcessingNodes(QString::fromStdString(VIEW_ID));
+  if (!m_PeakLists.empty() && idx < (int)m_PeakLists.size())
+  {
+    auto &peaks = m_PeakLists.at(idx);
+    m_Controls.tableWidget->clearContents();
+    m_Controls.tableWidget->setRowCount(peaks.size());
+    m_Controls.labelPaklist->setText(QString("Peaks list (#%1)").arg((int)peaks.size()));
+    unsigned int row = 0;
+    m_Controls.tableWidget->blockSignals(true);
+    for (auto &p : peaks)
+    {
+      auto item = new QTableWidgetItem(std::to_string(p.mass).c_str());
+      item->setCheckState(Qt::CheckState::Checked);
+      m_Controls.tableWidget->setItem(row++, 0, item);
+    }
+    m_Controls.tableWidget->blockSignals(false);
+  }
+}
+
+void m2PeakPickingView::OnStartPCA()
+{
+  for (auto node : *m_ReceivedNodes)
+  {
+    if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    {
+      auto filter = m2::PcaImageFilter::New();
+      filter->SetNumberOfComponents(3);
+      filter->SetMaskImage(imageBase->GetMaskImage());
+      const auto &peakList = imageBase->GetPeaks();
+      size_t index = 0;
+
+      std::vector<mitk::Image::Pointer> bufferedImages(peakList.size());
+      for (auto &p : peakList)
+      {
+        bufferedImages[index] = mitk::Image::New();
+        bufferedImages[index]->Initialize(imageBase);
+
+        imageBase->UpdateImage(
+          p.mass, imageBase->ApplyTolerance(p.mass), imageBase->GetMaskImage(), bufferedImages[index]);
+        filter->SetInput(index, bufferedImages[index]);
+        ++index;
+      }
+      filter->Update();
+
+      auto outputNode = mitk::DataNode::New();
+      auto data = m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(filter->GetOutput());
+      outputNode->SetData(data);
+
+      outputNode->SetName("PCA");
+      node->SetVisibility(false);
+      this->GetDataStorage()->Add(outputNode, node.GetPointer());
+    }
+  }
+}
+
+void m2PeakPickingView::OnStartTSNE()
+{
+  for (auto node : *m_ReceivedNodes)
+  {
+    if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    {
+      auto filter = m2::TSNEImageFilter::New();
+      filter->SetNumberOfComponents(3);
+      filter->SetMaskImage(imageBase->GetMaskImage());
+      const auto &peakList = imageBase->GetPeaks();
+      size_t index = 0;
+
+      std::vector<mitk::Image::Pointer> bufferedImages(peakList.size());
+      for (auto &p : peakList)
+      {
+        bufferedImages[index] = mitk::Image::New();
+        bufferedImages[index]->Initialize(imageBase);
+
+        imageBase->UpdateImage(
+          p.mass, imageBase->ApplyTolerance(p.mass), imageBase->GetMaskImage(), bufferedImages[index]);
+        filter->SetInput(index, bufferedImages[index]);
+        ++index;
+      }
+      filter->Update();
+
+      auto outputNode = mitk::DataNode::New();
+      auto data = m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(filter->GetOutput());
+      outputNode->SetData(data);
+
+      outputNode->SetName("PCA");
+      node->SetVisibility(false);
+      this->GetDataStorage()->Add(outputNode, node.GetPointer());
+    }
+  }
 }

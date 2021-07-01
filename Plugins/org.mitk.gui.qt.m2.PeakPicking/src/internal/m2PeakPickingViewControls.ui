@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>283</width>
-    <height>504</height>
+    <height>785</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -180,27 +180,78 @@
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="btnExport">
-     <property name="text">
-      <string>Export peak images to disk</string>
+    <widget class="Line" name="line_2">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
      </property>
     </widget>
    </item>
    <item>
-    <spacer name="spacer1">
+    <widget class="QCommandLinkButton" name="btnPCA">
+     <property name="text">
+      <string>Get PCA</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCommandLinkButton" name="btnTSNE">
+     <property name="text">
+      <string>Get t-SNE</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line">
      <property name="orientation">
-      <enum>Qt::Vertical</enum>
+      <enum>Qt::Horizontal</enum>
      </property>
-     <property name="sizeType">
-      <enum>QSizePolicy::Expanding</enum>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="labelPaklist">
+     <property name="text">
+      <string>Peak list (#0)</string>
      </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>20</width>
-       <height>220</height>
-      </size>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="imageSource"/>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableWidget">
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
      </property>
-    </spacer>
+     <property name="showDropIndicator" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="dragDropOverwriteMode">
+      <bool>false</bool>
+     </property>
+     <property name="selectionMode">
+      <enum>QAbstractItemView::NoSelection</enum>
+     </property>
+     <property name="columnCount">
+      <number>1</number>
+     </property>
+     <attribute name="horizontalHeaderCascadingSectionResizes">
+      <bool>false</bool>
+     </attribute>
+     <attribute name="horizontalHeaderMinimumSectionSize">
+      <number>20</number>
+     </attribute>
+     <attribute name="horizontalHeaderDefaultSectionSize">
+      <number>80</number>
+     </attribute>
+     <attribute name="horizontalHeaderStretchLastSection">
+      <bool>true</bool>
+     </attribute>
+     <column>
+      <property name="text">
+       <string>m/z</string>
+      </property>
+     </column>
+    </widget>
    </item>
   </layout>
  </widget>
