@@ -25,6 +25,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "QmitkMultiNodeSelectionWidget.h"
 #include "QmitkSingleNodeSelectionWidget.h"
 // Qt
+#include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QProcess>
@@ -44,6 +45,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <itksys/SystemTools.hxx>
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
+#include <ui_ParameterFileEditorDialog.h>
 
 const std::string OpticalImageRegistration::VIEW_ID = "org.mitk.views.opticalimageregistration";
 
@@ -53,6 +55,30 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
 {
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
+
+  m_ParameterFileEditor = new QDialog(parent);
+  m_ParameterFileEditorControls.setupUi(m_ParameterFileEditor);
+  m_ParameterFiles = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
+                      m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
+  m_DefaultParameterFiles = m_ParameterFiles;
+
+  connect(m_ParameterFileEditorControls.buttonBox->button(QDialogButtonBox::StandardButton::RestoreDefaults),
+          &QAbstractButton::clicked,
+          this,
+          [this]()
+          {
+            m_ParameterFileEditorControls.rigidText->setText(m_DefaultParameterFiles[0].c_str());
+            m_ParameterFileEditorControls.deformableText->setText(m_DefaultParameterFiles[1].c_str());
+          });
+
+  connect(m_ParameterFileEditorControls.buttonBox->button(QDialogButtonBox::StandardButton::Close),
+          &QAbstractButton::clicked,
+          this,
+          [this]()
+          {
+            m_ParameterFiles = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
+                                m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
+          });
 
   connect(m_Controls.btnStartRegistration, &QPushButton::clicked, this, &OpticalImageRegistration::StartRegistration);
 
@@ -120,6 +146,16 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
             node->SetFloatProperty("point 2D size", 0.5);
             node->SetProperty("color", mitk::ColorProperty::New(1.0f, 0.0f, 0.0f));
             this->m_FixedPointSetSingleNodeSelection->SetCurrentSelection({node});
+          });
+
+  connect(m_Controls.btnEditParameterFiles,
+          &QPushButton::clicked,
+          this,
+          [this]()
+          {
+            m_ParameterFileEditor->exec();
+            m_ParameterFiles = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
+                                m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
           });
 }
 
@@ -275,7 +311,7 @@ void OpticalImageRegistration::StartRegistration()
     if (auto pointSetNodeSelection = dynamic_cast<QmitkSingleNodeSelectionWidget *>(
           m_MovingModalitiesControls[kv.first].movingPointSetData->itemAt(1)->widget()))
     {
-      if(auto pointSetNode = pointSetNodeSelection->GetSelectedNode())
+      if (auto pointSetNode = pointSetNodeSelection->GetSelectedNode())
         movingPointSet = dynamic_cast<mitk::PointSet *>(pointSetNode->GetData());
     }
 
@@ -285,10 +321,14 @@ void OpticalImageRegistration::StartRegistration()
       helper.SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
       helper.SetImageData(fixedImage, movingImage);
       helper.SetPointData(fixedPointSet, movingPointSet);
-      // helper.SetRegistrationParameters({rigid, deformable});
+      helper.SetRegistrationParameters(m_ParameterFiles);
+      helper.SetRemoveWorkingdirectory(false);
       helper.GetRegistration();
 
       auto warpedImage = helper.WarpImage(movingImage);
+      // dualRepresentation->SetStateData(m2::DualGeometryImageWrapper::State::FINAL, warpedImage);
+      // dualRepresentation->ToggleFinalState(); // replace moving image with new data
+
       auto node = mitk::DataNode::New();
       node->SetData(warpedImage);
       node->SetName("Warped Image");
@@ -299,8 +339,6 @@ void OpticalImageRegistration::StartRegistration()
       MITK_ERROR << e.what();
     }
   }
-
-
 
   // auto resultPath = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "result.1.nrrd"}));
   // MITK_INFO << "Result image path: " << resultPath;
@@ -316,4 +354,3 @@ void OpticalImageRegistration::StartRegistration()
 
   // filesystem::remove(path);
 }
-

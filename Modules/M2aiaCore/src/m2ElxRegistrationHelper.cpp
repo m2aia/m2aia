@@ -1,3 +1,4 @@
+#include <clocale>
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
 #include <mitkImage2DToImage3DSliceFilter.h>
@@ -180,7 +181,7 @@ void m2::ElxRegistrationHelper::GetRegistration()
 
   CreateWorkingDirectory();
 
-  if(m_RegistrationParameters.empty())
+  if (m_RegistrationParameters.empty())
     m_RegistrationParameters.push_back(DEFAULT_PARAMETER_FILE);
 
   // Write parameter files
@@ -300,21 +301,44 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image *dat
   const auto resultPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "result.nrrd"});
 
   mitk::IOUtil::Save(GetSlice2DData(data), imagePath);
+  auto newSpacingX = m_MovingImage->GetGeometry()->GetSpacing()[0];
+  auto newSpacingY = m_MovingImage->GetGeometry()->GetSpacing()[1];
+  std::setlocale(LC_NUMERIC, "C");
 
   // write all transformations
   for (unsigned int i = 0; i < m_Transformations.size(); ++i)
   {
-    auto T = m_Transformations[i];
     auto transformationPath =
       ElxUtil::JoinPath({m_WorkingDirectory, "/", "TransformParameters." + std::to_string(i) + ".txt"});
+
+    auto T = m_Transformations[i];
+    auto size = m2::ElxUtil::GetParameterLine(T, "Size");
+    std::istringstream issSize(size);
+    std::vector<std::string> resultsSize(std::istream_iterator<std::string>{issSize}, std::istream_iterator<std::string>());
+    auto sizeX = std::stoi(resultsSize[1]);
+    auto sizeY = std::stoi(resultsSize[2].substr(0,resultsSize[2].find(')')));
+    // MITK_INFO << resultsSize[0] << " "<< sizeX;
+
+    auto spacing = m2::ElxUtil::GetParameterLine(T, "Spacing");
+    std::istringstream iss(spacing);
+    std::vector<std::string> results(std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>());
+    auto spacingX = std::stod(results[1]);
+    auto spacingY = std::stod(results[2].substr(0,results[2].find(')')));
+    // MITK_INFO << results[0] << " "<< spacingX;
+    
+    auto newSizeX = (sizeX * spacingX)/newSpacingX;
+    auto newSizeY = (sizeY * spacingY)/newSpacingY;
+
     ElxUtil::ReplaceParameter(T, "ResultImagePixelType", "\"" + pixelType + "\"");
     ElxUtil::ReplaceParameter(T, "ResampleInterpolator", "\"FinalBSplineInterpolatorFloat\"");
     ElxUtil::ReplaceParameter(T, "FinalBSplineInterpolationOrder", std::to_string(interpolationOrder));
+    ElxUtil::ReplaceParameter(T, "Spacing", std::to_string(newSpacingX) + " " + std::to_string(newSpacingY));
+    ElxUtil::ReplaceParameter(T, "Size", std::to_string(newSizeX) + " " + std::to_string(newSizeY));
     std::ofstream(transformationPath) << T;
   }
 
-  const auto transformationPath =
-    ElxUtil::JoinPath({m_WorkingDirectory, "/", "TransformParameters." + std::to_string(m_Transformations.size() - 1) + ".txt"});
+  const auto transformationPath = ElxUtil::JoinPath(
+    {m_WorkingDirectory, "/", "TransformParameters." + std::to_string(m_Transformations.size() - 1) + ".txt"});
 
   Poco::Process::Args args;
   args.insert(args.end(), {"-in", imagePath});

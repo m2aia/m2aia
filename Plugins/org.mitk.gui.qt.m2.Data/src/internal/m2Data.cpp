@@ -43,7 +43,7 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateProperty.h>
-#include <mitkTimer.h>
+#include <m2Timer.h>
 
 const std::string m2Data::VIEW_ID = "org.mitk.views.m2.Data";
 
@@ -90,59 +90,57 @@ void m2Data::CreateQtPartControl(QWidget *parent)
     ((QVBoxLayout *)(parent->layout()))->addWidget(m_MassSpecDataNodeSelectionWidget);
   }
 
-  connect(m_Controls.btnOpenPointSetWidget, &QAbstractButton::clicked, []() {
-    if (auto platform = berry::PlatformUI::GetWorkbench())
-    {
-      if (auto workbench = platform->GetActiveWorkbenchWindow())
-      {
-        if (auto page = workbench->GetActivePage())
-        {
-          if (page.IsNotNull())
+  connect(m_Controls.btnOpenPointSetWidget,
+          &QAbstractButton::clicked,
+          []()
           {
             try
             {
-              page->ShowView("org.mitk.views.pointsetinteraction", "", 1);
+              if (auto platform = berry::PlatformUI::GetWorkbench())
+                if (auto workbench = platform->GetActiveWorkbenchWindow())
+                  if (auto page = workbench->GetActivePage())
+                    if (page.IsNotNull())
+                      page->ShowView("org.mitk.views.pointsetinteraction", "", 1);
             }
             catch (berry::PartInitException &e)
             {
               BERRY_ERROR << "Error: " << e.what() << std::endl;
             }
-          }
-        }
-      }
-    }
-  });
+          });
 
-  connect(m_Controls.btnAddReferencepointSet, &QAbstractButton::clicked, [this]() {
-    auto nodes = this->AllNodes();
-    for (auto node : *nodes)
-    {
-      bool pointSetExist = false;
-      auto childNodes = this->GetDataStorage()->GetDerivations(node);
-      for (auto child : *childNodes)
-      {
-        if (dynamic_cast<mitk::PointSet *>(child->GetData()))
-        {
-          pointSetExist = true;
-          break;
-        }
-      }
-      if (!pointSetExist)
-      {
-        auto img = dynamic_cast<m2::SpectrumImageBase *>(node->GetData());
-        auto pointSet = mitk::PointSet::New();
-        pointSet->SetGeometry(img->GetGeometry());
-        auto dataNode = mitk::DataNode::New();
-        dataNode->SetData(pointSet);
-        dataNode->SetName(node->GetName());
-        this->GetDataStorage()->Add(dataNode, node);
+  connect(m_Controls.btnAddReferencepointSet,
+          &QAbstractButton::clicked,
+          [this]()
+          {
+            auto nodes = this->AllNodes();
+            for (auto node : *nodes)
+            {
+              bool pointSetExist = false;
+              auto childNodes = this->GetDataStorage()->GetDerivations(node);
+              for (auto child : *childNodes)
+              {
+                if (dynamic_cast<mitk::PointSet *>(child->GetData()))
+                {
+                  pointSetExist = true;
+                  break;
+                }
+              }
+              if (!pointSetExist)
+              {
+                auto img = dynamic_cast<m2::SpectrumImageBase *>(node->GetData());
+                auto pointSet = mitk::PointSet::New();
+                pointSet->SetGeometry(img->GetGeometry());
+                auto dataNode = mitk::DataNode::New();
+                dataNode->SetData(pointSet);
+                dataNode->SetName(node->GetName());
+                this->GetDataStorage()->Add(dataNode, node);
 
-        dataNode->SetFloatProperty("pointsize", img->GetGeometry()->GetSpacing()[0] * 3);
-        dataNode->SetFloatProperty("point 2D size", img->GetGeometry()->GetSpacing()[0] * 3);
-        img->GetImageArtifacts()["references"] = pointSet;
-      }
-    }
-  });
+                dataNode->SetFloatProperty("pointsize", img->GetGeometry()->GetSpacing()[0] * 3);
+                dataNode->SetFloatProperty("point 2D size", img->GetGeometry()->GetSpacing()[0] * 3);
+                img->GetImageArtifacts()["references"] = pointSet;
+              }
+            }
+          });
 
   /* connect(m_Controls.btnUpdate, &QAbstractButton::clicked, [this] {
      auto nodes = this->AllNodes();
@@ -173,21 +171,30 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   connect(m_Controls.applyTiling, &QPushButton::clicked, this, &m2Data::OnApplyTiling);
   connect(m_Controls.resetTiling, &QPushButton::clicked, this, &m2Data::OnResetTiling);
 
-  connect(m_Controls.btnGrabIonImage, &QAbstractButton::clicked, this, [&] {
-    OnGenerateImageData(m_Controls.spnBxMz->value(), -1);
-  });
+  connect(m_Controls.btnGrabIonImage,
+          &QAbstractButton::clicked,
+          this,
+          [&] { OnGenerateImageData(m_Controls.spnBxMz->value(), -1); });
 
-  connect(m_Controls.scaleBarEnableIon, &QRadioButton::toggled, this, [this](bool state) {
-    m_ColorBarAnnotations[0]->SetVisibility(state);
-    UpdateColorBarAndRenderWindows();
-    RequestRenderWindowUpdate();
-  });
+  connect(m_Controls.scaleBarEnableIon,
+          &QRadioButton::toggled,
+          this,
+          [this](bool state)
+          {
+            m_ColorBarAnnotations[0]->SetVisibility(state);
+            UpdateColorBarAndRenderWindows();
+            RequestRenderWindowUpdate();
+          });
 
-  connect(m_Controls.scaleBarEnableNormalization, &QRadioButton::toggled, this, [this](bool state) {
-    m_ColorBarAnnotations[1]->SetVisibility(state);
-    UpdateColorBarAndRenderWindows();
-    RequestRenderWindowUpdate();
-  });
+  connect(m_Controls.scaleBarEnableNormalization,
+          &QRadioButton::toggled,
+          this,
+          [this](bool state)
+          {
+            m_ColorBarAnnotations[1]->SetVisibility(state);
+            UpdateColorBarAndRenderWindows();
+            RequestRenderWindowUpdate();
+          });
 
   connect(m_Controls.btnAddIonImageReference, &QPushButton::clicked, this, &m2Data::EmitIonImageReference);
 
@@ -221,34 +228,54 @@ void m2Data::CreateQtPartControl(QWidget *parent)
     m_Controls.scaleBarLenght->setValue(cbAnnotation->GetLenght());
     m_Controls.scaleBarWidth->setValue(cbAnnotation->GetWidth());
 
-    connect(m_Controls.scaleBarForceUpdate, &QPushButton::clicked, this, [this] {
-      UpdateColorBarAndRenderWindows();
-      RequestRenderWindowUpdate();
-    });
+    connect(m_Controls.scaleBarForceUpdate,
+            &QPushButton::clicked,
+            this,
+            [this]
+            {
+              UpdateColorBarAndRenderWindows();
+              RequestRenderWindowUpdate();
+            });
 
-    connect(m_Controls.scaleBarFontSize, &QSlider::sliderMoved, this, [this, i](int pos) {
-      m_ColorBarAnnotations[i]->SetFontSize(pos);
-      UpdateColorBarAndRenderWindows();
-      RequestRenderWindowUpdate();
-    });
+    connect(m_Controls.scaleBarFontSize,
+            &QSlider::sliderMoved,
+            this,
+            [this, i](int pos)
+            {
+              m_ColorBarAnnotations[i]->SetFontSize(pos);
+              UpdateColorBarAndRenderWindows();
+              RequestRenderWindowUpdate();
+            });
 
-    connect(m_Controls.scaleBarLenght, &QSlider::sliderMoved, this, [this, i](int pos) {
-      m_ColorBarAnnotations[i]->SetLength(pos);
-      UpdateColorBarAndRenderWindows();
-      RequestRenderWindowUpdate();
-    });
+    connect(m_Controls.scaleBarLenght,
+            &QSlider::sliderMoved,
+            this,
+            [this, i](int pos)
+            {
+              m_ColorBarAnnotations[i]->SetLength(pos);
+              UpdateColorBarAndRenderWindows();
+              RequestRenderWindowUpdate();
+            });
 
-    connect(m_Controls.scaleBarWidth, &QSlider::sliderMoved, this, [this, i](int pos) {
-      m_ColorBarAnnotations[i]->SetWidth(pos);
-      UpdateColorBarAndRenderWindows();
-      RequestRenderWindowUpdate();
-    });
+    connect(m_Controls.scaleBarWidth,
+            &QSlider::sliderMoved,
+            this,
+            [this, i](int pos)
+            {
+              m_ColorBarAnnotations[i]->SetWidth(pos);
+              UpdateColorBarAndRenderWindows();
+              RequestRenderWindowUpdate();
+            });
 
-    connect(m_Controls.scaleBarOrientation, qOverload<int>(&QComboBox::currentIndexChanged), this, [this, i](int pos) {
-      m_ColorBarAnnotations[i]->SetOrientation(pos);
-      UpdateColorBarAndRenderWindows();
-      RequestRenderWindowUpdate();
-    });
+    connect(m_Controls.scaleBarOrientation,
+            qOverload<int>(&QComboBox::currentIndexChanged),
+            this,
+            [this, i](int pos)
+            {
+              m_ColorBarAnnotations[i]->SetOrientation(pos);
+              UpdateColorBarAndRenderWindows();
+              RequestRenderWindowUpdate();
+            });
   }
 }
 
@@ -491,9 +518,10 @@ void m2Data::OnEqualizeLW()
     mitk::LevelWindow lw_ref, lw_ref_normalization;
     node->GetLevelWindow(lw_ref);
     auto derivations = this->GetDataStorage()->GetDerivations(node);
-    auto nPos = std::find_if(derivations->begin(), derivations->end(), [](mitk::DataNode::Pointer v) {
-      return v->GetName().find("normalization") != std::string::npos;
-    });
+    auto nPos =
+      std::find_if(derivations->begin(),
+                   derivations->end(),
+                   [](mitk::DataNode::Pointer v) { return v->GetName().find("normalization") != std::string::npos; });
     (*nPos)->GetLevelWindow(lw_ref_normalization);
 
     auto allNodes = this->AllNodes();
@@ -501,9 +529,10 @@ void m2Data::OnEqualizeLW()
     {
       n->SetLevelWindow(lw_ref);
       derivations = this->GetDataStorage()->GetDerivations(n);
-      nPos = std::find_if(derivations->begin(), derivations->end(), [](mitk::DataNode::Pointer v) {
-        return v->GetName().find("normalization") != std::string::npos;
-      });
+      nPos =
+        std::find_if(derivations->begin(),
+                     derivations->end(),
+                     [](mitk::DataNode::Pointer v) { return v->GetName().find("normalization") != std::string::npos; });
 
       (*nPos)->SetLevelWindow(lw_ref_normalization);
     }
@@ -537,9 +566,10 @@ void m2Data::OnApplyTiling()
   if (N < 1)
     return;
 
-  std::sort(nodes.begin(), nodes.end(), [](mitk::DataNode::Pointer &a, mitk::DataNode::Pointer &b) -> bool {
-    return a->GetName().compare(b->GetName()) < 0;
-  });
+  std::sort(nodes.begin(),
+            nodes.end(),
+            [](mitk::DataNode::Pointer &a, mitk::DataNode::Pointer &b) -> bool
+            { return a->GetName().compare(b->GetName()) < 0; });
 
   for (auto &&e : nodes)
   {
@@ -738,13 +768,15 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
       //*************** Worker Finished Callback ******************//
       // capture holds a copy of the smartpointer, so it will stay alive. Make the lambda mutable to
       // allow the manipulation of captured varaibles that are copied by '='.
-      const auto futureFinished = [future, dataNode, nodesToProcess, labelText, this]() mutable {
+      const auto futureFinished = [future, dataNode, nodesToProcess, labelText, this]() mutable
+      {
         auto image = future->result();
 
         if (this->m_Controls.chkBxInitNew->isChecked())
         {
           using SourceImageType = itk::Image<m2::DisplayImagePixelType, 3>;
-          auto Caster = [&image](auto *itkImage) {
+          auto Caster = [&image](auto *itkImage)
+          {
             SourceImageType::Pointer srcImage;
 
             mitk::CastToItkImage(image, srcImage);
@@ -811,8 +843,9 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
       };
 
       //*************** Worker Block******************//
-      const auto futureWorker = [xRangeCenter, xRangeTol, data, maskImage, initializeNew, this]() {
-        mitk::Timer t("Create image @[" + std::to_string(xRangeCenter) + " " + std::to_string(xRangeTol) + "]");
+      const auto futureWorker = [xRangeCenter, xRangeTol, data, maskImage, initializeNew, this]()
+      {
+        m2::Timer t("Create image @[" + std::to_string(xRangeCenter) + " " + std::to_string(xRangeTol) + "]");
         if (initializeNew)
         {
           auto geom = data->GetGeometry()->Clone();

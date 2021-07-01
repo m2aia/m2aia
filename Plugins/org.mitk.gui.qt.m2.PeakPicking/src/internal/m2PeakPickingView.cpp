@@ -17,11 +17,12 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 // Blueberry
 #include <berryISelectionService.h>
 #include <berryIWorkbenchWindow.h>
-
+#include <m2ElxUtil.h>
 // Qmitk
 #include "m2PeakPickingView.h"
 
 // Qt
+#include <QFileDialog>
 #include <QMessageBox>
 
 // m2
@@ -70,6 +71,30 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
           &m2::CommunicationService::SendProcessingNodes,
           this,
           &m2PeakPickingView::OnProcessingNodesReceived);
+
+  connect(m_Controls.btnExport,
+          &QPushButton::clicked,
+          this,
+          [this]()
+          {
+            const auto res = QFileDialog::getExistingDirectory(nullptr, "Export directory");
+            for (auto n : *m_ReceivedNodes)
+            {
+              if (auto image = dynamic_cast<m2::SpectrumImageBase *>(n->GetData()))
+              {
+                const auto dir = m2::ElxUtil::JoinPath({res.toStdString(), "/", n->GetName()});
+                itksys::SystemTools::MakeDirectory(dir);
+                for (auto & p : image->GetPeaks())
+                {
+                  auto file = m2::ElxUtil::JoinPath({dir,"/",std::to_string(p.mass) + ".nrrd"});
+                  auto r = mitk::Image::New();
+                  r->Initialize(image);
+                  image->UpdateImage(p.mass,image->GetTolerance(),nullptr,r);
+                  mitk::IOUtil::Save(r, file);
+                }
+              }
+            }
+          });
 }
 
 void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
@@ -101,37 +126,38 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
         auto mad = m2::Signal::mad(s);
         std::vector<m2::MassValue> peaks;
         m2::Signal::localMaxima(std::begin(s),
-                               std::end(s),
-                               std::begin(m),
-                               std::back_inserter(peaks),
-                               m_Controls.sbHalfWindowSize->value(),
-                               mad * m_Controls.sbSNR->value());
+                                std::end(s),
+                                std::begin(m),
+                                std::back_inserter(peaks),
+                                m_Controls.sbHalfWindowSize->value(),
+                                mad * m_Controls.sbSNR->value());
         if (m_Controls.ckbMonoisotopic->isChecked())
         {
           peaks = m2::Signal::monoisotopic(peaks,
-                                          {3, 4, 5, 6, 7, 8, 9, 10},
-                                          m_Controls.sbMinCor->value(),
-                                          m_Controls.sbTolerance->value(),
-                                          m_Controls.sbDistance->value());
+                                           {3, 4, 5, 6, 7, 8, 9, 10},
+                                           m_Controls.sbMinCor->value(),
+                                           m_Controls.sbTolerance->value(),
+                                           m_Controls.sbDistance->value());
         }
 
         auto &outputvec = imageBase->PeakIndicators();
         outputvec.clear();
         outputvec.resize(imageBase->GetXAxis().size(), 0.0);
 
-        auto &maskIndices = imageBase->GetPeaks();
-        maskIndices.clear();
+        auto &peakList = imageBase->GetPeaks();
+        peakList.clear();
 
         for (auto &p : peaks)
         {
           outputvec[p.massAxisIndex] = 0.0005;
-          maskIndices.push_back(p);
+          peakList.push_back(p);
         }
 
         emit m2::CommunicationService::Instance()->OverviewSpectrumChanged(node.GetPointer(),
                                                                            m2::OverviewSpectrumType::PeakIndicators);
       }
     }
+  emit m2::CommunicationService::Instance()->SendProcessingNodes("", m_ReceivedNodes);
 }
 
 void m2PeakPickingView::StartPeakPicking()

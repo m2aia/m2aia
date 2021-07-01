@@ -23,7 +23,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkCommandLineParser.h>
 #include <mitkIOUtil.h>
 #include <mitkImageCast.h>
-#include <mitkTimer.h>
+#include <m2Timer.h>
 /*!
 \brief Perform N-linked glycane analysis
 */

@@ -25,7 +25,6 @@ See LICENSE.txt for details.
 #include <m2CoreCommon.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
-
 #include <mitkLabelSetImage.h>
 #include <mitkPointSet.h>
 #include <regex>
@@ -52,6 +51,15 @@ namespace m2
         paramFileString += "(" + what + " " + by + ")\n";
       else
         paramFileString.replace(pos1, pos2 - pos1 + 1, "(" + what + " " + by + ")\n");
+    }
+
+    static std::string GetParameterLine(std::string &paramFileString, std::string what)
+    {
+      auto pos1 = paramFileString.find("(" + what);
+      auto pos2 = paramFileString.find(')', pos1);
+      if (pos1 != std::string::npos && pos2 != std::string::npos)
+        return paramFileString.substr(pos1, pos2 - pos1 + 1);
+      return "";
     }
 
     /**
@@ -100,7 +108,7 @@ namespace m2
       return shape;
     }
 
-    static void SavePointSet(const mitk::PointSet::Pointer & pnts, const std::string & path)
+    static void SavePointSet(const mitk::PointSet::Pointer &pnts, const std::string &path)
     {
       std::ofstream f(path);
       f << "point\n";

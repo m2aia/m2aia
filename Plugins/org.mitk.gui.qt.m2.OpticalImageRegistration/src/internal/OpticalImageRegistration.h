@@ -20,9 +20,12 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "ui_MovingModalityWidgetControls.h"
 #include "ui_OpticalImageRegistrationControls.h"
 #include <QmitkAbstractView.h>
+#include <QDialog>
 #include <berryISelectionListener.h>
+#include <m2DualGeometryImageWrapper.h>
 #include <map>
 #include <mitkPointSet.h>
+#include <ui_ParameterFileEditorDialog.h>
 
 class QmitkSingleNodeSelectionWidget;
 
@@ -55,9 +58,13 @@ protected:
 
   Ui::OpticalImageRegistrationControls m_Controls;
   std::map<char, Ui::MovingModalityWidgetControls> m_MovingModalitiesControls;
+  std::map<char, std::shared_ptr<m2::DualGeometryImageWrapper>> m_MovingModalitiesDualRepresentation;
 
   QmitkSingleNodeSelectionWidget *m_FixedImageSingleNodeSelection;
   QmitkSingleNodeSelectionWidget *m_FixedPointSetSingleNodeSelection;
+  Ui::elxParameterFileEditor m_ParameterFileEditorControls;
+  QDialog * m_ParameterFileEditor;
+  std::vector<std::string> m_ParameterFiles, m_DefaultParameterFiles;
 
   void StartRegistration();
   void AddNewModalityTab();
