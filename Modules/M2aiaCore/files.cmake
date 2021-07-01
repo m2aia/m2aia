@@ -16,7 +16,7 @@ set(H_FILES
   include/mitkImage2DToImage3DSliceFilter.h
   
   include/mitkTimer.h
-  include/m2TransformUtil.h
+  include/m2ElxUtil.h
 
 )
 
@@ -25,6 +25,7 @@ set(CPP_FILES
   m2SpectrumImageBase.cpp
   m2CoreObjectFactory.cpp
   m2MassValue.cpp
+  m2ElxUtil.cpp
   
   mitkTransformixMSDataObjectStack.cpp
 
