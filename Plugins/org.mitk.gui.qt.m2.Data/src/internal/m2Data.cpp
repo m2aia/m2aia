@@ -1035,7 +1035,7 @@ void m2Data::FsmImageNodeAdded(const mitk::DataNode *node)
 void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
 {
   auto lut = mitk::LookupTable::New();
-  lut->SetType(mitk::LookupTable::LookupTableType::VIRIDIS_TRANSPARENT);
+  lut->SetType(mitk::LookupTable::LookupTableType::CIVIDS_TRANSPARENT);
   const_cast<mitk::DataNode *>(node)->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
   const_cast<mitk::DataNode *>(node)->SetBoolProperty("binary", false);
   mitk::LevelWindow lw;
