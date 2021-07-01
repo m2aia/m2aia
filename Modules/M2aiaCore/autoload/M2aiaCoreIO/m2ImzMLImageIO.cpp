@@ -325,7 +325,7 @@ namespace m2
     // Output file stream for ibd
     std::ofstream b(GetIBDOutputPath(), std::ofstream::binary | std::ofstream::app);
 
-    unsigned sourceId = 0;
+    //unsigned sourceId = 0;
     unsigned long long offset = 16;
     unsigned long long offsetDelta = 0;
     b.seekp(offset);
