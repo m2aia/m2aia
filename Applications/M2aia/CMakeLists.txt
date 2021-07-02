@@ -91,11 +91,3 @@ endif()
 if(MITK_MODULES_ENABLED_PLUGINS)
   add_dependencies(${M2AIAAPP_NAME} ${MITK_MODULES_ENABLED_PLUGINS})
 endif()
-
-# install elastixbinaries
-if(ElastixBinaries_DIR)
-  install(PROGRAMS "${ElastixBinaries_DIR}/transformix" DESTINATION "bin/")
-  install(PROGRAMS "${ElastixBinaries_DIR}/elastix" DESTINATION "bin/")
-  install(FILES "${ElastixBinaries_DIR}/../lib/libANNlib-5.0.so" DESTINATION "bin/")
-  install(FILES "${ElastixBinaries_DIR}/../lib/libANNlib-5.0.so.1" DESTINATION "bin/")
-endif(APPLE)
