@@ -21,7 +21,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryPlatformUI.h>
 
 // Qmitk
-#include "OpticalImageRegistration.h"
+#include "Registration2D.h"
 #include "QmitkMultiNodeSelectionWidget.h"
 #include "QmitkSingleNodeSelectionWidget.h"
 // Qt
@@ -48,11 +48,11 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ElxUtil.h>
 #include <ui_ParameterFileEditorDialog.h>
 
-const std::string OpticalImageRegistration::VIEW_ID = "org.mitk.views.opticalimageregistration";
+const std::string Registration2D::VIEW_ID = "org.mitk.views.registration2d";
 
-void OpticalImageRegistration::SetFocus() {}
+void Registration2D::SetFocus() {}
 
-void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
+void Registration2D::CreateQtPartControl(QWidget *parent)
 {
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
@@ -84,7 +84,7 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
                                 m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
           });
 
-  connect(m_Controls.btnStartRegistration, &QPushButton::clicked, this, &OpticalImageRegistration::StartRegistration);
+  connect(m_Controls.btnStartRegistration, &QPushButton::clicked, this, &Registration2D::StartRegistration);
 
   m_FixedImageSingleNodeSelection = new QmitkSingleNodeSelectionWidget();
   m_FixedImageSingleNodeSelection->SetDataStorage(GetDataStorage());
@@ -181,7 +181,7 @@ void OpticalImageRegistration::CreateQtPartControl(QWidget *parent)
           });
 }
 
-void OpticalImageRegistration::AddNewModalityTab()
+void Registration2D::AddNewModalityTab()
 {
   auto widget = new QWidget();
   Ui::MovingModalityWidgetControls controls;
@@ -255,7 +255,7 @@ void OpticalImageRegistration::AddNewModalityTab()
   ++m_ModalityId;
 }
 
-void OpticalImageRegistration::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
+void Registration2D::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
                                                   const QList<mitk::DataNode::Pointer> &nodes)
 {
   if (m_Controls.chkBxReinitOnSelectionChanged->isChecked())
@@ -277,7 +277,7 @@ void OpticalImageRegistration::OnSelectionChanged(berry::IWorkbenchPart::Pointer
   }
 }
 
-QString OpticalImageRegistration::GetElastixPath() const
+QString Registration2D::GetElastixPath() const
 {
   berry::IPreferences::Pointer preferences =
     berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.ext.externalprograms");
@@ -285,7 +285,7 @@ QString OpticalImageRegistration::GetElastixPath() const
   return preferences.IsNotNull() ? preferences->Get("elastix", "") : "";
 }
 
-void OpticalImageRegistration::StartRegistration()
+void Registration2D::StartRegistration()
 {
   // check if
   auto elastix = m2::ElxUtil::Executable("elastix");

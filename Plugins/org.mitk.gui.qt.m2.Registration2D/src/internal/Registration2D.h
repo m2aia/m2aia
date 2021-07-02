@@ -14,11 +14,11 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-#ifndef OpticalImageRegistration_h
-#define OpticalImageRegistration_h
+#ifndef Registration2D_h
+#define Registration2D_h
 
 #include "ui_MovingModalityWidgetControls.h"
-#include "ui_OpticalImageRegistrationControls.h"
+#include "ui_Registration2DControls.h"
 #include <QmitkAbstractView.h>
 #include <QDialog>
 #include <berryISelectionListener.h>
@@ -29,14 +29,14 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 class QmitkSingleNodeSelectionWidget;
 
 /**
-  \brief OpticalImageRegistration
+  \brief Registration2D
 
   \warning  This class is not yet documented. Use "git blame" and ask the author to provide basic documentation.
 
   \sa QmitkAbstractView
   \ingroup ${plugin_target}_internal
 */
-class OpticalImageRegistration : public QmitkAbstractView
+class Registration2D : public QmitkAbstractView
 {
   // this is needed for all Qt objects that should have a Qt meta-object
   // (everything that derives from QObject and wants to have signal/slots)
@@ -55,7 +55,7 @@ protected:
 
   char m_ModalityId = 'A';
 
-  Ui::OpticalImageRegistrationControls m_Controls;
+  Ui::Registration2DControls m_Controls;
   std::map<char, std::vector<QmitkSingleNodeSelectionWidget *>> m_MovingModalities;
 
   QmitkSingleNodeSelectionWidget *m_FixedImageSingleNodeSelection;
@@ -68,4 +68,4 @@ protected:
   void AddNewModalityTab();
 };
 
-#endif // OpticalImageRegistration_h
+#endif // Registration2D_h

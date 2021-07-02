@@ -19,6 +19,7 @@ set(target_libraries
   org_mitk_gui_qt_properties
   org_mitk_gui_qt_viewnavigator
   org_mitk_gui_qt_renderwindowmanager
+  org_mitk_gui_qt_geometrytools
   org_mitk_gui_qt_m2_application
   org_mitk_gui_qt_m2_Data
   org_mitk_gui_qt_m2_Ions
@@ -27,7 +28,7 @@ set(target_libraries
   org_mitk_gui_qt_m2_PeakPicking
   org_mitk_gui_qt_m2_ImzMLExport
   org_mitk_gui_qt_m2_Reconstruction3D
-  org_mitk_gui_qt_m2_OpticalImageRegistration
   org_mitk_gui_qt_m2_Position
+  org_mitk_gui_qt_m2_Registration2D
   org_mitk_m2_core_helper
 )

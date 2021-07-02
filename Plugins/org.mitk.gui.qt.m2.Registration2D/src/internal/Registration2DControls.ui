@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>OpticalImageRegistrationControls</class>
- <widget class="QWidget" name="OpticalImageRegistrationControls">
+ <class>Registration2DControls</class>
+ <widget class="QWidget" name="Registration2DControls">
   <property name="geometry">
    <rect>
     <x>0</x>
