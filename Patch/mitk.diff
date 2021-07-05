@@ -810,6 +810,79 @@ index 623924f0b3..f549e3610a 100644
      auto hasBinaryProperty = mitk::NodePredicateProperty::New("binary", mitk::BoolProperty::New(true));
      auto isNotBinary = mitk::NodePredicateNot::New(hasBinaryProperty);
      auto isNotBinaryImage = mitk::NodePredicateAnd::New(isImage, isNotBinary);
+diff --git a/Modules/ModuleList.cmake b/Modules/ModuleList.cmake
+index c36c213269..356200dad1 100644
+--- a/Modules/ModuleList.cmake
++++ b/Modules/ModuleList.cmake
+@@ -34,17 +34,17 @@ set(MITK_MODULES
+   SegmentationUI
+   MatchPointRegistration
+   MatchPointRegistrationUI
+-  Classification
+-  OpenIGTLink
+-  IGTBase
+-  IGT
+-  CameraCalibration
+-  OpenCL
+-  OpenCVVideoSupport
++  #Classification
++  #OpenIGTLink
++  #IGTBase
++  #IGT
++  #CameraCalibration
++  # OpenCL
++  #OpenCVVideoSupport
+   QtOverlays
+-  ToFHardware
+-  ToFProcessing
+-  ToFUI
++  #ToFHardware
++  #ToFProcessing
++  #ToFUI
+   US
+   USUI
+   DICOMUI
+@@ -52,28 +52,28 @@ set(MITK_MODULES
+   Python
+   QtPython
+   Persistence
+-  OpenIGTLinkUI
+-  IGTUI
+-  RT
+-  RTUI
++  #OpenIGTLinkUI
++  #IGTUI
++  #RT
++  #RTUI
+   IOExt
+   XNAT
+   TubeGraph
+   BoundingShape
+   RenderWindowManager
+   RenderWindowManagerUI
+-  SemanticRelations
+-  SemanticRelationsUI
++  #SemanticRelations
++  #SemanticRelationsUI
+   CEST
+   BasicImageProcessing
+-  ModelFit
+-  ModelFitUI
+-  Pharmacokinetics
+-  PharmacokineticsUI
+-  DICOMPM
++  #ModelFit
++  #ModelFitUI
++  #Pharmacokinetics
++  #PharmacokineticsUI
++  #DICOMPM
+   REST
+   RESTService
+-  DICOMweb
++  #DICOMweb
+ )
+ 
+ if(MITK_ENABLE_PIC_READER)
 diff --git a/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp b/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp
 index 46a8600375..9b555c7fe6 100644
 --- a/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp
