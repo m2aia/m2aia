@@ -47,6 +47,7 @@ set(_plugins
   org.mitk.gui.qt.m2.Data
   org.mitk.gui.qt.m2.Ions
   org.mitk.gui.qt.m2.CombineImages
+  org.mitk.gui.qt.m2.Position
   org.mitk.gui.qt.m2.Spectrum
   org.mitk.gui.qt.m2.PeakPicking
   org.mitk.gui.qt.m2.ImzMLExport
