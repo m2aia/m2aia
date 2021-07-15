@@ -172,7 +172,7 @@ namespace m2
     const T GetPropertyValue(const std::string &key) const;
 
     void ApplyGeometryOperation(mitk::Operation *);
-    void ApplyMoveOriginOperation(const std::array<int, 2> &v);
+    void ApplyMoveOriginOperation(const mitk::Vector3D &v);
 
     inline void SaveModeOn() const { this->m_InSaveMode = true; }
     inline void SaveModeOff() const { this->m_InSaveMode = false; }

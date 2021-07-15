@@ -28,23 +28,15 @@ double m2::SpectrumImageBase::ApplyTolerance(double x)
     return this->GetTolerance();
 }
 
-void m2::SpectrumImageBase::ApplyMoveOriginOperation(const std::array<int, 2> &v)
+void m2::SpectrumImageBase::ApplyMoveOriginOperation(const mitk::Vector3D &v)
 {
-  auto geometry = this->GetGeometry();
-  auto pos = geometry->GetOrigin();
-  auto space = geometry->GetSpacing();
-  pos[0] = pos[0] + v.at(0) * space[0];
-  pos[1] = pos[1] + v.at(1) * space[1];
-  geometry->SetOrigin(pos);
+  auto geometry = this->GetGeometry();  
+  geometry->Translate(v);
 
   for (auto kv : m_ImageArtifacts)
   {
     geometry = kv.second->GetGeometry();
-    pos = geometry->GetOrigin();
-    space = geometry->GetSpacing();
-    pos[0] = pos[0] + v.at(0) * space[0];
-    pos[1] = pos[1] + v.at(1) * space[1];
-    geometry->SetOrigin(pos);
+    geometry->Translate(v);
   }
 }
 
