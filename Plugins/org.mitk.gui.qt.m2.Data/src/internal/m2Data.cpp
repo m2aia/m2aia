@@ -30,6 +30,8 @@ See LICENSE.txt for details.
 #include <itksys/SystemTools.hxx>
 #include <m2FsmSpectrumImage.h>
 #include <m2OpenSlideImageIOHelperObject.h>
+#include <m2SubdivideImage2DFilter.h>
+#include <m2Timer.h>
 #include <mitkCameraController.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
@@ -43,7 +45,6 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateProperty.h>
-#include <m2Timer.h>
 
 const std::string m2Data::VIEW_ID = "org.mitk.views.m2.Data";
 
@@ -978,14 +979,40 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
     auto result = dialog->exec();
     if (result == QDialog::Accepted)
     {
+      try
+      {
       auto data = dialog->GetData();
+        // auto preview = dialog->GetPreviwData();
+        // mitk::DataNode::Pointer parent = nullptr;
+        // if (preview)
+        // {
+          // parent = mitk::DataNode::New();
+          // parent->SetName(
+          //   itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName()));
+          // parent->SetData(dialog->GetPreviwData());
+          // this->GetDataStorage()->Add(parent);
+        // }
       if (data.size() == 1)
       {
+          auto filter = m2::SubdivideImage2DFilter::New();
+          filter->SetInput(data.back());
+          filter->SetTileHeight((unsigned int)(1) << 13);
+          filter->SetTileWidth((unsigned int)(1) << 13);
+          filter->Update();
+
+          const auto nX = filter->GetNumberOfTilesInX();
+          const auto nY = filter->GetNumberOfTilesInY();
+          MITK_INFO << nX << " " << nY;
+
+          unsigned int k = 0;
+          for (auto I : filter->GetOutputs())
+          {
         auto node = mitk::DataNode::New();
-        node->SetData(data.back());
-        node->SetName(
-          itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName()));
+            node->SetData(I);
+            node->SetName("tile_" + std::to_string(k));
         this->GetDataStorage()->Add(node);
+            ++k;
+          }
       }
       else
       {
@@ -995,10 +1022,15 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
           auto node = mitk::DataNode::New();
           node->SetData(I);
           node->SetName(
-            itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName()) + "_" +
-            std::to_string(i++));
+              itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName()) +
+              "_" + std::to_string(i++));
           this->GetDataStorage()->Add(node);
         }
+        }
+      }
+      catch (std::exception &e)
+      {
+        MITK_ERROR << "Rendering Error";
       }
     }
     // remove IO helper object from DS

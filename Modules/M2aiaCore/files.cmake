@@ -17,6 +17,7 @@ set(H_FILES
   include/mitkTransformixMSDataObjectStack.h
   include/mitkImage3DSliceToImage2DFilter.h
   include/mitkImage2DToImage3DSliceFilter.h
+  include/m2SubdivideImage2DFilter.h
   
 
 )
@@ -38,6 +39,7 @@ set(CPP_FILES
 
   mitkImage3DSliceToImage2DFilter.cpp
   mitkImage2DToImage3DSliceFilter.cpp
+  m2SubdivideImage2DFilter.cpp
 )
 
 set(RESOURCE_FILES
