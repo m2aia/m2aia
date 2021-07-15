@@ -125,8 +125,8 @@ namespace m2
       else
         buffer << defaultValue;
 
-    
     map[searchString] = buffer.str();
+    MITK_WARN << "Using default value \t\"(" << searchString << ") " << map[searchString] << "\"";
     return defaultValue;
   };
 
