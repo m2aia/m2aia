@@ -27,8 +27,8 @@ Cite M²aia
 [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324)
 
 Cordes J; Enzlein T; Marsching C; Hinze M; Engelhardt S; Hopf C; Wolf
-I (2021): M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging
-data ___pending___
+I (July, 2021): M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging
+data [https://doi.org/10.1093/gigascience/giab049](https://doi.org/10.1093/gigascience/giab049)
 
 
 Muli-modal 3D mouse brain data
