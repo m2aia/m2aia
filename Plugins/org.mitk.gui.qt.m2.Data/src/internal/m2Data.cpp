@@ -1030,7 +1030,7 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
       }
       catch (std::exception &e)
       {
-        MITK_ERROR << "Rendering Error";
+        MITK_ERROR << "Rendering Error" << e.what();
       }
     }
     // remove IO helper object from DS
