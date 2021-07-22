@@ -14,25 +14,29 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-#ifndef OpticalImageRegistration_h
-#define OpticalImageRegistration_h
+#ifndef Registration2D_h
+#define Registration2D_h
 
-#include "ui_OpticalImageRegistrationControls.h"
+#include "ui_MovingModalityWidgetControls.h"
+#include "ui_Registration2DControls.h"
 #include <QmitkAbstractView.h>
+#include <QDialog>
 #include <berryISelectionListener.h>
+#include <map>
 #include <mitkPointSet.h>
+#include <ui_ParameterFileEditorDialog.h>
 
 class QmitkSingleNodeSelectionWidget;
 
 /**
-  \brief OpticalImageRegistration
+  \brief Registration2D
 
   \warning  This class is not yet documented. Use "git blame" and ask the author to provide basic documentation.
 
   \sa QmitkAbstractView
   \ingroup ${plugin_target}_internal
 */
-class OpticalImageRegistration : public QmitkAbstractView
+class Registration2D : public QmitkAbstractView
 {
   // this is needed for all Qt objects that should have a Qt meta-object
   // (everything that derives from QObject and wants to have signal/slots)
@@ -42,23 +46,26 @@ public:
   static const std::string VIEW_ID;
 
 protected:
-  void Save(mitk::PointSet::Pointer pnts, std::string path) const;
   virtual void CreateQtPartControl(QWidget *parent) override;
   virtual void OnSelectionChanged(berry::IWorkbenchPart::Pointer part,
                                   const QList<mitk::DataNode::Pointer> &nodes) override;
   virtual void SetFocus() override;
 
   QString GetElastixPath() const;
-  /// \brief Called when the user clicks the GUI button
-  void DoImageProcessing();
-  void DoSetOrigin();
 
-  Ui::OpticalImageRegistrationControls m_Controls;
+  char m_ModalityId = 'A';
+
+  Ui::Registration2DControls m_Controls;
+  std::map<char, std::vector<QmitkSingleNodeSelectionWidget *>> m_MovingModalities;
 
   QmitkSingleNodeSelectionWidget *m_FixedImageSingleNodeSelection;
-  QmitkSingleNodeSelectionWidget *m_MovingImageSingleNodeSelection;
   QmitkSingleNodeSelectionWidget *m_FixedPointSetSingleNodeSelection;
-  QmitkSingleNodeSelectionWidget *m_MovingPointSetSingleNodeSelection;
+  Ui::elxParameterFileEditor m_ParameterFileEditorControls;
+  QDialog * m_ParameterFileEditor;
+  std::vector<std::string> m_ParameterFiles, m_DefaultParameterFiles;
+
+  void StartRegistration();
+  void AddNewModalityTab();
 };
 
-#endif // OpticalImageRegistration_h
+#endif // Registration2D_h

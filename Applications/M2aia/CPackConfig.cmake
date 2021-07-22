@@ -15,7 +15,7 @@ if(CPACK_GENERATOR MATCHES "NSIS")
     )
 
   # tell cpack the executables you want in the start menu as links
-  SET(CPACK_PACKAGE_EXECUTABLES "MitkM2aia;M2aia" CACHE INTERNAL "Collecting windows shortcuts to executables")
+  SET(CPACK_PACKAGE_EXECUTABLES "M2aia;M2aia" CACHE INTERNAL "Collecting windows shortcuts to executables")
 
   # tell cpack to create a desktop link to M2aia
   # SET(CPACK_CREATE_DESKTOP_LINKS "M2aia")

@@ -1,1 +1,2 @@
 mitkFunctionAddExternalProject(NAME OpenSlide ON)
+mitkFunctionAddExternalProject(NAME ElastixBinaries ON)

@@ -178,8 +178,8 @@ void m2::TSNEImageFilter::GenerateData()
   initializeItkImage(itkImage);
   itkImage->Allocate();
 
-  auto vectorImage = itk::VectorImage<double, 3>::New();
-  initializeItkVectorImage(vectorImage);
+  auto vectorImage = initializeItkVectorImage(m_NumberOfComponents);
+  
 
   unsigned int k = 0;
   for (auto const &indeex : m_ValidIndices)

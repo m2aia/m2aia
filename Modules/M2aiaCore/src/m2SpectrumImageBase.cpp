@@ -20,23 +20,23 @@ See LICENSE.txt for details.
 #include <mitkLookupTableProperty.h>
 #include <mitkOperation.h>
 
-void m2::SpectrumImageBase::ApplyMoveOriginOperation(const std::array<int, 2> &v)
+double m2::SpectrumImageBase::ApplyTolerance(double x)
 {
-  auto geometry = this->GetGeometry();
-  auto pos = geometry->GetOrigin();
-  auto space = geometry->GetSpacing();
-  pos[0] = pos[0] + v.at(0) * space[0];
-  pos[1] = pos[1] + v.at(1) * space[1];
-  geometry->SetOrigin(pos);
+  if (this->GetUseToleranceInPPM())
+    return this->GetTolerance() * 10e-6 * x;
+  else
+    return this->GetTolerance();
+}
+
+void m2::SpectrumImageBase::ApplyMoveOriginOperation(const mitk::Vector3D &v)
+{
+  auto geometry = this->GetGeometry();  
+  geometry->Translate(v);
 
   for (auto kv : m_ImageArtifacts)
   {
     geometry = kv.second->GetGeometry();
-    pos = geometry->GetOrigin();
-    space = geometry->GetSpacing();
-    pos[0] = pos[0] + v.at(0) * space[0];
-    pos[1] = pos[1] + v.at(1) * space[1];
-    geometry->SetOrigin(pos);
+    geometry->Translate(v);
   }
 }
 
@@ -107,10 +107,10 @@ mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage()
   return nullptr;
 }
 
-void m2::SpectrumImageBase::GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
+void m2::SpectrumImageBase::UpdateImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
   GenerateImageStart.Send();
-  m_Processor->GrabIonImagePrivate(mz, tol, mask, img);
+  m_Processor->UpdateImagePrivate(mz, tol, mask, img);
   GenerateImageEnd.Send();
 }
 

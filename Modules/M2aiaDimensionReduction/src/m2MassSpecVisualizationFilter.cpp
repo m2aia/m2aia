@@ -75,8 +75,11 @@ void m2::MassSpecVisualizationFilter::initializeItkImage(itk::Image<RGBPixel, 3>
   }
 }
 
-void m2::MassSpecVisualizationFilter::initializeItkVectorImage(itk::VectorImage<PixelType, 3>::Pointer vectorImage)
+itk::VectorImage<double, 3>::Pointer m2::MassSpecVisualizationFilter::initializeItkVectorImage(unsigned int components)
 {
+  auto vectorImage = itk::VectorImage<PixelType, 3>::New();
+  vectorImage->SetVectorLength(components);
+
   itk::Image<PixelType, 3>::IndexType start;
   start[0] = 0;
   start[1] = 0;
@@ -91,7 +94,7 @@ void m2::MassSpecVisualizationFilter::initializeItkVectorImage(itk::VectorImage<
   region.SetSize(size);
   region.SetIndex(start);
   vectorImage->SetRegions(region);
-  vectorImage->SetVectorLength(m_NumberOfComponents);
+  
   vectorImage->Allocate();
 
   itk::VariableLengthVector<PixelType> initialPixelValues;
@@ -105,4 +108,6 @@ void m2::MassSpecVisualizationFilter::initializeItkVectorImage(itk::VectorImage<
     imageIterator.Set(initialPixelValues);
     ++imageIterator;
   }
+
+  return vectorImage;
 }

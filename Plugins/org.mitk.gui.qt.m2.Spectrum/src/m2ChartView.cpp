@@ -204,7 +204,7 @@ void m2::ChartView::mouseReleaseEvent(QMouseEvent *event)
     emit(AlignSpectra(mz, tol));
   else if (mods.testFlag(Qt::AltModifier)) {
     emit(RangeSelectionUpdate(p.x()));
-    emit(GenerateImageData(mz, tol));
+    emit(UpdateImage(mz, tol));
   }
   event->accept();
 }

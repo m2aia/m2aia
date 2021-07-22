@@ -20,7 +20,7 @@ See LICENSE.txt for details.
 #include <mbilog.h>
 #include <string>
 
-namespace mitk
+namespace m2
 {
   class Timer
   {

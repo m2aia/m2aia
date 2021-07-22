@@ -93,11 +93,11 @@ namespace m2
 
   protected:
     using RGBPixel = itk::RGBPixel<unsigned char>;
-    using PixelType = double;
+    
     mitk::Image::Pointer m_MaskImage;
     unsigned int m_NumberOfComponents = 3;
 
     void initializeItkImage(itk::Image<RGBPixel, 3>::Pointer);
-    void initializeItkVectorImage(itk::VectorImage<PixelType, 3>::Pointer);
+    itk::VectorImage<double, 3>::Pointer initializeItkVectorImage(unsigned int components);
   };
 } // namespace m2

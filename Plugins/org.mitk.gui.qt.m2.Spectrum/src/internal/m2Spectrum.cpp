@@ -250,10 +250,10 @@ void m2Spectrum::CreatePeakData(const mitk::DataNode *node)
   }
 }
 
-void m2Spectrum::OnMassRangeChanged(qreal mz, qreal tol)
+void m2Spectrum::OnMassRangeChanged(qreal x, qreal tol)
 {
-  SetSelectedAreaStartX(mz - tol);
-  SetSelectedAreaEndX(mz + tol);
+  SetSelectedAreaStartX(x - tol);
+  SetSelectedAreaEndX(x + tol);
   DrawSelectedArea();
 }
 
@@ -394,7 +394,7 @@ void m2Spectrum::OnMouseRelease(QPoint pos, qreal mz, qreal intValue, Qt::MouseB
     const auto mz = (m_SelectedAreaEndX + m_SelectedAreaStartX) * 0.5;
     const auto tol = std::abs(m_SelectedAreaEndX - m_SelectedAreaStartX) * 0.5;
 
-    emit m2::CommunicationService::Instance()->GenerateImageData(mz, tol);
+    emit m2::CommunicationService::Instance()->UpdateImage(mz, tol);
   }
   m_RangeSelectionStarted = false;
   m_Controls.chartView->setRubberBand(QtCharts::QChartView::RubberBand::NoRubberBand);
@@ -420,7 +420,7 @@ void m2Spectrum::OnMouseDoubleClick(
   }
   else
   {
-    emit m2::CommunicationService::Instance()->GenerateImageData(mz, -1);
+    emit m2::CommunicationService::Instance()->UpdateImage(mz, -1);
   }
 }
 
@@ -464,7 +464,7 @@ void m2Spectrum::UpdateSeriesMinMaxValues()
 
   for (auto &kv : m_LineTypeLevelData)
   {
-    auto ppp = kv.second[m_CurrentOverviewSpectrumType].front();
+    const auto & ppp = kv.second[m_CurrentOverviewSpectrumType].front();
     auto m = std::max_element(ppp.begin(), ppp.end(), [](auto largest, auto p) { return p.y() > largest.y(); });
     if (m->y() > m_CurrentMaxIntensity)
       m_CurrentMaxIntensity = m->y();
@@ -717,30 +717,33 @@ void m2Spectrum::OnSerieFocused(const mitk::DataNode *node)
 
 void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
 {
-  if (m_LineSeries.find(node) != std::end(m_LineSeries))
+  if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-    m_Controls.chartView->chart()->removeSeries(m_LineSeries[node]);
-    m_LineSeries.erase(node);
-  }
+    if (m_LineSeries.find(node) != std::end(m_LineSeries))
+    {
+      m_Controls.chartView->chart()->removeSeries(m_LineSeries[node]);
+      m_LineSeries.erase(node);
+    }
 
-  if (m_LineTypeLevelData.find(node) != std::end(m_LineTypeLevelData))
-  {
-    m_LineTypeLevelData.erase(node);
-  }
+    if (m_LineTypeLevelData.find(node) != std::end(m_LineTypeLevelData))
+    {
+      m_LineTypeLevelData.erase(node);
+    }
 
-  if (m_PeakSeries.find(node) != std::end(m_PeakSeries))
-  {
-    m_Controls.chartView->chart()->removeSeries(m_PeakSeries[node]);
-    m_PeakSeries.erase(node);
-  }
+    if (m_PeakSeries.find(node) != std::end(m_PeakSeries))
+    {
+      m_Controls.chartView->chart()->removeSeries(m_PeakSeries[node]);
+      m_PeakSeries.erase(node);
+    }
 
-  if (m_ScatterSeries.find(node) != std::end(m_ScatterSeries))
-  {
-    m_Controls.chartView->chart()->removeSeries(m_ScatterSeries[node]);
-    m_ScatterSeries.erase(node);
-  }
+    if (m_ScatterSeries.find(node) != std::end(m_ScatterSeries))
+    {
+      m_Controls.chartView->chart()->removeSeries(m_ScatterSeries[node]);
+      m_ScatterSeries.erase(node);
+    }
 
-  UpdateXAxisLabels(node, true);
+    UpdateXAxisLabels(node, true);
+  }
 }
 
 void m2Spectrum::OnLegnedHandleMarkerClicked()
@@ -911,7 +914,7 @@ void m2Spectrum::UpdateLineSeriesWindow(const mitk::DataNode *node)
   }
 }
 
-void m2Spectrum::UpdateXAxisLabels(const mitk::DataNode * node, bool remove)
+void m2Spectrum::UpdateXAxisLabels(const mitk::DataNode *node, bool remove)
 {
   if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {

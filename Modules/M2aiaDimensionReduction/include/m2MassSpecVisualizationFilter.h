@@ -98,6 +98,6 @@ namespace m2
     unsigned int m_NumberOfComponents = 3;
 
     void initializeItkImage(itk::Image<RGBPixel, 3>::Pointer);
-    void initializeItkVectorImage(itk::VectorImage<PixelType, 3>::Pointer);
+    itk::VectorImage<PixelType, 3>::Pointer initializeItkVectorImage(unsigned int compnents);
   };
 } // namespace m2

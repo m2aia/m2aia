@@ -85,7 +85,6 @@ public:
     auto actions = menuBar->actions();
     for (auto a : actions)
     {
-      MITK_INFO << a->text().toStdString();
       if (a->text() == "&Help")
       {
         auto helpMenu = a->menu();

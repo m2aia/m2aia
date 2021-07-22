@@ -40,9 +40,22 @@ namespace m2
   public:
   signals:
 	void SpectrumImageNodeAdded(const mitk::DataNode *);
-    
-	void RangeChanged(qreal, qreal);
-    void GenerateImageData(qreal, qreal);
+  
+  /**
+   * @brief This signal can be emitted to send a range indicator update in the spectrum view.
+   * 
+   * @param x 
+   * @param tol 
+   */
+	void RangeChanged(qreal x, qreal tol);
+
+  /**
+   * @brief This signal can be emitted to send a image update request to the data-view.
+   * 
+   * @param x 
+   * @param tol 
+   */
+  void UpdateImage(qreal x, qreal tol);
 	
 	void OverviewSpectrumChanged(const mitk::DataNode *, m2::OverviewSpectrumType);
 	

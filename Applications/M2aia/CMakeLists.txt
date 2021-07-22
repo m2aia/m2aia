@@ -1,6 +1,6 @@
 project(Workbench)
 
-set(M2AIAAPP_NAME MitkM2aia)
+set(M2AIAAPP_NAME M2aia)
 
 # Create a cache entry for the provisioning file which is used to export
 # the file name in the MITKConfig.cmake file. This will keep external projects
@@ -29,14 +29,15 @@ set(_plugins
   org.mitk.gui.qt.imagecropper
   org.mitk.gui.qt.measurementtoolbox
   org.mitk.gui.qt.segmentation
-  org.mitk.gui_qt.multilabelsegmentation
+  org.mitk.gui.qt.multilabelsegmentation
   org.mitk.gui.qt.volumevisualization
   org.mitk.gui.qt.pointsetinteraction
 #  org.mitk.gui.qt.matchpoint.algorithm.browser
 #  org.mitk.gui.qt.matchpoint.algorithm.control
 #  org.mitk.gui.qt.matchpoint.mapper
-#  org.mitk.gui.qt.matchpoint.manipulator
+  org.mitk.gui.qt.matchpoint.evaluator
   org.mitk.gui.qt.imagenavigator
+  org.mitk.gui.qt.geometrytools
   org.mitk.gui.qt.moviemaker
   org.mitk.gui.qt.basicimageprocessing
   org.mitk.gui.qt.properties
@@ -46,13 +47,12 @@ set(_plugins
   org.mitk.gui.qt.m2.Data
   org.mitk.gui.qt.m2.Ions
   org.mitk.gui.qt.m2.CombineImages
+  org.mitk.gui.qt.m2.Position
   org.mitk.gui.qt.m2.Spectrum
   org.mitk.gui.qt.m2.PeakPicking
   org.mitk.gui.qt.m2.ImzMLExport
   org.mitk.gui.qt.m2.Reconstruction3D
-  org.mitk.gui.qt.m2.Position
-#  org.mitk.gui.qt.m2.Manipulator
-#  org.mitk.gui.qt.m2.OpticalImageRegistration
+  org.mitk.gui.qt.m2.Registration2D
   org.mitk.m2.core.helper
 )
 
@@ -91,4 +91,3 @@ endif()
 if(MITK_MODULES_ENABLED_PLUGINS)
   add_dependencies(${M2AIAAPP_NAME} ${MITK_MODULES_ENABLED_PLUGINS})
 endif()
-

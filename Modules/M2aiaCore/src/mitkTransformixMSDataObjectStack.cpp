@@ -159,8 +159,8 @@ namespace m2
   TransformixMSDataObjectStack::TransformixMSDataObjectStack(std::string transformixPath)
     : m_Transformix(transformixPath)
   {
-    SetPropertyValue<double>("min m/z", std::numeric_limits<double>::max());
-    SetPropertyValue<double>("max m/z", std::numeric_limits<double>::min());
+    SetPropertyValue<double>("x_min", std::numeric_limits<double>::max());
+    SetPropertyValue<double>("x_max", std::numeric_limits<double>::min());
   }
 
   bool TransformixMSDataObjectStack::IsPathToTransformixValid() { return true; }
@@ -197,15 +197,15 @@ namespace m2
       m_MSDataObjectReferences[i].push_back(data);
       m_MSDataObjectTransformations[i].push_back(transformations);
 
-      auto newMin = data->GetPropertyValue<double>("min m/z");
-      auto newMax = data->GetPropertyValue<double>("max m/z");
-      auto currentMin = GetPropertyValue<double>("min m/z");
-      auto currentMax = GetPropertyValue<double>("max m/z");
+      auto newMin = data->GetPropertyValue<double>("x_min");
+      auto newMax = data->GetPropertyValue<double>("x_max");
+      auto currentMin = GetPropertyValue<double>("x_min");
+      auto currentMax = GetPropertyValue<double>("x_max");
 
       if (newMin < currentMin)
-        SetPropertyValue<double>("min m/z", newMin);
+        SetPropertyValue<double>("x_min", newMin);
       if (newMax > currentMax)
-        SetPropertyValue<double>("max m/z", newMax);
+        SetPropertyValue<double>("x_max", newMax);
     }
   }
 
@@ -327,7 +327,7 @@ namespace m2
                                        3);
   }
 
-  void TransformixMSDataObjectStack::GenerateImageData(double mz,
+  void TransformixMSDataObjectStack::UpdateImage(double mz,
                                                        double tol,
                                                        const mitk::Image * /*mask*/,
                                                        mitk::Image *img) const
@@ -336,7 +336,7 @@ namespace m2
     {
       auto current = m_MSDataObjectReferences[i].front();
       auto transformations = m_MSDataObjectTransformations[i].front();
-      current->GenerateImageData(mz, tol, current->GetMaskImage(), current);
+      current->UpdateImage(mz, tol, current->GetMaskImage(), current);
 
       MITK_INFO << "Grab ok";
 

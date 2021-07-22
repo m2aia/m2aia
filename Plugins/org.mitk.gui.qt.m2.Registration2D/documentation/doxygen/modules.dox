@@ -1,0 +1,16 @@
+/**
+  \defgroup org_mitk_gui_qt_m2_Registration2D org.mitk.gui.qt.m2.Registration2D
+  \ingroup MITKPlugins
+
+  \brief Describe your plugin here.
+
+*/
+
+/**
+  \defgroup org_mitk_gui_qt_m2_Registration2D_internal Internal
+  \ingroup org_mitk_gui_qt_m2_Registration2D
+
+  \brief This subcategory includes the internal classes of the org.mitk.gui.qt.m2.Registration2D plugin. Other
+  plugins must not rely on these classes. They contain implementation details and their interface
+  may change at any time. We mean it.
+*/

@@ -130,7 +130,7 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
           auto maskImage = msImage->GetMaskImage();
           mitk::Image::Pointer ionImage = mitk::Image::New();
           ionImage->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), *geom);
-          msImage->GenerateImageData(ref->mz, ref->tol, maskImage, ionImage);
+          msImage->UpdateImage(ref->mz, ref->tol, maskImage, ionImage);
           ionImages[ref] = ionImage;
         }
       }

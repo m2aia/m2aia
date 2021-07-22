@@ -33,19 +33,10 @@ private:
 public:
   void ApplyMAD_SeededGaussianNoise_shouldReturnTrue()
   {
-    const double mean = 1.0;
-    const double stddev = 0.33;
-    std::default_random_engine generator;
-    generator.seed(142191);
-    std::normal_distribution<double> dist(mean, stddev);
 
-    std::vector<double> signal;
-    auto it = std::inserter(signal, std::begin(signal));
-    for (int i = 0; i < 1000; ++i)
-      it = dist(generator);
-
+    std::vector<double> signal = {5, 5, 9, 5, 5, 5, 5, 0, 4, 4, 4, 6, 6, 6};
     double noiseLevel = m2::Signal::mad(signal);
-    CPPUNIT_ASSERT(noiseLevel == .32093696751496925134716775573906488716602325439453125);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(double(1.4825999999999999), noiseLevel, mitk::eps);
   }
 };
 

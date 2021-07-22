@@ -33,7 +33,7 @@ namespace m2
      *
      * \param mIt0 GetXAxis start position
      * \param mItEnd GetXAxis end position
-     * \param iIt0 Intensity array start (Source of intensities is the same size as the source of masses)
+     * \param iIt0 Intensity array start (ImzMLImageSource of intensities is the same size as the source of masses)
      * \return tic Value of the TotalIonCount
      */
     template <class MzItFirst, class MzItLast, class IntItFirst>

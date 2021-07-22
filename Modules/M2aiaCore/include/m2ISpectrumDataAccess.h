@@ -43,7 +43,7 @@ namespace m2
                                  std::vector<double> &ints,
                                  unsigned int sourceIndex = 0) const = 0;
 
-    virtual void GenerateImageData(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const = 0;
+    virtual void UpdateImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const = 0;
     /**
      * \brief Messages to emit
      *

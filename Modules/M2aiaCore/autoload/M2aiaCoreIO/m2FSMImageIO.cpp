@@ -298,10 +298,11 @@ namespace m2
     while (!it.IsAtEnd())
     {
       m2::FsmSpectrumImage::SpectrumData spectrum;
+      spectrum.data.resize(spectraDataVectors.front().size(), 0);
 
       if (inverse)
       {
-        std::copy(std::rbegin(*sit), std::rend(*sit), std::back_inserter(spectrum.data));
+        std::copy(std::rbegin(*sit), std::rend(*sit), std::begin(spectrum.data));
       }
       else
       {
@@ -310,7 +311,7 @@ namespace m2
 
       spectrum.id = i;
       spectrum.index = it.GetIndex();
-      fsmImage->GetSpectra().push_back(spectrum);
+      fsmImage->GetSpectra().emplace_back(spectrum);
 
       ++i;
       ++sit;

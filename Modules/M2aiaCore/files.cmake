@@ -8,14 +8,17 @@ set(H_FILES
   include/m2ImzMLSpectrumImage.h
   include/m2ImzMLXMLParser.h
   include/m2FsmSpectrumImage.h
+  include/m2Timer.h
+
+  include/m2ElxUtil.h
+  include/m2ElxRegistrationHelper.h
 
   include/mitkMassSpecImageInteractor.h
-
   include/mitkTransformixMSDataObjectStack.h
   include/mitkImage3DSliceToImage2DFilter.h
   include/mitkImage2DToImage3DSliceFilter.h
+  include/m2SubdivideImage2DFilter.h
   
-  include/mitkTimer.h
 
 )
 
@@ -24,6 +27,8 @@ set(CPP_FILES
   m2SpectrumImageBase.cpp
   m2CoreObjectFactory.cpp
   m2MassValue.cpp
+  m2ElxUtil.cpp
+  m2ElxRegistrationHelper.cpp
   
   mitkTransformixMSDataObjectStack.cpp
 
@@ -34,6 +39,7 @@ set(CPP_FILES
 
   mitkImage3DSliceToImage2DFilter.cpp
   mitkImage2DToImage3DSliceFilter.cpp
+  m2SubdivideImage2DFilter.cpp
 )
 
 set(RESOURCE_FILES

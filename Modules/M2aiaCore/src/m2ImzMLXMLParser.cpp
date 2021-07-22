@@ -18,7 +18,7 @@ See LICENSE.txt for details.
 #include <math.h>
 //#include <mitkImzMLXMLTemplate.h>
 #include <iterator>
-#include <mitkTimer.h>
+#include <m2Timer.h>
 #include <numeric>
 #include <unordered_map>
 
@@ -78,9 +78,9 @@ void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
   std::unordered_map<std::string, std::function<void(const std::string &)>> accession_map;
   std::unordered_map<std::string, std::function<void(const std::string &)>> context_map;
 
-  for (auto &source : data->GetSpectrumImageSourceList())
+  for (auto &source : data->GetImzMLSpectrumImageSourceList())
   {
-    f.open((source._ImzMLDataPath), std::ios_base::binary);
+    f.open((source.m_ImzMLDataPath), std::ios_base::binary);
 
     std::map<std::string, unsigned> precisionDict = {{"32-bit float", sizeof(float)},
                                                      {"64-bit float", sizeof(double)},
@@ -480,9 +480,9 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
   std::unordered_map<std::string, std::function<void(const std::string &)>> accession_map;
   std::unordered_map<std::string, std::function<void(const std::string &)>> context_map;
-  for (auto &source : data->GetSpectrumImageSourceList())
+  for (auto &source : data->GetImzMLSpectrumImageSourceList())
   {
-    f.open((source._ImzMLDataPath), std::ios_base::binary);
+    f.open((source.m_ImzMLDataPath), std::ios_base::binary);
 
     std::map<std::string, unsigned> precisionDict = {{"32-bit float", sizeof(float)},
                                                      {"64-bit float", sizeof(double)},
@@ -538,7 +538,7 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
       accession_map.clear();
       context_map.clear();
 
-      auto &spectra = source._Spectra;
+      auto &spectra = source.m_Spectra;
 
       context_map["spectrumList"] = [&](auto line) {
         unsigned count = std::stoul(attributValue(line, "count", value));
@@ -546,25 +546,16 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
         spectra.resize(count);
       };
 
-      unsigned long long spectrumIndexReference;
+      size_t spectrumIndexReference = 0;
 
-      context_map["spectrum"] = [&](auto line) {
-        const auto s = attributValue(line, "index", value);
-        if (s.find('+') != std::string::npos)
-          spectrumIndexReference = std::stod(s);
-        else
-          spectrumIndexReference = std::stoull(s);
-        if (spectra.size() == spectrumIndexReference)
+      context_map["spectrum"] = [&](auto line)
         {
-          MITK_WARN << "Index counting starts by 1 -.-";
-          spectrumIndexReference = 0;
-        }
-        else if (spectrumIndexReference > spectra.size())
-        {
-          mitkThrow() << "Index " << spectrumIndexReference << " is not in valid index range.";
-        }
-        spectra[spectrumIndexReference].id = spectrumIndexReference;
+        attributValue(line, "index", value);
         spectra[spectrumIndexReference].index.SetElement(2, 0);
+        //TODO: Backtracability to spectrum in file may be lost.
+        // Maybe we can add the id string to the BinarySpectrumMetaData definition.
+        // e.g. spectrum.tag = attributValue(line, "id", value);
+      
       };
 
       accession_map["IMS:1000050"] = [&](auto line) {
@@ -616,7 +607,11 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
         {
           std::getline(f, line); // read the next line from the file
           if (line.find("</") != std::string::npos)
+          {
+            if (line.find("spectrum") != std::string::npos)
+              ++spectrumIndexReference;
             continue; // check for end-tag
+          }
           if (line.rfind("/>") != std::string::npos)
           { // check for empty element-tag
             attributValue(line, "accession", accession);
