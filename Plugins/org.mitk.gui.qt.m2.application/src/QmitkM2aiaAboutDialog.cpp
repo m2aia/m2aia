@@ -57,7 +57,8 @@ QString QmitkM2aiaAboutDialog::GetAboutText() const
 
 QString QmitkM2aiaAboutDialog::GetCaptionText() const
 {
-  return m_GUI.m_CaptionLabel->text();
+  //return m_GUI.m_CaptionLabel->text();
+  return "";
 }
 
 
@@ -66,8 +67,8 @@ void QmitkM2aiaAboutDialog::SetAboutText(const QString &text)
   m_GUI.m_AboutLabel->setText(text);
 }
 
-void QmitkM2aiaAboutDialog::SetCaptionText(const QString &text)
+void QmitkM2aiaAboutDialog::SetCaptionText(const QString &/*text*/)
 {
-  m_GUI.m_CaptionLabel->setText(text);
+  //m_GUI.m_CaptionLabel->setText(text);
 }
 

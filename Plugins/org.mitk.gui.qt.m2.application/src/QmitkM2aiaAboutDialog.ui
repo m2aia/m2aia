@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>534</width>
-    <height>413</height>
+    <width>694</width>
+    <height>594</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -18,123 +18,27 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
-     <item>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <item>
-        <widget class="QLabel" name="m_CaptionLabel">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>0</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="font">
-          <font>
-           <family>MS Sans Serif</family>
-           <pointsize>48</pointsize>
-           <weight>75</weight>
-           <bold>true</bold>
-          </font>
-         </property>
-         <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;M&lt;span style=&quot; font-size:36pt; color:#ffaa00; vertical-align:super;&quot;&gt;2&lt;/span&gt;aia&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="textFormat">
-          <enum>Qt::AutoText</enum>
-         </property>
-         <property name="scaledContents">
-          <bool>false</bool>
-         </property>
-         <property name="alignment">
-          <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
-         </property>
-         <property name="wordWrap">
-          <bool>false</bool>
-         </property>
-         <property name="margin">
-          <number>0</number>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-     <item>
-      <spacer name="horizontalSpacer">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Expanding</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item>
-      <layout class="QVBoxLayout" name="verticalLayout_3">
-       <item>
-        <widget class="QLabel" name="m_LogoLabel">
-         <property name="maximumSize">
-          <size>
-           <width>54</width>
-           <height>54</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+    <widget class="QLabel" name="m_LogoLabel">
+     <property name="maximumSize">
+      <size>
+       <width>54</width>
+       <height>54</height>
+      </size>
+     </property>
+     <property name="text">
+      <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
 &lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:8.25pt; font-weight:400; font-style:normal;&quot;&gt;
 &lt;p style=&quot; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;a href=&quot;http://www.github.com/jtfcordes/m2aia&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;&lt;img src=&quot;:/org.mitk.gui.qt.m2.application/icon.png&quot; /&gt;&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-         </property>
-         <property name="scaledContents">
-          <bool>true</bool>
-         </property>
-         <property name="openExternalLinks">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <spacer name="verticalSpacer">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
-      </layout>
-     </item>
-    </layout>
+     </property>
+     <property name="scaledContents">
+      <bool>true</bool>
+     </property>
+     <property name="openExternalLinks">
+      <bool>true</bool>
+     </property>
+    </widget>
    </item>
    <item>
     <widget class="QScrollArea" name="scrollArea">
@@ -146,15 +50,22 @@ p, li { white-space: pre-wrap; }
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>497</width>
-        <height>557</height>
+        <width>660</width>
+        <height>552</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
-       <item row="0" column="0">
+       <item row="1" column="0">
         <widget class="QLabel" name="m_AboutLabel">
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Mass spectrometry applications and interactive analysis in MITK (M&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;aia) [1] has been developed by Jonas Cordes, member of the Faculty of Computer Science, University of applied science Mannheim (HS Mannheim) [2,3].&lt;/p&gt;&lt;p&gt;[1] &lt;a href=&quot;https://github.com/jtfcordes/m2aia&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#5555ff;&quot;&gt;github.com/jtfcordes/m2aia&lt;br/&gt;&lt;/span&gt;&lt;/a&gt;[2] &lt;a href=&quot;https://hs-mannheim.de&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#5555ff;&quot;&gt;hs-mannheim.de&lt;br/&gt;&lt;/span&gt;&lt;/a&gt;[3] &lt;a href=&quot;https://www.m2aind.hs-mannheim.de/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#5555ff;&quot;&gt;m2aind.hs-mannheim.de&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Third Party Libraries&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;M&lt;/span&gt;&lt;span style=&quot; font-size:10pt; vertical-align:super;&quot;&gt;2&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;aia's tSNE feature includes software developed by Laurens van der Maaten (Delft University of Technology). &lt;/span&gt;&lt;span style=&quot; font-size:10pt; font-style:italic;&quot;&gt;This product includes software developed by the Delft University of Technology&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Copyright (c) 2014, Laurens van der Maaten (Delft University of Technology).&lt;br/&gt;All rights reserved.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;View icons (From the Nounproject)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;CombineImage, ImzMlExport, PeakPicking, Spectrum View icon: Created by Template&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;Data View icon: Created by priyanka&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;Ions View icon: Created by HideMaru&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;Position View icon: Created by Federico Panzano&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;3DReconstruction view icon: Created by Adrien Coquet&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;Optical image registration view icon: &lt;/span&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;Created by Bohdan Burmich&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
+&lt;p&gt;Mass spectrometry applications and interactive analysis in MITK (M&lt;span style=&quot; vertical-align:super;&quot;&gt;2&lt;/span&gt;aia) [1,2] has been developed by Jonas Cordes, member of the Faculty of Computer Science, Mannheim University of Applied Sciences.&lt;/p&gt;
+&lt;p&gt;
+[1] &lt;a href=&quot;https://github.com/jtfcordes/m2aia&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#5555ff;&quot;&gt;https://github.com/jtfcordes/m2aia&lt;/span&gt;&lt;/a&gt;&lt;br/&gt;
+[2] Cordes J; Enzlein T; Marsching C; Hinze M; Engelhardt S; Hopf C; Wolf I (July, 2021): M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data &lt;a href=&quot;https://doi.org/10.1093/gigascience/giab049&quot;&gt;&lt;span  style=&quot; text-decoration: underline; color:#5555ff;&quot;&gt;https://doi.org/10.1093/gigascience/giab049&lt;/span&gt;&lt;/a&gt;
+&lt;/p&gt;
+
+&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;Third Party Libraries&lt;br/&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;M&lt;/span&gt;&lt;span style=&quot; font-size:10pt; vertical-align:super;&quot;&gt;2&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;aia's tSNE feature includes software developed by Laurens van der Maaten (Delft University of Technology). &lt;/span&gt;&lt;span style=&quot; font-size:10pt; font-style:italic;&quot;&gt;This product includes software developed by the Delft University of Technology&lt;/span&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt;&quot;&gt;Copyright (c) 2014, Laurens van der Maaten (Delft University of Technology).&lt;br/&gt;All rights reserved.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-size:10pt; font-weight:600;&quot;&gt;View icons (From the Nounproject)&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;CombineImage, ImzMlExport, PeakPicking, Spectrum View icon: Created by Template&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;Data View icon: Created by priyanka&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;Ions View icon: Created by HideMaru&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;Position View icon: Created by Federico Panzano&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;3DReconstruction view icon: Created by Adrien Coquet&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-family:'Consolas,Courier New,monospace'; font-size:14px; font-style:italic; color:#aaaaaa;&quot;&gt;Registration 2D view icon: Created by Bohdan Burmich&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
