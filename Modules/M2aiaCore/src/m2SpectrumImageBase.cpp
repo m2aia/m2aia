@@ -28,9 +28,44 @@ double m2::SpectrumImageBase::ApplyTolerance(double x)
     return this->GetTolerance();
 }
 
+void m2::SpectrumImageBase::InsertImageArtifact(const std::string &key, mitk::Image *img)
+{
+  m_ImageArtifacts[key] = img;
+  const unsigned int DIMS = 3;
+
+  if (img->GetDimension() != DIMS)
+  {
+    mitkThrow() << "SpectrumBaseImage related image artifacts require 3 dimensions.";
+  }
+  auto aD = this->GetDimensions();
+  auto bD = img->GetDimensions();
+
+  if (!std::equal(aD, aD + DIMS, bD))
+  {
+    mitkThrow() << "SpectrumBaseImage related image artifacts require identical image dimensions.";
+  }
+
+  auto aS = this->GetGeometry()->GetSpacing();
+  auto bS = img->GetGeometry()->GetSpacing();
+
+  if (!std::equal(aS.GetDataPointer(),
+                  aS.GetDataPointer() + DIMS,
+                  bS.GetDataPointer(),
+                  [](const auto &a, const auto &b) { return itk::Math::FloatAlmostEqual(a, b); }))
+  {
+    mitkThrow() << "SpectrumBaseImage related image artifacts require identical spacings.";
+  }
+
+  
+
+  // if spacing and dimensions are equal, copy origin and vtkMatrix to the new image artifact.
+  img->SetClonedTimeGeometry(this->GetTimeGeometry());
+
+}
+
 void m2::SpectrumImageBase::ApplyMoveOriginOperation(const mitk::Vector3D &v)
 {
-  auto geometry = this->GetGeometry();  
+  auto geometry = this->GetGeometry();
   geometry->Translate(v);
 
   for (auto kv : m_ImageArtifacts)

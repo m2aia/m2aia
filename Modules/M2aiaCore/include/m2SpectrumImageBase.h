@@ -164,6 +164,7 @@ namespace m2
                          std::vector<double> &ints,
                          unsigned int sourceIndex = 0) const override;
     void UpdateImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
+    void InsertImageArtifact(const std::string & key, mitk::Image * img);
 
     template <class T>
     void SetPropertyValue(const std::string &key, const T &value);
@@ -196,6 +197,7 @@ namespace m2
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
     unsigned int m_NumberOfThreads = itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
+    // unsigned int m_NumberOfThreads = 2;
     PeaksVectorType m_Peaks;
 
     ImageArtifactMapType m_ImageArtifacts;
