@@ -16,6 +16,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 
 #pragma once
+#include <cassert>
 #include <functional>
 #include <thread>
 #include <vector>
@@ -24,29 +25,45 @@ namespace m2
 {
   struct Process
   {
-    static void Map(unsigned long int N,
-                    unsigned int T,
-                    const std::function<void(unsigned int threadId, unsigned int startIdx, unsigned int endIdx)> &worker)
+    static void Map(
+      unsigned long int N,
+      unsigned int T,
+      const std::function<void(unsigned int threadId, unsigned int startIdx, unsigned int endIdx)> &worker)
     {
-      std::vector<std::thread> threadPool;
-      threadPool.clear();
+      std::vector<std::thread> threads;
+      threads.clear();
       unsigned int n = N / T;
+
+      if (N < 1)
+        mitkThrow() << "The number of input unit is < 1!";
+
+      if (T < 1)
+        mitkThrow() << "The number of threads is < 1!";
+
+      if (n == 0)
+      { // recursively reduce threads to get non-zero n
+        Map(N, T / 2, worker);
+      }
+
+      // start the workers
       unsigned int r = N % T;
       for (unsigned int t = 0; t < T; ++t)
       {
         if (t != (T - 1))
-          threadPool.emplace_back(std::thread(worker, t, t * n, (t + 1) * n));
+          threads.emplace_back(std::thread(worker, t, t * n, (t + 1) * n));
         else
-          threadPool.emplace_back(std::thread(worker, t, t * n, (t + 1) * n + r));
+          threads.emplace_back(std::thread(worker, t, t * n, (t + 1) * n + r));
       }
-      for (auto &t : threadPool)
+
+      // wait until the work is done
+      for (auto &t : threads)
         t.join();
     }
 
     template <class ElementType, class BinaryReduceOperationFunctionType, class UnaryFinalizeOperationFunctionType>
     static std::vector<ElementType> Reduce(const std::vector<std::vector<ElementType>> &cont,
-                       BinaryReduceOperationFunctionType reduceOp,
-                       UnaryFinalizeOperationFunctionType finalOp)
+                                           BinaryReduceOperationFunctionType reduceOp,
+                                           UnaryFinalizeOperationFunctionType finalOp)
     {
       std::vector<ElementType> resultCont(cont.front().size());
       for (const auto &v : cont)
