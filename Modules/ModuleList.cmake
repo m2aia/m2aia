@@ -3,5 +3,5 @@ set(MITK_MODULES
   M2aiaSignalProcessing
   M2aiaCore
   M2aiaDimensionReduction
-  M2aiaMiniApps
+  M2aiaCLI
 )

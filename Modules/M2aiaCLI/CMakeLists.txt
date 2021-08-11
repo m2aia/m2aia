@@ -2,24 +2,24 @@
 option(BUILD_M2aiaCLI_Export "Build commandline tools for M2aia" OFF)
 if(BUILD_M2aiaCLI_Export OR MITK_BUILD_ALL_APPS)
 
-  set(MITK_MODULE_NAME_PREFIX "M2aia")
+  # Rename Module Name Prefix 
+  set(MITK_MODULE_NAME_PREFIX "m2")
+
   # needed include directories
   include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_BINARY_DIR}
     )
 
-    # list of diffusion cmdapps
     # if an app requires additional dependencies
     # they are added after a ^^ and separated by _
-  set( m2cli_export_apps
+  set( m2_cli_export_apps
     NLinkedGlycan^^
     Processing^^
     PeakPicking^^
-#    MsImageRegistration^^MitkMatchPointRegistration
     )
 
-  foreach(m2cli_export_app ${m2cli_export_apps})
+  foreach(m2cli_export_app ${m2_cli_export_apps})
       # extract cmd app name and dependencies
       string(REPLACE "^^" "\\;" cmdapp_info ${m2cli_export_app})
       set(cmdapp_info_list ${cmdapp_info})
@@ -31,11 +31,12 @@ if(BUILD_M2aiaCLI_Export OR MITK_BUILD_ALL_APPS)
       mitkFunctionCreateCommandLineApp(
         NAME ${appname}
         DEPENDS M2aiaCore ${dependencies_list}
-        PACKAGE_DEPENDS ITK VTK Eigen
+        PACKAGE_DEPENDS 
 	    CPP_FILES ${appname}.cpp
       )
   endforeach()
   
+  # Rename Module Name Prefix 
   set(MITK_MODULE_NAME_PREFIX "Mitk")
   
   if(EXECUTABLE_IS_ENABLED)
