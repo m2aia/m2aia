@@ -601,7 +601,6 @@ template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::InitializeImageAccessContinuousProfile()
 {
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
-  unsigned long long intsOffsetBytes = 0;
 
   const auto &source = p->GetImzMLSpectrumImageSourceList().front();
   std::vector<std::vector<double>> skylineT;
@@ -643,8 +642,6 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
       [&](unsigned int t, unsigned int a, unsigned int b)
       {
         std::vector<IntensityType> ints(mzs.size(), 0);
-        std::vector<IntensityType> baseline(mzs.size(), 0);
-
         std::ifstream f(source.m_BinaryDataPath, std::ifstream::binary);
 
         for (unsigned long int i = a; i < b; i++)
@@ -652,7 +649,9 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
           const auto &spectrum = spectra[i];
 
           // Read data from file ------------
-          binaryDataToVector(f, spectrum.intOffset + intsOffsetBytes, mzs.size(), ints);
+          binaryDataToVector(f, spectrum.intOffset, spectrum.intLength, ints);
+
+
           if (ints.front() == 0)
             ints[0] = ints[1];
           if (ints.back() == 0)
