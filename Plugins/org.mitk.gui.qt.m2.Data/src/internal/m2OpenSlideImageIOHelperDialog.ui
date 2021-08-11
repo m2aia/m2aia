@@ -168,6 +168,19 @@
     </layout>
    </item>
    <item>
+    <widget class="QLabel" name="warningLabel">
+     <property name="styleSheet">
+      <string notr="true">color: rgb(237, 51, 59)</string>
+     </property>
+     <property name="text">
+      <string/>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>

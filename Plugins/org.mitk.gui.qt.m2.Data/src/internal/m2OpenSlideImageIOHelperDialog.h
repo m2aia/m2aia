@@ -44,11 +44,14 @@ public:
   int GetSelectedLevel() { return m_SelectedLevel; }
   double GetSliceThickness() { return m_SliceThickness; }
   std::vector<mitk::Image::Pointer> GetData();
+  mitk::Image::Pointer GetPreviwData();
 
 private:
   m2::OpenSlideImageIOHelperObject::Pointer m_Helper;
   Ui::OpenSlideImageIOHelperDialog m_Controls;
   int m_SelectedLevel = -1;
+  int m_TilesX;
+  int m_TilesY;
   double m_SliceThickness = 1;
 
   /*This function casts a itk RGBA Image, to a itk varaible lenght vector image with 3 components. */

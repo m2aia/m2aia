@@ -16,11 +16,14 @@ See LICENSE.txt for details.
 ===================================================================*/
 #include "m2OpenSlideImageIOHelperDialog.h"
 
+#include "GL/gl.h"
+#include <QMessageBox>
 #include <QPixmap>
 #include <QmitkNodeDescriptorManager.h>
 #include <itkImageDuplicator.h>
 #include <itkImageFileReader.h>
 #include <itkMetaDataObject.h>
+#include <itkRGBToLuminanceImageFilter.h>
 #include <itkRGBToVectorImageAdaptor.h>
 #include <itkVectorImage.h>
 #include <itkVectorImageToImageAdaptor.h>
@@ -33,7 +36,6 @@ See LICENSE.txt for details.
 #include <qpushbutton.h>
 #include <vtkLookupTable.h>
 #include <vtkMitkLevelWindowFilter.h>
-#include <itkRGBToLuminanceImageFilter.h>
 
 QPixmap GetPixmapFromImageNode(const mitk::Image *image, int height)
 {
@@ -144,15 +146,60 @@ void m2OpenSlideImageIOHelperDialog::UpdateImageInformation()
     auto item = new QListWidgetItem();
     item->setText(QString(("Level [" + kv.second.level + "] " + kv.second.width + " x " + kv.second.height).c_str()));
     item->setData(Qt::UserRole, (unsigned int)(kv.first));
+
     m_Controls.imageSelectionList->addItem(item);
   }
 
-  connect(
-    m_Controls.imageSelectionList, &QListWidget::currentItemChanged, [this](QListWidgetItem *item, auto /*prev*/) {
-      MITK_INFO << "Selected level " << item->data(Qt::UserRole).toUInt();
-      this->m_SelectedLevel = item->data(Qt::UserRole).toUInt();
-      this->m_SliceThickness = m_Controls.thickness->value();
-    });
+  connect(m_Controls.imageSelectionList,
+          &QListWidget::currentItemChanged,
+          [this, levelInfos](QListWidgetItem *item, auto /*prev*/)
+          {
+            this->m_SelectedLevel = item->data(Qt::UserRole).toUInt();
+            this->m_SliceThickness = m_Controls.thickness->value();
+
+            int value;
+            glGetIntegerv(GL_MAX_TEXTURE_SIZE, &value); // Returns 1 value
+            unsigned int maxGL = value;
+            maxGL = 1 << 13;
+
+            const unsigned int tileSize = maxGL;
+            const unsigned int width = std::stoi(levelInfos.at(this->m_SelectedLevel).width);
+            const unsigned int height = std::stoi(levelInfos.at(this->m_SelectedLevel).height);
+            QString warn = "";
+
+            this->m_TilesX = width / tileSize + int((width % tileSize) > 0);
+            this->m_TilesY = height / tileSize + int((height % tileSize) > 0);
+
+            if (width > maxGL)
+            {
+              warn += "Devision in x direction into " + QString::number(m_TilesX) + " parts";
+            }
+            if (height > maxGL)
+            {
+              if (!warn.isEmpty())
+                warn += "\n";
+              warn += "Devision in y direction into " + QString::number(m_TilesY) + " parts";
+            }
+
+            m_Controls.warningLabel->setText(warn);
+          });
+}
+
+mitk::Image::Pointer m2OpenSlideImageIOHelperDialog::GetPreviwData()
+{
+  auto IO = m_Helper->GetOpenSlideIO();
+  if (this->GetSelectedLevel() == IO->GetLevelCount() - 1)
+    return nullptr;
+  const auto prevLevel = this->GetSelectedLevel();
+  // read the image data
+  IO->SetLevel(IO->GetLevelCount() - 1);
+  mitk::ItkImageIO reader(IO);
+  reader.mitk::AbstractFileReader::SetInput(IO->GetFileName());
+  auto dataList = reader.Read();
+  mitk::Image::Pointer lowResImage = dynamic_cast<mitk::Image *>(dataList.back().GetPointer());
+
+  IO->SetLevel(prevLevel);
+  return lowResImage;
 }
 
 std::vector<mitk::Image::Pointer> m2OpenSlideImageIOHelperDialog::GetData()
@@ -163,7 +210,7 @@ std::vector<mitk::Image::Pointer> m2OpenSlideImageIOHelperDialog::GetData()
   IO->SetLevel(this->GetSelectedLevel());
 
   using ItkRGBAImageType = itk::Image<itk::RGBAPixel<unsigned char>, 3>;
-  
+
   auto reader = itk::ImageFileReader<ItkRGBAImageType>::New();
   reader->SetImageIO(IO);
   reader->SetFileName(IO->GetFileName());
@@ -247,10 +294,9 @@ std::vector<mitk::Image::Pointer> m2OpenSlideImageIOHelperDialog::GetData()
     filter->SetInput(itkImage);
     filter->Update();
 
-	mitk::Image::Pointer image;
+    mitk::Image::Pointer image;
     mitk::CastToMitkImage(filter->GetOutput(), image);
     return {image};
-  
   }
   return {};
 }
