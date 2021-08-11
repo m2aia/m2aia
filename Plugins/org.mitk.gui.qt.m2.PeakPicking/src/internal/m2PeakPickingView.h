@@ -14,19 +14,22 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-
 #ifndef m2PeakPickingView_h
 #define m2PeakPickingView_h
 
-#include <berryISelectionListener.h>
-
+#include "ui_m2PeakPickingViewControls.h"
+#include <QMetaObject>
 #include <QmitkAbstractView.h>
 #include <QmitkSingleNodeSelectionWidget.h>
-
-#include "ui_m2PeakPickingViewControls.h"
+#include <berryISelectionListener.h>
 #include <m2CommunicationService.h>
 #include <m2SpectrumImageBase.h>
-#include <QMetaObject>
+
+namespace itk{
+template< typename TPixelType, unsigned int Dimension >
+class VectorImageToImageAdaptor;
+
+}
 
 /**
   \brief m2PeakPickingView
@@ -46,19 +49,22 @@ public:
   static const std::string VIEW_ID;
 
 protected:
+  using VectorImageAdaptorType = itk::VectorImageToImageAdaptor<m2::DisplayImagePixelType, 3>;
+  using VectorImageType = itk::VectorImage<m2::DisplayImagePixelType, 3>;
+  using DisplayImageType = itk::Image<m2::DisplayImagePixelType, 3>;
   virtual void CreateQtPartControl(QWidget *parent) override;
-
+  mitk::Image::Pointer ResampleVectorImage(mitk::Image::Pointer lowResImage, mitk::Image::Pointer referenceImage);
 
   virtual void SetFocus() override;
   Ui::m2PeakPickingViewControls m_Controls;
-  QmitkSingleNodeSelectionWidget * m_MassSpecDataNodeSelectionWidget;
+  QmitkSingleNodeSelectionWidget *m_MassSpecDataNodeSelectionWidget;
   m2::CommunicationService::NodesVectorType::Pointer m_ReceivedNodes = nullptr;
   using PeakVectorType = m2::SpectrumImageBase::PeaksVectorType;
   std::vector<PeakVectorType> m_PeakLists;
   QMetaObject::Connection m_Connection;
 
 protected slots:
-	void OnProcessingNodesReceived(const QString &, m2::CommunicationService::NodesVectorType::Pointer);
+  void OnProcessingNodesReceived(const QString &, m2::CommunicationService::NodesVectorType::Pointer);
   void OnStartPCA();
   void OnStartTSNE();
   void OnRequestProcessingNodes();

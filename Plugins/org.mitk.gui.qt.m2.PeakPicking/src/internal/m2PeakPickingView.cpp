@@ -27,6 +27,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 // m2
 #include <m2CommunicationService.h>
+#include <m2CoreCommon.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2IonImageReference.h>
 #include <m2MedianAbsoluteDeviation.h>
@@ -35,12 +36,24 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2PeakDetection.h>
 #include <m2TSNEImageFilter.h>
 
+// itk
+#include <itkExtractImageFilter.h>
+#include <itkFixedArray.h>
+#include <itkIdentityTransform.h>
+#include <itkImageAlgorithm.h>
+#include <itkLinearInterpolateImageFunction.h>
+#include <itkResampleImageFilter.h>
+#include <itkShrinkImageFilter.h>
+#include <itkVectorImageToImageAdaptor.h>
+
 // mitk image
 #include <mitkImage.h>
+#include <mitkImageAccessByItk.h>
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateProperty.h>
+#include <mitkProperties.h>
 
 const std::string m2PeakPickingView::VIEW_ID = "org.mitk.views.m2.peakpickingview";
 
@@ -54,6 +67,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
   m_Controls.cbOverviewSpectra->addItems({"Skyline", "Mean", "Sum"});
+  m_Controls.cbOverviewSpectra->setCurrentIndex(1);
 
   connect(
     m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnRequestProcessingNodes);
@@ -66,7 +80,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
     // this button is not a normal button, it doesn't paint text or icon
     // so it is not easy to show text on it, the simplest way is tooltip
     button->setToolTip("Select/deselect all");
-       
+
     // disconnect the connected slots to the tableview (the "selectAll" slot)
     disconnect(button, Q_NULLPTR, m_Controls.tableWidget, Q_NULLPTR);
     // connect "clear" slot to it, here I use QTableWidget's clear, you can connect your own
@@ -258,55 +272,161 @@ void m2PeakPickingView::OnStartPCA()
       return;
     }
 
-    filter->SetNumberOfComponents(bufferedImages.size());
+    filter->SetNumberOfComponents(m_Controls.pca_dims->value());
     filter->Update();
 
     auto outputNode = mitk::DataNode::New();
     mitk::Image::Pointer data = filter->GetOutput(0);
     outputNode->SetData(data);
-    outputNode->SetName("eigenionimages");
+    outputNode->SetName("PCA");
     this->GetDataStorage()->Add(outputNode, node.GetPointer());
+    imageBase->InsertImageArtifact("PCA", data);
 
-    auto outputNode2 = mitk::DataNode::New();
-    mitk::Image::Pointer data2 = filter->GetOutput(1);
-    outputNode2->SetData(data2);
-    outputNode2->SetName("pcs");
-    this->GetDataStorage()->Add(outputNode2, node.GetPointer());
+    // auto outputNode2 = mitk::DataNode::New();
+    // mitk::Image::Pointer data2 = filter->GetOutput(1);
+    // outputNode2->SetData(data2);
+    // outputNode2->SetName("pcs");
+    // this->GetDataStorage()->Add(outputNode2, node.GetPointer());
   }
 }
 
 void m2PeakPickingView::OnStartTSNE()
 {
-  for (auto node : *m_ReceivedNodes)
+  if (!m_Controls.imageSource->count())
+    return;
+  const auto idx = m_Controls.imageSource->currentIndex();
+  auto node = m_ReceivedNodes->at(idx);
+
   {
+    auto p = node->GetProperty("name")->Clone();
+    static_cast<mitk::StringProperty *>(p.GetPointer())->SetValue("PCA");
+    auto derivations = this->GetDataStorage()->GetDerivations(node, mitk::NodePredicateProperty::New("name", p));
+    if (derivations->size() == 0)
+    {
+      QMessageBox::warning(nullptr,
+                           "PCA required!",
+                           "The t-SNE uses the top five features of the PCA transformed images! Start a PCA first.",
+                           QMessageBox::StandardButton::NoButton,
+                           QMessageBox::StandardButton::Ok);
+      return;
+    }
+
+    auto pcaImage = dynamic_cast<mitk::Image *>(derivations->front()->GetData());
+    const auto pcaComponents = pcaImage->GetPixelType().GetNumberOfComponents();
+
     if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
       auto filter = m2::TSNEImageFilter::New();
-      filter->SetNumberOfComponents(3);
-      filter->SetMaskImage(imageBase->GetMaskImage());
-      const auto &peakList = imageBase->GetPeaks();
+      filter->SetPerplexity(m_Controls.tsne_perplexity->value());
+      filter->SetIterations(m_Controls.tnse_iters->value());
+      filter->SetTheta(m_Controls.tsne_theta->value());
+
+      using MaskImageType = itk::Image<mitk::LabelSetImage::PixelType, 3>;
+      MaskImageType::Pointer maskImageItk;
+      mitk::Image::Pointer maskImage;
+      mitk::CastToItkImage(imageBase->GetMaskImage(), maskImageItk);
+      auto caster = itk::ShrinkImageFilter<MaskImageType, MaskImageType>::New();
+      caster->SetInput(maskImageItk);
+      caster->SetShrinkFactor(0, m_Controls.tsne_shrink->value());
+      caster->SetShrinkFactor(1, m_Controls.tsne_shrink->value());
+      caster->SetShrinkFactor(2, 1);
+      caster->Update();
+
+      mitk::CastToMitkImage(caster->GetOutput(), maskImage);
+
+      filter->SetMaskImage(maskImage);
+      // const auto &peakList = imageBase->GetPeaks();
       size_t index = 0;
 
-      std::vector<mitk::Image::Pointer> bufferedImages(peakList.size());
-      for (auto &p : peakList)
-      {
-        bufferedImages[index] = mitk::Image::New();
-        bufferedImages[index]->Initialize(imageBase);
+      itk::VectorImage<m2::DisplayImagePixelType, 3>::Pointer pcaImageItk;
+      mitk::CastToItkImage(pcaImage, pcaImageItk);
 
-        imageBase->UpdateImage(
-          p.mass, imageBase->ApplyTolerance(p.mass), imageBase->GetMaskImage(), bufferedImages[index]);
-        filter->SetInput(index, bufferedImages[index]);
+      auto adaptor = VectorImageAdaptorType::New();
+
+      std::vector<mitk::Image::Pointer> bufferedImages(pcaComponents);
+      unsigned int i = 0;
+      for (auto &I : bufferedImages)
+      {
+        adaptor->SetExtractComponentIndex(i++);
+        adaptor->SetImage(pcaImageItk);
+        auto caster = itk::ShrinkImageFilter<VectorImageAdaptorType, DisplayImageType>::New();
+        caster->SetInput(adaptor);
+        caster->SetShrinkFactor(0, m_Controls.tsne_shrink->value());
+        caster->SetShrinkFactor(1, m_Controls.tsne_shrink->value());
+        caster->SetShrinkFactor(2, 1);
+        caster->Update();
+
+        mitk::CastToMitkImage(caster->GetOutput(), I);
+
+        filter->SetInput(index, I);
         ++index;
       }
       filter->Update();
 
       auto outputNode = mitk::DataNode::New();
-      auto data = m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(filter->GetOutput());
+      auto data = m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(ResampleVectorImage(filter->GetOutput(), imageBase));
       outputNode->SetData(data);
-
-      outputNode->SetName("PCA");
-      node->SetVisibility(false);
+      outputNode->SetName("tSNE");
       this->GetDataStorage()->Add(outputNode, node.GetPointer());
+      imageBase->InsertImageArtifact("tSNE", data);
     }
   }
+}
+
+mitk::Image::Pointer m2PeakPickingView::ResampleVectorImage(mitk::Image::Pointer vectorImage,
+                                                            mitk::Image::Pointer referenceImage)
+{
+  const unsigned int components = vectorImage->GetPixelType().GetNumberOfComponents();
+
+  VectorImageType::Pointer vectorImageItk;
+  mitk::CastToItkImage(vectorImage, vectorImageItk);
+
+  DisplayImageType::Pointer referenceImageItk;
+  mitk::CastToItkImage(referenceImage, referenceImageItk);
+
+  auto resampledVectorImageItk = VectorImageType::New();
+  resampledVectorImageItk->SetOrigin(referenceImageItk->GetOrigin());
+  resampledVectorImageItk->SetDirection(referenceImageItk->GetDirection());
+  resampledVectorImageItk->SetSpacing(referenceImageItk->GetSpacing());
+  resampledVectorImageItk->SetRegions(referenceImageItk->GetLargestPossibleRegion());
+  resampledVectorImageItk->SetNumberOfComponentsPerPixel(components);
+  resampledVectorImageItk->Allocate();
+  itk::VariableLengthVector<m2::DisplayImagePixelType> v(components);
+  v.Fill(0);
+  resampledVectorImageItk->FillBuffer(v);
+
+  auto inAdaptor = VectorImageAdaptorType::New();
+  auto outAdaptor = VectorImageAdaptorType::New();
+  using LinearInterpolatorType = itk::LinearInterpolateImageFunction<VectorImageAdaptorType>;
+  using TransformType = itk::IdentityTransform<m2::DisplayImagePixelType, 3>;
+
+  for (unsigned int i = 0; i < components; ++i)
+  {
+    inAdaptor->SetExtractComponentIndex(i);
+    inAdaptor->SetImage(vectorImageItk);
+    inAdaptor->SetOrigin(vectorImageItk->GetOrigin());
+    inAdaptor->SetDirection(vectorImageItk->GetDirection());
+    inAdaptor->SetSpacing(vectorImageItk->GetSpacing());
+
+    outAdaptor->SetExtractComponentIndex(i);
+    outAdaptor->SetImage(resampledVectorImageItk);
+
+    auto resampler = itk::ResampleImageFilter<VectorImageAdaptorType, DisplayImageType>::New();
+    resampler->SetInput(inAdaptor);
+    resampler->SetOutputParametersFromImage(referenceImageItk);
+    resampler->SetInterpolator(LinearInterpolatorType::New());
+    resampler->SetTransform(TransformType::New());
+    resampler->Update();
+
+    itk::ImageAlgorithm::Copy<DisplayImageType, VectorImageAdaptorType>(
+      resampler->GetOutput(),
+      outAdaptor,
+      resampler->GetOutput()->GetLargestPossibleRegion(),
+      outAdaptor->GetLargestPossibleRegion());
+  }
+
+  mitk::Image::Pointer outImage;
+  mitk::CastToMitkImage(resampledVectorImageItk, outImage);
+
+  return outImage;
 }

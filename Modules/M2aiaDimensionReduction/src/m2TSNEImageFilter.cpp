@@ -118,7 +118,7 @@ void m2::TSNEImageFilter::GenerateData()
   MITK_INFO << "After the loop " << m_Perplexity;
   std::shared_ptr<TSNE::TSNE> tsne(new TSNE::TSNE);
   int max_iter = m_Iterations;
-  double perplexity = m_Perplexity, theta = 0.5;
+  double perplexity = m_Perplexity, theta = m_Theta;;
   int rand_seed = -1;
   // Now fire up the SNE implementation
 
@@ -174,17 +174,15 @@ void m2::TSNEImageFilter::GenerateData()
     maxValues.push_back(max);
   }
 
-  itk::Image<RGBPixel, 3>::Pointer itkImage = itk::Image<RGBPixel, 3>::New();
-  initializeItkImage(itkImage);
-  itkImage->Allocate();
+  // auto itkImage = itk::Image<RGBPixel, 3>::New();
+  // initializeItkImage(itkImage);
+  // itkImage->Allocate();
 
   auto vectorImage = initializeItkVectorImage(m_NumberOfComponents);
-  
-
-  unsigned int k = 0;
+    unsigned int k = 0;
   for (auto const &indeex : m_ValidIndices)
   {
-    itk::VariableLengthVector<double> variableVector;
+    itk::VariableLengthVector<m2::DisplayImagePixelType> variableVector;
     variableVector.SetSize(3);
     for (unsigned int i = 0; i < minValues.size(); ++i)
     {

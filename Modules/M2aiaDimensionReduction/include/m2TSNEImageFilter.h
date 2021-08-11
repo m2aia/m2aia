@@ -35,6 +35,9 @@ namespace m2
     itkGetMacro(Perplexity, unsigned int);
     itkSetMacro(Perplexity, unsigned int);
 
+    itkGetMacro(Theta, double);
+    itkSetMacro(Theta, double);
+
     itkGetMacro(Iterations, unsigned int);
     itkSetMacro(Iterations, unsigned int);
 
@@ -48,6 +51,7 @@ namespace m2
     unsigned int m_NumberOfValidPixels = 0;
     unsigned int m_Perplexity = 2;
     unsigned int m_Iterations = 200;
+    double m_Theta = 0.5;
 
     /*!
     \brief standard constructor
