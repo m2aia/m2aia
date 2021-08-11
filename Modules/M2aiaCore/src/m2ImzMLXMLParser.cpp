@@ -676,7 +676,7 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
           for (auto &uDiff : diffs_uniques)
           {
             unsigned count = std::count(std::begin(diffs), std::end(diffs), uDiff);
-            MITK_INFO << "Diff vlaue " << uDiff << " was foun " << count << " times.";
+            MITK_INFO << "Different values " << uDiff << " were found " << count << " times.";
             if (maxCount < count)
             {
               maxCount = count;

@@ -27,6 +27,7 @@ namespace m2
     mitkClassMacro(TSNEImageFilter, MassSpecVisualizationFilter);
     itkFactorylessNewMacro(Self);
     itkCloneMacro(Self);
+    using RGBPixel = itk::RGBPixel<unsigned char>;
 
     void SetNumberOfOutputDimensions(unsigned int v);
     itkGetMacro(NumberOfOutputDimensions, unsigned int);
@@ -38,7 +39,6 @@ namespace m2
     itkSetMacro(Iterations, unsigned int);
 
   protected:
-    using RGBPixel = itk::RGBPixel<unsigned char>;
     itk::DataObject::Pointer MakeOutput(const DataObjectIdentifierType &name);
 
     itk::DataObject::Pointer MakeOutput(DataObjectPointerArraySizeType idx);

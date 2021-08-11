@@ -21,6 +21,7 @@ See LICENSE.txt for details.
 #include <mitkImageCast.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImageToImageFilter.h>
+#include <m2CoreCommon.h>
 namespace m2
 {
   class M2AIADIMENSIONREDUCTION_EXPORT MassSpecVisualizationFilter : public mitk::ImageToImageFilter
@@ -93,7 +94,7 @@ namespace m2
 
   protected:
     using RGBPixel = itk::RGBPixel<unsigned char>;
-    using PixelType = double;
+    using PixelType = m2::DisplayImagePixelType;
     mitk::Image::Pointer m_MaskImage;
     unsigned int m_NumberOfComponents = 3;
 

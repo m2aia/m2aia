@@ -338,8 +338,6 @@ namespace m2
       auto transformations = m_MSDataObjectTransformations[i].front();
       current->UpdateImage(mz, tol, current->GetMaskImage(), current);
 
-      MITK_INFO << "Grab ok";
-
       auto warped = Transform(current, transformations, [this](auto trafo) {
         ReplaceParameter(trafo, "ResultImagePixelType", "\"double\"");
       });
