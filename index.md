@@ -17,7 +17,7 @@ Downloads
 |:------------------|:------------------|
 | [v2021.07](https://github.com/jtfcordes/M2aia/releases/tag/v2021.07.00) | [5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0)|
 
-[View all releses on github](https://github.com/jtfcordes/M2aia/releases)
+[View all releases on github](https://github.com/jtfcordes/M2aia/releases)
 
 Cite M²aia
 ----------
