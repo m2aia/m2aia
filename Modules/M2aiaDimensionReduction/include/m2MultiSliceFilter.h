@@ -27,6 +27,7 @@ namespace m2
     using ColorType = float;
     using OutputColorType = unsigned char;
     using RGBPixel = itk::RGBPixel<ColorType>;
+    using DisplayImageType = itk::Image<m2::DisplayImagePixelType, 3>;
 
   public:
     mitkClassMacro(MultiSliceFilter, MassSpecVisualizationFilter) itkFactorylessNewMacro(Self) itkCloneMacro(Self)
