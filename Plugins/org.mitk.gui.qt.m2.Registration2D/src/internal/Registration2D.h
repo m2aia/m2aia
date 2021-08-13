@@ -54,6 +54,7 @@ protected:
   QString GetElastixPath() const;
 
   char m_ModalityId = 'A';
+  
 
   Ui::Registration2DControls m_Controls;
   std::map<char, std::vector<QmitkSingleNodeSelectionWidget *>> m_MovingModalities;
@@ -62,7 +63,7 @@ protected:
   QmitkSingleNodeSelectionWidget *m_FixedPointSetSingleNodeSelection;
   Ui::elxParameterFileEditor m_ParameterFileEditorControls;
   QDialog * m_ParameterFileEditor;
-  std::vector<std::string> m_ParameterFiles, m_DefaultParameterFiles;
+  std::map<int,std::vector<std::string>> m_ParameterFiles, m_DefaultParameterFiles;
 
   void StartRegistration();
   void AddNewModalityTab();

@@ -46,10 +46,12 @@ namespace m2
     bool m_UsePointsForRegistration = false;
     bool m_RemoveWorkingDirectory = true;
     std::string m_WorkingDirectory = "";
+    std::string m_ExternalWorkingDirectory = "";
+    bool m_Use3DImageRegistration = false;
 
-    static bool CheckDimensions(const mitk::Image *image);
-    static mitk::Image::Pointer GetSlice2DData(const mitk::Image *);
-    static mitk::Image::Pointer GetSlice3DData(const mitk::Image *);
+    bool CheckDimensions(const mitk::Image *image);
+    mitk::Image::Pointer GetSlice2DData(const mitk::Image *);
+    mitk::Image::Pointer GetSlice3DData(const mitk::Image *);
     void CreateWorkingDirectory();
     void RemoveWorkingDirectory();
 
@@ -63,6 +65,7 @@ namespace m2
     void SetRemoveWorkingdirectory(bool val);
     void SetAdditionalBinarySearchPath(const std::string &list);
     virtual ~ElxRegistrationHelper();
+    void SetEnable3DImageRegistrationExperimental(bool val){this->m_Use3DImageRegistration = val;};
 
     void GetRegistration();
     std::vector<std::string> GetTransformation();

@@ -21,9 +21,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryPlatformUI.h>
 
 // Qmitk
-#include "Registration2D.h"
 #include "QmitkMultiNodeSelectionWidget.h"
 #include "QmitkSingleNodeSelectionWidget.h"
+#include "Registration2D.h"
 // Qt
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
@@ -31,7 +31,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QProcess>
 #include <QVBoxLayout>
 #include <qfiledialog.h>
-// mitk image
+
+// mitk
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
 #include <mitkImage3DSliceToImage2DFilter.h>
@@ -44,6 +45,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 // itk
 #include <itksys/SystemTools.hxx>
+
+// m2
+#include <m2ElxDefaultParameterFiles.h>
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
 #include <ui_ParameterFileEditorDialog.h>
@@ -57,22 +61,55 @@ void Registration2D::CreateQtPartControl(QWidget *parent)
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
 
-  m_Controls.buttonBoxLeft->addButton(m_Controls.btnEditParameterFiles, QDialogButtonBox::NoRole);
-  m_Controls.buttonBoxLeft->addButton(m_Controls.btnStartRegistration, QDialogButtonBox::NoRole);
-
   m_ParameterFileEditor = new QDialog(parent);
   m_ParameterFileEditorControls.setupUi(m_ParameterFileEditor);
-  m_ParameterFiles = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
-                      m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
-  m_DefaultParameterFiles = m_ParameterFiles;
+
+  // Initialize defaults
+  {
+    m_DefaultParameterFiles[0] = {m2::Elx::Rigid(), m2::Elx::Deformable()};
+
+    auto rigid = m2::Elx::Rigid();
+    m2::ElxUtil::ReplaceParameter(rigid, "FixedImageDimension", "3");
+    m2::ElxUtil::ReplaceParameter(rigid, "MovingImageDimension", "3");
+    auto deformable = m2::Elx::Deformable();
+    m2::ElxUtil::ReplaceParameter(deformable, "FixedImageDimension", "3");
+    m2::ElxUtil::ReplaceParameter(deformable, "MovingImageDimension", "3");
+    m2::ElxUtil::RemoveParameter(deformable, "FinalGridSpacingInPhysicalUnits");
+    m2::ElxUtil::RemoveParameter(deformable, "GridSpacingSchedule");
+    m_DefaultParameterFiles[1] = {rigid, deformable};
+  }
+
+  m_ParameterFiles = m_DefaultParameterFiles;
+  
+  connect(m_Controls.registrationStrategy,
+          qOverload<int>(&QComboBox::currentIndexChanged),
+          this,
+          [this](auto currentIndex)
+          {
+              m_ParameterFileEditorControls.rigidText->setText(m_ParameterFiles[currentIndex][0].c_str());
+              m_ParameterFileEditorControls.deformableText->setText(m_ParameterFiles[currentIndex][1].c_str()); 
+
+              switch(currentIndex){
+                case 0:
+                m_Controls.label->setText("MSI or histology image data are typical examples for slice data.");
+                break;
+                case 1:
+                m_Controls.label->setText("Any volume image data as CT or MRI images. This mode is experimental.");
+                break;
+
+              }           
+          });
+
+  m_Controls.registrationStrategy->setCurrentIndex(1);
 
   connect(m_ParameterFileEditorControls.buttonBox->button(QDialogButtonBox::StandardButton::RestoreDefaults),
           &QAbstractButton::clicked,
           this,
           [this]()
           {
-            m_ParameterFileEditorControls.rigidText->setText(m_DefaultParameterFiles[0].c_str());
-            m_ParameterFileEditorControls.deformableText->setText(m_DefaultParameterFiles[1].c_str());
+            auto currentIndex = this->m_Controls.registrationStrategy->currentIndex();
+            m_ParameterFileEditorControls.rigidText->setText(m_DefaultParameterFiles[currentIndex][0].c_str());
+            m_ParameterFileEditorControls.deformableText->setText(m_DefaultParameterFiles[currentIndex][1].c_str());
           });
 
   connect(m_ParameterFileEditorControls.buttonBox->button(QDialogButtonBox::StandardButton::Close),
@@ -80,7 +117,8 @@ void Registration2D::CreateQtPartControl(QWidget *parent)
           this,
           [this]()
           {
-            m_ParameterFiles = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
+            auto currentIndex = this->m_Controls.registrationStrategy->currentIndex();
+            m_ParameterFiles[currentIndex] = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
                                 m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
           });
 
@@ -158,27 +196,11 @@ void Registration2D::CreateQtPartControl(QWidget *parent)
           [this]()
           {
             m_ParameterFileEditor->exec();
-            m_ParameterFiles = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
-                                m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
+            auto currentIndex = this->m_Controls.registrationStrategy->currentIndex();
+            m_ParameterFiles[currentIndex] = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
+                                              m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
           });
 
-  connect(m_Controls.buttonBox->button(QDialogButtonBox::Save),
-          &QAbstractButton::clicked,
-          this,
-          []()
-          {
-            mitk::SceneIO::Pointer sceneIO = mitk::SceneIO::New();
-            auto setOfObjects = mitk::DataStorage::SetOfObjects::New();
-
-            // if ( !sceneIO->SaveScene( setOfObjects, storage, fileName.toStdString() ) )
-            // {
-            //   QMessageBox::information(nullptr,
-            //                            "Scene saving",
-            //                            "Scene could not be written completely. Please check the log.",
-            //                            QMessageBox::Ok);
-
-            // }
-          });
 }
 
 void Registration2D::AddNewModalityTab()
@@ -256,7 +278,7 @@ void Registration2D::AddNewModalityTab()
 }
 
 void Registration2D::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
-                                                  const QList<mitk::DataNode::Pointer> &nodes)
+                                        const QList<mitk::DataNode::Pointer> &nodes)
 {
   if (m_Controls.chkBxReinitOnSelectionChanged->isChecked())
   {
@@ -330,11 +352,14 @@ void Registration2D::StartRegistration()
 
     try
     {
+      auto currentIndex = m_Controls.registrationStrategy->currentIndex();
+
       m2::ElxRegistrationHelper helper;
+      helper.SetEnable3DImageRegistrationExperimental(currentIndex == 1);
       helper.SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
       helper.SetImageData(fixedImage, movingImage);
       helper.SetPointData(fixedPointSet, movingPointSet);
-      helper.SetRegistrationParameters(m_ParameterFiles);
+      helper.SetRegistrationParameters(m_ParameterFiles[currentIndex]);
       helper.SetRemoveWorkingdirectory(false);
       helper.GetRegistration();
 

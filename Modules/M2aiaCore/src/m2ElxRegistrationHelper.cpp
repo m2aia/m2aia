@@ -14,29 +14,40 @@ bool m2::ElxRegistrationHelper::CheckDimensions(const mitk::Image *image)
 {
   const auto dims = image->GetDimension();
   const auto sizeZ = image->GetDimensions()[2];
-  return dims == 3 && sizeZ == 1;
+  if (!m_Use3DImageRegistration)
+  {
+    return (dims == 3 && sizeZ == 1) || dims == 2;
+  }
+  else
+  {
+    return dims == 3;
+  }
 }
 
 mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image *image)
 {
   if (image)
   {
-    if (image->GetDimension() == 3)
+    const auto dims = image->GetDimension();
+    const auto sizeZ = image->GetDimensions()[2];
+
+    if (dims == 3 && sizeZ == 1)
     {
       auto filter = mitk::Image3DSliceToImage2DFilter::New();
       filter->SetInput(image);
       filter->Update();
       return {filter->GetOutput()};
     }
-    else
+    else if (dims == 2)
+    {
+      return const_cast<mitk::Image *>(image);
+    }
+    else if (dims == 3 && sizeZ > 1 && m_Use3DImageRegistration)
     {
       return const_cast<mitk::Image *>(image);
     }
   }
-  else
-  {
-    mitkThrow() << "Image data is null!";
-  }
+  mitkThrow() << "Image data is null!";
 }
 
 mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice3DData(const mitk::Image *image)
@@ -143,7 +154,7 @@ void m2::ElxRegistrationHelper::SetImageData(mitk::Image *fixed, mitk::Image *mo
 
 void m2::ElxRegistrationHelper::SetDirectory(const std::string &dir)
 {
-  m_WorkingDirectory = dir;
+  m_ExternalWorkingDirectory = dir;
 }
 
 void m2::ElxRegistrationHelper::SetRegistrationParameters(const std::vector<std::string> &params)
@@ -159,13 +170,18 @@ void m2::ElxRegistrationHelper::SetAdditionalBinarySearchPath(const std::string 
 void m2::ElxRegistrationHelper::CreateWorkingDirectory()
 {
   // Create a temporary directory if workdir not defined
-  m_WorkingDirectory = ElxUtil::JoinPath({m_WorkingDirectory});
 
-  if (m_WorkingDirectory.empty())
+  if (m_ExternalWorkingDirectory.empty())
+  {
     m_WorkingDirectory = mitk::IOUtil::CreateTemporaryDirectory();
-
-  if (!itksys::SystemTools::PathExists(m_WorkingDirectory))
+    MITK_INFO << "Create Working Directory: " << m_WorkingDirectory;
+  }
+  else if (!itksys::SystemTools::PathExists(m_ExternalWorkingDirectory))
+  {
+    m_WorkingDirectory = ElxUtil::JoinPath({m_ExternalWorkingDirectory});
     itksys::SystemTools::MakeDirectory(m_WorkingDirectory);
+    MITK_INFO << "Use External Working Directory: " << m_WorkingDirectory;
+  }
 }
 
 void m2::ElxRegistrationHelper::GetRegistration()
@@ -183,7 +199,7 @@ void m2::ElxRegistrationHelper::GetRegistration()
   CreateWorkingDirectory();
 
   if (m_RegistrationParameters.empty())
-    m_RegistrationParameters.push_back(DEFAULT_PARAMETER_FILE);
+    m_RegistrationParameters.push_back(m2::Elx::Rigid());
 
   // Write parameter files
   for (unsigned int i = 0; i < m_RegistrationParameters.size(); ++i)
@@ -271,6 +287,7 @@ void m2::ElxRegistrationHelper::GetRegistration()
       ElxUtil::JoinPath({m_WorkingDirectory, "/", "TransformParameters." + std::to_string(i) + ".txt"});
     auto ifs = std::ifstream(transformationParameterFile);
     m_Transformations.emplace_back(std::string{std::istreambuf_iterator<char>{ifs}, {}});
+    MITK_INFO << "Read transformation: " << transformationParameterFile;
   }
 
   RemoveWorkingDirectory();
@@ -304,6 +321,7 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image *dat
   mitk::IOUtil::Save(GetSlice2DData(data), imagePath);
   auto newSpacingX = m_MovingImage->GetGeometry()->GetSpacing()[0];
   auto newSpacingY = m_MovingImage->GetGeometry()->GetSpacing()[1];
+  auto newSpacingZ = m_MovingImage->GetGeometry()->GetSpacing()[2];
   std::setlocale(LC_NUMERIC, "C");
 
   // write all transformations
@@ -313,28 +331,53 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image *dat
       ElxUtil::JoinPath({m_WorkingDirectory, "/", "TransformParameters." + std::to_string(i) + ".txt"});
 
     auto T = m_Transformations[i];
+    // adapt target image geometry
+
     auto size = m2::ElxUtil::GetParameterLine(T, "Size");
     std::istringstream issSize(size);
-    std::vector<std::string> resultsSize(std::istream_iterator<std::string>{issSize}, std::istream_iterator<std::string>());
+    std::vector<std::string> resultsSize(std::istream_iterator<std::string>{issSize},
+                                         std::istream_iterator<std::string>());
+
     auto sizeX = std::stoi(resultsSize[1]);
-    auto sizeY = std::stoi(resultsSize[2].substr(0,resultsSize[2].find(')')));
+    auto sizeY = std::stoi(resultsSize[2]);
+
     // MITK_INFO << resultsSize[0] << " "<< sizeX;
 
     auto spacing = m2::ElxUtil::GetParameterLine(T, "Spacing");
     std::istringstream iss(spacing);
-    std::vector<std::string> results(std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>());
-    auto spacingX = std::stod(results[1]);
-    auto spacingY = std::stod(results[2].substr(0,results[2].find(')')));
+    std::vector<std::string> resultsSpacing(std::istream_iterator<std::string>{iss},
+                                            std::istream_iterator<std::string>());
+    auto spacingX = std::stod(resultsSpacing[1]);
+    auto spacingY = std::stod(resultsSpacing[2]);
     // MITK_INFO << results[0] << " "<< spacingX;
-    
-    auto newSizeX = (sizeX * spacingX)/newSpacingX;
-    auto newSizeY = (sizeY * spacingY)/newSpacingY;
+
+    auto newSizeX = (sizeX * spacingX) / newSpacingX;
+    auto newSizeY = (sizeY * spacingY) / newSpacingY;
+
+    std::string newSizeString = std::to_string(newSizeX) + " " + std::to_string(newSizeY);
+    std::string newSpacingString = std::to_string(newSpacingX) + " " + std::to_string(newSpacingY);
+
+    if (resultsSize.size() == 4 && resultsSpacing.size() == 4)
+    {
+      auto sizeZ = std::stoi(resultsSize[3]);
+      auto spacingZ = std::stod(resultsSpacing[3]);
+      auto newSizeZ = (sizeZ * spacingZ) / newSpacingZ;
+      newSizeString += " " + std::to_string(newSizeZ);
+      newSpacingString += " " + std::to_string(newSpacingZ);
+    }
+    MITK_INFO << "Wapred image geometry:\n(size) " + newSizeString + "\n(spacing) " + newSpacingString;
 
     ElxUtil::ReplaceParameter(T, "ResultImagePixelType", "\"" + pixelType + "\"");
     ElxUtil::ReplaceParameter(T, "ResampleInterpolator", "\"FinalBSplineInterpolatorFloat\"");
     ElxUtil::ReplaceParameter(T, "FinalBSplineInterpolationOrder", std::to_string(interpolationOrder));
-    ElxUtil::ReplaceParameter(T, "Spacing", std::to_string(newSpacingX) + " " + std::to_string(newSpacingY));
-    ElxUtil::ReplaceParameter(T, "Size", std::to_string(newSizeX) + " " + std::to_string(newSizeY));
+    ElxUtil::ReplaceParameter(T, "Spacing", newSpacingString);
+    ElxUtil::ReplaceParameter(T, "Size", newSizeString);
+    // if(data->GetPixelType().GetComponentTypeAsString().compare("float") == 0)
+    //   ElxUtil::ReplaceParameter(T, "ResultImagePixelType", "\"float\"");
+    // if(data->GetPixelType().GetComponentTypeAsString().compare("unsigned_short") == 0)
+    //   ElxUtil::ReplaceParameter(T, "ResultImagePixelType", "\"unsigned short\"");
+
+    
     std::ofstream(transformationPath) << T;
   }
 

@@ -145,70 +145,49 @@
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnEditParameterFiles">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
+       <widget class="QLabel" name="label">
         <property name="text">
-         <string>Edit</string>
+         <string>Desc.</string>
         </property>
        </widget>
       </item>
       <item>
-       <widget class="QPushButton" name="btnStartRegistration">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="text">
-         <string>Start</string>
-        </property>
-        <property name="icon">
-         <iconset resource="../../../../../mitk/Plugins/org.mitk.gui.qt.ext/resources/org_mitk_icons.qrc">
-          <normaloff>:/org_mitk_icons/icons/tango/scalable/actions/go-next.svg</normaloff>:/org_mitk_icons/icons/tango/scalable/actions/go-next.svg</iconset>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <widget class="QComboBox" name="registrationStrategy">
         <item>
-         <widget class="QDialogButtonBox" name="buttonBoxLeft">
+         <property name="text">
+          <string>Slice Registration</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>Volume Registration (experimental)</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QPushButton" name="btnEditParameterFiles">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
-          <property name="standardButtons">
-           <set>QDialogButtonBox::NoButton</set>
+          <property name="text">
+           <string>Edit parameter files</string>
+          </property>
+          <property name="icon">
+           <iconset>
+            <normaloff>:/org_mitk_icons/icons/tango/scalable/actions/go-next.svg</normaloff>:/org_mitk_icons/icons/tango/scalable/actions/go-next.svg</iconset>
           </property>
          </widget>
         </item>
         <item>
-         <spacer name="horizontalSpacer">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item>
-         <widget class="QDialogButtonBox" name="buttonBox">
-          <property name="standardButtons">
-           <set>QDialogButtonBox::Open|QDialogButtonBox::Save</set>
-          </property>
-          <property name="centerButtons">
-           <bool>false</bool>
+         <widget class="QCommandLinkButton" name="btnStartRegistration">
+          <property name="text">
+           <string>Start</string>
           </property>
          </widget>
         </item>
@@ -238,10 +217,7 @@
   <tabstop>btnAddModality</tabstop>
   <tabstop>tabWidget</tabstop>
   <tabstop>chkBxReinitOnSelectionChanged</tabstop>
-  <tabstop>btnEditParameterFiles</tabstop>
  </tabstops>
- <resources>
-  <include location="../../../../../mitk/Plugins/org.mitk.gui.qt.ext/resources/org_mitk_icons.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

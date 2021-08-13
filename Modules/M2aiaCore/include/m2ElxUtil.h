@@ -53,12 +53,29 @@ namespace m2
         paramFileString.replace(pos1, pos2 - pos1 + 1, "(" + what + " " + by + ")\n");
     }
 
+    /**
+     * @brief Search an elastix parameter file string for the specific entry and remove it
+     *
+     * @param paramFileString
+     * @param what
+     * @param by
+     */
+    static void RemoveParameter(std::string &paramFileString, std::string what)
+    {
+      auto pos1 = paramFileString.find("(" + what);
+      auto pos2 = paramFileString.find(')', pos1);
+      if (pos1 == std::string::npos || pos2 == std::string::npos)
+        return;
+      else
+        paramFileString.replace(pos1, pos2 - pos1 + 1, "");
+    }
+
     static std::string GetParameterLine(std::string &paramFileString, std::string what)
     {
       auto pos1 = paramFileString.find("(" + what);
       auto pos2 = paramFileString.find(')', pos1);
       if (pos1 != std::string::npos && pos2 != std::string::npos)
-        return paramFileString.substr(pos1, pos2 - pos1 + 1);
+        return paramFileString.substr(pos1, pos2 - pos1);
       return "";
     }
 
