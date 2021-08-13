@@ -32,9 +32,9 @@ set(_plugins
   org.mitk.gui.qt.multilabelsegmentation
   org.mitk.gui.qt.volumevisualization
   org.mitk.gui.qt.pointsetinteraction
-#  org.mitk.gui.qt.matchpoint.algorithm.browser
-#  org.mitk.gui.qt.matchpoint.algorithm.control
-#  org.mitk.gui.qt.matchpoint.mapper
+  org.mitk.gui.qt.matchpoint.algorithm.browser
+  org.mitk.gui.qt.matchpoint.algorithm.control
+  org.mitk.gui.qt.matchpoint.mapper
   org.mitk.gui.qt.matchpoint.evaluator
   org.mitk.gui.qt.imagenavigator
   org.mitk.gui.qt.geometrytools
