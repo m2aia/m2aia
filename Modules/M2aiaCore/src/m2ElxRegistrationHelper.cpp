@@ -5,23 +5,14 @@
 #include <mitkImage2DToImage3DSliceFilter.h>
 #include <mitkImage3DSliceToImage2DFilter.h>
 
-m2::ElxRegistrationHelper::~ElxRegistrationHelper()
-{
-  RemoveWorkingDirectory();
-}
+m2::ElxRegistrationHelper::~ElxRegistrationHelper() {}
 
 bool m2::ElxRegistrationHelper::CheckDimensions(const mitk::Image *image)
 {
   const auto dims = image->GetDimension();
-  const auto sizeZ = image->GetDimensions()[2];
-  if (!m_Use3DImageRegistration)
-  {
-    return (dims == 3 && sizeZ == 1) || dims == 2;
-  }
-  else
-  {
-    return dims == 3;
-  }
+  // const auto sizeZ = image->GetDimensions()[2];
+
+  return dims == 3 || dims == 2;
 }
 
 mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image *image)
@@ -42,11 +33,13 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image
     {
       return const_cast<mitk::Image *>(image);
     }
-    else if (dims == 3 && sizeZ > 1 && m_Use3DImageRegistration)
+    else if (dims == 3 && sizeZ > 1)
     {
       return const_cast<mitk::Image *>(image);
-    }else if(dims == 4){
-      mitkThrow() << "3D+t Images are not supported!";    
+    }
+    else if (dims == 4)
+    {
+      mitkThrow() << "3D+t Images are not supported!";
     }
   }
   mitkThrow() << "Image data is null!";
@@ -175,7 +168,7 @@ void m2::ElxRegistrationHelper::CreateWorkingDirectory()
 
   if (m_ExternalWorkingDirectory.empty())
   {
-    m_WorkingDirectory = mitk::IOUtil::CreateTemporaryDirectory();
+    m_WorkingDirectory = ElxUtil::JoinPath({mitk::IOUtil::CreateTemporaryDirectory()});
     MITK_INFO << "Create Working Directory: " << m_WorkingDirectory;
   }
   else if (!itksys::SystemTools::PathExists(m_ExternalWorkingDirectory))
@@ -364,19 +357,24 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image *dat
       newSizeString += " " + std::to_string(newSizeZ);
       newSpacingString += " " + std::to_string(newSpacingZ);
     }
-    MITK_INFO << "Wapred image geometry:\n(size) " + newSizeString + "\n(spacing) " + newSpacingString;
 
     ElxUtil::ReplaceParameter(T, "ResultImagePixelType", "\"" + pixelType + "\"");
     ElxUtil::ReplaceParameter(T, "ResampleInterpolator", "\"FinalBSplineInterpolatorFloat\"");
     ElxUtil::ReplaceParameter(T, "FinalBSplineInterpolationOrder", std::to_string(interpolationOrder));
     ElxUtil::ReplaceParameter(T, "Spacing", newSpacingString);
     ElxUtil::ReplaceParameter(T, "Size", newSizeString);
-    // if(data->GetPixelType().GetComponentTypeAsString().compare("float") == 0)
-    //   ElxUtil::ReplaceParameter(T, "ResultImagePixelType", "\"float\"");
-    // if(data->GetPixelType().GetComponentTypeAsString().compare("unsigned_short") == 0)
-    //   ElxUtil::ReplaceParameter(T, "ResultImagePixelType", "\"unsigned short\"");
+    if (i == 0)
+    {
+      ElxUtil::ReplaceParameter(T, "InitialTransformParametersFileName", R"("NoInitialTransform")");
+    }
+    else if (i > 0)
+    {
+      const auto initialTransform =
+        ElxUtil::JoinPath({m_WorkingDirectory, "/", "TransformParameters." + std::to_string(i - 1) + ".txt"});
+      ElxUtil::ReplaceParameter(T, "InitialTransformParametersFileName", "\"" + initialTransform + "\"");
+    }
 
-    
+    MITK_INFO << "Warped image geometry:\n(size) " + newSizeString + "\n(spacing) " + newSpacingString;
     std::ofstream(transformationPath) << T;
   }
 
@@ -396,17 +394,21 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image *dat
   MITK_INFO << exeTransformix << " complete";
 
   auto resultData = mitk::IOUtil::Load(resultPath).front();
-  mitk::Image::Pointer resultImage2D = dynamic_cast<mitk::Image *>(resultData.GetPointer());
+  mitk::Image::Pointer result = dynamic_cast<mitk::Image *>(resultData.GetPointer());
+  result = GetSlice3DData(result);
 
+  if (result->GetDimensions()[2] == 1)
+  {
+    MITK_WARN << "Restore slice thickness from input data";
+    auto s = result->GetGeometry()->GetSpacing();
+    s[2] = data->GetGeometry()->GetSpacing()[2];
+    result->GetGeometry()->SetSpacing(s);
+  }
   RemoveWorkingDirectory();
-  mitk::Image::Pointer resultSlice = GetSlice3DData(resultImage2D);
-  auto s = resultSlice->GetGeometry()->GetSpacing();
-  s[2] = data->GetGeometry()->GetSpacing()[2];
-  resultSlice->GetGeometry()->SetSpacing(s);
-  return resultSlice;
+  return result;
 }
 
-void m2::ElxRegistrationHelper::SetRemoveWorkingdirectory(bool val)
+void m2::ElxRegistrationHelper::SetRemoveWorkingDirectory(bool val)
 {
   m_RemoveWorkingDirectory = val;
 }

@@ -47,7 +47,7 @@ namespace m2
     bool m_RemoveWorkingDirectory = true;
     std::string m_WorkingDirectory = "";
     std::string m_ExternalWorkingDirectory = "";
-    bool m_Use3DImageRegistration = false;
+    bool m_UseMovingImageSpacing = false;
 
     bool CheckDimensions(const mitk::Image *image);
     mitk::Image::Pointer GetSlice2DData(const mitk::Image *);
@@ -62,10 +62,10 @@ namespace m2
     void SetPointData(mitk::PointSet *fixed, mitk::PointSet *moving);
     void SetDirectory(const std::string &dir);
     void SetRegistrationParameters(const std::vector<std::string> &);
-    void SetRemoveWorkingdirectory(bool val);
+    void SetRemoveWorkingDirectory(bool val);
     void SetAdditionalBinarySearchPath(const std::string &list);
     virtual ~ElxRegistrationHelper();
-    void SetEnable3DImageRegistrationExperimental(bool val){this->m_Use3DImageRegistration = val;};
+    void UseMovingImageSpacing(bool val){this->m_UseMovingImageSpacing = val;};
 
     void GetRegistration();
     std::vector<std::string> GetTransformation();
