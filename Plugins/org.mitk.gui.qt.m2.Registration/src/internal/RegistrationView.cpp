@@ -23,13 +23,14 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 // Qmitk
 #include "QmitkMultiNodeSelectionWidget.h"
 #include "QmitkSingleNodeSelectionWidget.h"
-#include "Registration2D.h"
+#include "RegistrationView.h"
 // Qt
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QMessageBox>
 #include <QProcess>
 #include <QVBoxLayout>
+#include <QtConcurrent>
 #include <qfiledialog.h>
 
 // mitk
@@ -52,11 +53,11 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ElxUtil.h>
 #include <ui_ParameterFileEditorDialog.h>
 
-const std::string Registration2D::VIEW_ID = "org.mitk.views.registration2d";
+const std::string RegistrationView::VIEW_ID = "org.mitk.views.registration";
 
-void Registration2D::SetFocus() {}
+void RegistrationView::SetFocus() {}
 
-void Registration2D::CreateQtPartControl(QWidget *parent)
+void RegistrationView::CreateQtPartControl(QWidget *parent)
 {
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
@@ -80,24 +81,24 @@ void Registration2D::CreateQtPartControl(QWidget *parent)
   }
 
   m_ParameterFiles = m_DefaultParameterFiles;
-  
+
   connect(m_Controls.registrationStrategy,
           qOverload<int>(&QComboBox::currentIndexChanged),
           this,
           [this](auto currentIndex)
           {
-              m_ParameterFileEditorControls.rigidText->setText(m_ParameterFiles[currentIndex][0].c_str());
-              m_ParameterFileEditorControls.deformableText->setText(m_ParameterFiles[currentIndex][1].c_str()); 
+            m_ParameterFileEditorControls.rigidText->setText(m_ParameterFiles[currentIndex][0].c_str());
+            m_ParameterFileEditorControls.deformableText->setText(m_ParameterFiles[currentIndex][1].c_str());
 
-              switch(currentIndex){
-                case 0:
+            switch (currentIndex)
+            {
+              case 0:
                 m_Controls.label->setText("MSI or histology image data are typical examples for slice data.");
                 break;
-                case 1:
+              case 1:
                 m_Controls.label->setText("Any volume image data as CT or MRI images. This mode is experimental.");
                 break;
-
-              }           
+            }
           });
 
   m_Controls.registrationStrategy->setCurrentIndex(1);
@@ -118,13 +119,14 @@ void Registration2D::CreateQtPartControl(QWidget *parent)
           [this]()
           {
             auto currentIndex = this->m_Controls.registrationStrategy->currentIndex();
-            m_ParameterFiles[currentIndex] = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
-                                m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
+            m_ParameterFiles[currentIndex] = {
+              m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
+              m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
           });
 
-  connect(m_Controls.btnStartRegistration, &QPushButton::clicked, this, &Registration2D::StartRegistration);
+  connect(m_Controls.btnStartRegistration, &QPushButton::clicked, this, &RegistrationView::StartRegistration);
 
-  m_FixedImageSingleNodeSelection = new QmitkSingleNodeSelectionWidget();
+  m_FixedImageSingleNodeSelection = m_Controls.fixedImageSelection;
   m_FixedImageSingleNodeSelection->SetDataStorage(GetDataStorage());
   m_FixedImageSingleNodeSelection->SetNodePredicate(
     mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::Image>::New(),
@@ -133,9 +135,7 @@ void Registration2D::CreateQtPartControl(QWidget *parent)
   m_FixedImageSingleNodeSelection->SetEmptyInfo(QString("Select fixed image"));
   m_FixedImageSingleNodeSelection->SetPopUpTitel(QString("Select fixed image node"));
 
-  m_Controls.fixedImageData->insertWidget(0, m_FixedImageSingleNodeSelection);
-
-  m_FixedPointSetSingleNodeSelection = new QmitkSingleNodeSelectionWidget();
+  m_FixedPointSetSingleNodeSelection = m_Controls.fixedPointSelection;
   m_FixedPointSetSingleNodeSelection->SetDataStorage(GetDataStorage());
   m_FixedPointSetSingleNodeSelection->SetNodePredicate(
     mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::PointSet>::New(),
@@ -143,8 +143,6 @@ void Registration2D::CreateQtPartControl(QWidget *parent)
   m_FixedPointSetSingleNodeSelection->SetSelectionIsOptional(true);
   m_FixedPointSetSingleNodeSelection->SetEmptyInfo(QString("Select fixed point set"));
   m_FixedPointSetSingleNodeSelection->SetPopUpTitel(QString("Select fixed point set node"));
-
-  m_Controls.fixedPointSetData->insertWidget(1, m_FixedPointSetSingleNodeSelection);
 
   // m_Controls.movingPointSetData->insertWidget(1, m_MovingPointSetSingleNodeSelection);
 
@@ -197,13 +195,13 @@ void Registration2D::CreateQtPartControl(QWidget *parent)
           {
             m_ParameterFileEditor->exec();
             auto currentIndex = this->m_Controls.registrationStrategy->currentIndex();
-            m_ParameterFiles[currentIndex] = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
-                                              m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
+            m_ParameterFiles[currentIndex] = {
+              m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
+              m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
           });
-
 }
 
-void Registration2D::AddNewModalityTab()
+void RegistrationView::AddNewModalityTab()
 {
   auto widget = new QWidget();
   Ui::MovingModalityWidgetControls controls;
@@ -277,7 +275,7 @@ void Registration2D::AddNewModalityTab()
   ++m_ModalityId;
 }
 
-void Registration2D::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
+void RegistrationView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
                                         const QList<mitk::DataNode::Pointer> &nodes)
 {
   if (m_Controls.chkBxReinitOnSelectionChanged->isChecked())
@@ -299,7 +297,7 @@ void Registration2D::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
   }
 }
 
-QString Registration2D::GetElastixPath() const
+QString RegistrationView::GetElastixPath() const
 {
   berry::IPreferences::Pointer preferences =
     berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.ext.externalprograms");
@@ -307,7 +305,7 @@ QString Registration2D::GetElastixPath() const
   return preferences.IsNotNull() ? preferences->Get("elastix", "") : "";
 }
 
-void Registration2D::StartRegistration()
+void RegistrationView::StartRegistration()
 {
   // check if
   auto elastix = m2::ElxUtil::Executable("elastix");
@@ -354,23 +352,31 @@ void Registration2D::StartRegistration()
     {
       auto currentIndex = m_Controls.registrationStrategy->currentIndex();
 
-      m2::ElxRegistrationHelper helper;
-      helper.SetEnable3DImageRegistrationExperimental(currentIndex == 1);
-      helper.SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
-      helper.SetImageData(fixedImage, movingImage);
-      helper.SetPointData(fixedPointSet, movingPointSet);
-      helper.SetRegistrationParameters(m_ParameterFiles[currentIndex]);
-      helper.SetRemoveWorkingdirectory(false);
-      helper.GetRegistration();
+      auto f = std::make_shared<QFutureWatcher<mitk::Image::Pointer>>();
+      f->setFuture(QtConcurrent::run(
+        [=]() -> mitk::Image::Pointer
+        {
+          m2::ElxRegistrationHelper helper;
 
-      auto warpedImage = helper.WarpImage(movingImage);
-      // dualRepresentation->SetStateData(m2::DualGeometryImageWrapper::State::FINAL, warpedImage);
-      // dualRepresentation->ToggleFinalState(); // replace moving image with new data
+          helper.SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
+          helper.SetImageData(fixedImage, movingImage);
+          helper.SetPointData(fixedPointSet, movingPointSet);
+          helper.SetRegistrationParameters(m_ParameterFiles[currentIndex]);
+          helper.SetRemoveWorkingDirectory(true);
+          helper.UseMovingImageSpacing(m_Controls.keepSpacings->isChecked());
+          helper.GetRegistration();
+          return helper.WarpImage(movingImage);
+        }));
+      
+      connect(f.get(), &QFutureWatcher<mitk::Image::Pointer>::finished, [=]() mutable {
+          auto node = mitk::DataNode::New();
+          node->SetData(f->result());
+          node->SetName("Warped Image");
+          this->GetDataStorage()->Add(node, movingImageNode);
+          f.reset();
+      });
 
-      auto node = mitk::DataNode::New();
-      node->SetData(warpedImage);
-      node->SetName("Warped Image");
-      GetDataStorage()->Add(node, movingImageNode);
+          
     }
     catch (std::exception &e)
     {

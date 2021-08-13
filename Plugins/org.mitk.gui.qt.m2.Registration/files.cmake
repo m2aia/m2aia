@@ -3,19 +3,19 @@ set(SRC_CPP_FILES
 )
 
 set(INTERNAL_CPP_FILES
-  org_mitk_gui_qt_m2_Registration2D_Activator.cpp
-  Registration2D.cpp
+  org_mitk_gui_qt_m2_Registration_Activator.cpp
+  RegistrationView.cpp
 )
 
 set(UI_FILES
-  src/internal/Registration2DControls.ui
+  src/internal/RegistrationViewControls.ui
   src/internal/ParameterFileEditorDialog.ui
   src/internal/MovingModalityWidgetControls.ui
 )
 
 set(MOC_H_FILES
-  src/internal/org_mitk_gui_qt_m2_Registration2D_Activator.h
-  src/internal/Registration2D.h
+  src/internal/org_mitk_gui_qt_m2_Registration_Activator.h
+  src/internal/RegistrationView.h
 )
 
 # list of resource files which can be used by the plug-in

@@ -15,24 +15,24 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 
-#ifndef org_mitk_gui_qt_m2_Registration2D_Activator_h
-#define org_mitk_gui_qt_m2_Registration2D_Activator_h
+#ifndef org_mitk_gui_qt_m2_Registration_Activator_h
+#define org_mitk_gui_qt_m2_Registration_Activator_h
 
 #include <ctkPluginActivator.h>
 
 namespace mitk
 {
-  class org_mitk_gui_qt_m2_Registration2D_Activator : public QObject, public ctkPluginActivator
+  class org_mitk_gui_qt_m2_Registration_Activator : public QObject, public ctkPluginActivator
   {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org_mitk_gui_qt_m2_Registration2D")
+    Q_PLUGIN_METADATA(IID "org_mitk_gui_qt_m2_Registration")
     Q_INTERFACES(ctkPluginActivator)
 
   public:
     void start(ctkPluginContext *context);
     void stop(ctkPluginContext *context);
 
-  }; // org_mitk_gui_qt_m2_Registration2D_Activator
+  }; // org_mitk_gui_qt_m2_Registration_Activator
 }
 
-#endif // org_mitk_gui_qt_m2_Registration2D_Activator_h
+#endif // org_mitk_gui_qt_m2_Registration_Activator_h

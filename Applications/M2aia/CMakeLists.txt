@@ -53,7 +53,7 @@ set(_plugins
   org.mitk.gui.qt.m2.PeakPicking
   org.mitk.gui.qt.m2.ImzMLExport
   org.mitk.gui.qt.m2.Reconstruction3D
-  org.mitk.gui.qt.m2.Registration2D
+  org.mitk.gui.qt.m2.Registration
   org.mitk.m2.core.helper
 )
 

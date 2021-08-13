@@ -1,11 +1,11 @@
 /**
-\page org_mitk_gui_qt_m2_Registration2D The M2Registration2D
+\page org_mitk_gui_qt_m2_Registration The M2Registration
 
-\imageMacro{icon.png,"Icon of M2Registration2D",2.00}
+\imageMacro{icon.png,"Icon of M2Registration",2.00}
 
 \tableofcontents
 
-\section org_mitk_gui_qt_m2_Registration2D Overview
+\section org_mitk_gui_qt_m2_Registration Overview
 Describe the features of your awesome plugin here
 <ul>
 <li>Increases productivity

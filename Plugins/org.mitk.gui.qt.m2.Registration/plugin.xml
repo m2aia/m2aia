@@ -2,9 +2,9 @@
 <plugin>
 
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.m2.registration2d"
-          name="Registration 2D"
-          class="Registration2D"
+    <view id="org.mitk.views.m2.registration"
+          name="Registration"
+          class="RegistrationView"
           category="MS imaging"
           icon="resources/noun_opticalillusion_1262005.svg" />
   </extension>

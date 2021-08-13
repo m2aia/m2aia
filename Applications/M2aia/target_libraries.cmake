@@ -29,7 +29,7 @@ set(target_libraries
   org_mitk_gui_qt_m2_ImzMLExport
   org_mitk_gui_qt_m2_Reconstruction3D
   org_mitk_gui_qt_m2_Position
-  org_mitk_gui_qt_m2_Registration2D
+  org_mitk_gui_qt_m2_Registration
   org_mitk_gui_qt_matchpoint_algorithm_browser
   org_mitk_gui_qt_matchpoint_algorithm_control
   org_mitk_gui_qt_matchpoint_mapper
