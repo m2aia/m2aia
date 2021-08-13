@@ -98,7 +98,7 @@ namespace m2
 
 // ************* Required by M2aia *************
 // The following components should usually be left as they are:
-(WriteResultImage "true")
+(WriteResultImage "false")
 (ResultImagePixelType "float")
 (ResultImageFormat "nrrd")
 )";
@@ -217,10 +217,10 @@ namespace m2
 // You can save some time by setting this to false, if you are
 // not interested in the final deformed moving image, but only
 // want to analyze the deformation field for example.
-(WriteResultImage "true")
 (WriteTransformParametersEachResolution "false")
 
 // The pixel type and format of the resulting deformed moving image
+(WriteResultImage "false")
 (ResultImagePixelType "float")
 (ResultImageFormat "nrrd")
 )";
