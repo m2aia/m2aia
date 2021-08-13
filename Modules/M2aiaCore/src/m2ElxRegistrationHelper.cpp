@@ -45,6 +45,8 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image
     else if (dims == 3 && sizeZ > 1 && m_Use3DImageRegistration)
     {
       return const_cast<mitk::Image *>(image);
+    }else if(dims == 4){
+      mitkThrow() << "3D+t Images are not supported!";    
     }
   }
   mitkThrow() << "Image data is null!";
@@ -338,30 +340,27 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image *dat
     std::vector<std::string> resultsSize(std::istream_iterator<std::string>{issSize},
                                          std::istream_iterator<std::string>());
 
-    auto sizeX = std::stoi(resultsSize[1]);
-    auto sizeY = std::stoi(resultsSize[2]);
+    const auto sizeX = std::stoi(resultsSize[1]);
+    const auto sizeY = std::stoi(resultsSize[2]);
 
-    // MITK_INFO << resultsSize[0] << " "<< sizeX;
-
-    auto spacing = m2::ElxUtil::GetParameterLine(T, "Spacing");
+    const auto spacing = m2::ElxUtil::GetParameterLine(T, "Spacing");
     std::istringstream iss(spacing);
     std::vector<std::string> resultsSpacing(std::istream_iterator<std::string>{iss},
                                             std::istream_iterator<std::string>());
-    auto spacingX = std::stod(resultsSpacing[1]);
-    auto spacingY = std::stod(resultsSpacing[2]);
-    // MITK_INFO << results[0] << " "<< spacingX;
+    const auto spacingX = std::stod(resultsSpacing[1]);
+    const auto spacingY = std::stod(resultsSpacing[2]);
 
-    auto newSizeX = (sizeX * spacingX) / newSpacingX;
-    auto newSizeY = (sizeY * spacingY) / newSpacingY;
+    const auto newSizeX = (sizeX * spacingX) / newSpacingX;
+    const auto newSizeY = (sizeY * spacingY) / newSpacingY;
 
     std::string newSizeString = std::to_string(newSizeX) + " " + std::to_string(newSizeY);
     std::string newSpacingString = std::to_string(newSpacingX) + " " + std::to_string(newSpacingY);
 
     if (resultsSize.size() == 4 && resultsSpacing.size() == 4)
     {
-      auto sizeZ = std::stoi(resultsSize[3]);
-      auto spacingZ = std::stod(resultsSpacing[3]);
-      auto newSizeZ = (sizeZ * spacingZ) / newSpacingZ;
+      const auto sizeZ = std::stoi(resultsSize[3]);
+      const auto spacingZ = std::stod(resultsSpacing[3]);
+      const auto newSizeZ = (sizeZ * spacingZ) / newSpacingZ;
       newSizeString += " " + std::to_string(newSizeZ);
       newSpacingString += " " + std::to_string(newSpacingZ);
     }
