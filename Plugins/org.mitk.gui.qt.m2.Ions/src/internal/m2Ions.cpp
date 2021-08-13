@@ -62,7 +62,7 @@ void m2Ions::CreateQtPartControl(QWidget *parent)
   m_Controls.itemsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
   m_Controls.itemsTable->setColumnCount(4);
   m_Controls.itemsTable->setColumnWidth(0, 130);
-  m_Controls.itemsTable->setColumnWidth(1, 20);
+  m_Controls.itemsTable->setColumnWidth(1, 80);
   m_Controls.itemsTable->setColumnWidth(2, 250);
 
   m_Controls.itemsTable->setHorizontalHeaderLabels({"m/z value", "color", "scale", "name"});
@@ -80,6 +80,13 @@ void m2Ions::CreateQtPartControl(QWidget *parent)
       emit m2::CommunicationService::Instance()->RequestProcessingNodes(QString::fromStdString(VIEW_ID));
     }
   });
+
+  //  auto tfw = new ctkTransferFunctionItem();
+  // tfw->ShowGradientOpacityFunction(false);
+  // tfw->ShowScalarOpacityFunction(false);
+  // tfw->SetDataNode();
+
+  // m_Controls.verticalLayout->addWidget(tfw);
 
   m_Menu = new QMenu(parent);
   m_PromoteToAllNodes = new QAction(parent);
@@ -229,130 +236,6 @@ void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer 
         ref->isActive = checked;
         CalculateVisualization(nodes);
       });
-
-      // DR
-      int subMenuMinWidth = 165;
-      auto CreateLabel = [&menu](auto labelName) {
-        int minLabelMinHeight = 25;
-        const char labelBackgrndStyle[256] = "background-color: #252525\0";
-        auto label = new QLabel();
-        label->setText(labelName);
-        label->setMinimumHeight(minLabelMinHeight);
-        label->setStyleSheet(labelBackgrndStyle);
-
-        auto action = new QWidgetAction(&menu);
-        action->setDefaultWidget(label);
-
-        return action;
-      };
-
-      auto menuLabel = CreateLabel("Dimensionality reduction");
-      menu.addAction(menuLabel);
-
-      auto asRGBImageAction = new QWidgetAction(&menu);
-      auto asRGBCheckBox = new QCheckBox();
-      asRGBCheckBox->setText("As RGB image");
-      asRGBCheckBox->setChecked(m_DR_AsRGBImage);
-      asRGBImageAction->setDefaultWidget(asRGBCheckBox);
-
-      auto componentSlider = new QSlider(Qt::Horizontal);
-      componentSlider->setMinimum(1);
-      componentSlider->setMaximum(10);
-      componentSlider->setValue(3);
-      componentSlider->setEnabled(false);
-      componentSlider->setStyleSheet("padding: 10px");
-
-      connect(asRGBCheckBox, &QCheckBox::toggled, [componentSlider, this](bool v) {
-        if (v)
-        {
-          componentSlider->setValue(3);
-          componentSlider->setEnabled(false);
-          m_DR_AsRGBImage = true;
-        }
-        else
-        {
-          componentSlider->setEnabled(true);
-          m_DR_AsRGBImage = false;
-        }
-      });
-      menu.addAction(asRGBImageAction);
-
-      auto componentSliederAction = new QWidgetAction(&menu);
-      componentSliederAction->setDefaultWidget(componentSlider);
-
-      menuLabel = CreateLabel(("Number of Components: " + std::to_string(componentSlider->value())).c_str());
-      menu.addAction(menuLabel);
-
-      connect(componentSlider, &QSlider::valueChanged, this, [componentSlider, menuLabel, this]() {
-        static_cast<QLabel *>(menuLabel->defaultWidget())
-          ->setText(("Number of Components: " + std::to_string(componentSlider->value())).c_str());
-        m_NumberOfComponents = componentSlider->value();
-      });
-
-      menu.addAction(componentSliederAction);
-
-      {
-        auto subMenu = new QMenu();
-        auto pcaAction = new QWidgetAction(subMenu);
-        pcaAction->setText("Perform pca");
-
-        subMenu->addAction(pcaAction);
-
-        std::string pcaMenuTitle = "PCA";
-        subMenu->setTitle(pcaMenuTitle.c_str());
-        subMenu->setMinimumWidth(subMenuMinWidth);
-        connect(pcaAction, &QAction::triggered, this, [tableRefs, nodes, this]() { PerformPCA(tableRefs, nodes); });
-
-        menu.addMenu(subMenu);
-      }
-
-      {
-        auto subMenu = new QMenu();
-        subMenu->setTitle("T-SNE");
-
-        auto tsneAction = new QWidgetAction(subMenu);
-        tsneAction->setText("Perform t-SNE");
-        connect(tsneAction, &QAction::triggered, this, [tableRefs, nodes, this]() { PerformTsne(tableRefs, nodes); });
-        subMenu->addAction(tsneAction);
-
-        auto tsneItSlider = new QSlider(Qt::Horizontal);
-        tsneItSlider->setMinimum(255);
-        tsneItSlider->setMaximum(2000);
-        tsneItSlider->setValue(m_Iterations);
-        tsneItSlider->setStyleSheet("padding: 10px");
-
-        menuLabel = CreateLabel(("Number of iterations: " + std::to_string(tsneItSlider->value())).c_str());
-        connect(tsneItSlider, &QSlider::valueChanged, this, [menuLabel, this](int value) {
-          static_cast<QLabel *>(menuLabel->defaultWidget())
-            ->setText(("Number of iterations: " + std::to_string(value)).c_str());
-          m_Iterations = value;
-        });
-
-        subMenu->addAction(menuLabel);
-
-        auto tsneItSliderAction = new QWidgetAction(subMenu);
-        tsneItSliderAction->setDefaultWidget(tsneItSlider);
-        subMenu->addAction(tsneItSliderAction);
-
-        menuLabel = CreateLabel("Perplexity: ");
-        subMenu->addAction(menuLabel);
-
-        auto tsnePerplexityInput = new QSpinBox();
-        tsnePerplexityInput->setRange(5, 50);
-        tsnePerplexityInput->setStyleSheet("padding-left: 10px");
-
-        connect(tsnePerplexityInput, QOverload<int>::of(&QSpinBox::valueChanged), this, [this](int value) {
-          m_Perplexity = value;
-        });
-
-        auto tsnePerplexityAction = new QWidgetAction(subMenu);
-        tsnePerplexityAction->setDefaultWidget(tsnePerplexityInput);
-        subMenu->addAction(tsnePerplexityAction);
-
-        subMenu->setMinimumWidth(subMenuMinWidth);
-
-        menu.addMenu(subMenu);
-      }
 
       menu.exec(label->mapToGlobal(pos));
     };
