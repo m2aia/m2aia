@@ -12,7 +12,7 @@ set(target_libraries
   org_mitk_gui_qt_multilabelsegmentation
   org_mitk_gui_qt_volumevisualization
   org_mitk_gui_qt_pointsetinteraction
-  org_mitk_gui_qt_matchpoint_evaluator
+  org_mitk_gui_qt_mitkworkbench_intro
   org_mitk_gui_qt_imagenavigator
   org_mitk_gui_qt_moviemaker
   org_mitk_gui_qt_basicimageprocessing

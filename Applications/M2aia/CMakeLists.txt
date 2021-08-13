@@ -36,6 +36,7 @@ set(_plugins
   org.mitk.gui.qt.matchpoint.algorithm.control
   org.mitk.gui.qt.matchpoint.mapper
   org.mitk.gui.qt.matchpoint.evaluator
+  org.mitk.gui.qt.mitkworkbench.intro
   org.mitk.gui.qt.imagenavigator
   org.mitk.gui.qt.geometrytools
   org.mitk.gui.qt.moviemaker
