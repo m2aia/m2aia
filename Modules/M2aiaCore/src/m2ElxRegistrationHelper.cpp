@@ -1,4 +1,5 @@
 #include <clocale>
+#include <m2ElxDefaultParameterFiles.h>
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
 #include <mitkImage2DToImage3DSliceFilter.h>
@@ -383,62 +384,3 @@ void m2::ElxRegistrationHelper::RemoveWorkingDirectory()
     MITK_ERROR << "Cleanup ElxRegistrationHelper fails!\n" << e.what();
   }
 }
-
-const std::string m2::ElxRegistrationHelper::DEFAULT_PARAMETER_FILE = R"(
-//ImageTypes
-(FixedInternalImagePixelType "float")
-(MovingInternalImagePixelType "float")
-(UseDirectionCosines "true")
-//Components
-(Registration "MultiResolutionRegistration")
-(FixedImagePyramid "FixedRecursiveImagePyramid")
-(MovingImagePyramid "MovingRecursiveImagePyramid")
-(Interpolator "BSplineInterpolator")
-(Metric "AdvancedMattesMutualInformation")
-(Optimizer "AdaptiveStochasticGradientDescent")
-(ResampleInterpolator "FinalBSplineInterpolator")
-(Resampler "DefaultResampler")
-(Transform "EulerTransform")
-// ********** Pyramid
-// Total number of resolutions
-(NumberOfResolutions 3)
-// ********** Transform
-//(CenterOfRotation 128 128) center by default
-(AutomaticTransformInitialization "true")
-(AutomaticScalesEstimation "true")
-(HowToCombineTransforms "Compose")
-// ********** Optimizer
-// Maximum number of iterations in each resolution level:
-(MaximumNumberOfIterations 300 300 600)
-(AutomaticParameterEstimation "true")
-(UseAdaptiveStepSizes "true")
-// ********** Metric
-//Number of grey level bins in each resolution level:
-(NumberOfHistogramBins 32)
-(FixedKernelBSplineOrder 1)
-(MovingKernelBSplineOrder 3)
-// ********** Several
-(WriteTransformParametersEachIteration "false")
-(WriteTransformParametersEachResolution "false")
-(ShowExactMetricValue "false")
-(ErodeMask "true")
-// ********** ImageSampler
-// Number of spatial samples used to compute the
-// mutual information in each resolution level:
-(ImageSampler "RandomCoordinate")
-(NumberOfSpatialSamples 2048)
-(NewSamplesEveryIteration "true")
-// ********** Interpolator and Resampler
-//Order of B-Spline interpolation used in each resolution level:
-(BSplineInterpolationOrder 1)
-//Order of B-Spline interpolation used for applying the final deformation:
-(FinalBSplineInterpolationOrder 3)
-//Default pixel value for pixels that come from outside the picture:
-(DefaultPixelValue 0)
-
-// The pixel type and format of the resulting deformed moving image
-(WriteResultImage "true")
-(ResultImagePixelType "float")
-(ResultImageFormat "nrrd")
-
-)";

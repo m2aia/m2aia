@@ -29,7 +29,7 @@ namespace m2
   class M2AIACORE_EXPORT ElxRegistrationHelper
   {
   protected:
-    static const std::string DEFAULT_PARAMETER_FILE;
+    
     mitk::Image::Pointer m_FixedImage;
     mitk::Image::Pointer m_FixedMask;
     mitk::PointSet::Pointer m_FixedPoints;
