@@ -23,7 +23,7 @@ void QmitkWelcomePerspective::CreateInitialLayout(berry::IPageLayout::Pointer la
   /////////////////////////////////////////////////////
   QString editorArea = layout->GetEditorArea();
 
-  auto folder = layout->CreateFolder("rightFolder", berry::IPageLayout::RIGHT, 0.66f, editorArea);
+  auto folder = layout->CreateFolder("rightFolder", berry::IPageLayout::RIGHT, 0.55f, editorArea);
   folder->AddView("org.mitk.views.m2.Data");
   auto lo = layout->GetViewLayout("org.mitk.views.m2.Data");
   lo->SetCloseable(false);
@@ -32,7 +32,7 @@ void QmitkWelcomePerspective::CreateInitialLayout(berry::IPageLayout::Pointer la
   lo = layout->GetViewLayout("org.mitk.views.datamanager");
   lo->SetCloseable(false);
 
-  layout->AddStandaloneView("org.mitk.views.m2.Spectrum", false, berry::IPageLayout::BOTTOM, 0.66f, editorArea);
+  layout->AddStandaloneView("org.mitk.views.m2.Spectrum", false, berry::IPageLayout::BOTTOM, 0.70f, editorArea);
   lo = layout->GetViewLayout("org.mitk.views.m2.Spectrum");
   lo->SetCloseable(false);
   
@@ -44,6 +44,7 @@ void QmitkWelcomePerspective::CreateInitialLayout(berry::IPageLayout::Pointer la
   layout->AddShowViewShortcut("org.mitk.views.m2.ImzMLExport");
   layout->AddShowViewShortcut("org.mitk.views.m2.PeakPicking");
   layout->AddShowViewShortcut("org.mitk.views.m2.Registration");
+  layout->AddShowViewShortcut("org.mitk.gui.qt.matchpoint.evaluator");
 
   
 //*/
