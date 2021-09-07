@@ -20,6 +20,7 @@ set(target_libraries
   org_mitk_gui_qt_viewnavigator
   org_mitk_gui_qt_renderwindowmanager
   org_mitk_gui_qt_geometrytools
+  org_mitk_gui_qt_preprocessing_resampling
   org_mitk_gui_qt_m2_application
   org_mitk_gui_qt_m2_Data
   org_mitk_gui_qt_m2_Ions
