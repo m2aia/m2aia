@@ -95,10 +95,10 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
             switch (currentIndex)
             {
               case 0:
-                m_Controls.label->setText("MSI or histology image data are typical examples for slice data.");
+                m_Controls.label->setText("SliceImageData [NxM] or [NxMx1], MuliModal, MultiMetric, Rigid + Deformable");
                 break;
               case 1:
-                m_Controls.label->setText("Any volume image data such as CT or MRI images.");
+                m_Controls.label->setText("VolumeImageData [NxMxD], MultiModal, MultiMetric, Rigid+Deformable");
                 break;
             }
           });
