@@ -20,8 +20,7 @@ namespace m2
   {
     const std::string Rigid()
     {
-      return R"(
-(FixedInternalImagePixelType "float")
+      return R"((FixedInternalImagePixelType "float")
 (MovingInternalImagePixelType "float")
 
 (FixedImageDimension 2)
@@ -106,11 +105,7 @@ namespace m2
 
     const std::string Deformable()
     {
-      return R"(
-// Example parameter file for B-spline registration
-// C-style comments: //
-
-(FixedInternalImagePixelType "float")
+      return R"((FixedInternalImagePixelType "float")
 (MovingInternalImagePixelType "float")
 
 (FixedImageDimension 2)

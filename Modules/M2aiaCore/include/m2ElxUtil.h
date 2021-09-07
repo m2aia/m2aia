@@ -50,7 +50,7 @@ namespace m2
       if (pos1 == std::string::npos || pos2 == std::string::npos)
         paramFileString += "(" + what + " " + by + ")\n";
       else
-        paramFileString.replace(pos1, pos2 - pos1 + 1, "(" + what + " " + by + ")\n");
+        paramFileString.replace(pos1, pos2 - pos1 + 1, "(" + what + " " + by + ")");
     }
 
     /**
