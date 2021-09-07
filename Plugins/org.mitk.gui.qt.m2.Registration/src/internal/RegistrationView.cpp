@@ -14,6 +14,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
+#include <queue>
+
 // Blueberry
 #include <berryISelectionService.h>
 #include <berryIWorkbenchWindow.h>
@@ -96,7 +98,7 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
                 m_Controls.label->setText("MSI or histology image data are typical examples for slice data.");
                 break;
               case 1:
-                m_Controls.label->setText("Any volume image data as CT or MRI images. This mode is experimental.");
+                m_Controls.label->setText("Any volume image data such as CT or MRI images.");
                 break;
             }
           });
@@ -276,7 +278,7 @@ void RegistrationView::AddNewModalityTab()
 }
 
 void RegistrationView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
-                                        const QList<mitk::DataNode::Pointer> &nodes)
+                                          const QList<mitk::DataNode::Pointer> &nodes)
 {
   if (m_Controls.chkBxReinitOnSelectionChanged->isChecked())
   {
@@ -351,32 +353,67 @@ void RegistrationView::StartRegistration()
     try
     {
       auto currentIndex = m_Controls.registrationStrategy->currentIndex();
-
       auto f = std::make_shared<QFutureWatcher<mitk::Image::Pointer>>();
+      std::list<std::string> queue;
+
+      std::function<void(std::string)> statusCallback = [=](std::string v) mutable
+      {
+        if (queue.size() > 15)
+          queue.pop_front();
+        queue.push_back(v);
+        QString s;
+        for (auto line : queue)
+          s = s + line.c_str() + "\n";
+
+        m_Controls.labelStatus->setText(s);
+      };
+
       f->setFuture(QtConcurrent::run(
         [=]() -> mitk::Image::Pointer
         {
           m2::ElxRegistrationHelper helper;
+          std::vector<std::string> parameterFiles;
 
+          // copy valid and discard empty parameterfiles
+          for (auto &p : m_ParameterFiles[currentIndex])
+            if (!p.empty())
+              parameterFiles.push_back(p);
+
+          // setup and run
           helper.SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
           helper.SetImageData(fixedImage, movingImage);
           helper.SetPointData(fixedPointSet, movingPointSet);
-          helper.SetRegistrationParameters(m_ParameterFiles[currentIndex]);
+          helper.SetRegistrationParameters(parameterFiles);
           helper.SetRemoveWorkingDirectory(true);
           helper.UseMovingImageSpacing(m_Controls.keepSpacings->isChecked());
+          helper.SetStatusCallback(statusCallback);
           helper.GetRegistration();
           return helper.WarpImage(movingImage);
         }));
-      
-      connect(f.get(), &QFutureWatcher<mitk::Image::Pointer>::finished, [=]() mutable {
-          auto node = mitk::DataNode::New();
-          node->SetData(f->result());
-          node->SetName("Warped Image");
-          this->GetDataStorage()->Add(node, movingImageNode);
-          f.reset();
-      });
 
-          
+      // started
+      connect(f.get(),
+              &QFutureWatcher<mitk::Image::Pointer>::started,
+              [=]()
+              {
+                statusCallback("Running ...");
+                m_Controls.btnStartRegistration->setDisabled(true);
+              });
+
+      connect(f.get(),
+              &QFutureWatcher<mitk::Image::Pointer>::finished,
+              [=]() mutable
+              {
+                auto node = mitk::DataNode::New();
+                node->SetData(f->result());
+                node->SetName("Warped Image");
+                this->GetDataStorage()->Add(node, movingImageNode);
+
+                m_Controls.btnStartRegistration->setEnabled(true);
+                statusCallback("Completed");
+
+                f.reset();
+              });
     }
     catch (std::exception &e)
     {
