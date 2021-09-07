@@ -19,6 +19,7 @@ See LICENSE.txt for details.
 #include <mitkPointSet.h>
 #include <string>
 #include <vector>
+#include <functional>
 
 namespace m2
 {
@@ -55,6 +56,9 @@ namespace m2
     void CreateWorkingDirectory();
     void RemoveWorkingDirectory();
 
+    std::function<void(std::string)> m_StatusFunction = [](std::string){};
+    
+
   public:
     // Registration
     void SetImageData(mitk::Image *fixed, mitk::Image *moving);
@@ -70,6 +74,10 @@ namespace m2
     void GetRegistration();
     std::vector<std::string> GetTransformation();
     void SetRegistration(const std::vector<std::string>);
+    void SetStatusCallback(const std::function<void(std::string)> & callback);
+    
+
+
 
     mitk::Image::Pointer WarpImage(const mitk::Image *,
                                    const std::string &type = "float",

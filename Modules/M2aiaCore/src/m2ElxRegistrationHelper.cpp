@@ -192,6 +192,7 @@ void m2::ElxRegistrationHelper::GetRegistration()
     mitkThrow() << "Elastix executable not found!";
 
   CreateWorkingDirectory();
+  
 
   if (m_RegistrationParameters.empty())
     m_RegistrationParameters.push_back(m2::Elx::Rigid());
@@ -228,6 +229,7 @@ void m2::ElxRegistrationHelper::GetRegistration()
     std::ofstream outStream(targetParamterFilePath);
     outStream << parameterText;
     outStream.close();
+    m_StatusFunction("Parameter file written: " + targetParamterFilePath);
   }
 
   const auto movingResultPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "result.0.nrrd"});
@@ -236,7 +238,10 @@ void m2::ElxRegistrationHelper::GetRegistration()
   const auto fixedPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "fixed.nrrd"});
   const auto movingPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "moving.nrrd"});
   mitk::IOUtil::Save(m_MovingImage, movingPath);
+  m_StatusFunction("Moving image written: " + movingPath);
   mitk::IOUtil::Save(m_FixedImage, fixedPath);
+  m_StatusFunction("Fixed image written: " + fixedPath);
+
 
   // START THE REGISTRATION
   Poco::Process::Args args;
@@ -269,12 +274,16 @@ void m2::ElxRegistrationHelper::GetRegistration()
     args.insert(args.end(), {"-p", parameterFile});
   }
 
-  MITK_INFO << "Start " << exeElastix << " ...";
+  
+  m_StatusFunction("Registration started ...");
+  
   Poco::Pipe oPipe;
   Poco::ProcessHandle ph(Poco::Process::launch(exeElastix, args, nullptr, &oPipe, nullptr));
   oPipe.close();
   ph.wait();
-  MITK_INFO << exeElastix << " complete";
+  
+  m_StatusFunction("Registration finished.");
+  
 
   for (unsigned int i = 0; i < m_RegistrationParameters.size(); ++i)
   {
@@ -285,7 +294,13 @@ void m2::ElxRegistrationHelper::GetRegistration()
     MITK_INFO << "Read transformation: " << transformationParameterFile;
   }
 
+  m_StatusFunction("Transformation parameters assimilated");
   RemoveWorkingDirectory();
+}
+
+void m2::ElxRegistrationHelper::SetStatusCallback(const std::function<void(std::string)> &callback)
+{
+  m_StatusFunction = callback;
 }
 
 std::vector<std::string> m2::ElxRegistrationHelper::GetTransformation()
@@ -302,6 +317,7 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image *dat
     mitkThrow() << "Transformix executable not found!";
 
   CreateWorkingDirectory();
+  m_StatusFunction("Directory created: " + m_WorkingDirectory);
 
   if (!CheckDimensions(data))
   {
@@ -314,6 +330,8 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image *dat
   const auto resultPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "result.nrrd"});
 
   mitk::IOUtil::Save(GetSlice2DData(data), imagePath);
+  m_StatusFunction("Moving image written: " + imagePath);
+
   auto newSpacingX = m_MovingImage->GetGeometry()->GetSpacing()[0];
   auto newSpacingY = m_MovingImage->GetGeometry()->GetSpacing()[1];
   auto newSpacingZ = m_MovingImage->GetGeometry()->GetSpacing()[2];
@@ -392,6 +410,7 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image *dat
   oPipe.close();
   ph.wait();
   MITK_INFO << exeTransformix << " complete";
+  m_StatusFunction("Image warped: " + imagePath);
 
   auto resultData = mitk::IOUtil::Load(resultPath).front();
   mitk::Image::Pointer result = dynamic_cast<mitk::Image *>(resultData.GetPointer());
