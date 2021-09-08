@@ -47,169 +47,180 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 const QString QmitkM2aiaAppWorkbenchAdvisor::WELCOME_PERSPECTIVE_ID = "org.mitk.m2.application.perspectives.welcome";
 
-class QmitkM2aiaAppWorkbenchWindowAdvisor : public QmitkExtWorkbenchWindowAdvisor
+QmitkM2aiaAppWorkbenchWindowAdvisor::QmitkM2aiaAppWorkbenchWindowAdvisor(
+  berry::WorkbenchAdvisor *wbAdvisor, berry::IWorkbenchWindowConfigurer::Pointer configurer)
+  : QmitkExtWorkbenchWindowAdvisor(wbAdvisor, configurer)
 {
-public:
-  QmitkM2aiaAppWorkbenchWindowAdvisor(berry::WorkbenchAdvisor *wbAdvisor,
-                                      berry::IWorkbenchWindowConfigurer::Pointer configurer)
-    : QmitkExtWorkbenchWindowAdvisor(wbAdvisor, configurer)
+}
+
+void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
+{
+  QmitkExtWorkbenchWindowAdvisor::PostWindowOpen();
+  berry::IWorkbenchWindowConfigurer::Pointer configurer = GetWindowConfigurer();
+  configurer->GetWindow()->GetWorkbench()->GetIntroManager()->ShowIntro(configurer->GetWindow(), false);
+
+  // very bad hack...
+  berry::IWorkbenchWindow::Pointer window = this->GetWindowConfigurer()->GetWindow();
+  QMainWindow *mainWindow = qobject_cast<QMainWindow *>(window->GetShell()->GetControl());
+  mainWindow->setContextMenuPolicy(Qt::PreventContextMenu);
+
+  // ==== RenderwindowViewNames ======================
+
+  berry::IPreferencesService *prefService = berry::Platform::GetPreferencesService();
+  Q_ASSERT(prefService);
+  auto m_Preferences = prefService->GetSystemPreferences()->Node("org.mitk.editors.stdmultiwidget");
+  m_Preferences->Put("stdmulti.widget0 corner annotation", "Top");
+  m_Preferences->Put("stdmulti.widget1 corner annotation", "Left");
+  m_Preferences->Put("stdmulti.widget2 corner annotation", "Front");
+  m_Preferences->Put("stdmulti.widget3 corner annotation", "3D");
+
+  // ==== Application menu ============================
+  QMenuBar *menuBar = mainWindow->menuBar();
+  menuBar->setContextMenuPolicy(Qt::PreventContextMenu);
+  auto actions = menuBar->actions();
+  for (auto a : actions)
   {
-
-  }
-
-  void PostWindowOpen() override
-  {
-
-    QmitkExtWorkbenchWindowAdvisor::PostWindowOpen();
-    berry::IWorkbenchWindowConfigurer::Pointer configurer = GetWindowConfigurer();
-    configurer->GetWindow()->GetWorkbench()->GetIntroManager()->ShowIntro(configurer->GetWindow(), false);
-
-    // very bad hack...
-    berry::IWorkbenchWindow::Pointer window = this->GetWindowConfigurer()->GetWindow();
-    QMainWindow *mainWindow = qobject_cast<QMainWindow *>(window->GetShell()->GetControl());
-    mainWindow->setContextMenuPolicy(Qt::PreventContextMenu);
-
-    // ==== RenderwindowViewNames ======================
-
-    berry::IPreferencesService *prefService = berry::Platform::GetPreferencesService();
-    Q_ASSERT(prefService);
-    auto m_Preferences = prefService->GetSystemPreferences()->Node("org.mitk.editors.stdmultiwidget");
-    m_Preferences->Put("stdmulti.widget0 corner annotation", "Top");
-    m_Preferences->Put("stdmulti.widget1 corner annotation", "Left");
-    m_Preferences->Put("stdmulti.widget2 corner annotation", "Front");
-    m_Preferences->Put("stdmulti.widget3 corner annotation", "3D");
-
-    // ==== Application menu ============================
-    QMenuBar *menuBar = mainWindow->menuBar();
-    menuBar->setContextMenuPolicy(Qt::PreventContextMenu);
-    auto actions = menuBar->actions();
-    for (auto a : actions)
+    if (a->text() == "&Help")
     {
-      if (a->text() == "&Help")
+      auto helpMenu = a->menu();
+      helpMenu->addAction("&About M2aia", this, []() { QmitkM2aiaAboutDialog().exec(); });
+      for (auto b : helpMenu->actions())
       {
-        auto helpMenu = a->menu();
-        helpMenu->addAction("&About M2aia", this, []() { QmitkM2aiaAboutDialog().exec(); });
-        for (auto b : helpMenu->actions())
+        if (b->text() == "&About")
         {
-          if (b->text() == "&About")
-          {
-            b->setText("&About MITK");
-          }
+          b->setText("&About MITK");
         }
       }
     }
+  }
 
-    // create GUI widgets from the Qt Designer's .ui file
-    auto view = new QMenu("View (3D)", menuBar);
-    view->addAction("Top", []() {
-      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-          controller->SetViewToCaudal();
-    });
-    view->addAction("Bottom", []() {
-      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-          controller->SetViewToCranial();
-    });
+  // create GUI widgets from the Qt Designer's .ui file
+  auto view = new QMenu("View (3D)", menuBar);
+  view->addAction("Top",
+                  []()
+                  {
+                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+                        controller->SetViewToCaudal();
+                  });
+  view->addAction("Bottom",
+                  []()
+                  {
+                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+                        controller->SetViewToCranial();
+                  });
 
-    view->addAction("Front", []() {
-      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-          controller->SetViewToPosterior();
-    });
+  view->addAction("Front",
+                  []()
+                  {
+                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+                        controller->SetViewToPosterior();
+                  });
 
-    view->addAction("Back", []() {
-      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-          controller->SetViewToAnterior();
-    });
+  view->addAction("Back",
+                  []()
+                  {
+                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+                        controller->SetViewToAnterior();
+                  });
 
-    view->addAction("Left", []() {
-      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-          controller->SetViewToSinister();
-    });
+  view->addAction("Left",
+                  []()
+                  {
+                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+                        controller->SetViewToSinister();
+                  });
 
-    view->addAction("Right", []() {
-      if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-        if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-          controller->SetViewToDexter();
-    });
+  view->addAction("Right",
+                  []()
+                  {
+                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
+                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
+                        controller->SetViewToDexter();
+                  });
 
-    menuBar->addMenu(view);
+  menuBar->addMenu(view);
 
-    // berry::IWorkbenchWindow::Pointer window =
-    // this->GetWindowConfigurer()->GetWindow();
-    // QMainWindow* mainWindow =
-    // qobject_cast<QMainWindow*> (window->GetShell()->GetControl());
-    // mainWindow->showMaximized();
+  // berry::IWorkbenchWindow::Pointer window =
+  // this->GetWindowConfigurer()->GetWindow();
+  // QMainWindow* mainWindow =
+  // qobject_cast<QMainWindow*> (window->GetShell()->GetControl());
+  // mainWindow->showMaximized();
 
-    const std::vector<QString> viewCategories = {"MS imaging", "Segmentation" /*, "Registration"*/};
+  const std::vector<QString> viewCategories = {"MS imaging", "Segmentation" /*, "Registration"*/};
 
+  {
+    auto prefService = berry::WorkbenchPlugin::GetDefault()->GetPreferencesService();
+    berry::IPreferences::Pointer stylePrefs =
+      prefService->GetSystemPreferences()->Node(berry::QtPreferences::QT_STYLES_NODE);
+    bool showCategoryNames = stylePrefs->GetBool(berry::QtPreferences::QT_SHOW_TOOLBAR_CATEGORY_NAMES, true);
+
+    // Order view descriptors by category
+
+    QMultiMap<QString, berry::IViewDescriptor::Pointer> categoryViewDescriptorMap;
+    std::map<QString, berry::IViewDescriptor::Pointer> VDMap;
+    // sort elements (converting vector to map...)
+    QList<berry::IViewDescriptor::Pointer>::const_iterator iter;
+
+    berry::IViewRegistry *viewRegistry = berry::PlatformUI::GetWorkbench()->GetViewRegistry();
+    const QList<berry::IViewDescriptor::Pointer> viewDescriptors = viewRegistry->GetViews();
+
+    // bool skip = false;
+    for (iter = viewDescriptors.begin(); iter != viewDescriptors.end(); ++iter)
     {
-      auto prefService = berry::WorkbenchPlugin::GetDefault()->GetPreferencesService();
-      berry::IPreferences::Pointer stylePrefs =
-        prefService->GetSystemPreferences()->Node(berry::QtPreferences::QT_STYLES_NODE);
-      bool showCategoryNames = stylePrefs->GetBool(berry::QtPreferences::QT_SHOW_TOOLBAR_CATEGORY_NAMES, true);
+      if ((*iter)->GetId() == "org.blueberry.ui.internal.introview")
+        continue;
+      if ((*iter)->GetId() == "org.mitk.views.imagenavigator")
+        continue;
+      if ((*iter)->GetId() == "org.mitk.views.viewnavigatorview")
+        continue;
 
-      // Order view descriptors by category
+      std::pair<QString, berry::IViewDescriptor::Pointer> p((*iter)->GetLabel(), (*iter));
+      VDMap.insert(p);
+    }
+    for (auto labelViewDescriptorPair : VDMap)
+    {
+      auto viewDescriptor = labelViewDescriptorPair.second;
+      auto category =
+        !viewDescriptor->GetCategoryPath().isEmpty() ? viewDescriptor->GetCategoryPath().back() : QString();
 
-      QMultiMap<QString, berry::IViewDescriptor::Pointer> categoryViewDescriptorMap;
-      std::map<QString, berry::IViewDescriptor::Pointer> VDMap;
-      // sort elements (converting vector to map...)
-      QList<berry::IViewDescriptor::Pointer>::const_iterator iter;
+      categoryViewDescriptorMap.insert(category, viewDescriptor);
+    }
 
-      berry::IViewRegistry *viewRegistry = berry::PlatformUI::GetWorkbench()->GetViewRegistry();
-      const QList<berry::IViewDescriptor::Pointer> viewDescriptors = viewRegistry->GetViews();
+    // Create a separate toolbar for each category
+    berry::IWorkbenchWindow::Pointer window = this->GetWindowConfigurer()->GetWindow();
+    QMainWindow *mainWindow = qobject_cast<QMainWindow *>(window->GetShell()->GetControl());
 
-      // bool skip = false;
-      for (iter = viewDescriptors.begin(); iter != viewDescriptors.end(); ++iter)
+    for (auto category : categoryViewDescriptorMap.uniqueKeys())
+    {
+      if (std::find(std::begin(viewCategories), std::end(viewCategories), category) == std::end(viewCategories))
+        continue;
+
+      auto viewDescriptorsInCurrentCategory = categoryViewDescriptorMap.values(category);
+
+      if (!viewDescriptorsInCurrentCategory.isEmpty())
       {
-        if ((*iter)->GetId() == "org.blueberry.ui.internal.introview")
-          continue;
-        if ((*iter)->GetId() == "org.mitk.views.imagenavigator")
-          continue;
-        if ((*iter)->GetId() == "org.mitk.views.viewnavigatorview")
-          continue;
+        auto toolbar = new QToolBar;
+        toolbar->setObjectName(category + " View Toolbar");
+        mainWindow->addToolBar(toolbar);
 
-        std::pair<QString, berry::IViewDescriptor::Pointer> p((*iter)->GetLabel(), (*iter));
-        VDMap.insert(p);
-      }
-      for (auto labelViewDescriptorPair : VDMap)
-      {
-        auto viewDescriptor = labelViewDescriptorPair.second;
-        auto category =
-          !viewDescriptor->GetCategoryPath().isEmpty() ? viewDescriptor->GetCategoryPath().back() : QString();
-
-        categoryViewDescriptorMap.insert(category, viewDescriptor);
-      }
-
-      // Create a separate toolbar for each category
-      berry::IWorkbenchWindow::Pointer window = this->GetWindowConfigurer()->GetWindow();
-      QMainWindow *mainWindow = qobject_cast<QMainWindow *>(window->GetShell()->GetControl());
-
-      for (auto category : categoryViewDescriptorMap.uniqueKeys())
-      {
-        if (std::find(std::begin(viewCategories), std::end(viewCategories), category) == std::end(viewCategories))
-          continue;
-
-        auto viewDescriptorsInCurrentCategory = categoryViewDescriptorMap.values(category);
-
-        if (!viewDescriptorsInCurrentCategory.isEmpty())
+        if (showCategoryNames && !category.isEmpty())
         {
-          auto toolbar = new QToolBar;
-          toolbar->setObjectName(category + " View Toolbar");
-          mainWindow->addToolBar(toolbar);
+          auto categoryButton = new QToolButton;
+          categoryButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
+          categoryButton->setText(category);
+          categoryButton->setStyleSheet("background: transparent; margin: 0; padding: 0;");
+          toolbar->addWidget(categoryButton);
 
-          if (showCategoryNames && !category.isEmpty())
-          {
-            auto categoryButton = new QToolButton;
-            categoryButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
-            categoryButton->setText(category);
-            categoryButton->setStyleSheet("background: transparent; margin: 0; padding: 0;");
-            toolbar->addWidget(categoryButton);
-
-            connect(categoryButton, &QToolButton::clicked, [toolbar]() {
+          connect(
+            categoryButton,
+            &QToolButton::clicked,
+            [toolbar]()
+            {
               for (QWidget *widget : toolbar->findChildren<QWidget *>())
               {
                 if (QStringLiteral("qt_toolbar_ext_button") == widget->objectName() && widget->isVisible())
@@ -223,23 +234,22 @@ public:
                 }
               }
             });
-          }
+        }
 
-          for (auto viewDescriptor : viewDescriptorsInCurrentCategory)
-          {
-            auto viewAction = new m2::QmitkM2aiaViewAction(window, viewDescriptor);
-            toolbar->addAction(viewAction);
-          }
+        for (auto viewDescriptor : viewDescriptorsInCurrentCategory)
+        {
+          auto viewAction = new m2::QmitkM2aiaViewAction(window, viewDescriptor);
+          toolbar->addAction(viewAction);
         }
       }
     }
-
-    {
-      auto m_Preferences = prefService->GetSystemPreferences()->Node("org.mitk.editors.stdmultiwidget");
-      m_Preferences->Put("DepartmentLogo", ":/org.mitk.gui.qt.m2.application/defaultWatermark.png");
-    }
   }
-};
+
+  {
+    auto m_Preferences = prefService->GetSystemPreferences()->Node("org.mitk.editors.stdmultiwidget");
+    m_Preferences->Put("DepartmentLogo", ":/org.mitk.gui.qt.m2.application/defaultWatermark.png");
+  }
+}
 
 void QmitkM2aiaAppWorkbenchAdvisor::Initialize(berry::IWorkbenchConfigurer::Pointer configurer)
 {
@@ -273,7 +283,6 @@ berry::WorkbenchWindowAdvisor *QmitkM2aiaAppWorkbenchAdvisor::CreateWorkbenchWin
   advisor->ShowMemoryIndicator(true);
   advisor->SetProductName("M2aia");
   advisor->SetWindowIcon(":/org.mitk.gui.qt.m2.application/icon.ico");
-
 
   std::cout << "M2aia git commit hash: " << MITKM2AIA_REVISION << std::endl;
   std::cout << "M2aia branch name: " << MITKM2AIA_REVISION_NAME << std::endl;

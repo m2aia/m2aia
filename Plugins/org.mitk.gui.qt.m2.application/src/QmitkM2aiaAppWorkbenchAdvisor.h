@@ -14,26 +14,31 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-
-#ifndef QMITKM2aiaAPPWORKBENCHADVISOR_H_
-#define QMITKM2aiaAPPWORKBENCHADVISOR_H_
+#pragma once
 
 #include <berryQtWorkbenchAdvisor.h>
+#include <QmitkExtWorkbenchWindowAdvisor.h>
 
 class QmitkM2aiaAppWorkbenchAdvisor : public berry::QtWorkbenchAdvisor
 {
-
 public:
-
   static const QString WELCOME_PERSPECTIVE_ID; // = "org.mitk.qt.M2aiaapp.defaultperspective"
 
   void Initialize(berry::IWorkbenchConfigurer::Pointer configurer) override;
 
-  berry::WorkbenchWindowAdvisor* CreateWorkbenchWindowAdvisor(
-        berry::IWorkbenchWindowConfigurer::Pointer configurer) override;
+  berry::WorkbenchWindowAdvisor *CreateWorkbenchWindowAdvisor(
+    berry::IWorkbenchWindowConfigurer::Pointer configurer) override;
 
   QString GetInitialWindowPerspectiveId() override;
-
 };
 
-#endif /* QMITKM2aiaAPPWORKBENCHADVISOR_H_ */
+class QmitkM2aiaAppWorkbenchWindowAdvisor : public QmitkExtWorkbenchWindowAdvisor
+{
+public:
+  QmitkM2aiaAppWorkbenchWindowAdvisor(berry::WorkbenchAdvisor *wbAdvisor,
+                                      berry::IWorkbenchWindowConfigurer::Pointer configurer);
+  void PostWindowOpen() override;
+  void Initialize(berry::IWorkbenchConfigurer::Pointer configurer);
+  
+  QString GetInitialWindowPerspectiveId();
+};
