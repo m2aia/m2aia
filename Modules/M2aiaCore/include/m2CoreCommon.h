@@ -87,43 +87,35 @@ namespace m2
 
   /// m2Utils
 
-  const auto Find = [](const auto &str, const auto &searchString, auto defaultValue, auto & map) {
+  const auto Find = [](const auto &str, const auto &searchString, auto defaultValue, auto &map)
+  {
     auto p = str.find(searchString);
     decltype(defaultValue) converted;
 
     if (p != std::string::npos)
     {
-      char begin = '"';
-      char end = '"';
-      auto s = p;
-      s = str.find(begin, p);
-      if (s == std::string::npos)
-      {
-        begin = ' ';
-        end = ')';
-        s = str.find(begin, p);
-      }
+      char begin = ' ';
+      char end = ')';
+      auto s = str.find(begin, p);
 
-      
       auto e = str.find(end, p);
       auto val = str.substr(s + 1, e - s - 1);
       std::stringstream buffer(val);
-      
-      
+
       if (std::is_same<decltype(defaultValue), bool>::value)
-        buffer >> std::boolalpha >> converted;      
+        buffer >> std::boolalpha >> converted;
       else
         buffer >> converted;
-      
+
       MITK_INFO << searchString << " " << converted;
       return converted;
     }
 
     std::stringstream buffer;
     if (std::is_same<decltype(defaultValue), bool>::value)
-        buffer << std::boolalpha << defaultValue;      
-      else
-        buffer << defaultValue;
+      buffer << std::boolalpha << defaultValue;
+    else
+      buffer << defaultValue;
 
     map[searchString] = buffer.str();
     MITK_WARN << "Using default value \t\"(" << searchString << ") " << map[searchString] << "\"";

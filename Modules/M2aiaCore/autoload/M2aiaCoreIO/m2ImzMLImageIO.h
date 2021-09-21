@@ -23,6 +23,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkImage.h>
 #include <mitkItkImageIO.h>
 
+
+
 namespace m2
 {
   /**
@@ -44,9 +46,9 @@ namespace m2
       return name;
     }
 
-	mitk::CustomMimeType IMZML_MIMETYPE()
+    mitk::CustomMimeType IMZML_MIMETYPE()
     {
-		mitk::CustomMimeType mimeType(IMZML_MIMETYPE_NAME());
+      mitk::CustomMimeType mimeType(IMZML_MIMETYPE_NAME());
       mimeType.AddExtension("imzML");
       mimeType.SetCategory("Images");
       mimeType.SetComment("imzML");
@@ -55,7 +57,6 @@ namespace m2
 
     // -------------- AbstractFileReader -------------
 
-    
     /**
      * @brief Reads a number of m2::ImzMLSpectrumImage from the file system
      * @return a vector of m2::ImzMLSpectrumImage
@@ -69,8 +70,7 @@ namespace m2
      *
      */
     void Write() override;
-    
-    
+
     ConfidenceLevel GetWriterConfidenceLevel() const override;
     std::string GetIBDOutputPath() const;
     std::string GetImzMLOutputPath() const;
@@ -80,8 +80,10 @@ namespace m2
     void WriteProcessedCentroid(m2::ImzMLSpectrumImage::SourceListType &sourceList) const;
 
   private:
-    void EvaluateSpectrumFormatType(m2::SpectrumImageBase * );
+    void EvaluateSpectrumFormatType(m2::SpectrumImageBase *);
     void LoadAssociatedData(m2::ImzMLSpectrumImage *);
     ImzMLImageIO *IOClone() const override;
   };
-} // end of namespace mitk
+} // namespace m2
+
+

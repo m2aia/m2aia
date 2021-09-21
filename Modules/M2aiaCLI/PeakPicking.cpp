@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
       auto path = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({cwd, "/m2PeakPicking.txt.sample"}));
       std::ofstream ofs(path);
       for(auto kv : pMap){
-        ofs << "(" << kv.first  << ") " << kv.second << "\n";
+        ofs << "(" << kv.first  << " " << kv.second << ")\n";
       }
       MITK_INFO << "A dummy parameter file was written to " << path;
       return 0;
