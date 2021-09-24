@@ -20,7 +20,7 @@ See LICENSE.txt for details.
 #include <m2ISpectrumDataAccess.h>
 #include <m2IonImageReference.h>
 #include <m2MassValue.h>
-#include <m2SignalCommon.h>
+#include <signal/m2SignalCommon.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
 
@@ -282,13 +282,7 @@ inline const T m2::SpectrumImageBase::GetPropertyValue(const std::string &key) c
 class m2::SpectrumImageBase::ProcessorBase
 {
 public:
-  virtual void UpdateImagePrivate(double mz, double tol, const Image *mask, Image *image) const = 0;
-  virtual void GrabIntensityPrivate(unsigned long int index,
-                                    std::vector<double> &ints,
-                                    unsigned int sourceIndex = 0) const = 0;
-  virtual void GrabMassPrivate(unsigned long int index,
-                               std::vector<double> &mzs,
-                               unsigned int sourceIndex = 0) const = 0;
+  virtual void UpdateImagePrivate(double mz, double tol, const Image *mask, Image *image) = 0;
   virtual void InitializeImageAccess() = 0;
   virtual void InitializeGeometry() = 0;
   virtual ~ProcessorBase() = default;

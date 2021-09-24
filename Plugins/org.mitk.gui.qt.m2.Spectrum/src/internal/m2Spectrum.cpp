@@ -23,7 +23,6 @@ See LICENSE.txt for details.
 #include <iostream>
 #include <m2CommunicationService.h>
 #include <m2ImzMLSpectrumImage.h>
-#include <m2PeakDetection.h>
 #include <m2SelectionProvider.h>
 #include <mitkLookupTableProperty.h>
 #include <mitkStatusBar.h>
@@ -31,6 +30,7 @@ See LICENSE.txt for details.
 #include <qmenu.h>
 #include <qvalueaxis.h>
 #include <qwidgetaction.h>
+#include <signal/m2PeakDetection.h>
 
 const std::string m2Spectrum::VIEW_ID = "org.mitk.views.m2.Spectrum";
 

@@ -23,7 +23,7 @@ SOFTWARE.
 ===================================================================*/
 #pragma once
 
-#include <M2aiaSignalProcessingExports.h>
+#include <M2aiaCoreExports.h>
 #include <algorithm>
 #include <cstring>
 #include <stdlib.h>
@@ -31,23 +31,24 @@ SOFTWARE.
 
 namespace m2
 {
-  class M2AIASIGNALPROCESSING_EXPORT RunMedian
+  class M2AIACORE_EXPORT RunMedian
   {
   public:
-    template <class T>
-    static void apply(const std::vector<T> &y, unsigned int s, std::vector<T> &output) noexcept
+    template <class IteratorType>
+    static void apply(IteratorType start, IteratorType end, unsigned int s, IteratorType baseline_start) noexcept
     {
       MedfiltData data;
       s = s * 2 + 1;
       MedfiltNode *nodes = new MedfiltNode[s];
 
-      medfilt_init(&data, nodes, s, y.front());
+      medfilt_init(&data, nodes, s, *start);
 
-      auto oit = std::begin(output);
-      for (const auto &v : y)
+      auto oit = baseline_start;
+      
+      for (auto it = start; it != end; ++it)
       {
         double min, mid, max;
-        medfilt(&data, v, &mid, &min, &max);
+        medfilt(&data, *it, &mid, &min, &max);
         if (mid < 0)
           *oit = max;
         else

@@ -86,13 +86,13 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-    sImage->SetBaselineCorrectionStrategy(static_cast<m2::BaselineCorrectionType>(m2::SIGNAL_MAPPINGS.at(bsc_s)));
+    sImage->SetBaselineCorrectionStrategy(static_cast<m2::BaselineCorrectionType>(m2::BASECOR_MAPPINGS.at(bsc_s)));
     sImage->SetBaseLineCorrectionHalfWindowSize(bsc_hw);
 
-    sImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(m2::SIGNAL_MAPPINGS.at(sm_s)));
+    sImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(m2::SMOOTHING_MAPPINGS.at(sm_s)));
     sImage->SetSmoothingHalfWindowSize(sm_hw);
 
-    sImage->SetNormalizationStrategy(static_cast<m2::NormalizationStrategyType>(m2::SIGNAL_MAPPINGS.at(norm)));
+    sImage->SetNormalizationStrategy(static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(norm)));
     sImage->InitializeImageAccess();
     
     sImage->SetExportMode(m2::SpectrumFormatType::ContinuousProfile);

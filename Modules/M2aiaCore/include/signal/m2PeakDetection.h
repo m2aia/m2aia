@@ -15,7 +15,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <M2aiaSignalProcessingExports.h>
+#include <M2aiaCoreExports.h>
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -23,7 +23,7 @@ See LICENSE.txt for details.
 #include <iostream>
 #include <limits>
 #include <m2MassValue.h>
-#include <m2MedianAbsoluteDeviation.h>
+#include <signal/m2MedianAbsoluteDeviation.h>
 #include <numeric>
 #include <tuple>
 #include <vector>

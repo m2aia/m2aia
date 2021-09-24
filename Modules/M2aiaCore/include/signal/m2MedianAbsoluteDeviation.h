@@ -15,7 +15,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <M2aiaSignalProcessingExports.h>
+#include <M2aiaCoreExports.h>
 #include <algorithm>
 #include <numeric>
 #include <vector>

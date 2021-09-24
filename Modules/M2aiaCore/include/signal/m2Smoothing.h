@@ -14,20 +14,19 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 #pragma once
-#include <M2aiaSignalProcessingExports.h>
-#include <deque>
-#include <vector>
-#include <m2SignalCommon.h>
+#include <M2aiaCoreExports.h>
 #include <algorithm>
+#include <deque>
 #include <functional>
+#include <mitkExceptionMacro.h>
 #include <numeric>
+#include <signal/m2SignalCommon.h>
+#include <vector>
 #include <vnl/algo/vnl_matrix_inverse.h>
 #include <vnl/vnl_matrix.h>
 
 namespace m2
 {
-
-
   namespace Signal
   {
     inline vnl_matrix<double> savitzkyGolayCoefficients(int hws, int order)
@@ -92,19 +91,25 @@ namespace m2
       return std::vector<double>(b, e);
     }
 
-    template <class T>
-    static void filter(std::vector<T> &y, std::vector<double> const &kernel, bool extend = true)
+    template <class DataIterType, class KernelIterType>
+    static void filter(
+      DataIterType start, DataIterType end, KernelIterType kernel_start, KernelIterType kernel_end, bool extend = true)
     {
-      assert((kernel.size() % 2) == 1);
-      const int hws = kernel.size() / 2;
+      using T = typename DataIterType::value_type;
+
+      const auto kernelSize = std::distance(kernel_start, kernel_end);
+      const size_t dataSize = std::distance(start, end);
+      assert((kernelSize % 2) == 1);
+      const int hws = kernelSize / 2;
+
       if (extend)
       {
-        std::deque<T> yy(y.begin(), y.end());
+        std::deque<T> yy(start, end);
         // extend border conditions
         for (int i = 0;;)
         {
-          yy.push_front(y.front());
-          yy.push_back(y.back());
+          yy.push_front(*start);
+          yy.push_back(*(end - 1));
           ++i;
           if (i == hws)
             break;
@@ -114,19 +119,19 @@ namespace m2
         auto it = yy.begin();
         for (;;)
         {
-          y[j] = std::inner_product(kernel.begin(), kernel.end(), it, T(0));
+          *(start + j) = std::inner_product(kernel_start, kernel_end, it, T(0));
           ++j;
-          if (j == y.size())
+          if (j == dataSize)
             break;
           ++it;
         }
       }
       else
       {
-        std::vector<T> yy(y.begin(), y.end());
+        std::vector<T> yy(start, end);
 
         auto it = yy.begin();
-        auto end = std::next(yy.begin(), yy.size() - hws * 2);
+        auto end = std::next(yy.begin(), yy.size() - hws);
         int j = hws;
 
         // inner product as convolution
@@ -136,7 +141,7 @@ namespace m2
 
         for (;;)
         {
-          y[j] = std::inner_product(kernel.begin(), kernel.end(), it, T(0));
+          *(start + j) = std::inner_product(kernel_start, kernel_end, it, T(0));
           ++it;
           if (it == end)
             break;
@@ -146,8 +151,8 @@ namespace m2
         //// fix left/right extrema
         for (int i = 0;;)
         {
-          y[i] = y[hws];
-          y[y.size() - 1 - i] = y[j];
+          *(start + i) = *(start + hws);
+          *(start + dataSize - 1 - i) = *(start + j);
           ++i;
           if (i == hws)
             break;
@@ -155,46 +160,57 @@ namespace m2
       }
     }
 
-    template <class ContainerValueType>
-    using SmootherFunction = std::function<void(typename std::vector<ContainerValueType> &)>;
-
-    template <class ContainerValueType>
-    inline SmootherFunction<ContainerValueType> CreateSmoother(SmoothingType strategy, int hws, bool extend = false)
+    template <class ItValueType>
+    class SmoothingFunctor
     {
-      std::vector<double> kernel;
-      switch (strategy)
-      {
-        case m2::SmoothingType::SavitzkyGolay:
-          kernel = m2::Signal::savitzkyGolayKernel(hws, 3);
-          return [kernel, extend](std::vector<ContainerValueType> &ints) -> void {
-            m2::Signal::filter(ints, kernel, extend);
-          };
+    private:
+      SmoothingType m_strategy;
+      int m_hws;
+      std::vector<double> m_kernel;
+      bool m_isKernelInitialized = false;
 
-        case m2::SmoothingType::Gaussian:
+    public:
+      void InitializeKernel()
+      {
+        switch (m_strategy)
         {
-          kernel.resize(hws * 2 + 1);
-          double sigma = hws / 4.0;
-          double sigma2 = sigma * sigma;
-          for (int x = -hws; x < hws + 1; ++x)
+          case m2::SmoothingType::SavitzkyGolay:
+            m_kernel = m2::Signal::savitzkyGolayKernel(m_hws, 3);
+            m_isKernelInitialized = true;
+            break;
+          case m2::SmoothingType::Gaussian:
           {
-            kernel[x + hws] = std::exp(-0.5 / sigma2 * x * x);
+            m_kernel.resize(m_hws * 2 + 1);
+            double sigma = m_hws / 4.0;
+            double sigma2 = sigma * sigma;
+            for (int x = -m_hws; x < m_hws + 1; ++x)
+              m_kernel[x + m_hws] = std::exp(-0.5 / sigma2 * x * x);
+            auto sum = std::accumulate(std::begin(m_kernel), std::end(m_kernel), double(0));
+            std::transform(
+              std::begin(m_kernel), std::end(m_kernel), std::begin(m_kernel), [sum](const auto &v) { return v / sum; });
+            m_isKernelInitialized = true;
           }
-          auto sum = std::accumulate(std::begin(kernel), std::end(kernel), double(0));
-          std::transform(
-            std::begin(kernel), std::end(kernel), std::begin(kernel), [sum](const auto &v) { return v / sum; });
-          return [kernel, extend](std::vector<ContainerValueType> &ints) -> void {
-            m2::Signal::filter(ints, kernel, extend);
-          };
+          case m2::SmoothingType::None:
+            break;
         }
-        break;
-        case m2::SmoothingType::None:
-          break;
-        default:
-          break;
       }
 
-      return [](std::vector<ContainerValueType> &) -> void {};
-    }
+      void Initialize(SmoothingType strategy, unsigned int hws)
+      {
+        m_strategy = strategy;
+        m_hws = hws;
+        InitializeKernel();
+      }
+
+      
+      void operator()(typename std::vector<ItValueType>::iterator start, typename std::vector<ItValueType>::iterator end)
+      {
+        if (m_isKernelInitialized)
+          m2::Signal::filter(start, end, std::begin(m_kernel), std::end(m_kernel), true);
+      }
+    };
+
+    
 
   }; // namespace Signal
 } // namespace m2

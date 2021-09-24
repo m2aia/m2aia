@@ -16,16 +16,16 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <algorithm>
 #include <boost/progress.hpp>
-#include <itksys/SystemTools.hxx>
 #include <itkImage.h>
+#include <itksys/SystemTools.hxx>
 #include <m2ImzMLSpectrumImage.h>
-#include <m2PeakDetection.h>
 #include <m2Process.hpp>
 #include <mitkCommandLineParser.h>
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
 #include <mutex>
 #include <numeric>
+#include <signal/m2PeakDetection.h>
 #include <stdlib.h>
 
 std::map<std::string, us::Any> CommandlineParsing(int argc, char *argv[]);
@@ -95,14 +95,14 @@ int main(int argc, char *argv[])
       return 1;
     }
 
-    sImage->SetBaselineCorrectionStrategy(static_cast<m2::BaselineCorrectionType>(m2::SIGNAL_MAPPINGS.at(bsc_s)));
+    sImage->SetBaselineCorrectionStrategy(static_cast<m2::BaselineCorrectionType>(m2::BASECOR_MAPPINGS.at(bsc_s)));
     sImage->SetBaseLineCorrectionHalfWindowSize(bsc_hw);
 
-    sImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(m2::SIGNAL_MAPPINGS.at(sm_s)));
+    sImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(m2::SMOOTHING_MAPPINGS.at(sm_s)));
     sImage->SetSmoothingHalfWindowSize(sm_hw);
 
-    sImage->SetNormalizationStrategy(static_cast<m2::NormalizationStrategyType>(m2::SIGNAL_MAPPINGS.at(norm)));
-    sImage->SetRangePoolingStrategy(static_cast<m2::RangePoolingStrategyType>(m2::SIGNAL_MAPPINGS.at(pool)));
+    sImage->SetNormalizationStrategy(static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(norm)));
+    sImage->SetRangePoolingStrategy(static_cast<m2::RangePoolingStrategyType>(m2::POOLING_MAPPINGS.at(pool)));
 
     sImage->InitializeImageAccess();
     sImage->SetTolerance(tol);

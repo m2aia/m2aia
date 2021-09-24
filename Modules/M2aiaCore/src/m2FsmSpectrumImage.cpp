@@ -14,24 +14,24 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 
-#include <m2Baseline.h>
 #include <m2FsmSpectrumImage.h>
-#include <m2Normalization.h>
-#include <m2PeakDetection.h>
-#include <m2Pooling.h>
 #include <m2Process.hpp>
-#include <m2RunningMedian.h>
-#include <m2Smoothing.h>
+#include <m2Timer.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
 #include <mitkLabelSetImage.h>
 #include <mitkProperties.h>
-#include <m2Timer.h>
+#include <signal/m2Baseline.h>
+#include <signal/m2Normalization.h>
+#include <signal/m2PeakDetection.h>
+#include <signal/m2Pooling.h>
+#include <signal/m2RunningMedian.h>
+#include <signal/m2Smoothing.h>
 
 void m2::FsmSpectrumImage::FsmProcessor::UpdateImagePrivate(double cmInv,
-                                                               double tol,
-                                                               const mitk::Image *mask,
-                                                               mitk::Image *destImage) const
+                                                            double tol,
+                                                            const mitk::Image *mask,
+                                                            mitk::Image *destImage)
 {
   AccessByItk(destImage, [](auto itkImg) { itkImg->FillBuffer(0); });
   using namespace m2;
@@ -66,25 +66,28 @@ void m2::FsmSpectrumImage::FsmProcessor::UpdateImagePrivate(double cmInv,
   // map all spectra to several threads for processing
   const unsigned t = p->GetNumberOfThreads();
 
-  m2::Process::Map(n, t, [&](auto /*id*/, auto a, auto b) {
-    auto &spectra = p->GetSpectra();
-    for (unsigned int i = a; i < b; ++i)
-    {
-      auto &spectrum = spectra[i];
-      auto &ys = spectrum.data;
-      auto s = std::next(std::begin(ys), subRes.first);
-      auto e = std::next(std::begin(ys), subRes.first + subRes.second);
+  m2::Process::Map(n,
+                   t,
+                   [&](auto /*id*/, auto a, auto b)
+                   {
+                     auto &spectra = p->GetSpectra();
+                     for (unsigned int i = a; i < b; ++i)
+                     {
+                       auto &spectrum = spectra[i];
+                       auto &ys = spectrum.data;
+                       auto s = std::next(std::begin(ys), subRes.first);
+                       auto e = std::next(std::begin(ys), subRes.first + subRes.second);
 
-      if (maskAccess && maskAccess->GetPixelByIndex(spectrum.index) == 0)
-      {
-        imageAccess.SetPixelByIndex(spectrum.index, 0);
-        continue;
-      }
+                       if (maskAccess && maskAccess->GetPixelByIndex(spectrum.index) == 0)
+                       {
+                         imageAccess.SetPixelByIndex(spectrum.index, 0);
+                         continue;
+                       }
 
-      const auto val = Signal::RangePooling<float>(s, e, p->GetRangePoolingStrategy());
-      imageAccess.SetPixelByIndex(spectrum.index, val);
-    }
-  });
+                       const auto val = Signal::RangePooling<float>(s, e, p->GetRangePoolingStrategy());
+                       imageAccess.SetPixelByIndex(spectrum.index, val);
+                     }
+                   });
 }
 
 void m2::FsmSpectrumImage::InitializeProcessor()
@@ -241,16 +244,18 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
   m2::Timer t("Initialize image");
 
   m2::Process::Map(
-    p->GetSpectra().size(), p->GetNumberOfThreads(), [&](unsigned int t, unsigned int a, unsigned int b) {
-      auto Smoother =
-        m2::Signal::CreateSmoother<float>(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize(), false);
+    p->GetSpectra().size(),
+    p->GetNumberOfThreads(),
+    [&](unsigned int t, unsigned int a, unsigned int b)
+    {
+      m2::Signal::SmoothingFunctor<float> Smoother;
+      Smoother.Initialize(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize());
 
-      auto BaselineSubstractor = m2::Signal::CreateSubstractBaselineConverter<float>(
-        p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
-
-      auto Normalizor = m2::Signal::CreateNormalizor<double, float>(p->GetNormalizationStrategy());
+      m2::Signal::BaselineFunctor<float> BaselineSubstractor;
+      BaselineSubstractor.Initialize(p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
       float val = 1;
+      std::vector<float> baseline;
 
       auto &spectra = p->GetSpectra();
 
@@ -284,8 +289,8 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
           // accNorm->SetPixelByIndex(spectrum.index + source.m_Offset, val); // Set normalization image pixel value
         }
 
-        Smoother(ys);
-        BaselineSubstractor(ys);
+        Smoother(std::begin(ys),std::end(ys));
+        BaselineSubstractor(std::begin(ys), std::end(ys), std::begin(baseline));
 
         std::transform(std::begin(ys), std::end(ys), sumT.at(t).begin(), sumT.at(t).begin(), plus);
         std::transform(std::begin(ys), std::end(ys), skylineT.at(t).begin(), skylineT.at(t).begin(), maximum);
@@ -293,23 +298,28 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
     });
 
   const auto &spectra = p->GetSpectra();
-  m2::Process::Map(spectra.size(), p->GetNumberOfThreads(), [&](unsigned int /*t*/, unsigned int a, unsigned int b) {
-    for (unsigned int i = a; i < b; i++)
-    {
-      const auto &spectrum = spectra[i];
+  m2::Process::Map(spectra.size(),
+                   p->GetNumberOfThreads(),
+                   [&](unsigned int /*t*/, unsigned int a, unsigned int b)
+                   {
+                     for (unsigned int i = a; i < b; i++)
+                     {
+                       const auto &spectrum = spectra[i];
 
-      accIndex->SetPixelByIndex(spectrum.index, i);
-      if (!p->GetUseExternalMask())
-        accMask->SetPixelByIndex(spectrum.index, 1);
-    }
-  });
+                       accIndex->SetPixelByIndex(spectrum.index, i);
+                       if (!p->GetUseExternalMask())
+                         accMask->SetPixelByIndex(spectrum.index, 1);
+                     }
+                   });
 
   auto &skyline = p->SkylineSpectrum();
   skyline.resize(xs.size(), 0);
   for (unsigned int t = 0; t < p->GetNumberOfThreads(); ++t)
-    std::transform(skylineT[t].begin(), skylineT[t].end(), skyline.begin(), skyline.begin(), [](auto &a, auto &b) {
-      return a > b ? a : b;
-    });
+    std::transform(skylineT[t].begin(),
+                   skylineT[t].end(),
+                   skyline.begin(),
+                   skyline.begin(),
+                   [](auto &a, auto &b) { return a > b ? a : b; });
 
   auto &mean = p->MeanSpectrum();
   auto &sum = p->SumSpectrum();
@@ -327,25 +337,6 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
     std::transform(
       sumT[t].begin(), sumT[t].end(), sum.begin(), sum.begin(), [](const auto &a, const auto &b) { return a + b; });
   std::transform(sum.begin(), sum.end(), mean.begin(), [&N](const auto &a) { return a / double(N); });
-}
-
-void m2::FsmSpectrumImage::FsmProcessor::GrabIntensityPrivate(unsigned long int index,
-                                                              std::vector<double> &ys,
-                                                              unsigned int) const
-{
-  mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> normAcc(p->GetNormalizationImage());
-
-  const auto &spectrum = p->GetSpectra()[index];
-  ys.clear();
-  std::copy(std::begin(spectrum.data), std::end(spectrum.data), std::back_inserter(ys));
-}
-
-void m2::FsmSpectrumImage::FsmProcessor::GrabMassPrivate(unsigned long int,
-                                                         std::vector<double> &mzs,
-                                                         unsigned int) const
-{
-  mzs.clear();
-  std::copy(std::begin(p->GetXAxis()), std::end(p->GetXAxis()), std::back_inserter(mzs));
 }
 
 m2::FsmSpectrumImage::~FsmSpectrumImage()

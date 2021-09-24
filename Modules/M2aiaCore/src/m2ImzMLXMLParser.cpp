@@ -578,7 +578,7 @@ void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
       };
 
       accession_map["MS:1000285"] = [&](auto line) {
-        spectra[spectrumIndexReference].normalize = std::stod(attributValue(line, "value", value));
+        spectra[spectrumIndexReference].inFileNormalizationFactor = std::stod(attributValue(line, "value", value));
       };
 
       context_map["referenceableParamGroupRef"] = [&](auto line) { attributValue(line, "ref", context); };

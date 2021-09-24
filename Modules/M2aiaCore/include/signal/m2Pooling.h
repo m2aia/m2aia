@@ -14,9 +14,9 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 #pragma once
-#include <M2aiaSignalProcessingExports.h>
-#include <m2Normalization.h>
-#include <m2SignalCommon.h>
+#include <M2aiaCoreExports.h>
+#include <signal/m2Normalization.h>
+#include <signal/m2SignalCommon.h>
 
 namespace m2
 {

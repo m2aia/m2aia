@@ -30,11 +30,11 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2CoreCommon.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2IonImageReference.h>
-#include <m2MedianAbsoluteDeviation.h>
 #include <m2MultiSliceFilter.h>
 #include <m2PcaImageFilter.h>
-#include <m2PeakDetection.h>
 #include <m2TSNEImageFilter.h>
+#include <signal/m2MedianAbsoluteDeviation.h>
+#include <signal/m2PeakDetection.h>
 
 // itk
 #include <itkExtractImageFilter.h>

@@ -13,7 +13,7 @@ A PARTICULAR PURPOSE.
 See LICENSE.txt for details.
 
 ===================================================================*/
-#include <m2PeakDetection.h>
+#include <signal/m2PeakDetection.h>
 #include <m2SpectrumImageBase.h>
 #include <mitkDataNode.h>
 #include <mitkLevelWindowProperty.h>
@@ -149,28 +149,28 @@ void m2::SpectrumImageBase::UpdateImage(double mz, double tol, const mitk::Image
   GenerateImageEnd.Send();
 }
 
-void m2::SpectrumImageBase::ReceiveIntensities(unsigned int index,
-                                               std::vector<double> &ints,
-                                               unsigned int sourceIndex) const
+void m2::SpectrumImageBase::ReceiveIntensities(unsigned int ,
+                                               std::vector<double> &,
+                                               unsigned int ) const
 {
-  m_Processor->GrabIntensityPrivate(index, ints, sourceIndex);
+  // m_Processor->GrabIntensityPrivate(index, ints, sourceIndex);
 }
 
-void m2::SpectrumImageBase::ReceivePositions(unsigned int index,
-                                             std::vector<double> &mzs,
-                                             unsigned int sourceIndex) const
+void m2::SpectrumImageBase::ReceivePositions(unsigned int ,
+                                             std::vector<double> &,
+                                             unsigned int ) const
 {
-  m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
+  // m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
 }
 
-void m2::SpectrumImageBase::ReceiveSpectrum(unsigned int index,
-                                            std::vector<double> &mzs,
-                                            std::vector<double> &ints,
-                                            unsigned int sourceIndex) const
+void m2::SpectrumImageBase::ReceiveSpectrum(unsigned int ,
+                                            std::vector<double> &,
+                                            std::vector<double> &,
+                                            unsigned int ) const
 {
   ReceiveSpectrumStart.Send();
-  m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
-  m_Processor->GrabIntensityPrivate(index, ints, sourceIndex);
+  // m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
+  // m_Processor->GrabIntensityPrivate(index, ints, sourceIndex);
   ReceiveSpectrumEnd.Send();
 }
 

@@ -17,13 +17,13 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <itksys/SystemTools.hxx>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2ImzMLXMLParser.h>
-#include <m2MedianAbsoluteDeviation.h>
-#include <m2PeakDetection.h>
+#include <m2Timer.h>
 #include <mbilog.h>
 #include <mitkCommandLineParser.h>
 #include <mitkIOUtil.h>
 #include <mitkImageCast.h>
-#include <m2Timer.h>
+#include <signal/m2MedianAbsoluteDeviation.h>
+#include <signal/m2PeakDetection.h>
 /*!
 \brief Perform N-linked glycane analysis
 */

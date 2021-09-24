@@ -17,6 +17,8 @@ See LICENSE.txt for details.
 
 #include <M2aiaCoreExports.h>
 #include <m2SpectrumImageBase.h>
+#include <signal/m2Baseline.h>
+#include <signal/m2Smoothing.h>
 
 namespace m2
 {
@@ -52,7 +54,8 @@ namespace m2
         float x, y, z;
       } world;
       // In imzML-file defined normalization constant
-      m2::NormImagePixelType normalize = -1.0;
+      m2::NormImagePixelType normalizationFactor = -1.0;
+      m2::NormImagePixelType inFileNormalizationFactor = -1.0;
       std::vector<m2::MassValue> peaks;
     };
     using SpectrumVectorType = std::vector<BinarySpectrumMetaData>;
@@ -62,19 +65,19 @@ namespace m2
      */
     struct ImzMLImageSource
     {
-      std::string m_ImzMLDataPath; 
+      std::string m_ImzMLDataPath;
       std::string m_BinaryDataPath;
       std::string m_MaskDataPath;
       std::string m_PointsDataPath;
-	  
-	  // For each spectrum in the image exists a meta data object
+
+      // For each spectrum in the image exists a meta data object
       SpectrumVectorType m_Spectra;
 
-	  // Pixel data of each image source is placed with respect to this offset
-	  // Currentlz it is used by the Combine method
+      // Pixel data of each image source is placed with respect to this offset
+      // Currentlz it is used by the Combine method
       itk::Offset<3> m_Offset = {0, 0, 0};
 
-	  // Transformations are applied if available using elastix transformix
+      // Transformations are applied if available using elastix transformix
       std::vector<std::string> m_Transformations;
     };
     using SourceListType = std::vector<ImzMLImageSource>;
@@ -88,11 +91,12 @@ namespace m2
     void InitializeGeometry() override;
     void InitializeProcessor() override;
 
-    template <class T>
-    static void binaryDataToVector(std::ifstream &f,
-                                   const unsigned long long int &offset,
-                                   const unsigned long int &length,
-                                   std::vector<T> &vec) noexcept;
+    template <class OffsetType, class LengthType, class DataType>
+    static void binaryDataToVector(std::ifstream &f, OffsetType offset, LengthType length, DataType *vec) noexcept
+    {
+      f.seekg(offset);
+      f.read((char *)vec, length * sizeof(DataType));
+    }
 
     static m2::ImzMLSpectrumImage::Pointer Combine(const m2::ImzMLSpectrumImage *A,
                                                    const m2::ImzMLSpectrumImage *B,
@@ -121,13 +125,9 @@ namespace m2
 
   public:
     explicit ImzMLImageProcessor(m2::ImzMLSpectrumImage *owner) : p(owner) {}
-    void UpdateImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) const override;
-    void GrabIntensityPrivate(unsigned long int index,
-                              std::vector<double> &ints,
-                              unsigned int sourceIndex = 0) const override;
-    void GrabMassPrivate(unsigned long int index,
-                         std::vector<double> &mzs,
-                         unsigned int sourceIndex = 0) const override;
+    void UpdateImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) override;
+
+    void GetSpectrum(unsigned long id, std::vector<MassAxisType> &xd, std::vector<IntensityType> &yd);
     void InitializeImageAccess() override;
 
     void InitializeImageAccessContinuousProfile();
@@ -136,6 +136,11 @@ namespace m2
     void InitializeImageAccessProcessedCentroid();
 
     void InitializeGeometry() override;
+
+    using XIteratorType = typename std::vector<MassAxisType>::iterator;
+    using YIteratorType = typename std::vector<IntensityType>::iterator;
+    m2::Signal::SmoothingFunctor<IntensityType> m_Smoother;
+    m2::Signal::BaselineFunctor<IntensityType> m_BaselineSubstractor;
   };
 
 } // namespace m2

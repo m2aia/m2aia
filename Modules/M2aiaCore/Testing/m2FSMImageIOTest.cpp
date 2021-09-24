@@ -16,7 +16,7 @@ See LICENSE.txt for details.
 
 #include "mitkIOUtil.h"
 #include <algorithm>
-#include <m2Normalization.h>
+#include <signal/m2Normalization.h>
 #include <m2FsmSpectrumImage.h>
 #include <m2TestingConfig.h>
 #include <mitkTestFixture.h>

@@ -15,22 +15,23 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <M2aiaSignalProcessingExports.h>
+#include <M2aiaCoreExports.h>
 #include <algorithm>
-#include <vector>
-#include <functional>
 #include <cstring>
+#include <functional>
+#include <vector>
 namespace m2
 {
   namespace Signal
   {
-    template <class T, class U>
-    void MorphologicalOperation(std::vector<T> &y, unsigned int s, std::vector<T> &output, U cmp = U()) noexcept
+    template <class IteratorType, class U>
+    void MorphologicalOperation(IteratorType start, IteratorType end, unsigned int s, IteratorType output, U cmp = U()) noexcept
     {
+      unsigned int n = std::distance(start,end);
+      using T = typename IteratorType::value_type;
       std::vector<T> f, g, h;
-      unsigned int n, fn, k, q, i, r, j, gi, hi;
+      unsigned int fn, k, q, i, r, j, gi, hi;
 
-      n = unsigned(y.size());
       q = s;
       k = 2 * q + 1;
 
@@ -39,11 +40,11 @@ namespace m2
       g.resize(fn, 0);
       h.resize(fn, 0);
 
-      T *data_y = y.data();
+      T *data_y = &(*start);
       T *data_f = f.data();
       T *data_g = g.data();
       T *data_h = h.data();
-      T *data_out = output.data();
+      T *data_out = &(*output);
 
       memcpy(data_f + q, data_y, n * sizeof(T));
       for (i = 0; i < q; ++i)
@@ -97,16 +98,16 @@ namespace m2
       }
     }
 
-    template <class T>
-    void Dilation(std::vector<T> &y, unsigned int s, std::vector<T> &output) noexcept
+    template <class IteratorType>
+    void Dilation(IteratorType start, IteratorType end, unsigned int s, IteratorType output) noexcept
     {
-      m2::Signal::MorphologicalOperation<T, std::less<>>(y, s, output);
+      m2::Signal::MorphologicalOperation<IteratorType, std::less<>>(start, end, s, output);
     }
 
-    template <class T>
-    void Erosion(std::vector<T> &y, unsigned int s, std::vector<T> &output) noexcept
+    template <class IteratorType>
+    void Erosion(IteratorType start, IteratorType end, unsigned int s, IteratorType output) noexcept
     {
-      m2::Signal::MorphologicalOperation<T, std::greater<>>(y, s, output);
+      m2::Signal::MorphologicalOperation<IteratorType, std::greater<>>(start, end, s, output);
     }
 
   }; // namespace Signal

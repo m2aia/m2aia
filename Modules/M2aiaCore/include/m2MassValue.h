@@ -14,13 +14,13 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <M2aiaSignalProcessingExports.h>
+#include <M2aiaCoreExports.h>
 #include <array>
 #include <vector>
 
 namespace m2
 {
-  class M2AIASIGNALPROCESSING_EXPORT MassValue
+  class M2AIACORE_EXPORT MassValue
   {
   public:
     MassValue() : mass(0), intensity(0), count(0) {}

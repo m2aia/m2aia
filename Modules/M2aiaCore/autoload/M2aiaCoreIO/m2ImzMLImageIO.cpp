@@ -26,16 +26,16 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLTemplate.h>
 #include <m2ImzMLXMLParser.h>
-#include <m2PeakDetection.h>
-#include <m2Pooling.h>
+#include <m2Timer.h>
 #include <mitkIOMimeTypes.h>
 #include <mitkIOUtil.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
 #include <mitkLocaleSwitch.h>
 #include <mitkProgressBar.h>
-#include <m2Timer.h>
 #include <numeric>
+#include <signal/m2PeakDetection.h>
+#include <signal/m2Pooling.h>
 #include <thread>
 
 template <class ConversionType, class ItFirst, class ItLast, class OStreamType>

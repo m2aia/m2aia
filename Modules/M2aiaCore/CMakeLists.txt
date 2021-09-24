@@ -1,7 +1,7 @@
 set(MITK_MODULE_NAME_PREFIX "")
 
 MITK_CREATE_MODULE(
-  DEPENDS MitkCore M2aiaSignalProcessing MitkMultilabel
+  DEPENDS MitkCore MitkMultilabel
   PACKAGE_DEPENDS
     PUBLIC Poco
   )
