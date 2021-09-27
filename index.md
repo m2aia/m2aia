@@ -31,7 +31,7 @@ data [https://doi.org/10.1093/gigascience/giab049](https://doi.org/10.1093/gigas
 [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324)
 
 
-Muli-modal 3D mouse brain data
+Multi-modal 3D mouse brain data
 ------------------------------
 
 Cordes J; Enzlein T; Marsching C; Hinze M; Engelhardt S; Hopf C; Wolf I (2021): Supporting data for "M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data" GigaScience Database. [http://dx.doi.org/10.5524/100909](http://dx.doi.org/10.5524/100909)
