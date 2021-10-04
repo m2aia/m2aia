@@ -64,6 +64,7 @@ namespace m2
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
     void InitializeProcessor() override;
+    void GetSpectrum(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int) const override {}
 
   private:
     SpectrumVectorType m_Spectra;
@@ -77,7 +78,6 @@ namespace m2
     class FsmProcessor;
   };
 
-  
   class FsmSpectrumImage::FsmProcessor : public m2::SpectrumImageBase::ProcessorBase
   {
   private:
@@ -86,13 +86,12 @@ namespace m2
 
   public:
     explicit FsmProcessor(m2::FsmSpectrumImage *owner) : p(owner) {}
-    void UpdateImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) override;
-    // void GrabIntensityPrivate(unsigned long int index,
-    //                           std::vector<double> &ints,
-    //                           unsigned int sourceIndex = 0) const override;
-    // void GrabMassPrivate(unsigned long int index,
-    //                      std::vector<double> &mzs,
-    //                      unsigned int sourceIndex = 0) const override;
+    void GetImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) override;
+    void GetSpectrumPrivate(unsigned int,
+                              std::vector<float> &,
+                              std::vector<float> &,
+                              unsigned int) override{}
+
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
   };

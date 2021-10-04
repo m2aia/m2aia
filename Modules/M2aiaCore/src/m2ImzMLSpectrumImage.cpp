@@ -48,8 +48,10 @@ const m2::ImzMLSpectrumImage::ImzMLImageSource &m2::ImzMLSpectrumImage::GetImzML
 }
 
 template <class MassAxisType, class IntensityType>
-void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::UpdateImagePrivate(
-  double xRangeCenter, double xRangeTol, const mitk::Image *mask, mitk::Image *destImage)
+void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::GetImagePrivate(double xRangeCenter,
+                                                                                               double xRangeTol,
+                                                                                               const mitk::Image *mask,
+                                                                                               mitk::Image *destImage)
 {
   AccessByItk(destImage, [](auto itkImg) { itkImg->FillBuffer(0); });
   using namespace m2;
@@ -193,6 +195,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::U
               continue;
             }
 
+            ints.resize(subRes.second);
             binaryDataToVector(
               f, spectrum.intOffset + subRes.first * sizeof(IntensityType), subRes.second, ints.data());
 
@@ -638,65 +641,65 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
   {
     auto &spectra = source.m_Spectra;
 
-    m2::Process::Map(source.m_Spectra.size(),
-                     p->GetNumberOfThreads(),
-                     [&](unsigned int t, unsigned int a, unsigned int b)
-                     {
-                       std::vector<IntensityType> ints(mzs.size(), 0);
-                       std::vector<IntensityType> baseline(mzs.size(), 0);
-                       std::ifstream f(source.m_BinaryDataPath, std::ifstream::binary);
+    m2::Process::Map(
+      source.m_Spectra.size(),
+      p->GetNumberOfThreads(),
+      [&](unsigned int t, unsigned int a, unsigned int b)
+      {
+        std::vector<IntensityType> ints(mzs.size(), 0);
+        std::vector<IntensityType> baseline(mzs.size(), 0);
+        std::ifstream f(source.m_BinaryDataPath, std::ifstream::binary);
 
-                       for (unsigned long int i = a; i < b; i++)
-                       {
-                         auto &spectrum = spectra[i];
+        for (unsigned long int i = a; i < b; i++)
+        {
+          auto &spectrum = spectra[i];
 
-                         // Read data from file ------------
-                         binaryDataToVector(f, spectrum.intOffset, spectrum.intLength, ints.data());
+          // Read data from file ------------
+          binaryDataToVector(f, spectrum.intOffset, spectrum.intLength, ints.data());
 
-                         if (ints.front() == 0)
-                           ints[0] = ints[1];
-                         if (ints.back() == 0)
-                           ints.back() = *(ints.rbegin() + 1);
+          if (ints.front() == 0)
+            ints[0] = ints[1];
+          if (ints.back() == 0)
+            ints.back() = *(ints.rbegin() + 1);
 
-                         // --------------------------------
+          // --------------------------------
 
-                         if (!p->GetUseExternalNormalization())
-                         {
-                           // if (normalizationStrategy == m2::NormalizationStrategyType::InFile)
-                           //   spectrum.normalize = spectrum.normalize;
-                           using namespace std;
-                           if (normalizationStrategy == m2::NormalizationStrategyType::Median)
-                             spectrum.normalizationFactor = m2::Signal::Median(begin(ints), end(ints));
-                           else if (normalizationStrategy == m2::NormalizationStrategyType::TIC)
-                             spectrum.normalizationFactor = m2::Signal::TotalIonCurrent(begin(mzs), end(mzs), begin(ints));
-                           else if (normalizationStrategy == m2::NormalizationStrategyType::Sum)
-                             spectrum.normalizationFactor = accumulate(begin(ints), end(ints), double(0.0));
-                           else if (normalizationStrategy == m2::NormalizationStrategyType::InFile)
-                              spectrum.normalizationFactor = spectrum.inFileNormalizationFactor;
-                           else
-                             spectrum.normalizationFactor = 1;
+          if (!p->GetUseExternalNormalization())
+          {
+            // if (normalizationStrategy == m2::NormalizationStrategyType::InFile)
+            //   spectrum.normalize = spectrum.normalize;
+            using namespace std;
+            if (normalizationStrategy == m2::NormalizationStrategyType::Median)
+              spectrum.normalizationFactor = m2::Signal::Median(begin(ints), end(ints));
+            else if (normalizationStrategy == m2::NormalizationStrategyType::TIC)
+              spectrum.normalizationFactor = m2::Signal::TotalIonCurrent(begin(mzs), end(mzs), begin(ints));
+            else if (normalizationStrategy == m2::NormalizationStrategyType::Sum)
+              spectrum.normalizationFactor = accumulate(begin(ints), end(ints), double(0.0));
+            else if (normalizationStrategy == m2::NormalizationStrategyType::InFile)
+              spectrum.normalizationFactor = spectrum.inFileNormalizationFactor;
+            else
+              spectrum.normalizationFactor = 1;
 
-                           accNorm->SetPixelByIndex(spectrum.index + source.m_Offset,
-                                                    spectrum.normalizationFactor); // Set normalization image pixel value
-                         }
-                         else
-                         {
-                           // Normalization-image content was set elsewhere
-                           spectrum.normalizationFactor = accNorm->GetPixelByIndex(spectrum.index + source.m_Offset);
-                         }
-                         std::transform(std::begin(ints),
-                                        std::end(ints),
-                                        std::begin(ints),
-                                        [&spectrum](const auto &a) { return a / spectrum.normalizationFactor; });
+            accNorm->SetPixelByIndex(spectrum.index + source.m_Offset,
+                                     spectrum.normalizationFactor); // Set normalization image pixel value
+          }
+          else
+          {
+            // Normalization-image content was set elsewhere
+            spectrum.normalizationFactor = accNorm->GetPixelByIndex(spectrum.index + source.m_Offset);
+          }
+          std::transform(std::begin(ints),
+                         std::end(ints),
+                         std::begin(ints),
+                         [&spectrum](const auto &a) { return a / spectrum.normalizationFactor; });
 
-                         m_Smoother(std::begin(ints), std::end(ints));
-                         m_BaselineSubstractor(std::begin(ints), std::end(ints), std::begin(baseline));
+          m_Smoother(std::begin(ints), std::end(ints));
+          m_BaselineSubstractor(std::begin(ints), std::end(ints), std::begin(baseline));
 
-                         std::transform(std::begin(ints), std::end(ints), sumT.at(t).begin(), sumT.at(t).begin(), plus);
-                         std::transform(
-                           std::begin(ints), std::end(ints), skylineT.at(t).begin(), skylineT.at(t).begin(), Maximum);
-                       }
-                     });
+          std::transform(std::begin(ints), std::end(ints), sumT.at(t).begin(), sumT.at(t).begin(), plus);
+          std::transform(std::begin(ints), std::end(ints), skylineT.at(t).begin(), skylineT.at(t).begin(), Maximum);
+        }
+      });
   }
 
   auto &skyline = p->SkylineSpectrum();
@@ -759,65 +762,66 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
   {
     const auto &spectra = source.m_Spectra;
 
-    m2::Process::Map(
-      spectra.size(),
-      p->GetNumberOfThreads(),
-      [&](unsigned int t, unsigned int a, unsigned int b)
-      {
-        std::ifstream f;
-        f.open(source.m_BinaryDataPath, std::ios::binary);
+    m2::Process::Map(spectra.size(),
+                     p->GetNumberOfThreads(),
+                     [&](unsigned int t, unsigned int a, unsigned int b)
+                     {
+                       std::ifstream f;
+                       f.open(source.m_BinaryDataPath, std::ios::binary);
 
-        std::vector<IntensityType> ints;
+                       std::vector<IntensityType> ints;
 
-        peaksT[t].resize(mzs.size());
-        auto pIt = std::begin(peaksT[t]);
-        unsigned int index = 0;
-        for (const auto &mz : mzs)
-        {
-          pIt->mass = mz;
-          (pIt++)->massAxisIndex = index++;
-        }
+                       peaksT[t].resize(mzs.size());
+                       auto pIt = std::begin(peaksT[t]);
+                       unsigned int index = 0;
+                       for (const auto &mz : mzs)
+                       {
+                         pIt->mass = mz;
+                         (pIt++)->massAxisIndex = index++;
+                       }
 
-        auto iO = spectra[0].intOffset;
-        auto iL = spectra[0].intLength;
+                       auto iO = spectra[0].intOffset;
+                       auto iL = spectra[0].intLength;
 
-        for (unsigned i = a; i < b; i++)
-        {
-          iO = spectra[i].intOffset;
-          binaryDataToVector(f, iO, iL, ints.data());
+                       for (unsigned i = a; i < b; i++)
+                       {
+                         iO = spectra[i].intOffset;
+                         binaryDataToVector(f, iO, iL, ints.data());
 
-          // double val = 1;
-          // if (p->GetNormalizationStrategy() == m2::NormalizationStrategyType::InFile)
-          // {
-          //   if (spectra[i].inFnormalizationFactor != 0)
-          //   {
-          //     val = spectra[i].normalize;
-          //     std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&val](auto &v) { return v / val; });
-          //   }
-          // }
-          // accNorm->SetPixelByIndex(spectra[i].index + source.m_Offset, val); // Set normalization image pixel value
+                         // double val = 1;
+                         // if (p->GetNormalizationStrategy() == m2::NormalizationStrategyType::InFile)
+                         // {
+                         //   if (spectra[i].inFnormalizationFactor != 0)
+                         //   {
+                         //     val = spectra[i].normalize;
+                         //     std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&val](auto &v) {
+                         //     return v / val; });
+                         //   }
+                         // }
+                         // accNorm->SetPixelByIndex(spectra[i].index + source.m_Offset, val); // Set normalization
+                         // image pixel value
 
-          auto intsIt = std::cbegin(ints);
-          auto mzsIt = std::cbegin(mzs);
-          auto pIt = std::begin(peaksT[t]);
+                         auto intsIt = std::cbegin(ints);
+                         auto mzsIt = std::cbegin(mzs);
+                         auto pIt = std::begin(peaksT[t]);
 
-          while (intsIt != std::cend(ints))
-          {
-            const auto &i = *intsIt;
-            if (i > pIt->intensity)
-            {
-              pIt->intensity = i;
-            }
-            pIt->intensitySum += i;
+                         while (intsIt != std::cend(ints))
+                         {
+                           const auto &i = *intsIt;
+                           if (i > pIt->intensity)
+                           {
+                             pIt->intensity = i;
+                           }
+                           pIt->intensitySum += i;
 
-            ++intsIt;
-            ++mzsIt;
-            ++pIt;
-          }
-        }
+                           ++intsIt;
+                           ++mzsIt;
+                           ++pIt;
+                         }
+                       }
 
-        f.close();
-      });
+                       f.close();
+                     });
 
     auto &mzAxis = p->GetXAxis();
     mzAxis.clear();
@@ -983,41 +987,76 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
   }
 }
 
+void m2::ImzMLSpectrumImage::GetSpectrum(unsigned int id,
+                                         std::vector<float> &xs,
+                                         std::vector<float> &ys,
+                                         unsigned int source) const 
+{
+  m_Processor->GetSpectrumPrivate(id, xs, ys, source);
+}
+
 template <class MassAxisType, class IntensityType>
-void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::GetSpectrum(
-  unsigned long id, std::vector<MassAxisType> &xd, std::vector<IntensityType> &yd)
+void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::GetSpectrumPrivate(
+  unsigned int id, std::vector<float> &xd, std::vector<float> &yd, unsigned int sourceId)
 {
   mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> normAcc(p->GetNormalizationImage());
 
-  const auto &source = p->m_SourcesList[0];
-  const auto &spectrum = source.m_Spectra[id];
-
-  const auto &xdLength = spectrum.mzLength;
-  const auto &xdOffset = spectrum.mzOffset;
-
-  const auto &ydLength = spectrum.intLength;
-  const auto &ydOffset = spectrum.intOffset;
-
-  xd.resize(xdLength);
-  yd.resize(ydLength);
-  decltype(yd) baseline(ydLength);
-
-  const auto importMode = p->GetImportMode();
-
+  const auto &source = p->m_SourcesList[sourceId];
   std::ifstream f;
   f.open(source.m_BinaryDataPath, std::ios::binary);
 
-  binaryDataToVector(f, xdLength, xdOffset, xd.data());
-  binaryDataToVector(f, ydLength, ydOffset, yd.data());
+  const auto importMode = p->GetImportMode();
+  const auto &spectrum = source.m_Spectra[id];
+  const auto &length = spectrum.intLength;
+  const auto &ysOffset = spectrum.intOffset;
+  
+  std::vector<IntensityType> ys;
+  ys.resize(length);
+  binaryDataToVector(f, ysOffset, length, ys.data());
 
-  if (any(importMode & (m2::SpectrumFormatType::ContinuousProfile)))
+  if (any(importMode & m2::SpectrumFormatType::ContinuousProfile | m2::SpectrumFormatType::ProcessedProfile))
   {
+    // Profile spectrum may require processing
     if (p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None)
-      std::transform(
-        std::begin(yd), std::end(yd), std::begin(yd), [&spectrum](auto &v) { return v / spectrum.normalizationFactor; });
+      std::transform(std::begin(ys),
+                     std::end(ys),
+                     std::begin(ys),
+                     [&spectrum](auto &v) { return v / spectrum.normalizationFactor; });
 
-    m_Smoother(std::begin(yd), std::end(yd));
-    m_BaselineSubstractor(std::begin(yd), std::end(yd), std::begin(baseline));
+    m_Smoother(std::begin(ys), std::end(ys));
+    decltype(ys) baseline(length);
+    m_BaselineSubstractor(std::begin(ys), std::end(ys), std::begin(baseline));
+  }
+
+  yd.resize(length);
+  xd.resize(length);
+
+  std::copy(std::begin(ys), std::end(ys), std::begin(yd));
+  
+  // continuous data -> mass axis already exist and can be used directly
+  if (any(importMode & m2::SpectrumFormatType::ContinuousCentroid | m2::SpectrumFormatType::ContinuousProfile))
+  {
+    auto &xAxis = p->GetXAxis();
+    std::copy(std::begin(xAxis), std::end(xAxis), std::begin(xd));
+  }
+  else
+  {
+    // processed data -> mass axis for individual pixels
+    const auto &xsOffset = spectrum.mzOffset;
+    if (p->GetXInputType() == m2::NumericType::Float)
+    {
+      // float must be converted to output type "double"
+      std::vector<MassAxisType> xs;
+      xs.resize(length);
+      binaryDataToVector(f, xsOffset, length, xs.data());
+      std::copy(std::begin(xs), std::end(xs), std::begin(xd));
+    }
+    else if (p->GetXInputType() == m2::NumericType::Double)
+    {
+      // copy directly
+      xd.resize(length);
+      binaryDataToVector(f, xsOffset, length, xd.data());
+    }
   }
 }
 

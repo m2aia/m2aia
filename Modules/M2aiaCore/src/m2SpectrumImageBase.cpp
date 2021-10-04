@@ -142,36 +142,9 @@ mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage()
   return nullptr;
 }
 
-void m2::SpectrumImageBase::UpdateImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
+void m2::SpectrumImageBase::GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
-  GenerateImageStart.Send();
-  m_Processor->UpdateImagePrivate(mz, tol, mask, img);
-  GenerateImageEnd.Send();
-}
-
-void m2::SpectrumImageBase::ReceiveIntensities(unsigned int ,
-                                               std::vector<double> &,
-                                               unsigned int ) const
-{
-  // m_Processor->GrabIntensityPrivate(index, ints, sourceIndex);
-}
-
-void m2::SpectrumImageBase::ReceivePositions(unsigned int ,
-                                             std::vector<double> &,
-                                             unsigned int ) const
-{
-  // m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
-}
-
-void m2::SpectrumImageBase::ReceiveSpectrum(unsigned int ,
-                                            std::vector<double> &,
-                                            std::vector<double> &,
-                                            unsigned int ) const
-{
-  ReceiveSpectrumStart.Send();
-  // m_Processor->GrabMassPrivate(index, mzs, sourceIndex);
-  // m_Processor->GrabIntensityPrivate(index, ints, sourceIndex);
-  ReceiveSpectrumEnd.Send();
+  m_Processor->GetImagePrivate(mz, tol, mask, img);  
 }
 
 m2::SpectrumImageBase::~SpectrumImageBase() {}

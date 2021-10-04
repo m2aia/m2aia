@@ -28,7 +28,7 @@ See LICENSE.txt for details.
 #include <signal/m2RunningMedian.h>
 #include <signal/m2Smoothing.h>
 
-void m2::FsmSpectrumImage::FsmProcessor::UpdateImagePrivate(double cmInv,
+void m2::FsmSpectrumImage::FsmProcessor::GetImagePrivate(double cmInv,
                                                             double tol,
                                                             const mitk::Image *mask,
                                                             mitk::Image *destImage)

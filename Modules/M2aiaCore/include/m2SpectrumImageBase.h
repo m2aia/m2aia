@@ -157,13 +157,7 @@ namespace m2
     SpectrumArtifactVectorType &GetXAxis();
     const SpectrumArtifactVectorType &GetXAxis() const;
 
-    void ReceiveIntensities(unsigned int index, std::vector<double> &ints, unsigned int sourceIndex = 0) const override;
-    void ReceivePositions(unsigned int index, std::vector<double> &mzs, unsigned int sourceIndex = 0) const override;
-    void ReceiveSpectrum(unsigned int index,
-                         std::vector<double> &mzs,
-                         std::vector<double> &ints,
-                         unsigned int sourceIndex = 0) const override;
-    void UpdateImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
+    void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
     void InsertImageArtifact(const std::string & key, mitk::Image * img);
 
     template <class T>
@@ -282,7 +276,8 @@ inline const T m2::SpectrumImageBase::GetPropertyValue(const std::string &key) c
 class m2::SpectrumImageBase::ProcessorBase
 {
 public:
-  virtual void UpdateImagePrivate(double mz, double tol, const Image *mask, Image *image) = 0;
+  virtual void GetImagePrivate(double mz, double tol, const Image *mask, Image *image) = 0;
+  virtual void GetSpectrumPrivate(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int source = 0) = 0;
   virtual void InitializeImageAccess() = 0;
   virtual void InitializeGeometry() = 0;
   virtual ~ProcessorBase() = default;

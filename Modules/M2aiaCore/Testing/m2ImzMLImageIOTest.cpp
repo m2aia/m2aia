@@ -81,8 +81,8 @@ public:
     imzMLImage->InitializeImageAccess();
     CPPUNIT_ASSERT_ASSERTION_PASS(CPPUNIT_ASSERT(imzMLImage != nullptr));
 
-    std::vector<double> ints;
-    imzMLImage->ReceiveIntensities(0, ints);
+    std::vector<float> ints, mzs;
+    imzMLImage->GetSpectrum(0, mzs, ints);
     WriteVector(ints, "lipid_spectrum0.data");
     auto reference = ReadDoubleVector("lipid_spectrum0.data");
 

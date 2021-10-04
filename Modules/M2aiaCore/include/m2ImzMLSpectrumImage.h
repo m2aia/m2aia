@@ -90,6 +90,7 @@ namespace m2
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
     void InitializeProcessor() override;
+    void GetSpectrum(unsigned int id, std::vector<float> & xs, std::vector<float> & ys, unsigned int source = 0) const override;
 
     template <class OffsetType, class LengthType, class DataType>
     static void binaryDataToVector(std::ifstream &f, OffsetType offset, LengthType length, DataType *vec) noexcept
@@ -125,11 +126,10 @@ namespace m2
 
   public:
     explicit ImzMLImageProcessor(m2::ImzMLSpectrumImage *owner) : p(owner) {}
-    void UpdateImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) override;
+    void GetImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) override;
+    void GetSpectrumPrivate(unsigned int id, std::vector<float> &xd, std::vector<float> &yd, unsigned int source) override;
 
-    void GetSpectrum(unsigned long id, std::vector<MassAxisType> &xd, std::vector<IntensityType> &yd);
     void InitializeImageAccess() override;
-
     void InitializeImageAccessContinuousProfile();
     void InitializeImageAccessProcessedProfile() {}
     void InitializeImageAccessContinuousCentroid();

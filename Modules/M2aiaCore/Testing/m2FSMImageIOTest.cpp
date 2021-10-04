@@ -81,8 +81,8 @@ public:
     fsmImage->InitializeImageAccess();
     CPPUNIT_ASSERT_ASSERTION_PASS(CPPUNIT_ASSERT(fsmImage != nullptr));
 
-    std::vector<double> ints;
-    fsmImage->ReceiveIntensities(0, ints);
+    std::vector<float> ints, mzs;
+    fsmImage->GetSpectrum(0, mzs, ints, 0);
     //WriteVector(ints, "FSMSpectrum.data");
     auto reference = ReadDoubleVector("FSMSpectrum.data");
 

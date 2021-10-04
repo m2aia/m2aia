@@ -158,14 +158,14 @@ void m2Spectrum::CreateLevelData(const mitk::DataNode *node)
     const std::vector<double> scales = {1.0, 2.0, 4.0, 8.0, 16.0};
 
     const auto &artifacts = image->GetSpectraArtifacts();
-    std::function<void(QVector<QPointF> & s, QPointF && p)> PushBackFormat = [](auto &s, auto &&p) -> void {
-      s.push_back(p);
-    };
+    std::function<void(QVector<QPointF> & s, QPointF && p)> PushBackFormat = [](auto &s, auto &&p) -> void
+    { s.push_back(p); };
     if (auto imzMLImage = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
     {
       if (imzMLImage->GetImportMode() == m2::SpectrumFormatType::ContinuousCentroid)
       {
-        PushBackFormat = [](auto &s, auto &&p) -> void {
+        PushBackFormat = [](auto &s, auto &&p) -> void
+        {
           s.push_back({p.x(), -0.3});
           s.push_back(p);
           s.push_back({p.x(), -0.3});
@@ -231,7 +231,8 @@ void m2Spectrum::CreatePeakData(const mitk::DataNode *node)
     // determine level of details
     const auto &mzs = image->GetXAxis();
     const auto &artifacts = image->GetSpectraArtifacts();
-    std::function<void(QVector<QPointF> & s, QPointF && p)> PushBackFormat = [](auto &s, auto &&p) -> void {
+    std::function<void(QVector<QPointF> & s, QPointF && p)> PushBackFormat = [](auto &s, auto &&p) -> void
+    {
       s.push_back({p.x(), -0.3});
       s.push_back(p);
       s.push_back({p.x(), -0.3});
@@ -464,7 +465,7 @@ void m2Spectrum::UpdateSeriesMinMaxValues()
 
   for (auto &kv : m_LineTypeLevelData)
   {
-    const auto & ppp = kv.second[m_CurrentOverviewSpectrumType].front();
+    const auto &ppp = kv.second[m_CurrentOverviewSpectrumType].front();
     auto m = std::max_element(ppp.begin(), ppp.end(), [](auto largest, auto p) { return p.y() > largest.y(); });
     if (m->y() > m_CurrentMaxIntensity)
       m_CurrentMaxIntensity = m->y();
@@ -541,49 +542,65 @@ void m2Spectrum::CreateQchartViewMenu()
   m_SpectrumSelectionGroup->addAction(m_SpectrumSum);
   m_SpectrumSelectionGroup->addAction(m_SpectrumMean);
 
-  connect(m_SpectrumSkyline, &QAction::toggled, this, [&](bool v) {
-    if (v)
-    {
-      m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Maximum;
-      for (auto &kv : m_LineSeries)
-        UpdateLineSeriesWindow(kv.first);
-      for (auto &kv : m_ScatterSeries)
-        OnUpdateScatterSeries(kv.first);
-      m_yAxis->setRange(0, std::numeric_limits<qreal>::max());
-    }
-  });
-  connect(m_SpectrumSum, &QAction::toggled, this, [&](bool v) {
-    if (v)
-    {
-      m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Sum;
-      for (auto &kv : m_LineSeries)
-        UpdateLineSeriesWindow(kv.first);
-      for (auto &kv : m_ScatterSeries)
-        OnUpdateScatterSeries(kv.first);
-      m_yAxis->setRange(0, std::numeric_limits<qreal>::max());
-    }
-  });
-  connect(m_SpectrumMean, &QAction::toggled, this, [&](bool v) {
-    if (v)
-    {
-      m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Mean;
-      for (auto &kv : m_LineSeries)
-        UpdateLineSeriesWindow(kv.first);
-      for (auto &kv : m_ScatterSeries)
-        OnUpdateScatterSeries(kv.first);
-      m_yAxis->setRange(0, std::numeric_limits<qreal>::max());
-    }
-  });
+  connect(m_SpectrumSkyline,
+          &QAction::toggled,
+          this,
+          [&](bool v)
+          {
+            if (v)
+            {
+              m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Maximum;
+              for (auto &kv : m_LineSeries)
+                UpdateLineSeriesWindow(kv.first);
+              for (auto &kv : m_ScatterSeries)
+                OnUpdateScatterSeries(kv.first);
+              m_yAxis->setRange(0, std::numeric_limits<qreal>::max());
+            }
+          });
+  connect(m_SpectrumSum,
+          &QAction::toggled,
+          this,
+          [&](bool v)
+          {
+            if (v)
+            {
+              m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Sum;
+              for (auto &kv : m_LineSeries)
+                UpdateLineSeriesWindow(kv.first);
+              for (auto &kv : m_ScatterSeries)
+                OnUpdateScatterSeries(kv.first);
+              m_yAxis->setRange(0, std::numeric_limits<qreal>::max());
+            }
+          });
+  connect(m_SpectrumMean,
+          &QAction::toggled,
+          this,
+          [&](bool v)
+          {
+            if (v)
+            {
+              m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Mean;
+              for (auto &kv : m_LineSeries)
+                UpdateLineSeriesWindow(kv.first);
+              for (auto &kv : m_ScatterSeries)
+                OnUpdateScatterSeries(kv.first);
+              m_yAxis->setRange(0, std::numeric_limits<qreal>::max());
+            }
+          });
 
   m_Menu->addAction(m_ShowLegend);
   m_Menu->addAction(m_ShowAxesTitles);
 
-  connect(m_ShowAxesTitles, &QAction::toggled, this, [this](bool s) {
-    if (m_yAxis)
-      m_yAxis->setTitleVisible(s);
-    if (m_xAxis)
-      m_xAxis->setTitleVisible(s);
-  });
+  connect(m_ShowAxesTitles,
+          &QAction::toggled,
+          this,
+          [this](bool s)
+          {
+            if (m_yAxis)
+              m_yAxis->setTitleVisible(s);
+            if (m_xAxis)
+              m_xAxis->setTitleVisible(s);
+          });
 
   m_ShowAxesTitles->setChecked(false);
 
@@ -632,28 +649,32 @@ void m2Spectrum::CreateQchartViewMenu()
   m_Menu->addAction(wActionY);
 
   m_Controls.chartView->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(m_Controls.chartView, &QtCharts::QChartView::customContextMenuRequested, this, [&](const QPoint &pos) {
-    m_FocusMenu->clear();
-    for (auto &kv : this->m_LineSeries)
-    {
-      auto action = new QAction(m_FocusMenu);
-      m_FocusMenu->addAction(action);
-      action->setText(kv.first->GetName().c_str());
-      auto node = kv.first;
-      connect(action, &QAction::triggered, this, [node, this]() { OnSerieFocused(node); });
-    }
+  connect(m_Controls.chartView,
+          &QtCharts::QChartView::customContextMenuRequested,
+          this,
+          [&](const QPoint &pos)
+          {
+            m_FocusMenu->clear();
+            for (auto &kv : this->m_LineSeries)
+            {
+              auto action = new QAction(m_FocusMenu);
+              m_FocusMenu->addAction(action);
+              action->setText(kv.first->GetName().c_str());
+              auto node = kv.first;
+              connect(action, &QAction::triggered, this, [node, this]() { OnSerieFocused(node); });
+            }
 
-    for (auto &kv : this->m_PeakSeries)
-    {
-      auto action = new QAction(m_FocusMenu);
-      m_FocusMenu->addAction(action);
-      action->setText(kv.first->GetName().c_str());
-      auto node = kv.first;
-      connect(action, &QAction::triggered, this, [node, this]() { OnSerieFocused(node); });
-    }
+            for (auto &kv : this->m_PeakSeries)
+            {
+              auto action = new QAction(m_FocusMenu);
+              m_FocusMenu->addAction(action);
+              action->setText(kv.first->GetName().c_str());
+              auto node = kv.first;
+              connect(action, &QAction::triggered, this, [node, this]() { OnSerieFocused(node); });
+            }
 
-    m_Menu->exec(m_Controls.chartView->viewport()->mapToGlobal(pos));
-  });
+            m_Menu->exec(m_Controls.chartView->viewport()->mapToGlobal(pos));
+          });
 }
 
 void m2Spectrum::CreateQChartView()
@@ -692,9 +713,10 @@ void m2Spectrum::OnSerieFocused(const mitk::DataNode *node)
     {
       const auto points = m_LineTypeLevelData[node][m_CurrentOverviewSpectrumType].front();
 
-      const auto max = std::max_element(std::begin(points), std::end(points), [](const auto &a, const auto &b) {
-                         return a.y() < b.y();
-                       })->y();
+      const auto max =
+        std::max_element(
+          std::begin(points), std::end(points), [](const auto &a, const auto &b) { return a.y() < b.y(); })
+          ->y();
       if (m_yAxis)
         m_yAxis->setRange(0, 1.1 * max);
       if (m_xAxis)
@@ -704,9 +726,10 @@ void m2Spectrum::OnSerieFocused(const mitk::DataNode *node)
     {
       const auto points = m_PeakSeries[node]->pointsVector();
 
-      const auto max = std::max_element(std::begin(points), std::end(points), [](const auto &a, const auto &b) {
-                         return a.y() < b.y();
-                       })->y();
+      const auto max =
+        std::max_element(
+          std::begin(points), std::end(points), [](const auto &a, const auto &b) { return a.y() < b.y(); })
+          ->y();
       if (m_yAxis)
         m_yAxis->setRange(0, 1.1 * max);
       if (m_xAxis)
@@ -872,9 +895,12 @@ void m2Spectrum::OnUpdateScatterSeries(const mitk::DataNode *node)
   const auto &data = m_LineTypeLevelData[node][m_CurrentOverviewSpectrumType][0];
 
   QVector<QPointF> qPeaks;
-  std::transform(std::begin(peaks), std::end(peaks), std::back_inserter(qPeaks), [&data](const auto &a) -> QPointF {
-    return {a.mass, data[a.massAxisIndex].y()};
-  });
+  std::transform(std::begin(peaks),
+                 std::end(peaks),
+                 std::back_inserter(qPeaks),
+                 [&data](const auto &a) -> QPointF {
+                   return {a.mass, data[a.massAxisIndex].y()};
+                 });
 
   m_ScatterSeries[node]->clear();
   m_ScatterSeries[node]->replace(qPeaks);

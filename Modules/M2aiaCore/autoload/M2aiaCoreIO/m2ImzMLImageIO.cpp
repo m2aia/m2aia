@@ -144,8 +144,8 @@ namespace m2
     const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
 
     MITK_INFO << "ImzMLImageSource list size " << sourceList.size();
-    std::vector<double> mzs;
-    std::vector<double> ints;
+    std::vector<float> mzs;
+    std::vector<float> ints;
 
     // Output file stream for ibd
     std::ofstream b(GetIBDOutputPath(), std::ofstream::binary | std::ofstream::app);
@@ -159,7 +159,7 @@ namespace m2
     {
       auto &source = sourceList.front();
       // write mass axis
-      input->ReceivePositions(0, mzs, sourceId);
+      input->GetSpectrum(0, mzs, ints, sourceId);
 
       source.m_Spectra[0].mzOffset = 16;
       source.m_Spectra[0].mzLength = mzs.size();
@@ -190,7 +190,7 @@ namespace m2
 
         // write ints
         {
-          input->ReceiveIntensities(id, ints, sourceId);
+          input->GetSpectrum(id, mzs, ints, sourceId);
 
           s.intOffset = offset;
           s.intLength = ints.size();
@@ -221,8 +221,8 @@ namespace m2
     if (massIndicesMask.empty())
       mitkThrow() << "No mass mask indices provided!";
 
-    std::vector<double> mzs, mzsMasked;
-    std::vector<double> ints, intsMasked;
+    std::vector<float> mzs, mzsMasked;
+    std::vector<float> ints, intsMasked;
 
     // Output file stream for ibd
     std::ofstream b(GetIBDOutputPath(), std::ofstream::binary | std::ofstream::app);
@@ -235,7 +235,7 @@ namespace m2
     {
       auto &source = sourceList.front();
       // write mass axis
-      input->ReceivePositions(0, mzs, sourceId);
+      input->GetSpectrum(0, mzs, ints, sourceId);
       for (auto i : massIndicesMask)
       {
         mzsMasked.push_back(mzs[i.massAxisIndex]);
@@ -262,7 +262,7 @@ namespace m2
 
     for (auto &source : sourceList)
     {
-      for (size_t id = 0 ; id < source.m_Spectra.size(); ++id)
+      for (size_t id = 0; id < source.m_Spectra.size(); ++id)
       {
         auto &s = source.m_Spectra[id];
         // update mz axis info
@@ -271,7 +271,7 @@ namespace m2
 
         // write ints
         {
-          input->ReceiveSpectrum(id, mzs, ints, sourceId);
+          input->GetSpectrum(id, mzs, ints, sourceId);
 
           for (auto p : massIndicesMask)
           {
@@ -338,7 +338,7 @@ namespace m2
     // write mzs
     {
       using namespace std;
-      vector<double> xs, ys, mzs, ints;
+      vector<float> xs, ys, mzs, ints;
 
       // std::vector<unsigned int> xs_index;
       unsigned int sourceId = 0;
@@ -358,7 +358,7 @@ namespace m2
           xs.clear();
           ys.clear();
 
-          input->ReceiveSpectrum(spectrumId, mzs, ints, sourceId);
+          input->GetSpectrum(spectrumId, mzs, ints, sourceId);
 
           for (const auto &p : peaks)
           {
@@ -663,11 +663,10 @@ namespace m2
       object->InitializeGeometry();
     }
     {
-       m2::Timer t("Load external data");
+      m2::Timer t("Load external data");
       EvaluateSpectrumFormatType(object);
       LoadAssociatedData(object);
     }
-
 
     return {object.GetPointer()};
   }

@@ -853,12 +853,12 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
           auto geom = data->GetGeometry()->Clone();
           auto image = mitk::Image::New();
           image->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), *geom);
-          data->UpdateImage(xRangeCenter, xRangeTol, maskImage, image);
+          data->GetImage(xRangeCenter, xRangeTol, maskImage, image);
           return image;
         }
         else
         {
-          data->UpdateImage(xRangeCenter, xRangeTol, maskImage, data);
+          data->GetImage(xRangeCenter, xRangeTol, maskImage, data);
           mitk::Image::Pointer imagePtr = data.GetPointer();
           return imagePtr;
         }

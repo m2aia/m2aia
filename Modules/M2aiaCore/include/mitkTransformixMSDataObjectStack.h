@@ -78,7 +78,8 @@ namespace m2
     // Inherited via IMSImageDataAccess
     // virtual void ReceiveSpectrum(unsigned int index, std::vector<double> &mzs, std::vector<double> &ints) const
     // override;
-    virtual void UpdateImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
+    virtual void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
+    virtual void GetSpectrum(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int) const override{}
   };
 
 } // namespace m2

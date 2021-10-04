@@ -254,7 +254,7 @@ void m2PeakPickingView::OnStartPCA()
       bufferedImages.push_back(mitk::Image::New());
       bufferedImages.back()->Initialize(imageBase);
 
-      imageBase->UpdateImage(peakList[row].mass,
+      imageBase->GetImage(peakList[row].mass,
                              imageBase->ApplyTolerance(peakList[row].mass),
                              imageBase->GetMaskImage(),
                              bufferedImages.back());
@@ -364,7 +364,8 @@ void m2PeakPickingView::OnStartTSNE()
       filter->Update();
 
       auto outputNode = mitk::DataNode::New();
-      auto data = m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(ResampleVectorImage(filter->GetOutput(), imageBase));
+      auto data =
+        m2::MultiSliceFilter::ConvertMitkVectorImageToRGB(ResampleVectorImage(filter->GetOutput(), imageBase));
       outputNode->SetData(data);
       outputNode->SetName("tSNE");
       this->GetDataStorage()->Add(outputNode, node.GetPointer());

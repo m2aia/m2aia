@@ -327,7 +327,7 @@ namespace m2
                                        3);
   }
 
-  void TransformixMSDataObjectStack::UpdateImage(double mz,
+  void TransformixMSDataObjectStack::GetImage(double mz,
                                                        double tol,
                                                        const mitk::Image * /*mask*/,
                                                        mitk::Image *img) const
@@ -336,7 +336,7 @@ namespace m2
     {
       auto current = m_MSDataObjectReferences[i].front();
       auto transformations = m_MSDataObjectTransformations[i].front();
-      current->UpdateImage(mz, tol, current->GetMaskImage(), current);
+      current->GetImage(mz, tol, current->GetMaskImage(), current);
 
       auto warped = Transform(current, transformations, [this](auto trafo) {
         ReplaceParameter(trafo, "ResultImagePixelType", "\"double\"");
