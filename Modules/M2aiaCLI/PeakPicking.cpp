@@ -126,10 +126,11 @@ int main(int argc, char *argv[])
                          threads,
                          [&](const auto /*tId*/, const auto s, const auto e)
                          {
-                           std::vector<double> yValues(xValues.size());
+                           std::vector<float> yValues(xValues.size());
+                           std::vector<float> xValues(xValues.size());
                            for (unsigned int spectrumId = s; spectrumId < e; ++spectrumId)
                            {
-                             imzMLImage->ReceiveIntensities(spectrumId, yValues, sourceId);
+                             imzMLImage->GetSpectrum(spectrumId, xValues, yValues, sourceId);
                              source.m_Spectra[spectrumId].peaks =
                                m2::Signal::PickPeaks(xValues, yValues, SNR, peakpicking_hw, binning_tol, monoisotopick);
                              ++show_progress;

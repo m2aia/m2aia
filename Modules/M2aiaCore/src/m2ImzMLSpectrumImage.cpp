@@ -200,12 +200,13 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::G
               f, spectrum.intOffset + subRes.first * sizeof(IntensityType), subRes.second, ints.data());
 
             // TODO: Is it useful to normalize centroid data?
-            // if (_NormalizationStrategy)
-            // {
-            //   IntensityType norm = normAccess.GetPixelByIndex(spectrum.index + source.m_Offset);
-            //   std::transform(std::begin(ints), std::end(ints), std::begin(ints), [&norm](auto &v) { return v / norm;
-            //   });
-            // }
+            if (p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None)
+            {
+              std::transform(std::begin(ints),
+                             std::end(ints),
+                             std::begin(ints),
+                             [&](auto &v) { return v / spectrum.normalizationFactor; });
+            }
 
             auto val =
               Signal::RangePooling<IntensityType>(std::begin(ints), std::end(ints), p->GetRangePoolingStrategy());
@@ -594,8 +595,8 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
             accMask->SetPixelByIndex(spectrum.index + source.m_Offset, 1);
 
           // If it is a processed file, normalization maps are set to 1 - assuming that spectra were already processed
-          if (any(importMode & (m2::SpectrumFormatType::ProcessedCentroid | m2::SpectrumFormatType::ProcessedProfile)))
-            accNorm->SetPixelByIndex(spectrum.index + source.m_Offset, 1);
+          // if (any(importMode & (m2::SpectrumFormatType::ProcessedCentroid | m2::SpectrumFormatType::ProcessedProfile)))
+          //   accNorm->SetPixelByIndex(spectrum.index + source.m_Offset, 1);
         }
       });
   }
@@ -866,9 +867,9 @@ template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::InitializeImageAccessProcessedCentroid()
 {
   std::vector<std::list<m2::MassValue>> peaksT(p->GetNumberOfThreads());
-  for (const auto &source : p->GetImzMLSpectrumImageSourceList())
+  for (auto &source : p->GetImzMLSpectrumImageSourceList())
   {
-    const auto &spectra = source.m_Spectra;
+    auto &spectra = source.m_Spectra;
     const auto &T = p->GetNumberOfThreads();
     const auto &binsN = p->GetNumberOfBins();
     std::vector<double> xMin(T, std::numeric_limits<double>::max()), xMax(T, 0);
@@ -883,6 +884,9 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
     double max = 1;
     double min = 0;
     double binSize = 1;
+    const auto normalizationStrategy = p->GetNormalizationStrategy();
+    auto accNorm =
+      std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
 
     // MAP
     m2::Process::Map(spectra.size(),
@@ -920,15 +924,44 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 
                        for (unsigned i = a; i < b; i++)
                        {
-                         const auto &mzO = spectra[i].mzOffset;
-                         const auto &mzL = spectra[i].mzLength;
+                         auto &spectrum = spectra[i];
+                         const auto &mzO = spectrum.mzOffset;
+                         const auto &mzL = spectrum.mzLength;
                          mzs.resize(mzL);
                          binaryDataToVector(f, mzO, mzL, mzs.data());
 
-                         const auto &intO = spectra[i].intOffset;
-                         const auto &intL = spectra[i].intLength;
+                         const auto &intO = spectrum.intOffset;
+                         const auto &intL = spectrum.intLength;
                          ints.resize(intL);
                          binaryDataToVector(f, intO, intL, ints.data());
+
+                         // if (!p->GetUseExternalNormalization())
+                         // {
+                         // if (normalizationStrategy == m2::NormalizationStrategyType::InFile)
+                         //   spectrum.normalize = spectrum.normalize;
+                         using namespace std;
+                         if (normalizationStrategy == m2::NormalizationStrategyType::InFile)
+                         {
+                           spectrum.normalizationFactor = spectrum.inFileNormalizationFactor;
+                         }
+                         else
+                           spectrum.normalizationFactor = 1;
+
+                         accNorm->SetPixelByIndex(spectrum.index,
+                                                  spectrum.normalizationFactor);                          // }
+                         // else
+                         // {
+                         //   // Normalization-image content was set elsewhere
+                         //   spectrum.normalizationFactor = accNorm->GetPixelByIndex(spectrum.index + source.m_Offset);
+                         // }
+
+                         if (normalizationStrategy != m2::NormalizationStrategyType::None)
+                         {
+                           std::transform(std::begin(ints),
+                                          std::end(ints),
+                                          std::begin(ints),
+                                          [&](auto &v) { return v / spectrum.normalizationFactor; });
+                         }
 
                          for (unsigned int k = 0; k < mzs.size(); ++k)
                          {
@@ -990,7 +1023,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 void m2::ImzMLSpectrumImage::GetSpectrum(unsigned int id,
                                          std::vector<float> &xs,
                                          std::vector<float> &ys,
-                                         unsigned int source) const 
+                                         unsigned int source) const
 {
   m_Processor->GetSpectrumPrivate(id, xs, ys, source);
 }
@@ -1009,7 +1042,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::G
   const auto &spectrum = source.m_Spectra[id];
   const auto &length = spectrum.intLength;
   const auto &ysOffset = spectrum.intOffset;
-  
+
   std::vector<IntensityType> ys;
   ys.resize(length);
   binaryDataToVector(f, ysOffset, length, ys.data());
@@ -1032,7 +1065,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::G
   xd.resize(length);
 
   std::copy(std::begin(ys), std::end(ys), std::begin(yd));
-  
+
   // continuous data -> mass axis already exist and can be used directly
   if (any(importMode & m2::SpectrumFormatType::ContinuousCentroid | m2::SpectrumFormatType::ContinuousProfile))
   {
