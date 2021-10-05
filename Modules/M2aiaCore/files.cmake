@@ -25,18 +25,14 @@ set(H_FILES
 set(CPP_FILES
   m2IonImageReference.cpp
   m2SpectrumImageBase.cpp
-  m2CoreObjectFactory.cpp
-  m2MassValue.cpp
+  m2CoreObjectFactory.cpp  
   m2ElxUtil.cpp
   m2ElxRegistrationHelper.cpp
-  
-  mitkTransformixMSDataObjectStack.cpp
-
   m2ImzMLXMLParser.cpp
   m2ImzMLSpectrumImage.cpp
-
   m2FsmSpectrumImage.cpp
 
+  mitkTransformixMSDataObjectStack.cpp
   mitkImage3DSliceToImage2DFilter.cpp
   mitkImage2DToImage3DSliceFilter.cpp
   m2SubdivideImage2DFilter.cpp

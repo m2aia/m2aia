@@ -164,7 +164,7 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
         m = imageBase->GetXAxis();
 
         auto mad = m2::Signal::mad(s);
-        std::vector<m2::MassValue> peaks;
+        std::vector<m2::Peak> peaks;
         m2::Signal::localMaxima(std::begin(s),
                                 std::end(s),
                                 std::begin(m),
@@ -191,7 +191,7 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
 
         for (auto &p : peaks)
         {
-          outputvec[p.massAxisIndex] = 0.0005;
+          outputvec[p.xIndex] = 0.0005;
           peakList.push_back(p);
 
           // m_Controls.tableWidget->setItem()
@@ -221,7 +221,7 @@ void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int idx)
     m_Controls.tableWidget->blockSignals(true);
     for (auto &p : peaks)
     {
-      auto item = new QTableWidgetItem(std::to_string(p.mass).c_str());
+      auto item = new QTableWidgetItem(std::to_string(p.xValue).c_str());
       item->setCheckState(Qt::CheckState::Unchecked);
       m_Controls.tableWidget->setItem(row++, 0, item);
     }
@@ -254,8 +254,8 @@ void m2PeakPickingView::OnStartPCA()
       bufferedImages.push_back(mitk::Image::New());
       bufferedImages.back()->Initialize(imageBase);
 
-      imageBase->GetImage(peakList[row].mass,
-                             imageBase->ApplyTolerance(peakList[row].mass),
+      imageBase->GetImage(peakList[row].xValue,
+                             imageBase->ApplyTolerance(peakList[row].xValue),
                              imageBase->GetMaskImage(),
                              bufferedImages.back());
       filter->SetInput(inputIdx, bufferedImages.back());

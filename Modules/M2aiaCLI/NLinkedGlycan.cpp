@@ -45,8 +45,8 @@ int main(int /*argc*/, char *argv[])
   {
     MITK_ERROR << "Fail to load images.";
   }
-  std::map<mitk::BaseData *, std::vector<m2::MassValue>> imagePeaks;
-  std::map<mitk::BaseData *, std::vector<m2::MassValue>> pixelPeaks;
+  std::map<mitk::BaseData *, std::vector<m2::Peak>> imagePeaks;
+  std::map<mitk::BaseData *, std::vector<m2::Peak>> pixelPeaks;
   for (auto I : {imagePNG1, imagePNG2, imageControl})
   {
     m2::ImzMLXMLParser::SlowReadMetaData(I);
@@ -65,7 +65,7 @@ int main(int /*argc*/, char *argv[])
     // peak picking on overview spectrum
     auto &overviewSpectrum = I->MeanSpectrum();
     auto SNR = m2::Signal::mad(overviewSpectrum);
-    std::vector<m2::MassValue> peaks;
+    std::vector<m2::Peak> peaks;
     m2::Signal::localMaxima(std::begin(overviewSpectrum),
                            std::end(overviewSpectrum),
                            std::begin(I->GetXAxis()),
@@ -73,9 +73,9 @@ int main(int /*argc*/, char *argv[])
                            10,
                            SNR * 5.5);
 
-    std::vector<m2::MassValue> filteredPeaks;
+    std::vector<m2::Peak> filteredPeaks;
     std::copy_if(std::begin(peaks), std::end(peaks), std::back_inserter(filteredPeaks), [](const auto &p) {
-      return (p.mass > 900 && p.mass < 3000);
+      return (p.xValue > 900 && p.xValue < 3000);
     });
 
     imagePeaks[I.GetPointer()] = m2::Signal::monoisotopic(peaks, {3, 4, 5, 6, 7, 8, 9, 10}, 0.40);
@@ -83,7 +83,7 @@ int main(int /*argc*/, char *argv[])
               << imagePeaks[I.GetPointer()].size();
   }
 
-  std::vector<m2::MassValue> unionPeaks, binPeaks;
+  std::vector<m2::Peak> unionPeaks, binPeaks;
   for (const auto &kv : imagePeaks)
     unionPeaks.insert(std::end(unionPeaks), std::begin(kv.second), std::end(kv.second));
   std::sort(std::begin(unionPeaks), std::end(unionPeaks));

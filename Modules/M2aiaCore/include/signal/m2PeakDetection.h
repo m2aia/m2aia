@@ -22,7 +22,7 @@ See LICENSE.txt for details.
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <m2MassValue.h>
+#include <m2Peak.h>
 #include <signal/m2MedianAbsoluteDeviation.h>
 #include <numeric>
 #include <tuple>
@@ -68,9 +68,9 @@ namespace m2
         return;
 
       unsigned int size = 0;
-      auto meanMZ = std::accumulate(s, e, double(0), [&size](auto &a, MassValue &b) {
+      auto meanMZ = std::accumulate(s, e, double(0), [&size](auto &a, Peak &b) {
         ++size;
-        return a + b.mass;
+        return a + b.xValue;
       });
       meanMZ /= double(size);
 
@@ -78,7 +78,7 @@ namespace m2
       InIterType i = s;
       while (i != e)
       {
-        if (std::abs(i->mass - meanMZ) >= ((meanMZ * tolerance) * (!absoluteDistance) + (absoluteDistance * tolerance)))
+        if (std::abs(i->xValue - meanMZ) >= ((meanMZ * tolerance) * (!absoluteDistance) + (absoluteDistance * tolerance)))
         {
           dirty = true;
           break;
@@ -96,9 +96,9 @@ namespace m2
           double max = 0; // max distance of mz neighbors is split position
           while (s1 != e)
           {
-            if (s1->mass - s0->mass > max)
+            if (s1->xValue - s0->xValue > max)
             {
-              max = s1->mass - s0->mass;
+              max = s1->xValue - s0->xValue;
               pivot = s1;
             }
             ++s1;
@@ -116,17 +116,17 @@ namespace m2
         double maxIntensityPeak = 0;
         unsigned int indexPeak = 0;
 
-        std::for_each(s, e, [&maxIntensityPeak, &countPeak, &indexPeak](const MassValue &p) {
-          if (p.intensity > maxIntensityPeak)
+        std::for_each(s, e, [&maxIntensityPeak, &countPeak, &indexPeak](const Peak &p) {
+          if (p.yValue > maxIntensityPeak)
           {
-            maxIntensityPeak = p.intensity;
-            indexPeak = p.massAxisIndex;
+            maxIntensityPeak = p.yValue;
+            indexPeak = p.xIndex;
           }
 
           countPeak += p.count;
         });
 
-        (*output) = MassValue(meanMZ, maxIntensityPeak, countPeak, indexPeak);
+        (*output) = Peak(meanMZ, maxIntensityPeak, countPeak, indexPeak);
         ++output;
       }
     };
@@ -158,10 +158,10 @@ namespace m2
           max = upper;
 
         if (max == mid && *max > threshold) // maximum is located at mid of the sliding window
-          (*peaksOutFirst) = MassValue{(double)(*mzsInFirst), (double)(*max), 1, index};
+          (*peaksOutFirst) = Peak{(double)(*mzsInFirst), (double)(*max), 1, index};
         else if (fillWithZeros)
         {
-          (*peaksOutFirst) = MassValue{(double)(*mzsInFirst), 0.0, 0, index};
+          (*peaksOutFirst) = Peak{(double)(*mzsInFirst), 0.0, 0, index};
         }
 
         if (std::distance(lower, upper) == (2 * windowSize) /*Number of hops from lower to upper*/
@@ -343,7 +343,7 @@ namespace m2
     }
 
     //  Model isotopic distribution by poisson distribution.
-    inline std::vector<std::vector<unsigned int>> monoisotopicPattern(const std::vector<MassValue> &x,
+    inline std::vector<std::vector<unsigned int>> monoisotopicPattern(const std::vector<Peak> &x,
                                                                       double minCor = 0.95,
                                                                       double tolerance = 1e-4,
                                                                       double distance = 1.00235,
@@ -353,7 +353,7 @@ namespace m2
       {
         std::vector<double> mzs;
         for (const auto &p : x)
-          mzs.push_back(p.mass);
+          mzs.push_back(p.xValue);
 
         auto pc = pseudoCluster(mzs, size, distance, tolerance);
         if (pc.empty())
@@ -366,12 +366,12 @@ namespace m2
           double sum = 0;
           for (const auto &i : p)
           {
-            u.push_back(x[i].intensity);
-            sum += x[i].intensity;
+            u.push_back(x[i].yValue);
+            sum += x[i].yValue;
           }
           std::transform(std::begin(u), std::end(u), std::begin(u), [&sum](const auto &v) { return v / sum; });
           ypc.emplace_back(u);
-          xpc.push_back(x[p[0]].mass);
+          xpc.push_back(x[p[0]].xValue);
         }
         std::vector<unsigned int> isotopes;
         unsigned int n = 0;
@@ -393,7 +393,7 @@ namespace m2
 
     // Loop through multiple .monoisotopicPattern outputs and remove duplicated
     // peaks.
-    inline std::vector<MassValue> monoisotopic(const std::vector<MassValue> &peaks,
+    inline std::vector<Peak> monoisotopic(const std::vector<Peak> &peaks,
                                                std::vector<unsigned int> size = {3, 4, 5, 6, 7, 8, 9, 10},
                                                double minCor = 0.95,
                                                double tolerance = 1e-4,
@@ -409,7 +409,7 @@ namespace m2
 
       std::sort(std::begin(patterns), std::end(patterns), [](const auto &a, const auto &b) { return a < b; });
       auto result = moveVectorsWithUniqueElementsOnly(patterns);
-      std::vector<MassValue> resultPeaks;
+      std::vector<Peak> resultPeaks;
       for (const auto &r : result)
       {
         resultPeaks.emplace_back(peaks[r[0]]);
@@ -418,14 +418,14 @@ namespace m2
     }
 
     template <class MzsContainer, class IntsContainer>
-    inline std::vector<MassValue> PickPeaks(const MzsContainer &mzs,
+    inline std::vector<Peak> PickPeaks(const MzsContainer &mzs,
                                             const IntsContainer &ints,
                                             double SNR = 10,
                                             unsigned int halfWindowSize = 20,
                                             double binningTolInPpm = 50.0,
                                             bool pickMonoisotopic = false)
     {
-      std::vector<m2::MassValue> peaks, binPeaks;
+      std::vector<m2::Peak> peaks, binPeaks;
 
       auto noise = m2::Signal::mad(ints);
 

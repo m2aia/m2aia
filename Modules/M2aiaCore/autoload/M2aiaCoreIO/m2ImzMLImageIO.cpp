@@ -238,7 +238,7 @@ namespace m2
       input->GetSpectrum(0, mzs, ints, sourceId);
       for (auto i : massIndicesMask)
       {
-        mzsMasked.push_back(mzs[i.massAxisIndex]);
+        mzsMasked.push_back(mzs[i.xIndex]);
       }
       mzs = mzsMasked;
 
@@ -275,7 +275,7 @@ namespace m2
 
           for (auto p : massIndicesMask)
           {
-            auto i = p.massAxisIndex;
+            auto i = p.xIndex;
             double val = 0;
             if (input->GetTolerance() == 0)
             {
@@ -362,15 +362,15 @@ namespace m2
 
           for (const auto &p : peaks)
           {
-            xs.push_back(p.mass);
+            xs.push_back(p.xValue);
             if (input->GetTolerance() == 0)
             {
-              ys.push_back(p.intensity);
+              ys.push_back(p.yValue);
             }
             else
             {
-              const auto tol = input->GetTolerance() * 10e-6 * mzs[p.massAxisIndex];
-              const auto subRes = m2::Signal::Subrange(mzs, mzs[p.massAxisIndex] - tol, mzs[p.massAxisIndex] + tol);
+              const auto tol = input->GetTolerance() * 10e-6 * mzs[p.xIndex];
+              const auto subRes = m2::Signal::Subrange(mzs, mzs[p.xIndex] - tol, mzs[p.xIndex] + tol);
               const auto s = next(begin(ints), subRes.first);
               const auto e = next(s, subRes.second);
 

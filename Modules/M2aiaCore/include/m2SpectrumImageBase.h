@@ -19,7 +19,7 @@ See LICENSE.txt for details.
 #include <m2CoreCommon.h>
 #include <m2ISpectrumDataAccess.h>
 #include <m2IonImageReference.h>
-#include <m2MassValue.h>
+#include <m2Peak.h>
 #include <signal/m2SignalCommon.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
@@ -53,11 +53,10 @@ namespace m2
     using SpectrumArtifactVectorType = std::vector<SpectrumArtifactDataType>;
     using SpectrumArtifactMapType = std::map<m2::OverviewSpectrumType, SpectrumArtifactVectorType>;
     using IonImageReferenceVectorType = std::vector<IonImageReference::Pointer>;
-    using PeaksVectorType = std::vector<m2::MassValue>;
+    using PeaksVectorType = std::vector<m2::Peak>;
     using TransformParameterVectorType = std::vector<std::string>;
 
     mitkClassMacro(SpectrumImageBase, mitk::Image);
-    // itkNewMacro(Self);
 
     itkSetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
     itkGetEnumMacro(NormalizationStrategy, NormalizationStrategyType);

@@ -12,4 +12,4 @@ A PARTICULAR PURPOSE.
 See LICENSE.txt for details.
 
 ===================================================================*/
-#include <m2MassValue.h>
+#include <m2Peak.h>

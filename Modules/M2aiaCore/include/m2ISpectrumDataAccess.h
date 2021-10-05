@@ -15,7 +15,6 @@ See LICENSE.txt for details.
 #pragma once
 
 #include <M2aiaCoreExports.h>
-#include <mitkMessage.h>
 #include <vector>
 
 namespace mitk
@@ -25,11 +24,6 @@ namespace mitk
 
 namespace m2
 {
-  /**
-   *
-   *
-   */
-
   class M2AIACORE_EXPORT ISpectrumDataAccess
   {
   public:

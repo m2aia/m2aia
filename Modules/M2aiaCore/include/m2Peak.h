@@ -20,23 +20,23 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  class M2AIACORE_EXPORT MassValue
+  class M2AIACORE_EXPORT Peak
   {
   public:
-    MassValue() : mass(0), intensity(0), count(0) {}
-    MassValue(double m, double i, unsigned int c, unsigned int oIdx)
-      : mass(m), intensity(i), count(c), massAxisIndex(oIdx)
+    Peak() : xValue(0), yValue(0), count(0) {}
+    Peak(double m, double i, unsigned int c, unsigned int oIdx)
+      : xValue(m), yValue(i), count(c), xIndex(oIdx)
     {
     }
-    // PeakType(PeakType &&) = default;
-    double mass = 0;
-    double intensity = 0;
-    double intensityMax = 0;
-    double intensitySum = 0;
+
+    double xValue = 0;
+    double yValue = 0;
+    double yValueMax = 0;
+    double yValueSum = 0;
     unsigned int count = 0;
-    unsigned int massAxisIndex = 0;
-    friend bool operator<(const MassValue &lhs, const MassValue &rhs) { return lhs.mass < rhs.mass; }
-    friend bool operator==(const MassValue &lhs, const MassValue &rhs) { return lhs.mass == rhs.mass; }
+    unsigned int xIndex = 0;
+    friend bool operator<(const Peak &lhs, const Peak &rhs) { return lhs.xValue < rhs.xValue; }
+    friend bool operator==(const Peak &lhs, const Peak &rhs) { return lhs.xValue == rhs.xValue; }
     // PeakType& operator=(PeakType &&lhs) = default;
   };
 

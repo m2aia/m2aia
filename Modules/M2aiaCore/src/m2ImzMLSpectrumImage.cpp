@@ -418,7 +418,7 @@ m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLS
                  });
 
   C->InitializeGeometry();
-  std::set<m2::MassValue> set;
+  std::set<m2::Peak> set;
   set.insert(std::begin(A->GetPeaks()), std::end(A->GetPeaks()));
   set.insert(std::begin(B->GetPeaks()), std::end(B->GetPeaks()));
 
@@ -757,7 +757,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
   skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(mzs.size(), 0));
   sumT.resize(p->GetNumberOfThreads(), std::vector<double>(mzs.size(), 0));
 
-  std::vector<std::vector<m2::MassValue>> peaksT(p->GetNumberOfThreads());
+  std::vector<std::vector<m2::Peak>> peaksT(p->GetNumberOfThreads());
 
   for (const auto &source : p->GetImzMLSpectrumImageSourceList())
   {
@@ -777,8 +777,8 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
                        unsigned int index = 0;
                        for (const auto &mz : mzs)
                        {
-                         pIt->mass = mz;
-                         (pIt++)->massAxisIndex = index++;
+                         pIt->xValue = mz;
+                         (pIt++)->xIndex = index++;
                        }
 
                        auto iO = spectra[0].intOffset;
@@ -809,11 +809,11 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
                          while (intsIt != std::cend(ints))
                          {
                            const auto &i = *intsIt;
-                           if (i > pIt->intensity)
+                           if (i > pIt->yValue)
                            {
-                             pIt->intensity = i;
+                             pIt->yValue = i;
                            }
-                           pIt->intensitySum += i;
+                           pIt->yValueSum += i;
 
                            ++intsIt;
                            ++mzsIt;
@@ -846,13 +846,13 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
     for (auto &peaks : peaksT)
     {
       const auto tol = p->GetBinningTolerance();
-      std::vector<m2::MassValue> binPeaks;
+      std::vector<m2::Peak> binPeaks;
       m2::Signal::binPeaks(std::begin(peaks), std::end(peaks), std::back_inserter(binPeaks), tol * 10e-6);
 
       for (const auto &peak : binPeaks)
       {
-        const auto &idx = peak.massAxisIndex;
-        skyline[idx] = std::max(skyline[idx], peak.intensity);
+        const auto &idx = peak.xIndex;
+        skyline[idx] = std::max(skyline[idx], peak.yValue);
       }
     }
 
@@ -866,7 +866,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::InitializeImageAccessProcessedCentroid()
 {
-  std::vector<std::list<m2::MassValue>> peaksT(p->GetNumberOfThreads());
+  std::vector<std::list<m2::Peak>> peaksT(p->GetNumberOfThreads());
   for (auto &source : p->GetImzMLSpectrumImageSourceList())
   {
     auto &spectra = source.m_Spectra;
@@ -898,7 +898,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
                        std::vector<MassAxisType> mzs;
                        std::vector<IntensityType> ints;
 
-                       std::list<m2::MassValue> peaks, tempList;
+                       std::list<m2::Peak> peaks, tempList;
                        // find x min/max
                        for (unsigned i = a; i < b; i++)
                        {
