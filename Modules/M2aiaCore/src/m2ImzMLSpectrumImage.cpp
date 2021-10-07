@@ -423,16 +423,6 @@ m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLS
   set.insert(std::begin(B->GetPeaks()), std::end(B->GetPeaks()));
 
   C->GetPeaks().insert(std::end(C->GetPeaks()), std::begin(set), std::end(set));
-
-  // for (auto &s : C->GetImzMLSpectrumImageSourceList())
-  //{
-  //  MITK_INFO << static_cast<unsigned>(s.ImportMode);
-  //  MITK_INFO << s.m_BinaryDataPath;
-  //  MITK_INFO << s.m_ImzMLDataPath;
-  //  MITK_INFO << s.m_Offset;
-  //  MITK_INFO << s.m_Spectra.size();
-  //}
-
   return C;
 }
 
@@ -935,33 +925,21 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
                          ints.resize(intL);
                          binaryDataToVector(f, intO, intL, ints.data());
 
-                         // if (!p->GetUseExternalNormalization())
-                         // {
-                         // if (normalizationStrategy == m2::NormalizationStrategyType::InFile)
-                         //   spectrum.normalize = spectrum.normalize;
-                         using namespace std;
                          if (normalizationStrategy == m2::NormalizationStrategyType::InFile)
-                         {
                            spectrum.normalizationFactor = spectrum.inFileNormalizationFactor;
-                         }
                          else
                            spectrum.normalizationFactor = 1;
 
                          accNorm->SetPixelByIndex(spectrum.index,
-                                                  spectrum.normalizationFactor);                          // }
-                         // else
-                         // {
-                         //   // Normalization-image content was set elsewhere
-                         //   spectrum.normalizationFactor = accNorm->GetPixelByIndex(spectrum.index + source.m_Offset);
-                         // }
+                                                  spectrum.normalizationFactor);
+
 
                          if (normalizationStrategy != m2::NormalizationStrategyType::None)
-                         {
                            std::transform(std::begin(ints),
                                           std::end(ints),
                                           std::begin(ints),
                                           [&](auto &v) { return v / spectrum.normalizationFactor; });
-                         }
+
 
                          for (unsigned int k = 0; k < mzs.size(); ++k)
                          {

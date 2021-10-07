@@ -160,18 +160,17 @@ void m2Spectrum::CreateLevelData(const mitk::DataNode *node)
     const auto &artifacts = image->GetSpectraArtifacts();
     std::function<void(QVector<QPointF> & s, QPointF && p)> PushBackFormat = [](auto &s, auto &&p) -> void
     { s.push_back(p); };
-    if (auto imzMLImage = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
+
+    if (any(image->GetImportMode() &
+            (m2::SpectrumFormatType::ContinuousCentroid | m2::SpectrumFormatType::ProcessedCentroid)))
     {
-      if (imzMLImage->GetImportMode() == m2::SpectrumFormatType::ContinuousCentroid)
+      PushBackFormat = [](auto &s, auto &&p) -> void
       {
-        PushBackFormat = [](auto &s, auto &&p) -> void
-        {
-          s.push_back({p.x(), -0.3});
-          s.push_back(p);
-          s.push_back({p.x(), -0.3});
-        };
+        s.push_back({p.x(), -0.3});
+        s.push_back(p);
+        s.push_back({p.x(), -0.3});
+      };
       }
-    }
 
     for (const auto &kv : artifacts)
     {
@@ -262,15 +261,13 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
 {
   if (!node)
     return;
-  if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  if (auto baseImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     auto chart = m_Controls.chartView->chart();
     bool isCentroidSpectrum = false;
-    if (auto imzMLImage = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
-    {
-      isCentroidSpectrum |= imzMLImage->GetImportMode() == m2::SpectrumFormatType::ContinuousCentroid;
-      isCentroidSpectrum |= imzMLImage->GetImportMode() == m2::SpectrumFormatType::ProcessedCentroid;
-    }
+
+    isCentroidSpectrum = any(baseImage->GetImportMode() &
+                             (m2::SpectrumFormatType::ContinuousCentroid | m2::SpectrumFormatType::ProcessedCentroid));
 
     const unsigned numSeries = m_LineSeries.size() + m_ScatterSeries.size() + m_PeakSeries.size();
 

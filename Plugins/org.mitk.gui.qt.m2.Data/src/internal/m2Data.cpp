@@ -143,32 +143,6 @@ void m2Data::CreateQtPartControl(QWidget *parent)
             }
           });
 
-  /* connect(m_Controls.btnUpdate, &QAbstractButton::clicked, [this] {
-     auto nodes = this->AllNodes();
-     for (auto node : *nodes)
-     {
-       if (m2::ImzMLSpectrumImage::Pointer imzml = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
-       {
-         auto childs = this->GetDataStorage()->GetDerivations(node, nullptr, true);
-         for (auto child : *childs)
-           this->GetDataStorage()->Remove(child);
-         this->GetDataStorage()->Remove(node);
-
-         imzml->GetImageArtifacts().clear();
-         imzml->GetSpectraArtifacts().clear();
-         imzml->SetImageGeometryInitialized(false);
-         imzml->InitializeGeometry();
-
-         imzml->SetImageAccessInitialized(false);
-
-         auto newNode = mitk::DataNode::New();
-         newNode->SetData(imzml);
-         newNode->SetName(node->GetName());
-         this->GetDataStorage()->Add(newNode);
-       }
-     }
-   });*/
-
   connect(m_Controls.applyTiling, &QPushButton::clicked, this, &m2Data::OnApplyTiling);
   connect(m_Controls.resetTiling, &QPushButton::clicked, this, &m2Data::OnResetTiling);
 
@@ -747,7 +721,10 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
       if (!data->IsInitialized())
         mitkThrow() << "Trying to grab an ion image but data access was not initialized properly!";
 
-      if (xRangeCenter > data->GetXAxis().back() || xRangeCenter < data->GetXAxis().front())
+      auto xMin = data->GetPropertyValue<double>("x_min");
+      auto xMax = data->GetPropertyValue<double>("x_max");
+
+      if (xRangeCenter > xMax || xRangeCenter < xMin)
         continue;
 
       mitk::Image::Pointer maskImage;
@@ -952,21 +929,19 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
   {
     OpenSlideImageNodeAdded(node);
   }
-  else if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  else if (auto data = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-    if (dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
-      ImzMLImageNodeAdded(node);
-    else if (dynamic_cast<m2::FsmSpectrumImage *>(node->GetData()))
-      FsmImageNodeAdded(node);
+//    if (dynamic_cast<m2::ImzMLSpectrumImage *>(data))
+//      ImzMLImageNodeAdded(node);
+//    else if (dynamic_cast<m2::FsmSpectrumImage *>(data))
+//      FsmImageNodeAdded(node);
+
+    this->ApplySettingsToImage(data);
+    data->InitializeImageAccess();
+    this->RequestRenderWindowUpdate();
 
     SpectrumImageNodeAdded(node);
-    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-    {
-      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-      {
-        controller->SetViewToCaudal();
-      }
-    }
+    emit m2::CommunicationService::Instance()->SpectrumImageNodeAdded(node);
   }
 }
 
@@ -981,19 +956,19 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
     {
       try
       {
-      auto data = dialog->GetData();
+        auto data = dialog->GetData();
         // auto preview = dialog->GetPreviwData();
         // mitk::DataNode::Pointer parent = nullptr;
         // if (preview)
         // {
-          // parent = mitk::DataNode::New();
-          // parent->SetName(
-          //   itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName()));
-          // parent->SetData(dialog->GetPreviwData());
-          // this->GetDataStorage()->Add(parent);
+        // parent = mitk::DataNode::New();
+        // parent->SetName(
+        //   itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName()));
+        // parent->SetData(dialog->GetPreviwData());
+        // this->GetDataStorage()->Add(parent);
         // }
-      if (data.size() == 1)
-      {
+        if (data.size() == 1)
+        {
           auto filter = m2::SubdivideImage2DFilter::New();
           filter->SetInput(data.back());
           filter->SetTileHeight((unsigned int)(1) << 13);
@@ -1007,25 +982,25 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
           unsigned int k = 0;
           for (auto I : filter->GetOutputs())
           {
-        auto node = mitk::DataNode::New();
+            auto node = mitk::DataNode::New();
             node->SetData(I);
             node->SetName("tile_" + std::to_string(k));
-        this->GetDataStorage()->Add(node);
+            this->GetDataStorage()->Add(node);
             ++k;
           }
-      }
-      else
-      {
-        unsigned int i = 0;
-        for (auto &I : data)
+        }
+        else
         {
-          auto node = mitk::DataNode::New();
-          node->SetData(I);
-          node->SetName(
+          unsigned int i = 0;
+          for (auto &I : data)
+          {
+            auto node = mitk::DataNode::New();
+            node->SetData(I);
+            node->SetName(
               itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName()) +
               "_" + std::to_string(i++));
-          this->GetDataStorage()->Add(node);
-        }
+            this->GetDataStorage()->Add(node);
+          }
         }
       }
       catch (std::exception &e)
@@ -1039,29 +1014,14 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
   }
 }
 
-void m2Data::ImzMLImageNodeAdded(const mitk::DataNode *node)
+void m2Data::ImzMLImageNodeAdded(const mitk::DataNode *)
 {
-  if (auto image = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
-  {
-    if (!image->GetImageAccessInitialized())
-    {
-      this->ApplySettingsToImage(image);
-      image->InitializeImageAccess();
-      this->RequestRenderWindowUpdate();
-      emit m2::CommunicationService::Instance()->SpectrumImageNodeAdded(node);
-    }
-  }
+ //
 }
 
-void m2Data::FsmImageNodeAdded(const mitk::DataNode *node)
+void m2Data::FsmImageNodeAdded(const mitk::DataNode *)
 {
-  if (auto image = dynamic_cast<m2::FsmSpectrumImage *>(node->GetData()))
-  {
-    this->ApplySettingsToImage(image);
-    image->InitializeImageAccess();
-    this->RequestRenderWindowUpdate();
-    emit m2::CommunicationService::Instance()->SpectrumImageNodeAdded(node);
-  }
+//
 }
 
 void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
@@ -1075,51 +1035,51 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   lw.SetToMaxWindowSize();
   const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
 
-  if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
-  {
-    // and add as child node
-    if (spectrumImage->GetImageArtifacts().find("references") != std::end(spectrumImage->GetImageArtifacts()))
-    {
-      auto helperNode = mitk::DataNode::New();
-      helperNode->SetName(node->GetName());
-      helperNode->SetVisibility(false);
-      helperNode->SetData(spectrumImage->GetImageArtifacts()["references"]);
-      helperNode->SetFloatProperty("point 2D size",
-                                   spectrumImage->GetGeometry()->GetSpacing()[0] * 3);              // x spacing
-      helperNode->SetFloatProperty("pointsize", spectrumImage->GetGeometry()->GetSpacing()[0] * 3); // x spacing
-      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-    }
+//  if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+//  {
+//    // and add as child node
+//    if (spectrumImage->GetImageArtifacts().find("references") != std::end(spectrumImage->GetImageArtifacts()))
+//    {
+//      auto helperNode = mitk::DataNode::New();
+//      helperNode->SetName(node->GetName());
+//      helperNode->SetVisibility(false);
+//      helperNode->SetData(spectrumImage->GetImageArtifacts()["references"]);
+//      helperNode->SetFloatProperty("point 2D size",
+//                                   spectrumImage->GetGeometry()->GetSpacing()[0] * 3);              // x spacing
+//      helperNode->SetFloatProperty("pointsize", spectrumImage->GetGeometry()->GetSpacing()[0] * 3); // x spacing
+//      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+//    }
 
     // -------------- add Mask to datastorage --------------
-    {
-      auto helperNode = mitk::DataNode::New();
-      helperNode->SetName(node->GetName() + "_mask");
-      helperNode->SetVisibility(true);
-      helperNode->SetData(spectrumImage->GetMaskImage());
+    //   if(spectrumImage->GetMaskImage()){
+    //     auto helperNode = mitk::DataNode::New();
+    //     helperNode->SetName(node->GetName() + "_mask");
+    //     helperNode->SetVisibility(true);
+    //     helperNode->SetData(spectrumImage->GetMaskImage());
 
-      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-    }
+    //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    //   }
 
-    // -------------- add Index to datastorage --------------
-    {
-      auto helperNode = mitk::DataNode::New();
-      helperNode->SetName(node->GetName() + "_index");
-      helperNode->SetVisibility(false);
-      helperNode->SetData(spectrumImage->GetIndexImage());
+    //   // -------------- add Index to datastorage --------------
+    //   if(spectrumImage->GetIndexImage()){
+    //     auto helperNode = mitk::DataNode::New();
+    //     helperNode->SetName(node->GetName() + "_index");
+    //     helperNode->SetVisibility(false);
+    //     helperNode->SetData(spectrumImage->GetIndexImage());
 
-      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-    }
+    //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    //   }
 
-    // -------------- add Normalization to datastorage --------------
-    {
-      auto helperNode = mitk::DataNode::New();
-      helperNode->SetName(node->GetName() + "_normalization");
-      helperNode->SetVisibility(false);
-      helperNode->SetData(spectrumImage->GetNormalizationImage());
+    //   // -------------- add Normalization to datastorage --------------
+    //   if(spectrumImage->GetNormalizationImage()){
+    //     auto helperNode = mitk::DataNode::New();
+    //     helperNode->SetName(node->GetName() + "_normalization");
+    //     helperNode->SetVisibility(false);
+    //     helperNode->SetData(spectrumImage->GetNormalizationImage());
 
-      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-    }
-  }
+    //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    //   }
+//  }
 }
 
 void m2Data::NodeRemoved(const mitk::DataNode *node)

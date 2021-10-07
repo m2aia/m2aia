@@ -16,6 +16,7 @@ See LICENSE.txt for details.
 
 #include <M2aiaCoreExports.h>
 #include <itkMetaDataObject.h>
+#include <m2ElxRegistrationHelper.h>
 #include <m2CoreCommon.h>
 #include <m2ISpectrumDataAccess.h>
 #include <m2IonImageReference.h>
@@ -121,10 +122,6 @@ namespace m2
     itkGetMacro(IonImageReferenceVector, IonImageReferenceVectorType &);
     itkGetConstReferenceMacro(IonImageReferenceVector, IonImageReferenceVectorType);
 
-    itkGetMacro(Transformations, TransformParameterVectorType &);
-    itkGetConstReferenceMacro(Transformations, TransformParameterVectorType);
-    void SetTransformations(const TransformParameterVectorType &v) { m_Transformations = v; }
-
     itkGetObjectMacro(CurrentIonImageReference, IonImageReference);
     itkGetConstObjectMacro(CurrentIonImageReference, IonImageReference);
     itkSetObjectMacro(CurrentIonImageReference, IonImageReference);
@@ -170,7 +167,11 @@ namespace m2
 
     inline void SaveModeOn() const { this->m_InSaveMode = true; }
     inline void SaveModeOff() const { this->m_InSaveMode = false; }
-    double ApplyTolerance(double);
+    double ApplyTolerance(double xValue);
+
+    void SetElxRegistrationHelper(const std::shared_ptr<m2::ElxRegistrationHelper> & d){
+      m_ElxRegistrationHelper = d;
+    }
 
   protected:
     bool mutable m_InSaveMode = false;
@@ -183,9 +184,7 @@ namespace m2
     bool m_UseExternalNormalization = false;
     bool m_UseToleranceInPPM = false;
 
-    // if UseTransformationsOn()
-    bool m_UseTransformations = true;
-    TransformParameterVectorType m_Transformations;
+    std::shared_ptr<m2::ElxRegistrationHelper> m_ElxRegistrationHelper;   
 
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;

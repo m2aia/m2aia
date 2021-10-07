@@ -28,9 +28,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryISelectionListener.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageBase.h>
+#include <m2SpectrumImageStack.h>
 #include <mitkImage.h>
 #include <mitkPointSet.h>
-#include <mitkTransformixMSDataObjectStack.h>
 #include <qfuturewatcher.h>
 #include <qlistwidget.h>
 #include <qprocess.h>
@@ -55,52 +55,25 @@ public:
 protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
   virtual void SetFocus() override {}
+  
 
-  struct DataTuple
-  {
-    mitk::Image::Pointer image, mask;
-    // mitk::PointSet::Pointer points;
-  };
+struct DataTuple
+{
+  mitk::Image::Pointer image, mask;
+  mitk::PointSet::Pointer points;
+};
 
-  struct DataTupleWarpingResult
-  {
-    std::vector<std::string> m_transformations;
-    std::vector<DataTuple> m_images;
+Ui::m2Reconstruction3DControls m_Controls;
+std::shared_ptr<QProcess> m_Process;
 
-    DataTupleWarpingResult(std::vector<std::string> &t, std::vector<DataTuple> &i) : m_transformations(t), m_images(i)
-    {
-    }
+QListWidget *m_List1, *m_List2;
 
-    const std::vector<std::string> &transformations() { return m_transformations; }
-    const std::vector<DataTuple> &images() { return m_images; }
-  };
-
-  void WarpPoints(mitk::Image *ionImage, mitk::PointSet *inPoints, std::vector<std::string> transformations);
-
-  std::shared_ptr<DataTupleWarpingResult> WarpImage(const DataTuple &fixed,
-                                                    const DataTuple &moving,
-                                                    bool useNormalization = false,
-                                                    bool useInvertIntensities = false,
-                                                    bool omitDeformable = false);
-  static void ExportSlice(mitk::Image *input,
-                          const std::string &directory,
-                          const std::string &name,
-                          bool useNormalization,
-                          bool useInvertIntensities);
-
-  Ui::m2Reconstruction3DControls m_Controls;
-  QString GetTransformixPath() const;
-  QString GetElastixPath() const;
-  std::shared_ptr<QProcess> m_Process;
-
-  QListWidget *m_list1, *m_list2;
-
-  std::map<unsigned int, DataTuple> m_referenceMap;
+std::map<unsigned int, DataTuple> m_referenceMap;
 
 public slots:
-  void OnUpdateList();
-  void OnCancelRegistration();
-  void OnStartStacking();
-};
+void OnUpdateList();
+void OnStartStacking();
+}
+;
 
 #endif // m2Reconstruction3D_h

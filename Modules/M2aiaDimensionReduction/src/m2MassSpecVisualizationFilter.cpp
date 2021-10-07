@@ -75,7 +75,7 @@ void m2::MassSpecVisualizationFilter::initializeItkImage(itk::Image<RGBPixel, 3>
   }
 }
 
-itk::VectorImage<double, 3>::Pointer m2::MassSpecVisualizationFilter::initializeItkVectorImage(unsigned int components)
+itk::VectorImage<m2::DisplayImagePixelType, 3>::Pointer m2::MassSpecVisualizationFilter::initializeItkVectorImage(unsigned int components)
 {
   auto vectorImage = itk::VectorImage<PixelType, 3>::New();
   vectorImage->SetVectorLength(components);

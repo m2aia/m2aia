@@ -7,7 +7,7 @@
 
 m2::ElxRegistrationHelper::~ElxRegistrationHelper() {}
 
-bool m2::ElxRegistrationHelper::CheckDimensions(const mitk::Image *image)
+bool m2::ElxRegistrationHelper::CheckDimensions(const mitk::Image *image) const
 {
   const auto dims = image->GetDimension();
   // const auto sizeZ = image->GetDimensions()[2];
@@ -15,7 +15,7 @@ bool m2::ElxRegistrationHelper::CheckDimensions(const mitk::Image *image)
   return dims == 3 || dims == 2;
 }
 
-mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image *image)
+mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image *image) const
 {
   if (image)
   {
@@ -45,7 +45,7 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image
   mitkThrow() << "Image data is null!";
 }
 
-mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice3DData(const mitk::Image *image)
+mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice3DData(const mitk::Image *image) const
 {
   if (image)
   {
@@ -99,8 +99,8 @@ void m2::ElxRegistrationHelper::SetMaskData(mitk::Image *fixed, mitk::Image *mov
     return;
   }
 
-  m_FixedMask = GetSlice2DData(fixed);
-  m_MovingMask = GetSlice2DData(moving);
+  m_FixedMask = fixed;
+  m_MovingMask = moving;
 
   // if images were already set, check if geometries fit
   if (m_FixedImage && m_MovingImage)
@@ -129,8 +129,8 @@ void m2::ElxRegistrationHelper::SetImageData(mitk::Image *fixed, mitk::Image *mo
                 << m2::ElxUtil::GetShape(moving) << "]! This is yet not implemented.\n"
                 << "Shape has to be [NxMx1]";
 
-  m_FixedImage = GetSlice2DData(fixed);
-  m_MovingImage = GetSlice2DData(moving);
+  m_FixedImage = fixed;
+  m_MovingImage = moving;
 
   // if masks were already set, check if geometries fit
   if (m_UseMasksForRegistration)
@@ -162,7 +162,7 @@ void m2::ElxRegistrationHelper::SetAdditionalBinarySearchPath(const std::string 
   m_BinarySearchPath = ElxUtil::JoinPath({path});
 }
 
-void m2::ElxRegistrationHelper::CreateWorkingDirectory()
+void m2::ElxRegistrationHelper::CreateWorkingDirectory() const
 {
   // Create a temporary directory if workdir not defined
 
@@ -237,9 +237,9 @@ void m2::ElxRegistrationHelper::GetRegistration()
 
   const auto fixedPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "fixed.nrrd"});
   const auto movingPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "moving.nrrd"});
-  mitk::IOUtil::Save(m_MovingImage, movingPath);
+  mitk::IOUtil::Save(GetSlice2DData(m_MovingImage), movingPath);
   m_StatusFunction("Moving image written: " + movingPath);
-  mitk::IOUtil::Save(m_FixedImage, fixedPath);
+  mitk::IOUtil::Save(GetSlice2DData(m_FixedImage), fixedPath);
   m_StatusFunction("Fixed image written: " + fixedPath);
 
 
@@ -252,8 +252,8 @@ void m2::ElxRegistrationHelper::GetRegistration()
   {
     const auto fixedMaskPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "fixedMask.nrrd"});
     const auto movingMaskPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "movingMask.nrrd"});
-    mitk::IOUtil::Save(m_MovingMask, movingMaskPath);
-    mitk::IOUtil::Save(m_FixedMask, fixedMaskPath);
+    mitk::IOUtil::Save(GetSlice2DData(m_MovingMask), movingMaskPath);
+    mitk::IOUtil::Save(GetSlice2DData(m_FixedMask), fixedMaskPath);
     args.insert(args.end(), {"-fMask", fixedMaskPath});
     args.insert(args.end(), {"-mMask", movingMaskPath});
   }
@@ -303,14 +303,14 @@ void m2::ElxRegistrationHelper::SetStatusCallback(const std::function<void(std::
   m_StatusFunction = callback;
 }
 
-std::vector<std::string> m2::ElxRegistrationHelper::GetTransformation()
+std::vector<std::string> m2::ElxRegistrationHelper::GetTransformation() const
 {
   return m_Transformations;
 }
 
-mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image *data,
+mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Pointer data,
                                                           const std::string &pixelType,
-                                                          const unsigned char &interpolationOrder)
+                                                          const unsigned char &interpolationOrder) const
 {
   const auto exeTransformix = m2::ElxUtil::Executable("transformix", m_BinarySearchPath);
   if (exeTransformix.empty())
@@ -432,7 +432,7 @@ void m2::ElxRegistrationHelper::SetRemoveWorkingDirectory(bool val)
   m_RemoveWorkingDirectory = val;
 }
 
-void m2::ElxRegistrationHelper::RemoveWorkingDirectory()
+void m2::ElxRegistrationHelper::RemoveWorkingDirectory() const
 {
   try
   {

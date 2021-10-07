@@ -46,15 +46,15 @@ namespace m2
     bool m_UseMasksForRegistration = false;
     bool m_UsePointsForRegistration = false;
     bool m_RemoveWorkingDirectory = true;
-    std::string m_WorkingDirectory = "";
-    std::string m_ExternalWorkingDirectory = "";
+    mutable std::string m_WorkingDirectory = "";
+    mutable std::string m_ExternalWorkingDirectory = "";
     bool m_UseMovingImageSpacing = false;
 
-    bool CheckDimensions(const mitk::Image *image);
-    mitk::Image::Pointer GetSlice2DData(const mitk::Image *);
-    mitk::Image::Pointer GetSlice3DData(const mitk::Image *);
-    void CreateWorkingDirectory();
-    void RemoveWorkingDirectory();
+    bool CheckDimensions(const mitk::Image *image) const;
+    mitk::Image::Pointer GetSlice2DData(const mitk::Image *) const;
+    mitk::Image::Pointer GetSlice3DData(const mitk::Image *) const;
+    void CreateWorkingDirectory() const;
+    void RemoveWorkingDirectory() const;
 
     std::function<void(std::string)> m_StatusFunction = [](std::string){};
     
@@ -72,16 +72,20 @@ namespace m2
     void UseMovingImageSpacing(bool val){this->m_UseMovingImageSpacing = val;};
 
     void GetRegistration();
-    std::vector<std::string> GetTransformation();
-    void SetRegistration(const std::vector<std::string>);
+    std::vector<std::string> GetTransformation() const;
     void SetStatusCallback(const std::function<void(std::string)> & callback);
     
+    mitk::Image::Pointer GetFixedImage() const{
+      return m_FixedImage;
+    }
 
-
-
-    mitk::Image::Pointer WarpImage(const mitk::Image *,
+    mitk::Image::Pointer GetMovingImage() const{
+      return m_MovingImage;
+    }
+    
+    mitk::Image::Pointer WarpImage(const mitk::Image::Pointer image,
                                    const std::string &type = "float",
-                                   const unsigned char &interpolationOrder = 3);
+                                   const unsigned char &interpolationOrder = 3) const;
     mitk::Image::Pointer WarpPoints(mitk::PointSet *);
   };
 
