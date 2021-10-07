@@ -23,12 +23,11 @@ void QmitkWelcomePerspective::CreateInitialLayout(berry::IPageLayout::Pointer la
   /////////////////////////////////////////////////////
   QString editorArea = layout->GetEditorArea();
 
-  auto folder = layout->CreateFolder("rightFolder", berry::IPageLayout::RIGHT, 0.55f, editorArea);
-  folder->AddView("org.mitk.views.m2.Data");
+  layout->AddView("org.mitk.views.m2.Data", berry::IPageLayout::RIGHT, 0.55f, editorArea);
   auto lo = layout->GetViewLayout("org.mitk.views.m2.Data");
   lo->SetCloseable(false);
-  
-  folder->AddView("org.mitk.views.datamanager");
+
+  layout->AddView("org.mitk.views.datamanager", berry::IPageLayout::BOTTOM, 0.70f, "org.mitk.views.m2.Data");
   lo = layout->GetViewLayout("org.mitk.views.datamanager");
   lo->SetCloseable(false);
 
