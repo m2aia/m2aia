@@ -203,9 +203,10 @@ namespace m2
                                                                            mitk::Image *stack,
                                                                            unsigned i) const
   {
-    auto N = warped->GetDimensions()[0] * warped->GetDimensions()[1];
-    if (N != (stack->GetDimensions()[0] * stack->GetDimensions()[1]))
-      mitkThrow() << "Slice dimensions are not equal!";
+    auto warpN = warped->GetDimensions()[0] * warped->GetDimensions()[1];
+    auto stackN = stack->GetDimensions()[0] * stack->GetDimensions()[1];
+    if (warpN != stackN)
+      mitkThrow() << "Slice dimensions are not equal for target slice with index !" << i;
     if (i >= stack->GetDimensions()[2])
       mitkThrow() << "Stack index is invalid! Z dim is " << stack->GetDimensions()[2];
 
@@ -217,7 +218,7 @@ namespace m2
                   [&](auto itkImg)
                   {
                     auto warpedData = itkImg->GetBufferPointer();
-                    std::copy(warpedData, warpedData + N, stackData + (i * N));
+                    std::copy(warpedData, warpedData + stackN, stackData + (i * stackN));
                   }));
   }
 

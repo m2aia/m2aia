@@ -139,9 +139,8 @@ void m2Reconstruction3D::OnStartStacking()
     spectrumImageStack1->Insert(currentRow, elxHelper);
   }
 
-  for (int movingId = currentRow - 1; movingId >= 0; --movingId)
-  {
-    int fixedId = UseSubsequentOrdering ? movingId + 1 : currentRow;
+  auto registrationStep = [&](auto fixedId, auto movingId){
+  
 
     const auto & transformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
     auto fixedImage = transformer->GetMovingImage();
@@ -155,24 +154,20 @@ void m2Reconstruction3D::OnStartStacking()
     elxHelper->SetRegistrationParameters(parameter);
     elxHelper->GetRegistration();
     spectrumImageStack1->Insert(movingId, elxHelper);
+   
+  };
 
+  for (int movingId = currentRow - 1; movingId >= 0; --movingId)
+  {
+    int fixedId = UseSubsequentOrdering ? movingId + 1 : currentRow;
+    registrationStep(fixedId, movingId);
     mitk::ProgressBar::GetInstance()->Progress();
   }
 
   for (int movingId = currentRow + 1; movingId < numItems; ++movingId)
   {
     int fixedId = UseSubsequentOrdering ? movingId - 1 : currentRow;
-
-    auto fixedData = getImageDataById(fixedId, m_List1);
-    auto movingData = getImageDataById(movingId, m_List1);
-
-    auto elxHelper = std::make_shared<m2::ElxRegistrationHelper>();
-    elxHelper->SetImageData(fixedData.image, movingData.image);
-    elxHelper->SetMaskData(fixedData.mask, movingData.mask);
-    elxHelper->SetRegistrationParameters(parameter);
-    elxHelper->GetRegistration();
-    spectrumImageStack1->Insert(movingId, elxHelper);
-
+    registrationStep(fixedId, movingId);
     mitk::ProgressBar::GetInstance()->Progress();
   }
 
