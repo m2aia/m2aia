@@ -18,6 +18,18 @@ set(H_FILES
   include/mitkImage3DSliceToImage2DFilter.h
   include/mitkImage2DToImage3DSliceFilter.h
   include/m2SubdivideImage2DFilter.h
+
+  include/signal/m2Baseline.h
+  include/signal/m2EstimateFwhm.h
+  include/signal/m2MedianAbsoluteDeviation.h
+  include/signal/m2Morphology.h
+  include/signal/m2Normalization.h
+  include/signal/m2PeakDetection.h
+  include/signal/m2Pooling.h
+  include/signal/m2RunningMedian.h
+  include/signal/m2SignalCommon.h
+  include/signal/m2Smoothing.h
+  
   
 
 )
