@@ -153,21 +153,21 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
       }
       else
       {
-        std::vector<double> s, m;
+        std::vector<double> ys, xs;
         if (m_Controls.cbOverviewSpectra->currentIndex() == 0) // skyline
-          s = imageBase->SkylineSpectrum();
+          ys = imageBase->SkylineSpectrum();
         if (m_Controls.cbOverviewSpectra->currentIndex() == 1) // mean
-          s = imageBase->MeanSpectrum();
+          ys = imageBase->MeanSpectrum();
         if (m_Controls.cbOverviewSpectra->currentIndex() == 2) // sum
-          s = imageBase->SumSpectrum();
+          ys = imageBase->SumSpectrum();
 
-        m = imageBase->GetXAxis();
+        xs = imageBase->GetXAxis();
 
-        auto mad = m2::Signal::mad(s);
+        auto mad = m2::Signal::mad(ys);
         std::vector<m2::Peak> peaks;
-        m2::Signal::localMaxima(std::begin(s),
-                                std::end(s),
-                                std::begin(m),
+        m2::Signal::localMaxima(std::begin(ys),
+                                std::end(ys),
+                                std::begin(xs),
                                 std::back_inserter(peaks),
                                 m_Controls.sbHalfWindowSize->value(),
                                 mad * m_Controls.sbSNR->value());
@@ -191,7 +191,7 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
 
         for (auto &p : peaks)
         {
-          outputvec[p.xIndex] = 0.0005;
+          outputvec[p.GetIndex()] = 0.0005;
           peakList.push_back(p);
 
           // m_Controls.tableWidget->setItem()
@@ -221,7 +221,7 @@ void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int idx)
     m_Controls.tableWidget->blockSignals(true);
     for (auto &p : peaks)
     {
-      auto item = new QTableWidgetItem(std::to_string(p.xValue).c_str());
+      auto item = new QTableWidgetItem(std::to_string(p.GetX()).c_str());
       item->setCheckState(Qt::CheckState::Unchecked);
       m_Controls.tableWidget->setItem(row++, 0, item);
     }
@@ -243,7 +243,7 @@ void m2PeakPickingView::OnStartPCA()
 
     const auto &peakList = m_PeakLists[idx];
 
-    std::vector<mitk::Image::Pointer> bufferedImages;
+    std::vector<mitk::Image::Pointer> temporaryImages;
 
     size_t inputIdx = 0;
     for (size_t row = 0; row < peakList.size(); ++row)
@@ -251,18 +251,18 @@ void m2PeakPickingView::OnStartPCA()
       if (m_Controls.tableWidget->item(row, 0)->checkState() != Qt::CheckState::Checked)
         continue;
 
-      bufferedImages.push_back(mitk::Image::New());
-      bufferedImages.back()->Initialize(imageBase);
+      temporaryImages.push_back(mitk::Image::New());
+      temporaryImages.back()->Initialize(imageBase);
 
-      imageBase->GetImage(peakList[row].xValue,
-                             imageBase->ApplyTolerance(peakList[row].xValue),
+      imageBase->GetImage(peakList[row].GetX(),
+                             imageBase->ApplyTolerance(peakList[row].GetX()),
                              imageBase->GetMaskImage(),
-                             bufferedImages.back());
-      filter->SetInput(inputIdx, bufferedImages.back());
+                             temporaryImages.back());
+      filter->SetInput(inputIdx, temporaryImages.back());
       ++inputIdx;
     }
 
-    if (bufferedImages.size() == 0)
+    if (temporaryImages.size() == 0)
     {
       QMessageBox::warning(nullptr,
                            "Select images first!",

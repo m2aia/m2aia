@@ -16,16 +16,19 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #pragma once
 
-#include "m2ChartView.h"
-#include "ui_m2Spectrum.h"
-#include <QmitkAbstractView.h>
-#include <berryISelectionListener.h>
-#include "m2Crosshair.h"
-#include <m2SpectrumImageBase.h>
-#include <m2SelectionProvider.h>
 #include <qlegendmarker.h>
 #include <qscatterseries.h>
 #include <qslider.h>
+
+#include <berryISelectionListener.h>
+
+#include <QmitkAbstractView.h>
+
+#include <m2SpectrumImageBase.h>
+#include <m2SelectionProvider.h>
+#include "m2ChartView.h"
+#include "m2Crosshair.h"
+#include "ui_m2Spectrum.h"
 
 class QMenu;
 class QActionGroup;
@@ -106,25 +109,6 @@ protected:
     return m_DataAssociatedSeriesMap;
   }
 
-  // template <typename SeriesType>
-  // inline void AddSerie(
-  //  mitk::DataNode *source,
-  //  m2::OverviewSpectrumType spectrumType,
-  //  bool reinitAxes,
-  //  std::function<void(SeriesType *series)> seriesInitializer = [](SeriesType *) {},
-  //  std::function<void(QList<QPointF> &, QPointF &p)> pointModifier = [](QList<QPointF> &v, QPointF &p) { v << p; });
-
-  // template <typename SeriesType>
-  // inline void AddAllSeries(
-  //  mitk::DataNode *source,
-  //  bool reinitAxes,
-  //  std::function<void(SeriesType *series)> seriesInitializer = [](SeriesType *) {},
-  //  std::function<void(QList<QPointF> &, QPointF &p)> pointModifier = [](QList<QPointF> &v, QPointF &p) { v << p; });
-
-  // void ExclusiveShow(m2::OverviewSpectrumType type);
-  // void RemoveSeries(mitk::DataNode *source);
-  // void UpdateSeries(mitk::DataNode *source);
-
   void UpdateSeriesMinMaxValues();
 
   void SetSelectedAreaStartX(double v) { m_SelectedAreaStartX = v; }
@@ -145,15 +129,6 @@ protected:
 
   m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Mean;
   bool m_CurrentOverviewSpectrumTypeChanged = false;
-
-  // 20201023: custom selection service did not work as expected
-  // m2::SelectionProvider::Pointer m_SelectionProvider;
-  // void SetSelectionProvider() override;
-
-  // incoming
-  // QScopedPointer<berry::ISelectionListener> m_CustomSelectionChangedListener;
-  // void OnCustomSelectionChanged(const berry::IWorkbenchPart::Pointer &sourcepart,
-  // const berry::ISelection::ConstPointer &selection);
 
   virtual void SetFocus() override {}
   Ui::imsSpectrumControls m_Controls;
@@ -185,12 +160,7 @@ protected:
   QFuture<void> m_DragFuture;
 
   bool m_RangeSelectionStarted = false;
-  //
-  // signals:
-  //	void GrabIonImages(qreal, qreal);
 
-  // void OnAlignSpectra(qreal, qreal);
-  // void OnGenerateImageData(qreal, qreal);
 private:
   QMenu *m_Menu;
   QAction *m_SpectrumSkyline;
@@ -208,115 +178,3 @@ private:
   QVector<QString> m_xAxisTitels;
 
 };
-
-// template <typename SeriesType>
-// void m2Spectrum::AddAllSeries(mitk::DataNode *source,
-//                              bool reinitAxes,
-//                              std::function<void(SeriesType *series)> seriesInitializer,
-//                              std::function<void(QList<QPointF> &, QPointF &p)> pointModifier)
-//{
-//  if (auto msiBase = dynamic_cast<m2::SpectrumImageBase *>(source->GetData()))
-//  {
-//    for (auto &&key_spec : msiBase->GetSpectraArtifacts())
-//    {
-//      if (key_spec.first == m2::OverviewSpectrumType::PeakIndicators)
-//        AddSerie<QtCharts::QScatterSeries>(
-//          source,
-//          key_spec.first,
-//          reinitAxes,
-//          [](QtCharts::QScatterSeries *series) {
-//            series->setMarkerShape(QtCharts::QScatterSeries::MarkerShape::MarkerShapeRectangle);
-//            series->setMarkerSize(3);
-//          },
-//          [](QList<QPointF> &list, QPointF &p) {
-//            if (p.y() > 0.00001)
-//              list << p;
-//          });
-//      else
-//        AddSerie(source, key_spec.first, reinitAxes, seriesInitializer, pointModifier);
-//    }
-//  }
-//
-//  m_Controls.chartView->OnResize();
-//
-//  // Connect all markers to handler
-//
-//  const auto markers = this->m_chart->legend()->markers();
-//  for (auto *marker : markers)
-//  {
-//    connect(marker, SIGNAL(clicked()), this, SLOT(OnLegnedHandleMarkerClicked()), Qt::UniqueConnection);
-//  }
-//}
-//
-// template <typename SeriesType>
-// void m2Spectrum::AddSerie(mitk::DataNode *source,
-//                          m2::OverviewSpectrumType spectrumType,
-//                          bool reinitAxes,
-//                          std::function<void(SeriesType *series)> seriesInitializer,
-//                          std::function<void(QList<QPointF> &, QPointF &p)> pointModifier)
-//{
-//  if (auto msiBase = dynamic_cast<m2::SpectrumImageBase *>(source->GetData()))
-//  {
-//    auto &container = m_DataAssociatedSeriesMap[source];
-//
-//    const auto type = msiBase->GetSpectraArtifacts().find(spectrumType)->first;
-//    const auto ints = msiBase->GetSpectraArtifacts().find(spectrumType)->second;
-//
-//    SeriesType *series = new SeriesType();
-//    container[type] = series;
-//    container.GetXAxis = msiBase->GetXAxis();
-//
-//    QList<QPointF> points;
-//    for (auto y = ints.cbegin(), x = msiBase->GetXAxis().cbegin(); y != ints.end(); ++x, ++y)
-//    {
-//      auto a = QPointF{*x, *y};
-//      pointModifier(points, a);
-//    }
-//
-//    series->append(points);
-//    series->setName((source->GetName()).c_str());
-//    this->m_chart->addSeries(series);
-//    seriesInitializer(series);
-//
-//    if (container.Color != QColor{0, 0, 0, 0})
-//      series->setColor(container.Color);
-//    else
-//      container.Color = series->color();
-//
-//    if (reinitAxes)
-//    {
-//      this->m_chart->createDefaultAxes();
-//      auto axes = m_chart->axes(Qt::Horizontal);
-//      if (!axes.empty())
-//        QObject::connect(axes.back(),
-//                         SIGNAL(rangeChanged(qreal, qreal)),
-//                         this,
-//                         SLOT(OnRangeChangedAxisX(qreal, qreal)),
-//                         Qt::UniqueConnection);
-//
-//      axes = m_chart->axes(Qt::Vertical);
-//      if (!axes.empty())
-//        QObject::connect(axes.back(),
-//                         SIGNAL(rangeChanged(qreal, qreal)),
-//                         this,
-//                         SLOT(OnRangeChangedAxisY(qreal, qreal)),
-//                         Qt::UniqueConnection);
-//    }
-//    else
-//    {
-//      series->attachAxis(this->m_chart->axes(Qt::Horizontal).back());
-//      series->attachAxis(this->m_chart->axes(Qt::Vertical).back());
-//    }
-//    QPen p = series->pen();
-//    p.setWidthF(0.5f);
-//    p.setCapStyle(Qt::FlatCap);
-//    series->setPen(p);
-//  }
-//  m_Controls.chartView->OnResize();
-//  // Connect all markers to handler
-//  const auto markers = this->m_chart->legend()->markers();
-//  for (auto *marker : markers)
-//  {
-//    QObject::connect(marker, SIGNAL(clicked()), this, SLOT(OnLegnedHandleMarkerClicked()), Qt::UniqueConnection);
-//  }
-//}

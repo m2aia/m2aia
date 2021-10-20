@@ -60,25 +60,22 @@ namespace m2
       }
     }
 
-    template <class InIterType, class OutIterType>
+    template <class PeakItFirst,class PeakItLast, class OutIterType>
     inline void binPeaks(
-      InIterType s, InIterType e, OutIterType output, double tolerance, bool absoluteDistance = false)
+      PeakItFirst s, PeakItLast e, OutIterType output, double tolerance, bool absoluteDistance = false)
     {
       if (s == e)
         return;
 
       unsigned int size = 0;
-      auto meanMZ = std::accumulate(s, e, double(0), [&size](auto &a, Peak &b) {
-        ++size;
-        return a + b.xValue;
-      });
-      meanMZ /= double(size);
+      const auto accPeak = std::accumulate(s, e, Peak());
+      const auto meanX = accPeak.GetX();
 
       bool dirty = false;
-      InIterType i = s;
+      decltype(s) i = s;
       while (i != e)
       {
-        if (std::abs(i->xValue - meanMZ) >= ((meanMZ * tolerance) * (!absoluteDistance) + (absoluteDistance * tolerance)))
+        if (std::abs(i->GetX() - meanX) >= ((meanX * tolerance) * (!absoluteDistance) + (absoluteDistance * tolerance)))
         {
           dirty = true;
           break;
@@ -88,17 +85,17 @@ namespace m2
 
       if (dirty && size >= 2)
       {
-        InIterType pivot;
+        decltype(s) pivot;
         {
-          InIterType s0 = s;
-          InIterType s1 = std::next(s);
+          decltype(s) s0 = s;
+          decltype(s) s1 = std::next(s);
           pivot = s1;
           double max = 0; // max distance of mz neighbors is split position
           while (s1 != e)
           {
-            if (s1->xValue - s0->xValue > max)
+            if (s1->GetX() - s0->GetX() > max)
             {
-              max = s1->xValue - s0->xValue;
+              max = s1->GetX() - s0->GetX();
               pivot = s1;
             }
             ++s1;
@@ -112,21 +109,14 @@ namespace m2
       else
       {
         // output a new peak
-        unsigned int countPeak = 0;
-        double maxIntensityPeak = 0;
-        unsigned int indexPeak = 0;
+        m2::Peak newPeak = *s;
+        ++s;
 
-        std::for_each(s, e, [&maxIntensityPeak, &countPeak, &indexPeak](const Peak &p) {
-          if (p.yValue > maxIntensityPeak)
-          {
-            maxIntensityPeak = p.yValue;
-            indexPeak = p.xIndex;
-          }
-
-          countPeak += p.count;
+        std::for_each(s, e, [&newPeak](const Peak &p) {
+          newPeak.Insert(p);
         });
 
-        (*output) = Peak(meanMZ, maxIntensityPeak, countPeak, indexPeak);
+        (*output) = newPeak;
         ++output;
       }
     };
@@ -147,21 +137,21 @@ namespace m2
       const auto first = intsInFirst;
       const auto last = intsInLast;
 
-      auto max = std::max_element(first, upper + 1);
+      auto localMaximum = std::max_element(first, upper + 1);
       unsigned int index = 0;
 
       for (; mid != last;)
       {
-        if (max < lower)
-          max = std::max_element(lower, upper + 1);
-        else if (*upper >= *max)
-          max = upper;
+        if (localMaximum < lower)
+          localMaximum = std::max_element(lower, upper + 1);
+        else if (*upper >= *localMaximum)
+          localMaximum = upper;
 
-        if (max == mid && *max > threshold) // maximum is located at mid of the sliding window
-          (*peaksOutFirst) = Peak{(double)(*mzsInFirst), (double)(*max), 1, index};
+        if (localMaximum == mid && *localMaximum > threshold) // maximum is located at mid of the sliding window
+          (*peaksOutFirst) = Peak{index, (double)(*mzsInFirst), (double)(*localMaximum)};
         else if (fillWithZeros)
         {
-          (*peaksOutFirst) = Peak{(double)(*mzsInFirst), 0.0, 0, index};
+          (*peaksOutFirst) = Peak{index, (double)(*mzsInFirst), 0};
         }
 
         if (std::distance(lower, upper) == (2 * windowSize) /*Number of hops from lower to upper*/
@@ -353,7 +343,7 @@ namespace m2
       {
         std::vector<double> mzs;
         for (const auto &p : x)
-          mzs.push_back(p.xValue);
+          mzs.push_back(p.GetX());
 
         auto pc = pseudoCluster(mzs, size, distance, tolerance);
         if (pc.empty())
@@ -366,12 +356,12 @@ namespace m2
           double sum = 0;
           for (const auto &i : p)
           {
-            u.push_back(x[i].yValue);
-            sum += x[i].yValue;
+            u.push_back(x[i].GetY());
+            sum += x[i].GetY();
           }
           std::transform(std::begin(u), std::end(u), std::begin(u), [&sum](const auto &v) { return v / sum; });
           ypc.emplace_back(u);
-          xpc.push_back(x[p[0]].xValue);
+          xpc.push_back(x[p[0]].GetX());
         }
         std::vector<unsigned int> isotopes;
         unsigned int n = 0;

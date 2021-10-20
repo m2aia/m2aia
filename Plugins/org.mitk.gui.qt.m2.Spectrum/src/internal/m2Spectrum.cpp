@@ -896,7 +896,7 @@ void m2Spectrum::OnUpdateScatterSeries(const mitk::DataNode *node)
                  std::end(peaks),
                  std::back_inserter(qPeaks),
                  [&data](const auto &a) -> QPointF {
-                   return {a.xValue, data[a.xIndex].y()};
+                   return {a.GetX(), data[a.GetIndex()].y()};
                  });
 
   m_ScatterSeries[node]->clear();

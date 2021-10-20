@@ -75,7 +75,7 @@ int main(int /*argc*/, char *argv[])
 
     std::vector<m2::Peak> filteredPeaks;
     std::copy_if(std::begin(peaks), std::end(peaks), std::back_inserter(filteredPeaks), [](const auto &p) {
-      return (p.xValue > 900 && p.xValue < 3000);
+      return (p.GetX() > 900 && p.GetX() < 3000);
     });
 
     imagePeaks[I.GetPointer()] = m2::Signal::monoisotopic(peaks, {3, 4, 5, 6, 7, 8, 9, 10}, 0.40);
