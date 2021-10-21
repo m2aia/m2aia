@@ -20,10 +20,10 @@ See LICENSE.txt for details.
 #include <mitkLookupTableProperty.h>
 #include <mitkOperation.h>
 
-double m2::SpectrumImageBase::ApplyTolerance(double xValue)
+double m2::SpectrumImageBase::ApplyTolerance(double xValue) const
 {
   if (this->GetUseToleranceInPPM())
-    return this->GetTolerance() * 10e-6 * xValue;
+    return m2::PartPerMillionToFactor(this->GetTolerance()) * xValue;
   else
     return this->GetTolerance();
 }

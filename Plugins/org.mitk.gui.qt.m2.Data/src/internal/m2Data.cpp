@@ -347,13 +347,13 @@ void m2Data::OnCreateNextImage()
 {
   if (m_IonImageReference)
   {
-    auto mz = m_IonImageReference->mz;
-    auto tol = m_Controls.spnBxTol->value();
+    auto center = m_IonImageReference->mz;
+    auto offset = m_Controls.spnBxTol->value();
     if (m_Controls.rbtnTolPPM->isChecked())
     {
-      tol = tol * 10e-6 * mz;
+      offset = m2::PartPerMillionToFactor(offset) * center;
     }
-    this->OnGenerateImageData(mz + tol, -1);
+    this->OnGenerateImageData(center + offset, -1);
   }
 }
 
@@ -361,13 +361,13 @@ void m2Data::OnCreatePrevImage()
 {
   if (m_IonImageReference)
   {
-    auto mz = m_IonImageReference->mz;
-    auto tol = m_Controls.spnBxTol->value();
+    auto center = m_IonImageReference->mz;
+    auto offset = m_Controls.spnBxTol->value();
     if (m_Controls.rbtnTolPPM->isChecked())
     {
-      tol = tol * 10e-6 * mz;
+      offset = m2::PartPerMillionToFactor(offset) * center;
     }
-    this->OnGenerateImageData(mz - tol, -1);
+    this->OnGenerateImageData(center - offset, -1);
   }
 }
 
@@ -682,7 +682,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
   {
     xRangeTol = Controls()->spnBxTol->value();
     bool isPpm = Controls()->rbtnTolPPM->isChecked();
-    xRangeTol = isPpm ? xRangeTol * 10e-6 * xRangeCenter : xRangeTol;
+    xRangeTol = isPpm ? m2::PartPerMillionToFactor(xRangeTol) * xRangeCenter : xRangeTol;
   }
   emit m2::CommunicationService::Instance()->RangeChanged(xRangeCenter, xRangeTol);
 

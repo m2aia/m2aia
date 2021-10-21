@@ -74,8 +74,8 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
 void m2Reconstruction3D::OnStartStacking()
 {
   // prepare stacks
-  auto spectrumImageStack1 = m2::SpectrumImageStack::New(m_Controls.spinBoxZSpacing->value() * 10e-3);
-  auto spectrumImageStack2 = m2::SpectrumImageStack::New(m_Controls.spinBoxZSpacing->value() * 10e-3);
+  auto spectrumImageStack1 = m2::SpectrumImageStack::New(m2::MicroMetreToMilliMetre(m_Controls.spinBoxZSpacing->value()));
+  auto spectrumImageStack2 = m2::SpectrumImageStack::New(m2::MicroMetreToMilliMetre(m_Controls.spinBoxZSpacing->value()));
 
   auto getImageDataById = [this](auto id, QListWidget *listWidget) -> DataTuple
   {

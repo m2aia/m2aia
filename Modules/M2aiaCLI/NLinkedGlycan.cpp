@@ -88,7 +88,7 @@ int main(int /*argc*/, char *argv[])
     unionPeaks.insert(std::end(unionPeaks), std::begin(kv.second), std::end(kv.second));
   std::sort(std::begin(unionPeaks), std::end(unionPeaks));
 
-  m2::Signal::binPeaks(std::begin(unionPeaks), std::end(unionPeaks), std::back_inserter(binPeaks), 50 * 10e-6);
+  m2::Signal::binPeaks(std::begin(unionPeaks), std::end(unionPeaks), std::back_inserter(binPeaks), m2::PartPerMillionToFactor(50));
 
   MITK_INFO << "Size of common indieces " << binPeaks.size() << "\n";
 

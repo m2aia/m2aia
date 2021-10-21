@@ -283,7 +283,7 @@ namespace m2
             }
             else
             {
-              auto tol = input->GetTolerance() * 10e-6 * mzs[i];
+              auto tol = input->ApplyTolerance(mzs[i]) ;
               auto subRes = m2::Signal::Subrange(mzs, mzs[i] - tol, mzs[i] + tol);
               auto s = std::next(std::begin(ints), subRes.first);
               auto e = std::next(s, subRes.second);
@@ -369,7 +369,7 @@ namespace m2
             }
             else
             {
-              const auto tol = input->GetTolerance() * 10e-6 * mzs[p.GetIndex()];
+              const auto tol = input->ApplyTolerance(mzs[p.GetIndex()]);
               const auto subRes = m2::Signal::Subrange(mzs, mzs[p.GetIndex()] - tol, mzs[p.GetIndex()] + tol);
               const auto s = next(begin(ints), subRes.first);
               const auto e = next(s, subRes.second);

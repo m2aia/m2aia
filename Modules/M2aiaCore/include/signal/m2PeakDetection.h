@@ -16,6 +16,7 @@ See LICENSE.txt for details.
 #pragma once
 
 #include <M2aiaCoreExports.h>
+#include <m2CoreCommon.h>
 #include <algorithm>
 #include <cmath>
 #include <functional>
@@ -422,13 +423,10 @@ namespace m2
       m2::Signal::localMaxima(
         std::begin(ints), std::end(ints), std::begin(mzs), std::back_inserter(peaks), halfWindowSize, SNR * noise);
 
-      if (binningTolInPpm)
-      {
-        binPeaks.clear();
-        m2::Signal::binPeaks(std::begin(peaks), std::end(peaks), std::back_inserter(binPeaks), binningTolInPpm * 10e-6);
-        peaks = std::move(binPeaks);
-      }
-
+      binPeaks.clear();
+      m2::Signal::binPeaks(std::begin(peaks), std::end(peaks), std::back_inserter(binPeaks), m2::PartPerMillionToFactor(binningTolInPpm));
+      peaks = std::move(binPeaks);
+      
       if (pickMonoisotopic)
       {
         peaks = m2::Signal::monoisotopic(peaks);

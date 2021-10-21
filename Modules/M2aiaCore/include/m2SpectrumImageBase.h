@@ -167,7 +167,7 @@ namespace m2
 
     inline void SaveModeOn() const { this->m_InSaveMode = true; }
     inline void SaveModeOff() const { this->m_InSaveMode = false; }
-    double ApplyTolerance(double xValue);
+    double ApplyTolerance(double xValue) const;
 
     void SetElxRegistrationHelper(const std::shared_ptr<m2::ElxRegistrationHelper> & d){
       m_ElxRegistrationHelper = d;
