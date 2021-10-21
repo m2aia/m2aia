@@ -811,10 +811,10 @@ index 623924f0b3..f549e3610a 100644
      auto isNotBinary = mitk::NodePredicateNot::New(hasBinaryProperty);
      auto isNotBinaryImage = mitk::NodePredicateAnd::New(isImage, isNotBinary);
 diff --git a/Modules/ModuleList.cmake b/Modules/ModuleList.cmake
-index c36c213269..356200dad1 100644
+index c36c213269..3c56112dde 100644
 --- a/Modules/ModuleList.cmake
 +++ b/Modules/ModuleList.cmake
-@@ -34,17 +34,17 @@ set(MITK_MODULES
+@@ -34,46 +34,46 @@ set(MITK_MODULES
    SegmentationUI
    MatchPointRegistration
    MatchPointRegistrationUI
@@ -836,15 +836,19 @@ index c36c213269..356200dad1 100644
 -  ToFHardware
 -  ToFProcessing
 -  ToFUI
+-  US
+-  USUI
 +  #ToFHardware
 +  #ToFProcessing
 +  #ToFUI
-   US
-   USUI
++  #US
++  #USUI
    DICOMUI
-@@ -52,28 +52,28 @@ set(MITK_MODULES
-   Python
-   QtPython
+   Remeshing
+-  Python
+-  QtPython
++  #Python
++  #QtPython
    Persistence
 -  OpenIGTLinkUI
 -  IGTUI
@@ -855,36 +859,40 @@ index c36c213269..356200dad1 100644
 +  #RT
 +  #RTUI
    IOExt
-   XNAT
+-  XNAT
++  #XNAT
    TubeGraph
    BoundingShape
    RenderWindowManager
    RenderWindowManagerUI
 -  SemanticRelations
 -  SemanticRelationsUI
+-  CEST
 +  #SemanticRelations
 +  #SemanticRelationsUI
-   CEST
++  #CEST
    BasicImageProcessing
 -  ModelFit
 -  ModelFitUI
 -  Pharmacokinetics
 -  PharmacokineticsUI
 -  DICOMPM
+-  REST
+-  RESTService
+-  DICOMweb
 +  #ModelFit
 +  #ModelFitUI
 +  #Pharmacokinetics
 +  #PharmacokineticsUI
 +  #DICOMPM
-   REST
-   RESTService
--  DICOMweb
++  #REST
++  #RESTService
 +  #DICOMweb
  )
  
  if(MITK_ENABLE_PIC_READER)
 diff --git a/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp b/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp
-index 46a8600375..9b555c7fe6 100644
+index 46a8600375..27b7ece498 100644
 --- a/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp
 +++ b/Modules/QtWidgets/src/QmitkNodeDescriptorManager.cpp
 @@ -13,10 +13,12 @@ found in the LICENSE file.
@@ -904,7 +912,7 @@ index 46a8600375..9b555c7fe6 100644
    auto isMultiComponentImage = mitk::NodePredicateAnd::New(isImage, mitk::NodePredicateProperty::New("Image.Displayed Component"));
    AddDescriptor(new QmitkNodeDescriptor(tr("MultiComponentImage"), QString(": / Qmitk / Images_48.png"), isMultiComponentImage, this));
  
-+  auto a = mitk::NodePredicateDataType::New("SpectrumImageBase");
++  auto a = mitk::NodePredicateDataType::New("SpectrumImageStack");
 +  auto b = mitk::NodePredicateDataType::New("ImzMLSpectrumImage");
 +  auto c = mitk::NodePredicateOr::New(a, b);
 +  auto f = mitk::TNodePredicateDataType<mitk::Image>::New();
