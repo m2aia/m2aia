@@ -14,7 +14,7 @@
    </rect>
   </property>
   <property name="sizePolicy">
-   <sizepolicy hsizetype="Preferred" vsizetype="MinimumExpanding">
+   <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
     <horstretch>0</horstretch>
     <verstretch>0</verstretch>
    </sizepolicy>
@@ -57,6 +57,9 @@
           <property name="text">
            <string>No normalization</string>
           </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
          </widget>
         </item>
         <item>
@@ -90,7 +93,7 @@
            <string>TIC</string>
           </property>
           <property name="checked">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -156,7 +159,7 @@
            <string>Savitzky-Golay</string>
           </property>
           <property name="checked">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -176,7 +179,7 @@
            <string>None</string>
           </property>
           <property name="checked">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -248,7 +251,7 @@
            <string>None</string>
           </property>
           <property name="checked">
-           <bool>false</bool>
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -268,7 +271,7 @@
            <string>Median</string>
           </property>
           <property name="checked">
-           <bool>true</bool>
+           <bool>false</bool>
           </property>
          </widget>
         </item>
@@ -311,6 +314,13 @@
     </widget>
    </item>
    <item>
+    <widget class="QCommandLinkButton" name="applySettingsAndReLoad">
+     <property name="text">
+      <string>Apply settings and re-load</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="Line" name="line">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -320,7 +330,7 @@
    <item>
     <widget class="QTabWidget" name="Tabs">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+      <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
@@ -566,52 +576,21 @@
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_16">
        <item>
-        <widget class="QGroupBox" name="GrabIonImageStrategy">
+        <widget class="QGroupBox" name="groupBox_6">
          <property name="title">
           <string>Imaging strategy</string>
          </property>
-         <property name="checkable">
-          <bool>false</bool>
-         </property>
          <layout class="QVBoxLayout" name="verticalLayout_14">
-          <property name="leftMargin">
-           <number>8</number>
-          </property>
-          <property name="topMargin">
-           <number>4</number>
-          </property>
-          <property name="rightMargin">
-           <number>8</number>
-          </property>
-          <property name="bottomMargin">
-           <number>4</number>
-          </property>
           <item>
            <layout class="QGridLayout" name="gridLayout_4">
-            <item row="1" column="0">
-             <widget class="QRadioButton" name="radioButtonMax">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Maximum</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="0">
+            <item row="0" column="1">
              <widget class="QRadioButton" name="radioButtonSum">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -620,7 +599,7 @@
               </property>
               <property name="maximumSize">
                <size>
-                <width>1000</width>
+                <width>16777215</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -632,8 +611,14 @@
               </property>
              </widget>
             </item>
-            <item row="0" column="1">
-             <widget class="QRadioButton" name="radioButtonMedian">
+            <item row="0" column="0">
+             <widget class="QRadioButton" name="radioButtonMax">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
               <property name="minimumSize">
                <size>
                 <width>0</width>
@@ -642,7 +627,60 @@
               </property>
               <property name="maximumSize">
                <size>
-                <width>1000</width>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Maximum</string>
+              </property>
+              <property name="checked">
+               <bool>false</bool>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QRadioButton" name="radioButtonMean">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>Mean</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QRadioButton" name="radioButtonMedian">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>16777215</width>
                 <height>16777215</height>
                </size>
               </property>
@@ -651,25 +689,6 @@
               </property>
               <property name="checked">
                <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="1">
-             <widget class="QRadioButton" name="radioButtonMean">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>0</height>
-               </size>
-              </property>
-              <property name="maximumSize">
-               <size>
-                <width>1000</width>
-                <height>16777215</height>
-               </size>
-              </property>
-              <property name="text">
-               <string>Mean</string>
               </property>
              </widget>
             </item>
@@ -931,85 +950,17 @@
         </widget>
        </item>
        <item>
-        <widget class="QGroupBox" name="grpBoxLastGrab">
-         <property name="enabled">
-          <bool>true</bool>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
          </property>
-         <property name="toolTip">
-          <string/>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
          </property>
-         <property name="title">
-          <string>Image reference</string>
-         </property>
-         <property name="flat">
-          <bool>false</bool>
-         </property>
-         <property name="checkable">
-          <bool>false</bool>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_12">
-          <item>
-           <layout class="QGridLayout" name="gridLayout_6">
-            <item row="0" column="0">
-             <widget class="QLabel" name="labelIonImageInfo">
-              <property name="text">
-               <string>&lt;x±t(x)&gt;</string>
-              </property>
-             </widget>
-            </item>
-            <item row="0" column="1">
-             <widget class="QLineEdit" name="textIonName">
-              <property name="enabled">
-               <bool>true</bool>
-              </property>
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="text">
-               <string/>
-              </property>
-              <property name="placeholderText">
-               <string>&lt;enter name&gt;</string>
-              </property>
-             </widget>
-            </item>
-           </layout>
-          </item>
-          <item>
-           <widget class="QCommandLinkButton" name="btnAddIonImageReference">
-            <property name="text">
-             <string>Add to image reference view</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QGroupBox" name="refPointSetGroup">
-         <property name="title">
-          <string>Reference points</string>
-         </property>
-         <layout class="QVBoxLayout" name="verticalLayout_11">
-          <item>
-           <widget class="QCommandLinkButton" name="btnAddReferencepointSet">
-            <property name="text">
-             <string>Add reference point set</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="btnOpenPointSetWidget">
-            <property name="text">
-             <string>Open point set editor view</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
-        </widget>
+        </spacer>
        </item>
       </layout>
      </widget>
@@ -1024,7 +975,7 @@
           <string>Tile images</string>
          </property>
          <property name="checkable">
-          <bool>true</bool>
+          <bool>false</bool>
          </property>
          <layout class="QVBoxLayout" name="verticalLayout_9">
           <item>
@@ -1081,6 +1032,35 @@
         </widget>
        </item>
        <item>
+        <widget class="QGroupBox" name="groupBox_5">
+         <property name="title">
+          <string>Equialize level window</string>
+         </property>
+         <layout class="QVBoxLayout" name="verticalLayout_15">
+          <item>
+           <widget class="QLabel" name="label_13">
+            <property name="text">
+             <string>The level window of the selected image node is applied to all spectrum image nodes in the data manager.</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QmitkSingleNodeSelectionWidget" name="ReferenceLevelWindowSelection" native="true"/>
+          </item>
+          <item>
+           <widget class="QCommandLinkButton" name="btnEqualizeLW">
+            <property name="text">
+             <string>Apply</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
         <widget class="QGroupBox" name="ScaleBar">
          <property name="title">
           <string>Scale bar</string>
@@ -1088,30 +1068,25 @@
          <property name="checkable">
           <bool>true</bool>
          </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
          <layout class="QVBoxLayout" name="verticalLayout_5">
           <item>
-           <layout class="QHBoxLayout" name="horizontalLayout_9">
-            <item>
-             <widget class="QRadioButton" name="scaleBarEnableIon">
-              <property name="text">
-               <string>Ion image</string>
-              </property>
-              <property name="checked">
-               <bool>true</bool>
-              </property>
-             </widget>
-            </item>
-            <item>
-             <widget class="QRadioButton" name="scaleBarEnableNormalization">
-              <property name="text">
-               <string>Normalization image</string>
-              </property>
-              <property name="checked">
-               <bool>false</bool>
-              </property>
-             </widget>
-            </item>
-           </layout>
+           <widget class="QLabel" name="sclaeBarLabel">
+            <property name="enabled">
+             <bool>false</bool>
+            </property>
+            <property name="text">
+             <string>A scalebar appears for the selected image node.</string>
+            </property>
+            <property name="wordWrap">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QmitkSingleNodeSelectionWidget" name="ReferenceSelectionForScaleBar" native="true"/>
           </item>
           <item>
            <layout class="QHBoxLayout" name="horizontalLayout_5">
@@ -1235,21 +1210,7 @@
             </item>
            </widget>
           </item>
-          <item>
-           <widget class="QPushButton" name="scaleBarForceUpdate">
-            <property name="text">
-             <string>Force update</string>
-            </property>
-           </widget>
-          </item>
          </layout>
-        </widget>
-       </item>
-       <item>
-        <widget class="QPushButton" name="btnEqualizeLW">
-         <property name="text">
-          <string>Equalize LevelWindows</string>
-         </property>
         </widget>
        </item>
        <item>
@@ -1270,7 +1231,10 @@
     </widget>
    </item>
    <item>
-    <spacer name="verticalSpacer">
+    <widget class="QmitkMultiNodeSelectionWidget" name="MassSpecDataNodeSelectionWidget" native="true"/>
+   </item>
+   <item>
+    <spacer name="verticalSpacer_3">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
      </property>
@@ -1282,9 +1246,104 @@
      </property>
     </spacer>
    </item>
+   <item>
+    <widget class="QGroupBox" name="refPointSetGroup">
+     <property name="title">
+      <string>Reference points</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_11">
+      <item>
+       <widget class="QCommandLinkButton" name="btnAddReferencepointSet">
+        <property name="text">
+         <string>Add reference point set</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnOpenPointSetWidget">
+        <property name="text">
+         <string>Open point set editor view</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="imageRefGroup">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="toolTip">
+      <string/>
+     </property>
+     <property name="title">
+      <string>Image reference</string>
+     </property>
+     <property name="flat">
+      <bool>false</bool>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_12">
+      <item>
+       <layout class="QGridLayout" name="gridLayout_6">
+        <item row="0" column="0">
+         <widget class="QLabel" name="labelIonImageInfo">
+          <property name="text">
+           <string>&lt;x±t(x)&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="1">
+         <widget class="QLineEdit" name="textIonName">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+          <property name="placeholderText">
+           <string>&lt;enter name&gt;</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QCommandLinkButton" name="btnAddIonImageReference">
+        <property name="text">
+         <string>Add to image reference view</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QmitkMultiNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkMultiNodeSelectionWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QmitkSingleNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkSingleNodeSelectionWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>radioButtonNoneNormalization</tabstop>
   <tabstop>radioButtonInFileNormalization</tabstop>
@@ -1300,10 +1359,6 @@
   <tabstop>spnBxBaseline</tabstop>
   <tabstop>rdBtnBaselineCorrectionMedian</tabstop>
   <tabstop>Tabs</tabstop>
-  <tabstop>radioButtonSum</tabstop>
-  <tabstop>radioButtonMedian</tabstop>
-  <tabstop>radioButtonMax</tabstop>
-  <tabstop>radioButtonMean</tabstop>
   <tabstop>spnBxMz</tabstop>
   <tabstop>spnBxTol</tabstop>
   <tabstop>rbtnTolPPM</tabstop>
@@ -1319,19 +1374,15 @@
   <tabstop>checkBoxOnlyVisible</tabstop>
   <tabstop>checkBoxOnlyComboBoxSelection</tabstop>
   <tabstop>spnBxPeakBinning</tabstop>
-  <tabstop>scaleBarEnableIon</tabstop>
   <tabstop>scaleBarOrientation</tabstop>
   <tabstop>scaleBarLenght</tabstop>
-  <tabstop>scaleBarEnableNormalization</tabstop>
   <tabstop>scaleBarFontSize</tabstop>
   <tabstop>groupBox_3</tabstop>
   <tabstop>scaleBarWidth</tabstop>
-  <tabstop>scaleBarForceUpdate</tabstop>
   <tabstop>mosaicRows</tabstop>
   <tabstop>applyTiling</tabstop>
   <tabstop>resetTiling</tabstop>
   <tabstop>ScaleBar</tabstop>
-  <tabstop>btnEqualizeLW</tabstop>
  </tabstops>
  <resources/>
  <connections/>

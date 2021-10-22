@@ -79,17 +79,36 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   m_Controls.grpBoxCommon->setChecked(false);
 
   {
-    auto m_MassSpecPredicate = mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New();
-    m_MassSpecDataNodeSelectionWidget = new QmitkMultiNodeSelectionWidget();
-    m_MassSpecDataNodeSelectionWidget->SetDataStorage(GetDataStorage());
-    m_MassSpecDataNodeSelectionWidget->SetNodePredicate(
+    m_Controls.MassSpecDataNodeSelectionWidget->SetDataStorage(GetDataStorage());
+    m_Controls.MassSpecDataNodeSelectionWidget->SetNodePredicate(
       mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
                                   mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
-    m_MassSpecDataNodeSelectionWidget->SetSelectionIsOptional(true);
-    m_MassSpecDataNodeSelectionWidget->SetEmptyInfo(QString("Image selection"));
-    m_MassSpecDataNodeSelectionWidget->SetPopUpTitel(QString("Image"));
-    ((QVBoxLayout *)(parent->layout()))->addWidget(m_MassSpecDataNodeSelectionWidget);
+    m_Controls.MassSpecDataNodeSelectionWidget->SetSelectionIsOptional(true);
+    m_Controls.MassSpecDataNodeSelectionWidget->SetEmptyInfo(QString("Image selection"));
+    m_Controls.MassSpecDataNodeSelectionWidget->SetPopUpTitel(QString("Image"));
+
+    m_Controls.ReferenceLevelWindowSelection->SetDataStorage(GetDataStorage());
+    m_Controls.ReferenceLevelWindowSelection->SetNodePredicate(
+      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
+                                  mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+    m_Controls.ReferenceLevelWindowSelection->SetSelectionIsOptional(true);
+    m_Controls.ReferenceLevelWindowSelection->SetEmptyInfo(QString("Reference image selection"));
+    m_Controls.ReferenceLevelWindowSelection->SetPopUpTitel(QString("Image"));
+
+    m_Controls.ReferenceSelectionForScaleBar->SetDataStorage(GetDataStorage());
+    m_Controls.ReferenceSelectionForScaleBar->SetNodePredicate(
+      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
+                                  mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+    m_Controls.ReferenceSelectionForScaleBar->SetSelectionIsOptional(true);
+    m_Controls.ReferenceSelectionForScaleBar->SetEmptyInfo(QString("Reference image selection"));
+    m_Controls.ReferenceSelectionForScaleBar->SetPopUpTitel(QString("Image"));
   }
+
+  // disable image references
+  m_Controls.imageRefGroup->setVisible(false);
+
+  // disable reference point set
+  m_Controls.refPointSetGroup->setVisible(false);
 
   connect(m_Controls.btnOpenPointSetWidget,
           &QAbstractButton::clicked,
@@ -151,26 +170,6 @@ void m2Data::CreateQtPartControl(QWidget *parent)
           this,
           [&] { OnGenerateImageData(m_Controls.spnBxMz->value(), -1); });
 
-  connect(m_Controls.scaleBarEnableIon,
-          &QRadioButton::toggled,
-          this,
-          [this](bool state)
-          {
-            m_ColorBarAnnotations[0]->SetVisibility(state);
-            UpdateColorBarAndRenderWindows();
-            RequestRenderWindowUpdate();
-          });
-
-  connect(m_Controls.scaleBarEnableNormalization,
-          &QRadioButton::toggled,
-          this,
-          [this](bool state)
-          {
-            m_ColorBarAnnotations[1]->SetVisibility(state);
-            UpdateColorBarAndRenderWindows();
-            RequestRenderWindowUpdate();
-          });
-
   connect(m_Controls.btnAddIonImageReference, &QPushButton::clicked, this, &m2Data::EmitIonImageReference);
 
   connect(m_Controls.btnEqualizeLW, &QPushButton::clicked, this, &m2Data::OnEqualizeLW);
@@ -186,8 +185,26 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   QShortcut *shortcutCtrlI = new QShortcut(QKeySequence(tr("Ctrl+I")), parent);
   connect(shortcutCtrlI, SIGNAL(activated()), this, SLOT(EmitIonImageReference()));
 
-  // connect(m_Controls.btnPrev, &QPushButton::clicked, this, &m2Data::OnCreatePrevImage);
-  // connect(m_Controls.btnNext, &QPushButton::clicked, this, &m2Data::OnCreateNextImage);
+  // scale bar
+  m_Controls.sclaeBarLabel->setEnabled(true);
+  m_Controls.ReferenceSelectionForScaleBar->setEnabled(true);
+
+  connect(m_Controls.ScaleBar,
+          &QGroupBox::toggled,
+          this,
+          [this](bool state)
+          {
+            if (state && !m_Controls.ReferenceSelectionForScaleBar->GetSelectedNode())
+            {
+              m_Controls.ScaleBar->setChecked(false);
+              return;
+            }
+            m_Controls.sclaeBarLabel->setEnabled(true);
+            m_Controls.ReferenceSelectionForScaleBar->setEnabled(true);
+            m_ColorBarAnnotations[0]->SetVisibility(state);
+            UpdateColorBarAndRenderWindows();
+            RequestRenderWindowUpdate();
+          });
 
   this->m_ColorBarAnnotations.clear();
   for (int i = 0; i < 2; ++i)
@@ -202,15 +219,6 @@ void m2Data::CreateQtPartControl(QWidget *parent)
     m_Controls.scaleBarOrientation->setCurrentIndex(cbAnnotation->GetOrientation());
     m_Controls.scaleBarLenght->setValue(cbAnnotation->GetLenght());
     m_Controls.scaleBarWidth->setValue(cbAnnotation->GetWidth());
-
-    connect(m_Controls.scaleBarForceUpdate,
-            &QPushButton::clicked,
-            this,
-            [this]
-            {
-              UpdateColorBarAndRenderWindows();
-              RequestRenderWindowUpdate();
-            });
 
     connect(m_Controls.scaleBarFontSize,
             &QSlider::sliderMoved,
@@ -418,7 +426,8 @@ m2Data::NodesVectorType::Pointer m2Data::AllNodes()
   auto nodesToProcess = itk::VectorContainer<unsigned int, mitk::DataNode::Pointer>::New();
   if (!m_Controls.checkBoxOnlyComboBoxSelection->isChecked())
   { // is checked: all nodes that fit the predicate are processed
-    auto processableNodes = GetDataStorage()->GetSubset(this->m_MassSpecDataNodeSelectionWidget->GetNodePredicate());
+    auto processableNodes =
+      GetDataStorage()->GetSubset(this->m_Controls.MassSpecDataNodeSelectionWidget->GetNodePredicate());
     if (!m_Controls.checkBoxOnlyVisible->isChecked())
     {
       for (auto node : processableNodes->CastToSTLConstContainer())
@@ -440,7 +449,7 @@ m2Data::NodesVectorType::Pointer m2Data::AllNodes()
   else
   { // or only the current index is used
     nodesToProcess->clear();
-    auto nodes = this->m_MassSpecDataNodeSelectionWidget->GetSelectedNodes();
+    auto nodes = this->m_Controls.MassSpecDataNodeSelectionWidget->GetSelectedNodes();
     if (!nodes.empty())
     {
       for (auto n : nodes)
@@ -487,32 +496,18 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
 
 void m2Data::OnEqualizeLW()
 {
-  auto nodes = this->m_MassSpecDataNodeSelectionWidget->GetSelectedNodes();
-  if (nodes.size() == 1)
+  
+  if (auto node = this->m_Controls.ReferenceLevelWindowSelection->GetSelectedNode())
   {
-    auto node = nodes.front();
-    mitk::LevelWindow lw_ref, lw_ref_normalization;
+    mitk::LevelWindow lw_ref;
     node->GetLevelWindow(lw_ref);
-    auto derivations = this->GetDataStorage()->GetDerivations(node);
-    auto nPos =
-      std::find_if(derivations->begin(),
-                   derivations->end(),
-                   [](mitk::DataNode::Pointer v) { return v->GetName().find("normalization") != std::string::npos; });
-    (*nPos)->GetLevelWindow(lw_ref_normalization);
 
     auto allNodes = this->AllNodes();
-    for (auto &&n : *allNodes)
-    {
+    for (auto &n : *allNodes)
       n->SetLevelWindow(lw_ref);
-      derivations = this->GetDataStorage()->GetDerivations(n);
-      nPos =
-        std::find_if(derivations->begin(),
-                     derivations->end(),
-                     [](mitk::DataNode::Pointer v) { return v->GetName().find("normalization") != std::string::npos; });
-
-      (*nPos)->SetLevelWindow(lw_ref_normalization);
-    }
   }
+
+  RequestRenderWindowUpdate();
 }
 
 void m2Data::OnApplyTiling()
@@ -582,90 +577,21 @@ void m2Data::OnApplyTiling()
   // this->RequestRenderWindowUpdate();
 }
 
-// void m2Data::OnCopyRescale()
-//{
-//  if (auto current = m_MassSpecDataNodeSelectionWidget->GetSelectedNode())
-//  {
-//    if (auto image = dynamic_cast<mitk::Image *>(current->GetData()))
-//    {
-//      auto node = mitk::DataNode::New();
-//
-//      AccessByItk(
-//        image, ([&node](auto itkImage) {
-//          using OutType = itk::Image<unsigned char, 3>;
-//          auto rescaleFilter =
-//            itk::RescaleIntensityImageFilter<typename std::remove_pointer<decltype(itkImage)>::type, OutType>::New();
-//          rescaleFilter->SetInput(itkImage);
-//          rescaleFilter->Update();
-//          mitk::Image::Pointer out;
-//          mitk::CastToMitkImage(rescaleFilter->GetOutput(), out);
-//          node->SetData(out);
-//        }));
-//      node->SetName(current->GetName() + "_rescaled");
-//      this->GetDataStorage()->Add(node);
-//    }
-//  }
-//}
-
 void m2Data::UpdateColorBarAndRenderWindows()
 {
   mitk::ColorBarAnnotation::Pointer cbAnnotation;
   auto lookuptabel = mitk::LookupTableProperty::New();
 
-  if (m_Controls.scaleBarEnableIon->isChecked())
+  cbAnnotation = m_ColorBarAnnotations[0];
+
+  auto renderer = GetRenderWindowPart()->GetQmitkRenderWindow("axial")->GetRenderer();
+  mitk::LayoutAnnotationRenderer::AddAnnotation(cbAnnotation, renderer);
+
+  auto node = this->m_Controls.ReferenceSelectionForScaleBar->GetSelectedNode();
+  if (node)
   {
-    cbAnnotation = m_ColorBarAnnotations[0];
-
-    auto renderer = GetRenderWindowPart()->GetQmitkRenderWindow("axial")->GetRenderer();
-    mitk::LayoutAnnotationRenderer::AddAnnotation(cbAnnotation, renderer);
-
-    // auto processNodes = this->AllNodes();
-    // for (auto &&n : *processNodes)
-    //{
-    //  auto derivations = this->GetDataStorage()->GetDerivations(n);
-    //  for (auto &&d : *derivations)
-    //  {
-    //    if (d->IsVisible(nullptr))
-    //    {
-    //      d->SetVisibility(false);
-    //    }
-    //  }
-    //}
-    auto nodes = this->m_MassSpecDataNodeSelectionWidget->GetSelectedNodes();
-    if (nodes.size() == 1)
-    {
-      if (nodes.front()->GetProperty(lookuptabel, "LookupTable"))
-        cbAnnotation->SetLookupTable(lookuptabel->GetValue()->GetVtkLookupTable());
-    }
-  }
-  else
-  {
-    cbAnnotation = m_ColorBarAnnotations[1];
-
-    auto renderer = GetRenderWindowPart()->GetQmitkRenderWindow("axial")->GetRenderer();
-    mitk::LayoutAnnotationRenderer::AddAnnotation(cbAnnotation, renderer);
-
-    mitk::DataNode::Pointer node;
-    auto processNodes = this->AllNodes();
-    for (auto &&n : *processNodes)
-    {
-      auto derivations = this->GetDataStorage()->GetDerivations(n);
-      for (auto &&n : *derivations)
-      {
-        if (n->GetName().find("normalization") != std::string::npos)
-        {
-          n->SetVisibility(true);
-          node = n;
-        }
-      }
-    }
-    if (node)
-    {
-      if (node->GetProperty(lookuptabel, "LookupTable"))
-      {
-        cbAnnotation->SetLookupTable(lookuptabel->GetValue()->GetVtkLookupTable());
-      }
-    }
+    if (node->GetProperty(lookuptabel, "LookupTable"))
+      cbAnnotation->SetLookupTable(lookuptabel->GetValue()->GetVtkLookupTable());
   }
 }
 
@@ -931,10 +857,10 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
   }
   else if (auto data = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-//    if (dynamic_cast<m2::ImzMLSpectrumImage *>(data))
-//      ImzMLImageNodeAdded(node);
-//    else if (dynamic_cast<m2::FsmSpectrumImage *>(data))
-//      FsmImageNodeAdded(node);
+    //    if (dynamic_cast<m2::ImzMLSpectrumImage *>(data))
+    //      ImzMLImageNodeAdded(node);
+    //    else if (dynamic_cast<m2::FsmSpectrumImage *>(data))
+    //      FsmImageNodeAdded(node);
 
     this->ApplySettingsToImage(data);
     data->InitializeImageAccess();
@@ -1016,12 +942,12 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
 
 void m2Data::ImzMLImageNodeAdded(const mitk::DataNode *)
 {
- //
+  //
 }
 
 void m2Data::FsmImageNodeAdded(const mitk::DataNode *)
 {
-//
+  //
 }
 
 void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
@@ -1035,51 +961,51 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   lw.SetToMaxWindowSize();
   const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
 
-//  if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
-//  {
-//    // and add as child node
-//    if (spectrumImage->GetImageArtifacts().find("references") != std::end(spectrumImage->GetImageArtifacts()))
-//    {
-//      auto helperNode = mitk::DataNode::New();
-//      helperNode->SetName(node->GetName());
-//      helperNode->SetVisibility(false);
-//      helperNode->SetData(spectrumImage->GetImageArtifacts()["references"]);
-//      helperNode->SetFloatProperty("point 2D size",
-//                                   spectrumImage->GetGeometry()->GetSpacing()[0] * 3);              // x spacing
-//      helperNode->SetFloatProperty("pointsize", spectrumImage->GetGeometry()->GetSpacing()[0] * 3); // x spacing
-//      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-//    }
+  //  if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  //  {
+  //    // and add as child node
+  //    if (spectrumImage->GetImageArtifacts().find("references") != std::end(spectrumImage->GetImageArtifacts()))
+  //    {
+  //      auto helperNode = mitk::DataNode::New();
+  //      helperNode->SetName(node->GetName());
+  //      helperNode->SetVisibility(false);
+  //      helperNode->SetData(spectrumImage->GetImageArtifacts()["references"]);
+  //      helperNode->SetFloatProperty("point 2D size",
+  //                                   spectrumImage->GetGeometry()->GetSpacing()[0] * 3);              // x spacing
+  //      helperNode->SetFloatProperty("pointsize", spectrumImage->GetGeometry()->GetSpacing()[0] * 3); // x spacing
+  //      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+  //    }
 
-    // -------------- add Mask to datastorage --------------
-    //   if(spectrumImage->GetMaskImage()){
-    //     auto helperNode = mitk::DataNode::New();
-    //     helperNode->SetName(node->GetName() + "_mask");
-    //     helperNode->SetVisibility(true);
-    //     helperNode->SetData(spectrumImage->GetMaskImage());
+  // -------------- add Mask to datastorage --------------
+  //   if(spectrumImage->GetMaskImage()){
+  //     auto helperNode = mitk::DataNode::New();
+  //     helperNode->SetName(node->GetName() + "_mask");
+  //     helperNode->SetVisibility(true);
+  //     helperNode->SetData(spectrumImage->GetMaskImage());
 
-    //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-    //   }
+  //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+  //   }
 
-    //   // -------------- add Index to datastorage --------------
-    //   if(spectrumImage->GetIndexImage()){
-    //     auto helperNode = mitk::DataNode::New();
-    //     helperNode->SetName(node->GetName() + "_index");
-    //     helperNode->SetVisibility(false);
-    //     helperNode->SetData(spectrumImage->GetIndexImage());
+  //   // -------------- add Index to datastorage --------------
+  //   if(spectrumImage->GetIndexImage()){
+  //     auto helperNode = mitk::DataNode::New();
+  //     helperNode->SetName(node->GetName() + "_index");
+  //     helperNode->SetVisibility(false);
+  //     helperNode->SetData(spectrumImage->GetIndexImage());
 
-    //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-    //   }
+  //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+  //   }
 
-    //   // -------------- add Normalization to datastorage --------------
-    //   if(spectrumImage->GetNormalizationImage()){
-    //     auto helperNode = mitk::DataNode::New();
-    //     helperNode->SetName(node->GetName() + "_normalization");
-    //     helperNode->SetVisibility(false);
-    //     helperNode->SetData(spectrumImage->GetNormalizationImage());
+  //   // -------------- add Normalization to datastorage --------------
+  //   if(spectrumImage->GetNormalizationImage()){
+  //     auto helperNode = mitk::DataNode::New();
+  //     helperNode->SetName(node->GetName() + "_normalization");
+  //     helperNode->SetVisibility(false);
+  //     helperNode->SetData(spectrumImage->GetNormalizationImage());
 
-    //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-    //   }
-//  }
+  //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+  //   }
+  //  }
 }
 
 void m2Data::NodeRemoved(const mitk::DataNode *node)

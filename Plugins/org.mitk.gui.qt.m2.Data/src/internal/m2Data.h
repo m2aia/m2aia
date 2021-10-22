@@ -159,15 +159,8 @@ protected:
   m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Maximum;
 
   m2::IonImageReference::Pointer m_IonImageReference;
-
   /*!
-   * Main element holding a list of DataNodes containing MassSpecBaseData objects.
-   * Thes selected node in the combobox may be in focus of the processing controlled by this view.
-   */
-  QmitkMultiNodeSelectionWidget *m_MassSpecDataNodeSelectionWidget;
-
-  /*!
-   * Main element holding a list of DataNodes containing MassSpecBaseData objects.
+   * Main element holding a list of DataNodes containing PointSet objects.
    * Thes selected node in the combobox may be in focus of the processing controlled by this view.
    */
   QmitkMultiNodeSelectionWidget *m_PointSetDataNodeSelectionWidget;
