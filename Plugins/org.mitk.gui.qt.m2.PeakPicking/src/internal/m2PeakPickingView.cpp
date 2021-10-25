@@ -55,7 +55,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkNodePredicateProperty.h>
 #include <mitkProperties.h>
 
-const std::string m2PeakPickingView::VIEW_ID = "org.mitk.views.m2.peakpickingview";
+const std::string m2PeakPickingView::VIEW_ID = "org.mitk.views.m2.PeakPicking";
 
 void m2PeakPickingView::SetFocus()
 {

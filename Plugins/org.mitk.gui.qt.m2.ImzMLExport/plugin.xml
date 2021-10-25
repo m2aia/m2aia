@@ -2,7 +2,7 @@
 <plugin>
 
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.imzmlexport"
+    <view id="org.mitk.views.m2.imzmlexport"
           name="ImzML export"
           class="m2ImzMLExportView"
           category="MS imaging"

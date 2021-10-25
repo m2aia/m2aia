@@ -27,6 +27,15 @@ void QmitkWelcomePerspective::CreateInitialLayout(berry::IPageLayout::Pointer la
   auto lo = layout->GetViewLayout("org.mitk.views.m2.Data");
   lo->SetCloseable(false);
 
+  auto folder = layout->GetFolderForView("org.mitk.views.m2.Data");
+  folder->AddPlaceholder("org.mitk.views.m2.Reconstruction3D");
+  folder->AddPlaceholder("org.mitk.views.m2.PeakPicking");
+  folder->AddPlaceholder("org.mitk.views.m2.registration");
+
+  
+
+  
+
   layout->AddView("org.mitk.views.datamanager", berry::IPageLayout::BOTTOM, 0.70f, "org.mitk.views.m2.Data");
   lo = layout->GetViewLayout("org.mitk.views.datamanager");
   lo->SetCloseable(false);

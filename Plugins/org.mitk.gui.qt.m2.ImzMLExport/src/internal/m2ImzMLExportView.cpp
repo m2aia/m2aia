@@ -30,7 +30,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2SpectrumImageBase.h>
 #include <mitkImage.h>
 
-const std::string m2ImzMLExportView::VIEW_ID = "org.mitk.views.imzmlexport";
+const std::string m2ImzMLExportView::VIEW_ID = "org.mitk.views.m2.imzmlexport";
 
 void m2ImzMLExportView::SetFocus() {}
 
