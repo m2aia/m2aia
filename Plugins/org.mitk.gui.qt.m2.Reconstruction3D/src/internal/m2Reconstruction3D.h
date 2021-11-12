@@ -55,6 +55,9 @@ public:
 protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
   virtual void SetFocus() override {}
+  QWidget *  m_Parent;
+  
+
   
 
 struct DataTuple

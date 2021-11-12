@@ -21,6 +21,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 // Qt
 #include <QtConcurrent>
+#include <QMessageBox>
 
 // mitk
 #include <mitkNodePredicateDataType.h>
@@ -28,6 +29,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 // m2aia
 #include "m2Reconstruction3D.h"
+#include "m2StackNameDialog.h"
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
 #include <m2ImzMLSpectrumImage.h>
@@ -37,6 +39,7 @@ const std::string m2Reconstruction3D::VIEW_ID = "org.mitk.views.m2.Reconstructio
 void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
 {
   // create GUI widgets from the Qt Designer's .ui file
+  m_Parent = parent;
   m_Controls.setupUi(parent);
   connect(m_Controls.btnUpdateList, &QPushButton::clicked, this, &m2Reconstruction3D::OnUpdateList);
 
@@ -73,18 +76,43 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
 
 void m2Reconstruction3D::OnStartStacking()
 {
-  // prepare stacks
-  auto spectrumImageStack1 = m2::SpectrumImageStack::New(m2::MicroMetreToMilliMetre(m_Controls.spinBoxZSpacing->value()));
-  auto spectrumImageStack2 = m2::SpectrumImageStack::New(m2::MicroMetreToMilliMetre(m_Controls.spinBoxZSpacing->value()));
-
+  // helper function
   auto getImageDataById = [this](auto id, QListWidget *listWidget) -> DataTuple
   {
     auto referenceIndex = listWidget->item(id)->data(Qt::UserRole).toUInt();
     return m_referenceMap.at(referenceIndex);
   };
 
-  // std::vector<mitk::DataNode::Pointer> workerResult;
 
+  // check input data
+  const auto numItems = m_List1->count();
+  const bool PerformMultimodalSteps = m_List1->count() == m_List2->count();
+  if(!numItems){
+    QMessageBox::warning(m_Parent, "No data available!", "The list for 3D reconstruction must not be empty!");
+    return;
+  }
+
+  // name of the result stack
+  std::string stackName;
+  {
+    m2StackNameDialog dialog(m_Parent);
+    auto d = getImageDataById(0,m_List1);
+    if(auto bp = d.image->GetProperty("x_range_center")){
+      auto center = dynamic_cast<mitk::DoubleProperty *>(bp.GetPointer())->GetValueAsString();
+      dialog.SetName(std::string("stack") + " " + center);
+    }
+    if(dialog.exec()){
+      stackName = dialog.GetName();
+    }else{
+      MITK_WARN << "Cancle stacking.";
+      return;
+    }
+    
+  }
+
+  // prepare stacks
+  auto spectrumImageStack1 = m2::SpectrumImageStack::New(m2::MicroMetreToMilliMetre(m_Controls.spinBoxZSpacing->value()));
+  auto spectrumImageStack2 = m2::SpectrumImageStack::New(m2::MicroMetreToMilliMetre(m_Controls.spinBoxZSpacing->value()));
   /*
    * Two modalities
    * M2 is optional
@@ -105,8 +133,7 @@ void m2Reconstruction3D::OnStartStacking()
 
   // prepare workbench
 
-  const auto numItems = m_List1->count();
-  const bool PerformMultimodalSteps = m_List1->count() == m_List2->count();
+  
   if (PerformMultimodalSteps)
   {
     mitk::ProgressBar::GetInstance()->AddStepsToDo(numItems * 2 - 1);
@@ -176,7 +203,7 @@ void m2Reconstruction3D::OnStartStacking()
 
   auto node = mitk::DataNode::New();
   node->SetData(spectrumImageStack1);
-  node->SetName("Stack 1");
+  node->SetName(stackName);
   GetDataStorage()->Add(node);
   // future release all connections and destroy itself
   // future->disconnect();

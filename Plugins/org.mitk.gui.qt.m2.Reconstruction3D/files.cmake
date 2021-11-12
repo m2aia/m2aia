@@ -6,16 +6,19 @@ set(INTERNAL_CPP_FILES
   org_mitk_gui_qt_m2_Reconstruction3D_Activator.cpp
   m2Reconstruction3D.cpp
   m2LandmarkEvaluation.cpp
+  m2StackNameDialog.cpp
 )
 
 set(UI_FILES
   src/internal/m2Reconstruction3DControls.ui
+  src/internal/m2StackNameDialogControls.ui
 )
 
 set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_Reconstruction3D_Activator.h
   src/internal/m2Reconstruction3D.h
   src/internal/m2LandmarkEvaluation.h
+  src/internal/m2StackNameDialog.h
 )
 
 # list of resource files which can be used by the plug-in
