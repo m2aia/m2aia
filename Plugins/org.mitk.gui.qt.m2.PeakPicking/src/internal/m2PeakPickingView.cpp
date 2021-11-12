@@ -150,6 +150,20 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
       if (imageBase->GetImportMode() != m2::SpectrumFormatType::ContinuousProfile)
       {
         QMessageBox::warning(nullptr, "Warning", "Centroid data are not supported for peak picking operations!");
+
+        auto &peakList = imageBase->GetPeaks();
+        peakList.clear();
+
+        unsigned i =0 ;
+        for (auto &x : imageBase->GetXAxis())
+        { 
+        
+          peakList.emplace_back(i++, x, 0);
+        }
+        m_PeakLists.push_back(peakList);
+        MITK_INFO << "OK";
+
+        
       }
       else
       {
