@@ -32,6 +32,7 @@ See LICENSE.txt for details.
 #include <mitkImage.h>
 #include <mitkImage2DToImage3DSliceFilter.h>
 #include <mitkImageCast.h>
+#include <mitkImageStatisticsHolder.h>
 #include <mitkItkImageIO.h>
 #include <qpushbutton.h>
 #include <vtkLookupTable.h>
@@ -55,7 +56,7 @@ QPixmap GetPixmapFromImageNode(const mitk::Image *image, int height)
   vtkImageData *imageData = extractSliceFilter->GetVtkOutput();
 
   vtkSmartPointer<vtkLookupTable> lookupTable = vtkSmartPointer<vtkLookupTable>::New();
-  lookupTable->SetRange(image->GetScalarValue2ndMin(), image->GetScalarValue2ndMax());
+  lookupTable->SetRange(image->GetStatistics()->GetScalarValue2ndMin(), image->GetStatistics()->GetScalarValue2ndMax());
   lookupTable->SetSaturationRange(0.0, 0.0);
   lookupTable->SetValueRange(0.0, 1.0);
   lookupTable->SetHueRange(0.0, 0.0);
