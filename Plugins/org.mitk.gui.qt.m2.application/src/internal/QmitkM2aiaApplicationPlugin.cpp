@@ -17,7 +17,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "QmitkM2aiaApplicationPlugin.h"
 #include "src/QmitkM2aiaAppApplication.h"
 
-#include "src/internal/Perspectives/QmitkWelcomePerspective.h"
+#include "src/internal/Perspectives/QmitkSpectrumImagingPerspective.h"
 //#include "src/internal/QmitkM2aiaAppIntroPart.h"
 
 #include <mitkVersion.h>
@@ -51,7 +51,7 @@ void QmitkM2aiaApplicationPlugin::start(ctkPluginContext* context)
 
   this->context = context;
 
-  BERRY_REGISTER_EXTENSION_CLASS(QmitkWelcomePerspective, context)
+  BERRY_REGISTER_EXTENSION_CLASS(QmitkSpectrumImagingPerspective, context)
   BERRY_REGISTER_EXTENSION_CLASS(QmitkM2aiaAppApplication, context)
 
 
