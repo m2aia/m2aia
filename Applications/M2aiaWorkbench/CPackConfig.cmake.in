@@ -7,7 +7,7 @@ if(CPACK_GENERATOR MATCHES "NSIS")
   SET(CPACK_NSIS_MUI_ICON "D:\\Dev\\m2aia\\Applications\\M2aia\\icons\\icon.ico")
   SET(CPACK_NSIS_MUI_UNIICON "D:\\Dev\\m2aia\\Applications\\M2aia\\icons\\icon.ico")
 
-  set(CPACK_NSIS_DISPLAY_NAME "M2aia")
+  set(CPACK_NSIS_DISPLAY_NAME "M2aiaWorkbench")
 
   # tell cpack to create links to the doc files
   SET(CPACK_NSIS_MENU_LINKS
@@ -15,10 +15,10 @@ if(CPACK_GENERATOR MATCHES "NSIS")
     )
 
   # tell cpack the executables you want in the start menu as links
-  SET(CPACK_PACKAGE_EXECUTABLES "M2aia;M2aia" CACHE INTERNAL "Collecting windows shortcuts to executables")
+  SET(CPACK_PACKAGE_EXECUTABLES "M2aiaWorkbench;M2aiaWorkbench" CACHE INTERNAL "Collecting windows shortcuts to executables")
 
   # tell cpack to create a desktop link to M2aia
-  # SET(CPACK_CREATE_DESKTOP_LINKS "M2aia")
+  # SET(CPACK_CREATE_DESKTOP_LINKS "M2aiaWorkbench")
   SET(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\icon.ico")
   SET(CPACK_NSIS_HELP_LINK "http:\\\\www.github.com/jtfcordes/")
   SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\www.github.com/jtfcordes/")

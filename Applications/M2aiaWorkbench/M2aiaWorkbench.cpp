@@ -31,8 +31,8 @@ int main(int argc, char **argv)
   mitk::BaseApplication app(argc, argv);
 
   app.setSingleMode(true);
-  app.setApplicationName("M2aia");
-  app.setOrganizationName("M2aia");
+  app.setApplicationName("M2aia Workbench");
+  app.setOrganizationName("University of Applied Sciences");
 
   #if defined __GNUC__ && !defined __clang__
     auto library = QFileInfo(argv[0]).dir().path() + "/../lib/plugins/liborg_blueberry_core_expressions.so";

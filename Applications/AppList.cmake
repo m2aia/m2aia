@@ -1,5 +1,7 @@
-option(MITK_BUILD_APP_M2aia "Build the M2aia executable" OFF)
+
+option(MITK_BUILD_APP_M2aiaWorkbench "Build the M2aiaWorkbench executable" ON)
+
 
 set(MITK_APPS
-  M2aia^^MITK_BUILD_APP_M2aia^^M2aia
+  M2aiaWorkbench^^MITK_BUILD_APP_M2aiaWorkbench^^M2aiaWorkbench
 )
