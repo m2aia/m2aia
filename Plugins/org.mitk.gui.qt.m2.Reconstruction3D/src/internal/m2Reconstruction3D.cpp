@@ -20,7 +20,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryPlatform.h>
 
 // Qt
-#include <QtConcurrent>
 #include <QMessageBox>
 
 // mitk
@@ -209,7 +208,7 @@ void m2Reconstruction3D::OnStartStacking()
   // future->disconnect();
   // });
 
-  // future->setFuture(QtConcurrent::run(worker));
+
   // m_Controls.btnCancel->setEnabled(true);
 }
 

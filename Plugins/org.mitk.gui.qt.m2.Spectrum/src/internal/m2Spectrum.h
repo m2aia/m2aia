@@ -45,6 +45,7 @@ class m2Spectrum : public QmitkAbstractView
 
 public:
   static const std::string VIEW_ID;
+  ~m2Spectrum(){}
 
 protected:
   virtual void CreateQtPartControl(QWidget *parent) override;

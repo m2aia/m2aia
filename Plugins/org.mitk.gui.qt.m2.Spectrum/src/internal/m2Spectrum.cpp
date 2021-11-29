@@ -18,7 +18,6 @@ See LICENSE.txt for details.
 
 #include <QApplication>
 #include <QValueAxis>
-#include <QtConcurrent>
 #include <berryPlatformUI.h>
 #include <iostream>
 #include <m2CommunicationService.h>

@@ -17,7 +17,6 @@ See LICENSE.txt for details.
 #include "m2ChartView.h"
 
 #include <QValueAxis>
-#include <QtConcurrent>
 #include <QtGui/QMouseEvent>
 #include <iostream>
 #include <qapplication.h>
