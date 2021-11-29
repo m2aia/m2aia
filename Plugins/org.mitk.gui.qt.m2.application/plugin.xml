@@ -8,42 +8,16 @@
   </extension>
 
   <extension id="workbench" point="org.blueberry.core.runtime.products">
-    <product name="MITK M2aia" application="org.mitk.qt.m2.application" />
-  </extension>
-
-  <extension point="org.blueberry.ui.intro">
-    <intro id="org.mitk.qt.m2.applicationintro"
-      class="QmitkM2aiaAppIntroPart"
-      role="editor"/>
-    <introProductBinding
-      productId="org.mitk.qt.m2.application.workbench"
-      introId="org.mitk.qt.m2.applicationintro"/>
+    <product name="M²aia Workbench" application="org.mitk.qt.m2.application" />
   </extension>
 
   <extension point="org.blueberry.ui.perspectives">
-    <perspective id="org.mitk.m2.application.perspectives.welcome"
-      name="Data Display"
-      class="QmitkWelcomePerspective"
-      icon="resources/icon_home.png"/>
+    <perspective id="org.mitk.m2.application.perspectives.spectrumimaging"
+      name="Spectrum Imaging Perspective"
+      class="QmitkSpectrumImagingPerspective"
+      icon="resources/perspectives/icon.png"/>
   </extension>
 
-
-  <extension point="org.blueberry.ui.preferencePages">
-    <page
-      id="org.blueberry.ui.preferencePages.Style"
-      name="Themes"
-      category="org.mitk.GeneralPreferencePage"
-      class="berry::ExtensionFactory:stylePreferencePage">
-      <keywordreference id="org.blueberry.ui.style"/>
-    </page>
-    <page
-      id="org.blueberry.ui.preferencePages.Perspectives"
-      name="Perspectives"
-      category="org.mitk.GeneralPreferencePage"
-      class="berry::ExtensionFactory:perspectivesPreferencePage">
-      <keywordreference id="org.blueberry.ui.perspectives"/>
-    </page>
-  </extension>
 
 </plugin>
 

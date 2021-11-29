@@ -33,5 +33,5 @@ QVariant QmitkM2aiaAppApplication::Start(berry::IApplicationContext*)
 
 void QmitkM2aiaAppApplication::Stop()
 {
-
+  
 }

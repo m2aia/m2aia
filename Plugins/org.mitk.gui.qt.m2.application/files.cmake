@@ -7,7 +7,7 @@ set(SRC_CPP_FILES
 
 set(INTERNAL_CPP_FILES
   QmitkM2aiaApplicationPlugin.cpp
-  Perspectives/QmitkWelcomePerspective.cpp
+  Perspectives/QmitkSpectrumImagingPerspective.cpp
 )
 
 set(UI_FILES
@@ -18,10 +18,11 @@ set(MOC_H_FILES
  # src/internal/QmitkM2aiaAppIntroPart.h
   src/internal/QmitkM2aiaApplicationPlugin.h
   src/QmitkM2aiaAppApplication.h
-  src/internal/Perspectives/QmitkWelcomePerspective.h
 
   src/QmitkM2aiaViewAction.h
   src/QmitkM2aiaAboutDialog.h
+
+  src/internal/Perspectives/QmitkSpectrumImagingPerspective.h
 )
 
 set(CACHED_RESOURCE_FILES
@@ -30,7 +31,7 @@ set(CACHED_RESOURCE_FILES
 # for example the icon used in the menu and tabs for the
 # plug-in views in the workbench
   plugin.xml
-  resources/icon_home.png
+  resources/perspectives/icon.png
 )
 
 set(QRC_FILES
