@@ -14,16 +14,17 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-#include "QmitkWelcomePerspective.h"
+#include "QmitkSpectrumImagingPerspective.h"
 
-void QmitkWelcomePerspective::CreateInitialLayout(berry::IPageLayout::Pointer layout)
+
+void QmitkSpectrumImagingPerspective::CreateInitialLayout(berry::IPageLayout::Pointer layout)
 {
   /////////////////////////////////////////////////////
   // all di-app perspectives should have the following:
   /////////////////////////////////////////////////////
   QString editorArea = layout->GetEditorArea();
-
-  layout->AddView("org.mitk.views.m2.Data", berry::IPageLayout::RIGHT, 0.55f, editorArea);
+  
+  layout->AddView("org.mitk.views.m2.Data", berry::IPageLayout::RIGHT, 0.61f, editorArea);
   auto lo = layout->GetViewLayout("org.mitk.views.m2.Data");
   lo->SetCloseable(false);
 
@@ -32,15 +33,11 @@ void QmitkWelcomePerspective::CreateInitialLayout(berry::IPageLayout::Pointer la
   folder->AddPlaceholder("org.mitk.views.m2.PeakPicking");
   folder->AddPlaceholder("org.mitk.views.m2.registration");
 
-  
-
-  
-
-  layout->AddView("org.mitk.views.datamanager", berry::IPageLayout::BOTTOM, 0.70f, "org.mitk.views.m2.Data");
+  layout->AddView("org.mitk.views.datamanager", berry::IPageLayout::BOTTOM, 0.61f, "org.mitk.views.m2.Data");
   lo = layout->GetViewLayout("org.mitk.views.datamanager");
   lo->SetCloseable(false);
 
-  layout->AddStandaloneView("org.mitk.views.m2.Spectrum", false, berry::IPageLayout::BOTTOM, 0.70f, editorArea);
+  layout->AddStandaloneView("org.mitk.views.m2.Spectrum", false, berry::IPageLayout::BOTTOM, 0.61f, editorArea);
   lo = layout->GetViewLayout("org.mitk.views.m2.Spectrum");
   lo->SetCloseable(false);
   
@@ -54,15 +51,4 @@ void QmitkWelcomePerspective::CreateInitialLayout(berry::IPageLayout::Pointer la
   layout->AddShowViewShortcut("org.mitk.views.m2.Registration");
   layout->AddShowViewShortcut("org.mitk.gui.qt.matchpoint.evaluator");
 
-  
-//*/
-  ///////////////////////////////////////////////
-  //// here goes the perspective specific stuff
-  ///////////////////////////////////////////////
-
-  //// Adding the entry for the image navigator to the Windows->"Show View" menu
-  // layout->AddShowViewShortcut("org.mitk.views.imagenavigator");
-
-  // layout->AddPerspectiveShortcut("org.mitk.extapp.defaultperspective");
-  // layout->AddPerspectiveShortcut("org.mitk.mitkworkbench.perspectives.editor");
 }
