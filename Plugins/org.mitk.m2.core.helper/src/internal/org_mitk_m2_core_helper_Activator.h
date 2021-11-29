@@ -18,8 +18,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #define org_mitk_m2_core_helper_Activator_h
 
 #include <berryAbstractUICTKPlugin.h>
-#include <m2SelectionT.hxx>
-#include <m2SpectrumImageBase.h>
 
 class org_mitk_m2_core_helper_Activator :
     public berry::AbstractUICTKPlugin
@@ -30,22 +28,12 @@ class org_mitk_m2_core_helper_Activator :
 
 public:
 
-	m2::SelectionT<m2::IonImageReference::Pointer>::Pointer IonImageReferenceSelection;
-
-    org_mitk_m2_core_helper_Activator();
-    ~org_mitk_m2_core_helper_Activator() override;
-
     void start(ctkPluginContext* context) override;
     void stop(ctkPluginContext* context) override;
 
-    static org_mitk_m2_core_helper_Activator* getDefault();
-
-    static ctkPluginContext* getContext();
+    
 
 private:
-
-    static ctkPluginContext* m_Context;
-    static org_mitk_m2_core_helper_Activator* m_Instance;
 
 }; // org_mitk_gui_qt_algorithmcontrol_Activator
 

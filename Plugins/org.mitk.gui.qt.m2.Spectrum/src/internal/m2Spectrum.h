@@ -19,13 +19,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <qlegendmarker.h>
 #include <qscatterseries.h>
 #include <qslider.h>
-
 #include <berryISelectionListener.h>
-
 #include <QmitkAbstractView.h>
-
 #include <m2SpectrumImageBase.h>
-#include <m2SelectionProvider.h>
 #include "m2ChartView.h"
 #include "m2Crosshair.h"
 #include "ui_m2Spectrum.h"
