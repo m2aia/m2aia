@@ -5,7 +5,7 @@
     <view id="org.mitk.views.m2.combineimages"
           name="Combine Images"
           class="m2CombineImagesView"
-          category="MS imaging"
+          category="Spectrum imaging"
           icon="resources/noun_Blockchain_3404536.svg" />
   </extension>
 
