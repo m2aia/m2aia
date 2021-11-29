@@ -2,7 +2,7 @@
 <plugin>
 
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.m2.Spectrum" name="Spectrum" category="MS imaging" class="m2Spectrum" icon="resources/noun_full_spectrum_2852801.svg" />
+    <view id="org.mitk.views.m2.Spectrum" name="Spectrum" category="Spectrum imaging" class="m2Spectrum" icon="resources/noun_full_spectrum_2852801.svg" />
   </extension>
 
   <extension point="org.blueberry.ui.keywords">

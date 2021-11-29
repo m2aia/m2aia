@@ -5,7 +5,7 @@
     <view id="org.mitk.views.m2.registration"
           name="Registration"
           class="RegistrationView"
-          category="MS imaging"
+          category="Spectrum imaging"
           icon="resources/noun_opticalillusion_1262005.svg" />
   </extension>
 

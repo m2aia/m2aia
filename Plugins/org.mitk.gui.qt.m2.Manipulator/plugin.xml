@@ -5,7 +5,7 @@
     <view id="org.mitk.views.m2.Manipulator"
           name="Geometry Manipulator"
           class="m2Manipulator"
-          category="MS imaging"
+          category="Spectrum imaging"
           icon="resources/manipulator.svg" />
   </extension>
 

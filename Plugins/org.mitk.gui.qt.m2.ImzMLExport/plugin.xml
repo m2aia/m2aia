@@ -5,7 +5,7 @@
     <view id="org.mitk.views.m2.imzmlexport"
           name="ImzML export"
           class="m2ImzMLExportView"
-          category="MS imaging"
+          category="Spectrum imaging"
           icon="resources/noun_Document_3405414.svg" />
   </extension>
 

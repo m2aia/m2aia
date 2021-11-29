@@ -5,7 +5,7 @@
     <view id="org.mitk.views.m2.PeakPicking"
           name="Peak Picking"
           class="m2PeakPickingView"
-          category="MS imaging"
+          category="Spectrum imaging"
           icon="resources/noun_analysis_3405381.svg" />
   </extension>
 

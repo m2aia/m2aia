@@ -45,7 +45,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <qtoolbar.h>
 #include <qtoolbutton.h>
 
-const QString QmitkM2aiaAppWorkbenchAdvisor::WELCOME_PERSPECTIVE_ID = "org.mitk.m2.application.perspectives.welcome";
 
 QmitkM2aiaAppWorkbenchWindowAdvisor::QmitkM2aiaAppWorkbenchWindowAdvisor(
   berry::WorkbenchAdvisor *wbAdvisor, berry::IWorkbenchWindowConfigurer::Pointer configurer)
@@ -68,11 +67,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
 
   berry::IPreferencesService *prefService = berry::Platform::GetPreferencesService();
   Q_ASSERT(prefService);
-  auto m_Preferences = prefService->GetSystemPreferences()->Node("org.mitk.editors.stdmultiwidget");
-  m_Preferences->Put("stdmulti.widget0 corner annotation", "Top");
-  m_Preferences->Put("stdmulti.widget1 corner annotation", "Left");
-  m_Preferences->Put("stdmulti.widget2 corner annotation", "Front");
-  m_Preferences->Put("stdmulti.widget3 corner annotation", "3D");
+
 
   // ==== Application menu ============================
   QMenuBar *menuBar = mainWindow->menuBar();
@@ -83,7 +78,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
     if (a->text() == "&Help")
     {
       auto helpMenu = a->menu();
-      helpMenu->addAction("&About M2aia", this, []() { QmitkM2aiaAboutDialog().exec(); });
+      helpMenu->addAction("&About M²aia Workbench", this, []() { QmitkM2aiaAboutDialog().exec(); });
       for (auto b : helpMenu->actions())
       {
         if (b->text() == "&About")
@@ -94,64 +89,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
     }
   }
 
-  // create GUI widgets from the Qt Designer's .ui file
-  auto view = new QMenu("View (3D)", menuBar);
-  view->addAction("Top",
-                  []()
-                  {
-                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-                        controller->SetViewToCaudal();
-                  });
-  view->addAction("Bottom",
-                  []()
-                  {
-                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-                        controller->SetViewToCranial();
-                  });
-
-  view->addAction("Front",
-                  []()
-                  {
-                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-                        controller->SetViewToPosterior();
-                  });
-
-  view->addAction("Back",
-                  []()
-                  {
-                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-                        controller->SetViewToAnterior();
-                  });
-
-  view->addAction("Left",
-                  []()
-                  {
-                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-                        controller->SetViewToSinister();
-                  });
-
-  view->addAction("Right",
-                  []()
-                  {
-                    if (vtkRenderWindow *renderWindow = mitk::BaseRenderer::GetRenderWindowByName("stdmulti.widget3"))
-                      if (auto controller = mitk::BaseRenderer::GetInstance(renderWindow)->GetCameraController())
-                        controller->SetViewToDexter();
-                  });
-
-  menuBar->addMenu(view);
-
-  // berry::IWorkbenchWindow::Pointer window =
-  // this->GetWindowConfigurer()->GetWindow();
-  // QMainWindow* mainWindow =
-  // qobject_cast<QMainWindow*> (window->GetShell()->GetControl());
-  // mainWindow->showMaximized();
-
-  const std::vector<QString> viewCategories = {"MS imaging", "Segmentation" /*, "Registration"*/};
+  const std::vector<QString> viewCategories = {"Spectrum imaging", "Segmentation" /*, "Registration"*/};
 
   {
     auto prefService = berry::WorkbenchPlugin::GetDefault()->GetPreferencesService();
@@ -262,37 +200,30 @@ berry::WorkbenchWindowAdvisor *QmitkM2aiaAppWorkbenchAdvisor::CreateWorkbenchWin
   berry::IWorkbenchWindowConfigurer::Pointer configurer)
 {
   QList<QString> perspExcludeList;
-  perspExcludeList.push_back("org.blueberry.uitest.util.EmptyPerspective");
-  perspExcludeList.push_back("org.blueberry.uitest.util.EmptyPerspective2");
   perspExcludeList.push_back("org.blueberry.perspectives.help");
 
   QList<QString> viewExcludeList;
   viewExcludeList.push_back("org.mitk.views.controlvisualizationpropertiesview");
   viewExcludeList.push_back("org.mitk.views.modules");
 
-  QmitkM2aiaAppWorkbenchWindowAdvisor *advisor = new QmitkM2aiaAppWorkbenchWindowAdvisor(this, configurer);
+  auto advisor = new QmitkM2aiaAppWorkbenchWindowAdvisor(this, configurer);
   advisor->ShowViewMenuItem(true);
   advisor->ShowNewWindowMenuItem(true);
-  advisor->ShowClosePerspectiveMenuItem(true);
+  advisor->ShowClosePerspectiveMenuItem(false);
   advisor->SetPerspectiveExcludeList(perspExcludeList);
   advisor->SetViewExcludeList(viewExcludeList);
-  advisor->ShowViewToolbar(false);
-  advisor->ShowPerspectiveToolbar(true);
+  advisor->ShowViewToolbar(false);  
+  advisor->ShowPerspectiveToolbar(false);
   advisor->ShowVersionInfo(false);
   advisor->ShowMitkVersionInfo(false);
   advisor->ShowMemoryIndicator(true);
-  advisor->SetProductName("M2aia");
+  advisor->SetProductName("M²aia Workbench");
   advisor->SetWindowIcon(":/org.mitk.gui.qt.m2.application/icon.ico");
-
-  std::cout << "M2aia git commit hash: " << MITKM2AIA_REVISION << std::endl;
-  std::cout << "M2aia branch name: " << MITKM2AIA_REVISION_NAME << std::endl;
-  std::cout << "MITK git commit hash: " << MITK_REVISION << std::endl;
-  std::cout << "MITK branch name: " << MITK_REVISION_NAME << std::endl;
 
   return advisor;
 }
 
 QString QmitkM2aiaAppWorkbenchAdvisor::GetInitialWindowPerspectiveId()
 {
-  return WELCOME_PERSPECTIVE_ID;
+  return "org.mitk.m2.application.perspectives.spectrumimaging";
 }
