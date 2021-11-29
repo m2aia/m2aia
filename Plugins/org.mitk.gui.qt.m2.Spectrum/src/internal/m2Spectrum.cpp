@@ -90,17 +90,17 @@ void m2Spectrum::DrawSelectedArea()
 
   if (m_SelectedAreaLower)
   {
-    auto c = m_Controls.chartView->chart();
-    auto *yAx = dynamic_cast<QtCharts::QValueAxis *>(c->axes(Qt::Vertical).front());
+    // auto c = m_Controls.chartView->chart();
+    auto yAx = std::numeric_limits<float>::max();
 
     m_SelectedAreaLower->clear();
     *m_SelectedAreaLower << QPointF(m_SelectedAreaStartX, 0) << QPointF(m_SelectedAreaEndX, 0);
 
     m_SelectedAreaLeft->clear();
-    *m_SelectedAreaLeft << QPointF(m_SelectedAreaStartX, 0) << QPointF(m_SelectedAreaStartX, yAx->max());
+    *m_SelectedAreaLeft << QPointF(m_SelectedAreaStartX, 0) << QPointF(m_SelectedAreaStartX, yAx);
 
     m_SelectedAreaRight->clear();
-    *m_SelectedAreaRight << QPointF(m_SelectedAreaEndX, 0) << QPointF(m_SelectedAreaEndX, yAx->max());
+    *m_SelectedAreaRight << QPointF(m_SelectedAreaEndX, 0) << QPointF(m_SelectedAreaEndX, yAx);
 
     m_Controls.chartView->repaint();
   }
