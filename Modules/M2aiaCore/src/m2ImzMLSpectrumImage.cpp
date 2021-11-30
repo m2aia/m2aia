@@ -954,6 +954,8 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 
     p->SetPropertyValue<double>("x_min", mzAxis.front());
     p->SetPropertyValue<double>("x_max", mzAxis.back());
+    p->SetPropertyValue<unsigned>("spectral depth (bins)", mzAxis.size());
+    
   }
 }
 
