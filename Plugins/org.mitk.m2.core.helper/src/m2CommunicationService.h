@@ -60,7 +60,7 @@ namespace m2
 	void OverviewSpectrumChanged(const mitk::DataNode *, m2::OverviewSpectrumType);
 	
 	void RequestProcessingNodes(const QString &);
-	void SendProcessingNodes(const QString &, NodesVectorType::Pointer);
+	void BroadcastProcessingNodes(const QString &, NodesVectorType::Pointer);
 
   private:
   };

@@ -100,7 +100,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   }
 
   connect(m2::CommunicationService::Instance(),
-          &m2::CommunicationService::SendProcessingNodes,
+          &m2::CommunicationService::BroadcastProcessingNodes,
           this,
           &m2PeakPickingView::OnProcessingNodesReceived);
 
@@ -220,7 +220,7 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
   OnImageSelectionChangedUpdatePeakList(0);
   m_Connection = connect(
     m_Controls.imageSource, SIGNAL(currentIndexChanged(int)), this, SLOT(OnImageSelectionChangedUpdatePeakList(int)));
-  emit m2::CommunicationService::Instance()->SendProcessingNodes("", m_ReceivedNodes);
+  emit m2::CommunicationService::Instance()->BroadcastProcessingNodes("", m_ReceivedNodes);
 }
 
 void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int idx)

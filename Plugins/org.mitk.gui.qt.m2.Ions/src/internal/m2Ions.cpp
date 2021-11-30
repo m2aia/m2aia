@@ -70,7 +70,7 @@ void m2Ions::CreateQtPartControl(QWidget *parent)
   // m_Controls.itemsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
   connect(m2::CommunicationService::Instance(),
-          &m2::CommunicationService::SendProcessingNodes,
+          &m2::CommunicationService::BroadcastProcessingNodes,
           this,
           &m2Ions::OnProcessingNodesReceived);
 
