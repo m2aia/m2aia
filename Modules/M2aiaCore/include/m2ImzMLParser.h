@@ -20,7 +20,7 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  class M2AIACORE_EXPORT ImzMLXMLParser
+  class M2AIACORE_EXPORT ImzMLParser
   {
   public:
     /*!

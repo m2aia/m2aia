@@ -14,7 +14,7 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 #include <future>
-#include <m2ImzMLXMLParser.h>
+#include <m2ImzMLParser.h>
 #include <math.h>
 //#include <mitkImzMLXMLTemplate.h>
 #include <iterator>
@@ -22,7 +22,7 @@ See LICENSE.txt for details.
 #include <numeric>
 #include <unordered_map>
 
-auto m2::ImzMLXMLParser::findLine(std::ifstream &f, std::string name, std::string start_tag, bool eol)
+auto m2::ImzMLParser::findLine(std::ifstream &f, std::string name, std::string start_tag, bool eol)
   -> unsigned long long
 {
   auto line = f.tellg();
@@ -64,7 +64,7 @@ auto m2::ImzMLXMLParser::findLine(std::ifstream &f, std::string name, std::strin
   return -1;
 }
 
-void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
+void m2::ImzMLParser::FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
 {
   std::ifstream f;
   std::vector<std::string> stack, context_stack;
@@ -467,7 +467,7 @@ void m2::ImzMLXMLParser::FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
   }
 }
 
-void m2::ImzMLXMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
+void m2::ImzMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
 {
   std::ifstream f;
   std::vector<std::string> stack, context_stack;

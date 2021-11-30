@@ -7,7 +7,7 @@ set(H_FILES
 
   include/m2IonImageReference.h
   include/m2ImzMLSpectrumImage.h
-  include/m2ImzMLXMLParser.h
+  include/m2ImzMLParser.h
   include/m2FsmSpectrumImage.h
   include/m2Timer.h
 
@@ -41,7 +41,7 @@ set(CPP_FILES
   m2CoreObjectFactory.cpp  
   m2ElxUtil.cpp
   m2ElxRegistrationHelper.cpp
-  m2ImzMLXMLParser.cpp
+  m2ImzMLParser.cpp
   m2ImzMLSpectrumImage.cpp
   m2FsmSpectrumImage.cpp
 

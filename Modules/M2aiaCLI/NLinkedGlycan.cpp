@@ -16,7 +16,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <itksys/SystemTools.hxx>
 #include <m2ImzMLSpectrumImage.h>
-#include <m2ImzMLXMLParser.h>
+#include <m2ImzMLParser.h>
 #include <m2Timer.h>
 #include <mbilog.h>
 #include <mitkCommandLineParser.h>
@@ -49,7 +49,7 @@ int main(int /*argc*/, char *argv[])
   std::map<mitk::BaseData *, std::vector<m2::Peak>> pixelPeaks;
   for (auto I : {imagePNG1, imagePNG2, imageControl})
   {
-    m2::ImzMLXMLParser::SlowReadMetaData(I);
+    m2::ImzMLParser::SlowReadMetaData(I);
     const auto &source = I->GetImzMLSpectrumImageSource();
     auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source.m_BinaryDataPath);
     I->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::TopHat);

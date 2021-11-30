@@ -25,7 +25,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLEngine.h>
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLTemplate.h>
-#include <m2ImzMLXMLParser.h>
+#include <m2ImzMLParser.h>
 #include <m2Timer.h>
 #include <mitkIOMimeTypes.h>
 #include <mitkIOUtil.h>
@@ -654,8 +654,8 @@ namespace m2
     object->SetImportMode(SpectrumFormatType::None);
     {
       m2::Timer t("Parsing imzML");
-      m2::ImzMLXMLParser::FastReadMetaData(object);
-      m2::ImzMLXMLParser::SlowReadMetaData(object);
+      m2::ImzMLParser::FastReadMetaData(object);
+      m2::ImzMLParser::SlowReadMetaData(object);
     }
 
     {
