@@ -16,12 +16,14 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include "org_mitk_gui_qt_m2_Data_Activator.h"
 #include "m2Data.h"
+#include "m2DataTools.h"
 
 namespace mitk
 {
   void org_mitk_gui_qt_m2_Data_Activator::start(ctkPluginContext *context)
   {
     BERRY_REGISTER_EXTENSION_CLASS(m2Data, context)
+    BERRY_REGISTER_EXTENSION_CLASS(m2DataTools, context)
   }
 
   void org_mitk_gui_qt_m2_Data_Activator::stop(ctkPluginContext *context) { Q_UNUSED(context) }

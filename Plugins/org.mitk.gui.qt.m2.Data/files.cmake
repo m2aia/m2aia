@@ -5,17 +5,20 @@ set(SRC_CPP_FILES
 set(INTERNAL_CPP_FILES
   org_mitk_gui_qt_m2_Data_Activator.cpp
   m2Data.cpp
+  m2DataTools.cpp
   m2OpenSlideImageIOHelperDialog.cpp
 )
 
 set(UI_FILES
   src/internal/m2Data.ui
+  src/internal/m2DataTools.ui
   src/internal/m2OpenSlideImageIOHelperDialog.ui
 )
 
 set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_Data_Activator.h
   src/internal/m2Data.h
+  src/internal/m2DataTools.h
   src/internal/m2OpenSlideImageIOHelperDialog.h
 )
 
@@ -25,6 +28,7 @@ set(MOC_H_FILES
 # plug-in views in the workbench
 set(CACHED_RESOURCE_FILES
   resources/icon_data.svg
+  resources/icon_tools.svg
   plugin.xml
 )
 

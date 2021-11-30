@@ -29,6 +29,7 @@ void QmitkSpectrumImagingPerspective::CreateInitialLayout(berry::IPageLayout::Po
   lo->SetCloseable(false);
 
   auto folder = layout->GetFolderForView("org.mitk.views.m2.Data");
+  folder->AddPlaceholder("org.mitk.views.m2.DataTools");
   folder->AddPlaceholder("org.mitk.views.m2.Reconstruction3D");
   folder->AddPlaceholder("org.mitk.views.m2.PeakPicking");
   folder->AddPlaceholder("org.mitk.views.m2.registration");

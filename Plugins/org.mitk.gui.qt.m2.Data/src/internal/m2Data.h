@@ -95,22 +95,21 @@ public:
    */
   void ApplySettingsToImage(m2::SpectrumImageBase *image);
 
+  void InitNormalizationStrategyComboBox();
+  void InitRangePoolingStrategyComboBox();
+  void InitSmoothingStrategyComboBox();
+  void InitBaselineCorrectionStrategyComboBox();
+  
   m2::NormalizationStrategyType GuiToNormalizationStrategyType();
-  m2::RangePoolingStrategyType GuiToRangePoolingStrategyType();
-
-  m2::SmoothingType GuiToSmoothingStrategyType();
-
+  m2::RangePoolingStrategyType GuiToRangePoolingStrategyType();  
+  m2::SmoothingType GuiToSmoothingStrategyType();  
   m2::BaselineCorrectionType GuiToBaselineCorrectionStrategyType();
 
 public slots:
-  void UpdateColorBarAndRenderWindows();
-  void OnEqualizeLW();
-  void OnApplyTiling();
-  void OnResetTiling();
   void OnCreateNextImage();
   void OnCreatePrevImage();
   void OnProcessingNodesRequested(const QString &);
-  void EmitIonImageReference();
+  
 
   /**
    * @brief GUI side invocation of an ion image grab.

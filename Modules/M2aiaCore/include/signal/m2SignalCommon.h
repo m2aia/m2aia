@@ -27,6 +27,8 @@ namespace m2
     Gaussian = 2
   };
 
+  const std::array<std::string, 5>  SmoothingTypeNames = {"None", "SavitzkyGolay", "Gaussian"};
+
   enum class RangePoolingStrategyType : unsigned int
   {
     None = 0,
@@ -35,6 +37,8 @@ namespace m2
     Maximum = 3,
     Sum = 4
   };
+
+  const std::array<std::string, 5>  RangePoolingStrategyTypeNames = {"None", "Mean", "Median", "Maximum", "Sum"};
 
   enum class NormalizationStrategyType : unsigned int
   {
@@ -45,12 +49,16 @@ namespace m2
     Sum = 4
   };
 
+  const std::array<std::string, 5> NormalizationStrategyTypeNames = {"None", "TIC", "Median", "InFile", "Sum"};
+
   enum class BaselineCorrectionType : unsigned int
   {
     None = 0,
     TopHat = 1,
     Median = 2
   };
+
+  const std::array<std::string, 3> BaselineCorrectionTypeNames = {"None", "TopHat", "Median"};
 
   //////////////////////////////////////////////////////////////////////
   /////////////////// ATTENTION ////////////////////////////////////////
