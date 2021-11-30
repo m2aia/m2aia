@@ -405,6 +405,8 @@ void m2Spectrum::OnMouseDoubleClick(
   QPoint pos, qreal mz, qreal intValue, Qt::MouseButton /*button*/, Qt::KeyboardModifiers /*mod*/)
 {
   Q_UNUSED(pos)
+  const unsigned numSeries = m_LineSeries.size() + m_ScatterSeries.size() + m_PeakSeries.size();
+  if(!numSeries) return;
 
   if (intValue < m_yAxis->min())
   {
