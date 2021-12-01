@@ -242,7 +242,11 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
     data->SetBaseLineCorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
     data->SetUseToleranceInPPM(m_Controls.rbtnTolPPM->isChecked());
 
-    data->SetNumberOfBins(m_Controls.spnBxNumberOfBins->value());
+    berry::IPreferences::Pointer preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+
+    data->SetNumberOfBins(preferences->Get("bins", "10000").toUInt());
+
     // data->SetBinningTolerance(m_Controls.spnBxPeakBinning->value());
   }
 }

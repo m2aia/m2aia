@@ -34,7 +34,7 @@ static berry::IPreferences::Pointer GetPreferences()
 		berry::IPreferences::Pointer systemPreferences = preferencesService->GetSystemPreferences();
 
 		if (systemPreferences.IsNotNull())
-			return systemPreferences->Node("/org.mitk.gui.qt.ext.externalprograms");
+			return systemPreferences->Node("/org.mitk.gui.qt.m2aia.preferences");
 	}
 
 	mitkThrow();
@@ -75,7 +75,14 @@ void m2BrowserPreferencesPage::CreateQtControl(QWidget* parent)
 		SLOT(OnTransformixProcessFinished(int, QProcess::ExitStatus)));
 	connect(m_Ui->transformixButton, SIGNAL(clicked()), this, SLOT(OnTransformixButtonClicked()));
 
+	connect(m_Ui->spnBxBins, SIGNAL(valueChanged(const QString &)), this, SLOT(OnBinsSpinBoxValueChanged(const QString &)));
+
 	this->Update();
+}
+
+
+void m2BrowserPreferencesPage::OnBinsSpinBoxValueChanged(const QString & text){
+	m_Preferences->Put("bins", text);
 }
 
 
@@ -170,6 +177,7 @@ QWidget* m2BrowserPreferencesPage::GetQtControl() const
 
 void m2BrowserPreferencesPage::Init(berry::IWorkbench::Pointer)
 {
+	
 }
 
 void m2BrowserPreferencesPage::PerformCancel()
@@ -185,6 +193,15 @@ bool m2BrowserPreferencesPage::PerformOk()
 
 void m2BrowserPreferencesPage::Update()
 {
+	
+	auto bins = m_Preferences->Get("bins", "");
+	if(bins.isEmpty())
+		m_Preferences->Put("bins", m_Ui->spnBxBins->text());
+	else
+		m_Ui->spnBxBins->setValue(bins.toInt());
+	
+	
+
 	m_ElastixPath = m_Preferences->Get("elastix", "");
 
 	if (!m_ElastixPath.isEmpty())

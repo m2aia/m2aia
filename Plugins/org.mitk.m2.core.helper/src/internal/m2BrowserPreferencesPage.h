@@ -59,6 +59,8 @@ public slots:
 	void OnTransformixProcessError(QProcess::ProcessError error);
 	void OnTransformixProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
+	void OnBinsSpinBoxValueChanged(const QString &);
+
 	void CreateQtControl(QWidget* parent) override;
 	QWidget* GetQtControl() const override;
 	void Init(berry::IWorkbench::Pointer) override;
