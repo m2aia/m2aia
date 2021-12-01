@@ -16,35 +16,32 @@ See LICENSE.txt for details.
 ===================================================================*/
 
 #include "m2Data.h"
-
 #include "m2OpenSlideImageIOHelperDialog.h"
-#include <QFutureWatcher>
-#include <QShortcut>
-#include <QmitkMultiNodeSelectionWidget.h>
-#include <QmitkRenderWindow.h>
-#include <QmitkSingleNodeSelectionWidget.h>
-#include <QtConcurrent>
-#include <berryPlatformUI.h>
+
 #include <boost/format.hpp>
-#include <itkRescaleIntensityImageFilter.h>
+
+#include <QtConcurrent>
+#include <QShortcut>
+
+#include <berryPlatform.h>
+
 #include <itksys/SystemTools.hxx>
-#include <m2FsmSpectrumImage.h>
-#include <m2OpenSlideImageIOHelperObject.h>
-#include <m2SubdivideImage2DFilter.h>
-#include <m2Timer.h>
-#include <mitkCameraController.h>
-#include <mitkIOUtil.h>
-#include <mitkImage.h>
-#include <mitkImage2DToImage3DSliceFilter.h>
-#include <mitkImageAccessByItk.h>
-#include <mitkImageCast.h>
-#include <mitkItkImageIO.h>
-#include <mitkLabelSetImageConverter.h>
+
+#include <itkRescaleIntensityImageFilter.h>
+
+#include <QmitkRenderWindow.h>
+
 #include <mitkLayoutAnnotationRenderer.h>
 #include <mitkLookupTableProperty.h>
-#include <mitkNodePredicateAnd.h>
+#include <mitkImageCast.h>
 #include <mitkNodePredicateNot.h>
+#include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateProperty.h>
+
+#include <m2SubdivideImage2DFilter.h>
+#include <m2Timer.h>
+
+
 
 const std::string m2Data::VIEW_ID = "org.mitk.views.m2.Data";
 
