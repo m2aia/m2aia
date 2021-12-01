@@ -51,7 +51,7 @@ protected:
                                   const QList<mitk::DataNode::Pointer> &nodes) override;
   virtual void SetFocus() override;
 
-  QString GetElastixPath() const;
+  QString GetElastixPathFromPreferences() const;
 
   char m_ModalityId = 'A';
   

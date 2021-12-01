@@ -299,10 +299,10 @@ void RegistrationView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*
   }
 }
 
-QString RegistrationView::GetElastixPath() const
+QString RegistrationView::GetElastixPathFromPreferences() const
 {
   berry::IPreferences::Pointer preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.ext.externalprograms");
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
 
   return preferences.IsNotNull() ? preferences->Get("elastix", "") : "";
 }
@@ -313,7 +313,7 @@ void RegistrationView::StartRegistration()
   auto elastix = m2::ElxUtil::Executable("elastix");
   if (elastix.empty())
   {
-    elastix = GetElastixPath().toStdString();
+    elastix = GetElastixPathFromPreferences().toStdString();
     if (elastix.empty())
     {
       QMessageBox::information(nullptr, "Error", "No elastix executable specified in the MITK properties!");
