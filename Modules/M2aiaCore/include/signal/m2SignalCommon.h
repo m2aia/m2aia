@@ -27,7 +27,7 @@ namespace m2
     Gaussian = 2
   };
 
-  const std::array<std::string, 5>  SmoothingTypeNames = {"None", "SavitzkyGolay", "Gaussian"};
+  const std::array<std::string, 3>  SmoothingTypeNames = {"None", "SavitzkyGolay", "Gaussian"};
 
   enum class RangePoolingStrategyType : unsigned int
   {
