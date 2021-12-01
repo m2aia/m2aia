@@ -46,7 +46,7 @@ public:
 protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
   void CreateQChartView();
-  void CreateQchartViewMenu();
+  void CreateQChartViewMenu();
   m2Crosshair *m_Crosshair;
 
   std::map<const mitk::DataNode *, QtCharts::QLineSeries *> m_PeakSeries;
@@ -61,7 +61,7 @@ protected:
 
   void OnUpdateScatterSeries(const mitk::DataNode *);
   void UpdateLineSeriesWindow(const mitk::DataNode *);
-  void UpdateXAxisLabels(const mitk::DataNode *, bool remove = false);
+  void UpdateAxisLabels(const mitk::DataNode *, bool remove = false);
   void UpdateZoomLevel(const mitk::DataNode *);
 
   void SetDefaultLineSeriesStyle(QtCharts::QLineSeries *);
@@ -80,7 +80,7 @@ protected slots:
   void OnDataNodeReceived(const mitk::DataNode *node);
 
   void OnMassRangeChanged(qreal x, qreal tol);
-  void OnSerieFocused(const mitk::DataNode *node);
+  void OnSeriesFocused(const mitk::DataNode *node);
   void OnLegnedHandleMarkerClicked();
   void OnResetView();
 

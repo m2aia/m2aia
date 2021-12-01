@@ -326,6 +326,7 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
       m_yAxis->setTitleVisible(yTitleVisible);
     }
 
+    UpdateAxisLabels(node);
     UpdateSeriesMinMaxValues();
     OnResetView();
 
@@ -506,10 +507,10 @@ void m2Spectrum::CreateQtPartControl(QWidget *parent)
           SLOT(OnOverviewSpectrumChanged(const mitk::DataNode *, m2::OverviewSpectrumType)));
 
   CreateQChartView();
-  CreateQchartViewMenu();
+  CreateQChartViewMenu();
 }
 
-void m2Spectrum::CreateQchartViewMenu()
+void m2Spectrum::CreateQChartViewMenu()
 {
   m_Menu = new QMenu(m_Controls.chartView);
 
@@ -593,6 +594,7 @@ void m2Spectrum::CreateQchartViewMenu()
           this,
           [this](bool s)
           {
+            MITK_INFO << m_yAxis << " "  << m_xAxis;
             if (m_yAxis)
               m_yAxis->setTitleVisible(s);
             if (m_xAxis)
@@ -658,7 +660,7 @@ void m2Spectrum::CreateQchartViewMenu()
               m_FocusMenu->addAction(action);
               action->setText(kv.first->GetName().c_str());
               auto node = kv.first;
-              connect(action, &QAction::triggered, this, [node, this]() { OnSerieFocused(node); });
+              connect(action, &QAction::triggered, this, [node, this]() { OnSeriesFocused(node); });
             }
 
             for (auto &kv : this->m_PeakSeries)
@@ -667,7 +669,7 @@ void m2Spectrum::CreateQchartViewMenu()
               m_FocusMenu->addAction(action);
               action->setText(kv.first->GetName().c_str());
               auto node = kv.first;
-              connect(action, &QAction::triggered, this, [node, this]() { OnSerieFocused(node); });
+              connect(action, &QAction::triggered, this, [node, this]() { OnSeriesFocused(node); });
             }
 
             m_Menu->exec(m_Controls.chartView->viewport()->mapToGlobal(pos));
@@ -701,7 +703,7 @@ void m2Spectrum::CreateQChartView()
   connect(m_Controls.chartView, &m2::ChartView::mouseWheel, this, &m2Spectrum::OnMouseWheel);
 }
 
-void m2Spectrum::OnSerieFocused(const mitk::DataNode *node)
+void m2Spectrum::OnSeriesFocused(const mitk::DataNode *node)
 {
   UpdateSeriesMinMaxValues();
   if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
@@ -762,7 +764,7 @@ void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
       m_ScatterSeries.erase(node);
     }
 
-    UpdateXAxisLabels(node, true);
+    UpdateAxisLabels(node, true);
   }
 }
 
@@ -910,8 +912,7 @@ void m2Spectrum::OnUpdateScatterSeries(const mitk::DataNode *node)
 void m2Spectrum::UpdateLineSeriesWindow(const mitk::DataNode *node)
 {
   if (node)
-  {
-    UpdateXAxisLabels(node);
+  { 
 
     const auto &typeLevelData = m_LineTypeLevelData[node][m_CurrentOverviewSpectrumType];
     const auto &d = typeLevelData.at(m_Level[node]);
@@ -937,8 +938,11 @@ void m2Spectrum::UpdateLineSeriesWindow(const mitk::DataNode *node)
   }
 }
 
-void m2Spectrum::UpdateXAxisLabels(const mitk::DataNode *node, bool remove)
+void m2Spectrum::UpdateAxisLabels(const mitk::DataNode *node, bool remove)
 {
+
+  MITK_INFO << "Update axis";
+
   if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
     auto label = image->GetPropertyValue<std::string>("x_label");
@@ -955,6 +959,7 @@ void m2Spectrum::UpdateXAxisLabels(const mitk::DataNode *node, bool remove)
   {
     label.append(l + "; ");
   }
+  
   m_xAxis->setTitleText(label);
   switch (m_CurrentOverviewSpectrumType)
   {
