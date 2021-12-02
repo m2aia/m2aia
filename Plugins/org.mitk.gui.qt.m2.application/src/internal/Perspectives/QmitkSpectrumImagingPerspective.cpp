@@ -33,6 +33,8 @@ void QmitkSpectrumImagingPerspective::CreateInitialLayout(berry::IPageLayout::Po
   folder->AddPlaceholder("org.mitk.views.m2.Reconstruction3D");
   folder->AddPlaceholder("org.mitk.views.m2.PeakPicking");
   folder->AddPlaceholder("org.mitk.views.m2.registration");
+  folder->AddPlaceholder("org.mitk.views.volumevisualization");
+  folder->AddPlaceholder("org.mitk.views.viewnavigatorview");
 
   layout->AddView("org.mitk.views.datamanager", berry::IPageLayout::BOTTOM, 0.61f, "org.mitk.views.m2.Data");
   lo = layout->GetViewLayout("org.mitk.views.datamanager");
