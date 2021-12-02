@@ -22,8 +22,8 @@ set(target_libraries
   org_mitk_gui_qt_geometrytools
   org_mitk_gui_qt_preprocessing_resampling
   org_mitk_gui_qt_m2_application
+  org_mitk_gui_qt_m2_common
   org_mitk_gui_qt_m2_Data
-  org_mitk_gui_qt_m2_Ions
   org_mitk_gui_qt_m2_CombineImages
   org_mitk_gui_qt_m2_Spectrum
   org_mitk_gui_qt_m2_PeakPicking
@@ -34,6 +34,7 @@ set(target_libraries
   org_mitk_gui_qt_matchpoint_algorithm_browser
   org_mitk_gui_qt_matchpoint_algorithm_control
   org_mitk_gui_qt_matchpoint_mapper
+  org_mitk_gui_qt_matchpoint_manipulator
   org_mitk_gui_qt_matchpoint_evaluator
-  org_mitk_m2_core_helper
+  org_mitk_gui_qt_matchpoint_visualizer
 )

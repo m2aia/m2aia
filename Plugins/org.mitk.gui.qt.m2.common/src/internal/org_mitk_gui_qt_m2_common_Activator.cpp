@@ -14,19 +14,19 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-#include "org_mitk_m2_core_helper_Activator.h"
+#include "org_mitk_gui_qt_m2_common_Activator.h"
 #include "m2BrowserPreferencesPage.h"
-#include <m2CommunicationService.h>
+#include <m2UIUtils.h>
 
-void org_mitk_m2_core_helper_Activator::start(ctkPluginContext* context)
+void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext* context)
 {
     BERRY_REGISTER_EXTENSION_CLASS(m2BrowserPreferencesPage, context)
 }
 
-void org_mitk_m2_core_helper_Activator::stop(ctkPluginContext* )
+void org_mitk_gui_qt_m2_common_Activator::stop(ctkPluginContext* )
 {
 
-    m2::CommunicationService::Instance()->disconnect();
+    m2::UIUtils::Instance()->disconnect();
 
 
 }

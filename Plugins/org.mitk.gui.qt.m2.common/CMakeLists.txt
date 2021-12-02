@@ -1,4 +1,4 @@
-project(org_mitk_m2_core_helper)
+project(org_mitk_gui_qt_m2_common)
 
 mitk_create_plugin(
   EXPORT_DIRECTIVE MITK_M2_CORE_HELPER_EXPORT

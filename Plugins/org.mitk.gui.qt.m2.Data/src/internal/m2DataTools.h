@@ -21,7 +21,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <mitkColorBarAnnotation.h>
 #include <mitkTextAnnotation2D.h>
-#include <m2CommunicationService.h>
+#include <m2UIUtils.h>
 
 
 class m2DataTools : public QmitkAbstractView
@@ -35,9 +35,9 @@ public:
   Ui::imsDataToolsControls *Controls() { return &m_Controls; }
 
 public slots:
-  void OnEqualizeLW(const QString &, m2::CommunicationService::NodesVectorType::Pointer);
-  void OnApplyTiling(const QString &, m2::CommunicationService::NodesVectorType::Pointer);
-  void OnResetTiling(const QString &, m2::CommunicationService::NodesVectorType::Pointer);  
+  void OnEqualizeLW();
+  void OnApplyTiling();
+  void OnResetTiling();  
   void UpdateColorBarAndRenderWindows();
   
   

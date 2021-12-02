@@ -2,7 +2,7 @@
 <plugin>
 
   <extension point="org.blueberry.ui.preferencePages">
-    <page id="org.mitk.m2.core.helper.PreferencesPage" name="M²aia" class="m2BrowserPreferencesPage"></page>
+    <page id="org.mitk.gui.qt.m2.common.PreferencesPage" name="M²aia" class="m2BrowserPreferencesPage"></page>
   </extension>
 
 </plugin>

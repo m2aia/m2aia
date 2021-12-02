@@ -1,9 +1,9 @@
 set(SRC_CPP_FILES
-  m2CommunicationService.cpp
+  m2UIUtils.cpp
 )
 
 set(INTERNAL_CPP_FILES
-  org_mitk_m2_core_helper_Activator.cpp
+  org_mitk_gui_qt_m2_common_Activator.cpp
   m2BrowserPreferencesPage.cpp
 )
 
@@ -15,9 +15,9 @@ set(H_FILES
 )
 
 set(MOC_H_FILES
-  src/internal/org_mitk_m2_core_helper_Activator.h
+  src/internal/org_mitk_gui_qt_m2_common_Activator.h
   src/internal/m2BrowserPreferencesPage.h
-  src/m2CommunicationService.h
+  src/m2UIUtils.h
 )
 
 # list of resource files which can be used by the plug-in

@@ -25,7 +25,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkDataStorageComboBox.h>
 #include <berryISelectionListener.h>
 #include <ctkRangeWidget.h>
-#include <m2CommunicationService.h>
+#include <m2UIUtils.h>
 #include <m2SpectrumImageBase.h>
 #include <mitkImage.h>
 #include <qaction.h>
@@ -57,8 +57,8 @@ protected:
   /*virtual void OnSelectionChanged(berry::IWorkbenchPart::Pointer source,
                                   const QList<mitk::DataNode::Pointer> &nodes) override;
 */
-  void CalculateVisualization(m2::CommunicationService::NodesVectorType::Pointer nodes);
-  void UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer nodes);
+  void CalculateVisualization(m2::UIUtils::NodesVectorType::Pointer nodes);
+  void UpdateImageList(m2::UIUtils::NodesVectorType::Pointer nodes);
 
   Ui::m2IonsControls m_Controls;
 
@@ -93,7 +93,7 @@ private:
   bool m_DR_AsRGBImage = true;
 
 protected slots:
-  void OnProcessingNodesReceived(const QString &, m2::CommunicationService::NodesVectorType::Pointer nodes);
+  void OnProcessingNodesReceived();
 };
 
 #endif // m2Ions_h

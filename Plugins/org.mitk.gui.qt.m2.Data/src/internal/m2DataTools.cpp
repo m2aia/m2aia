@@ -18,7 +18,7 @@ See LICENSE.txt for details.
 #include "m2DataTools.h"
 
 #include <QmitkRenderWindow.h>
-#include <m2CommunicationService.h>
+#include <m2UIUtils.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageBase.h>
 #include <mitkLayoutAnnotationRenderer.h>
@@ -41,15 +41,6 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
   m_Parent = parent;
-
-  // auto serviceRef = m2::CommunicationService::Instance();
-  // connect(serviceRef, SIGNAL(UpdateImage(qreal, qreal)), this, SLOT(OnGenerateImageData(qreal, qreal)));
-  // connect(serviceRef,
-  //         SIGNAL(RequestProcessingNodes(const QString &)),
-  //         this,
-  //         SLOT(OnProcessingNodesRequested(const QString &)));
-
-  // m_Controls.grpBoxCommon->setChecked(false);
 
   {
     m_Controls.ReferenceLevelWindowSelection->SetDataStorage(GetDataStorage());
@@ -75,22 +66,9 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
   // disable reference point set
   m_Controls.refPointSetGroup->setVisible(false);
 
-  auto cs = m2::CommunicationService::Instance();
-
-  connect(m_Controls.btnEqualizeLW, &QAbstractButton::clicked, this, [cs](){
-    emit cs->RequestProcessingNodes("m2DataTools::OnEqualizeLW");
-  });  
-  connect(cs, &m2::CommunicationService::BroadcastProcessingNodes,this,&m2DataTools::OnEqualizeLW);
-
-  connect(m_Controls.resetTiling, &QAbstractButton::clicked, this, [cs](){
-    emit cs->RequestProcessingNodes("m2DataTools::OnResetTiling");
-  });  
-  connect(cs, &m2::CommunicationService::BroadcastProcessingNodes,this,&m2DataTools::OnResetTiling);
-
-  connect(m_Controls.applyTiling, &QAbstractButton::clicked, this, [cs](){
-    emit cs->RequestProcessingNodes("m2DataTools::OnApplyTiling");
-  });  
-  connect(cs, &m2::CommunicationService::BroadcastProcessingNodes,this,&m2DataTools::OnApplyTiling);
+  connect(m_Controls.btnEqualizeLW, &QAbstractButton::clicked, this ,&m2DataTools::OnEqualizeLW);
+  connect(m_Controls.resetTiling, &QAbstractButton::clicked, this, &m2DataTools::OnResetTiling);
+  connect(m_Controls.applyTiling, &QAbstractButton::clicked, this, &m2DataTools::OnApplyTiling);
   
 
   // scale bar
@@ -171,11 +149,10 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
   }
 }
 
-void m2DataTools::OnResetTiling(const QString & requestId,m2::CommunicationService::NodesVectorType::Pointer allNodes)
+void m2DataTools::OnResetTiling()
 {
 
-  if(requestId != "m2DataTools::OnResetTiling")
-    return;
+  auto allNodes = m2::UIUtils::AllNodes(GetDataStorage());
   
   //	unsigned int maxWidth = 0, maxHeight = 0;
   if (allNodes->Size() == 0)
@@ -217,10 +194,9 @@ void m2DataTools::OnResetTiling(const QString & requestId,m2::CommunicationServi
   mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
 }
 
-void m2DataTools::OnEqualizeLW(const QString & requestId, m2::CommunicationService::NodesVectorType::Pointer allNodes)
+void m2DataTools::OnEqualizeLW()
 {
-  if(requestId != "m2DataTools::OnEqualizeLW")
-    return;
+  auto allNodes = m2::UIUtils::AllNodes(GetDataStorage());
 
   if (auto node = this->m_Controls.ReferenceLevelWindowSelection->GetSelectedNode())
   {
@@ -234,11 +210,10 @@ void m2DataTools::OnEqualizeLW(const QString & requestId, m2::CommunicationServi
   RequestRenderWindowUpdate();
 }
 
-void m2DataTools::OnApplyTiling(const QString & requestId, m2::CommunicationService::NodesVectorType::Pointer allNodes)
+void m2DataTools::OnApplyTiling()
 {
 
-  if(requestId != "m2DataTools::OnApplyTiling")
-    return;
+  auto allNodes = m2::UIUtils::AllNodes(GetDataStorage());
 
   auto v = m_Controls.mosaicRows->value();
   if (v < 1)

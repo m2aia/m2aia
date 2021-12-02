@@ -20,7 +20,7 @@ See LICENSE.txt for details.
 #include <QValueAxis>
 #include <berryPlatformUI.h>
 #include <iostream>
-#include <m2CommunicationService.h>
+#include <m2UIUtils.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <mitkLookupTableProperty.h>
 #include <mitkStatusBar.h>
@@ -391,7 +391,7 @@ void m2Spectrum::OnMouseRelease(QPoint pos, qreal mz, qreal intValue, Qt::MouseB
     const auto mz = (m_SelectedAreaEndX + m_SelectedAreaStartX) * 0.5;
     const auto tol = std::abs(m_SelectedAreaEndX - m_SelectedAreaStartX) * 0.5;
 
-    emit m2::CommunicationService::Instance()->UpdateImage(mz, tol);
+    emit m2::UIUtils::Instance()->UpdateImage(mz, tol);
   }
   m_RangeSelectionStarted = false;
   m_Controls.chartView->setRubberBand(QtCharts::QChartView::RubberBand::NoRubberBand);
@@ -419,7 +419,7 @@ void m2Spectrum::OnMouseDoubleClick(
   }
   else
   {
-    emit m2::CommunicationService::Instance()->UpdateImage(mz, -1);
+    emit m2::UIUtils::Instance()->UpdateImage(mz, -1);
   }
 }
 
@@ -495,7 +495,7 @@ void m2Spectrum::CreateQtPartControl(QWidget *parent)
   m_Controls.setupUi(parent);
 
   // 20201023: use communciation service
-  auto serviceRef = m2::CommunicationService::Instance();
+  auto serviceRef = m2::UIUtils::Instance();
   connect(serviceRef, SIGNAL(RangeChanged(qreal, qreal)), this, SLOT(OnMassRangeChanged(qreal, qreal)));
   connect(serviceRef,
           SIGNAL(SpectrumImageNodeAdded(const mitk::DataNode *)),

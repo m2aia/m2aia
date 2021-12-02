@@ -26,7 +26,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QMessageBox>
 
 // m2
-#include <m2CommunicationService.h>
+#include <m2UIUtils.h>
 #include <m2CoreCommon.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2IonImageReference.h>
@@ -70,7 +70,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.cbOverviewSpectra->setCurrentIndex(1);
 
   connect(
-    m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnRequestProcessingNodes);
+    m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPeakPicking);
 
   connect(m_Controls.btnPCA, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPCA);
   connect(m_Controls.btnTSNE, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartTSNE);
@@ -99,11 +99,6 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
             });
   }
 
-  connect(m2::CommunicationService::Instance(),
-          &m2::CommunicationService::BroadcastProcessingNodes,
-          this,
-          &m2PeakPickingView::OnProcessingNodesReceived);
-
   const auto itemHandler = [this](QTableWidgetItem *item)
   {
     const size_t idx = m_Controls.imageSource->currentIndex();
@@ -117,7 +112,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
     if (auto spImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
       auto mz = std::stod(item->text().toStdString());
-      emit m2::CommunicationService::Instance()->UpdateImage(mz, spImage->ApplyTolerance(mz));
+      emit m2::UIUtils::Instance()->UpdateImage(mz, spImage->ApplyTolerance(mz));
     }
   };
 
@@ -126,18 +121,11 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   connect(m_Controls.tableWidget, &QTableWidget::itemDoubleClicked, this, itemHandler);
 }
 
-void m2PeakPickingView::OnRequestProcessingNodes()
+void m2PeakPickingView::OnStartPeakPicking()
 {
-  emit m2::CommunicationService::Instance()->RequestProcessingNodes(QString::fromStdString(VIEW_ID));
-}
 
-void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
-                                                  m2::CommunicationService::NodesVectorType::Pointer nodes)
-{
-  if (id != VIEW_ID.c_str())
-    return;
-  m_ReceivedNodes = nodes;
-
+  m_ReceivedNodes = m2::UIUtils::AllNodes(GetDataStorage());
+  
   if (m_Connection)
     disconnect(m_Connection);
   m_Controls.imageSource->clear();
@@ -150,20 +138,14 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
       if (imageBase->GetImportMode() != m2::SpectrumFormatType::ContinuousProfile)
       {
         QMessageBox::warning(nullptr, "Warning", "Centroid data are not supported for peak picking operations!");
-
         auto &peakList = imageBase->GetPeaks();
         peakList.clear();
 
         unsigned i =0 ;
         for (auto &x : imageBase->GetXAxis())
-        { 
-        
           peakList.emplace_back(i++, x, 0);
-        }
-        m_PeakLists.push_back(peakList);
-        MITK_INFO << "OK";
-
         
+        m_PeakLists.push_back(peakList);       
       }
       else
       {
@@ -213,14 +195,14 @@ void m2PeakPickingView::OnProcessingNodesReceived(const QString &id,
 
         m_PeakLists.push_back(peakList);
 
-        emit m2::CommunicationService::Instance()->OverviewSpectrumChanged(node.GetPointer(),
+        emit m2::UIUtils::Instance()->OverviewSpectrumChanged(node.GetPointer(),
                                                                            m2::OverviewSpectrumType::PeakIndicators);
       }
     }
   OnImageSelectionChangedUpdatePeakList(0);
   m_Connection = connect(
     m_Controls.imageSource, SIGNAL(currentIndexChanged(int)), this, SLOT(OnImageSelectionChangedUpdatePeakList(int)));
-  emit m2::CommunicationService::Instance()->BroadcastProcessingNodes("", m_ReceivedNodes);
+  // emit m2::UIUtils::Instance()->BroadcastProcessingNodes("", m_ReceivedNodes);
 }
 
 void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int idx)

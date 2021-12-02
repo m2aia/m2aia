@@ -23,7 +23,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkPointListWidget.h>
 #include <berryISelectionListener.h>
 #include <itkVectorContainer.h>
-#include <m2CommunicationService.h>
+#include <m2UIUtils.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageBase.h>
 #include <mitkColorBarAnnotation.h>
@@ -55,7 +55,7 @@ class m2Data : public QmitkAbstractView
 
 public:
   static const std::string VIEW_ID;
-  using NodesVectorType = m2::CommunicationService::NodesVectorType;
+  using NodesVectorType = m2::UIUtils::NodesVectorType;
 
   /**
    * @brief Get the Overview Spectrum Type object

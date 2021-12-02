@@ -45,13 +45,10 @@ const std::string m2Ions::VIEW_ID = "org.mitk.views.m2.Ions";
 
 void m2Ions::SetFocus() {}
 
-void m2Ions::OnProcessingNodesReceived(const QString & /*id*/, m2::CommunicationService::NodesVectorType::Pointer nodes)
+void m2Ions::OnToggleVisualization(bool v)
 {
-  if (nodes->empty())
-  {
-    return;
-  }
-
+  if(!v) return;
+  auto nodes = m2::UIUtils::AllNodes(GetDataStorage());
   UpdateImageList(nodes);
 }
 
@@ -66,20 +63,8 @@ void m2Ions::CreateQtPartControl(QWidget *parent)
   m_Controls.itemsTable->setColumnWidth(2, 250);
 
   m_Controls.itemsTable->setHorizontalHeaderLabels({"m/z value", "color", "scale", "name"});
-  // m_Controls.itemsTable->setSelectionMode(QAbstractItemView::NoSelection);
-  // m_Controls.itemsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
 
-  connect(m2::CommunicationService::Instance(),
-          &m2::CommunicationService::BroadcastProcessingNodes,
-          this,
-          &m2Ions::OnProcessingNodesReceived);
-
-  connect(m_Controls.visualization, &QCheckBox::toggled, this, [](auto v) {
-    if (v)
-    {
-      emit m2::CommunicationService::Instance()->RequestProcessingNodes(QString::fromStdString(VIEW_ID));
-    }
-  });
+  connect(m_Controls.visualization, &QCheckBox::toggled, this, &m2Ions::OnToggleVisualization);
 
   //  auto tfw = new ctkTransferFunctionItem();
   // tfw->ShowGradientOpacityFunction(false);
@@ -101,7 +86,7 @@ void m2Ions::CreateQtPartControl(QWidget *parent)
   m_Menu->addAction(m_Include);
 }
 
-void m2Ions::UpdateImageList(m2::CommunicationService::NodesVectorType::Pointer nodes)
+void m2Ions::UpdateImageList(m2::UIUtils::NodesVectorType::Pointer nodes)
 {
   std::set<m2::IonImageReference *, m2::IonImageReference::Comp> tableRefs;
   for (auto n : *nodes)
@@ -366,7 +351,7 @@ void m2Ions::PerformPCA(std::set<m2::IonImageReference *, m2::IonImageReference:
   }
 }
 
-void m2Ions::CalculateVisualization(m2::CommunicationService::NodesVectorType::Pointer nodes)
+void m2Ions::CalculateVisualization(m2::UIUtils::NodesVectorType::Pointer nodes)
 {
   if (m_Controls.visualization->isChecked())
   {

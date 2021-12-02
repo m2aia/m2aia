@@ -14,16 +14,16 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-#ifndef org_mitk_m2_core_helper_Activator_h
-#define org_mitk_m2_core_helper_Activator_h
+#ifndef org_mitk_gui_qt_m2_common_Activator_h
+#define org_mitk_gui_qt_m2_common_Activator_h
 
 #include <berryAbstractUICTKPlugin.h>
 
-class org_mitk_m2_core_helper_Activator :
+class org_mitk_gui_qt_m2_common_Activator :
     public berry::AbstractUICTKPlugin
 {
     Q_OBJECT
-        Q_PLUGIN_METADATA(IID "org_mitk_m2_core_helper")
+        Q_PLUGIN_METADATA(IID "org_mitk_gui_qt_m2_common")
         Q_INTERFACES(ctkPluginActivator)
 
 public:

@@ -22,7 +22,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkAbstractView.h>
 #include <QmitkSingleNodeSelectionWidget.h>
 #include <berryISelectionListener.h>
-#include <m2CommunicationService.h>
+#include <m2UIUtils.h>
 #include <m2SpectrumImageBase.h>
 
 namespace itk{
@@ -58,16 +58,15 @@ protected:
   virtual void SetFocus() override;
   Ui::m2PeakPickingViewControls m_Controls;
   QmitkSingleNodeSelectionWidget *m_MassSpecDataNodeSelectionWidget;
-  m2::CommunicationService::NodesVectorType::Pointer m_ReceivedNodes = nullptr;
+  m2::UIUtils::NodesVectorType::Pointer m_ReceivedNodes = nullptr;
   using PeakVectorType = m2::SpectrumImageBase::PeaksVectorType;
   std::vector<PeakVectorType> m_PeakLists;
   QMetaObject::Connection m_Connection;
 
 protected slots:
-  void OnProcessingNodesReceived(const QString &, m2::CommunicationService::NodesVectorType::Pointer);
   void OnStartPCA();
   void OnStartTSNE();
-  void OnRequestProcessingNodes();
+  void OnStartPeakPicking();
   void OnImageSelectionChangedUpdatePeakList(int idx);
 };
 
