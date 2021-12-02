@@ -73,14 +73,6 @@ public:
 
 
   /**
-   * @brief Return all nodes selected by GUI-defined condistions.
-   *
-   * @return A set of data nodes.
-   *
-   */
-  NodesVectorType::Pointer AllNodes();
-
-  /**
    * @brief Apply settings to nodes.
    *
    * @param v A set of data node of mass spec images.
@@ -108,7 +100,6 @@ public:
 public slots:
   void OnCreateNextImage();
   void OnCreatePrevImage();
-  void OnProcessingNodesRequested(const QString &);
   
 
   /**
@@ -120,7 +111,7 @@ public slots:
    * @param tol Tolerance (tol) to control mass range window that is concidred.
    */
   void OnGenerateImageData(qreal mz, qreal tol);
-  void OnGrabIonImageFinished(mitk::DataNode * parent, mitk::Image * image);
+  
 
 signals:
   void SendNodes(NodesVectorType::Pointer vec);

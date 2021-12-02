@@ -16,32 +16,23 @@ See LICENSE.txt for details.
 ===================================================================*/
 
 #include "m2Data.h"
+
 #include "m2OpenSlideImageIOHelperDialog.h"
-
-#include <boost/format.hpp>
-
-#include <QtConcurrent>
 #include <QShortcut>
-
-#include <berryPlatform.h>
-
-#include <itksys/SystemTools.hxx>
-
-#include <itkRescaleIntensityImageFilter.h>
-
 #include <QmitkRenderWindow.h>
-
-#include <mitkLayoutAnnotationRenderer.h>
-#include <mitkLookupTableProperty.h>
-#include <mitkImageCast.h>
-#include <mitkNodePredicateNot.h>
-#include <mitkNodePredicateAnd.h>
-#include <mitkNodePredicateProperty.h>
-
+#include <QtConcurrent>
+#include <berryPlatform.h>
+#include <boost/format.hpp>
+#include <itkRescaleIntensityImageFilter.h>
+#include <itksys/SystemTools.hxx>
 #include <m2SubdivideImage2DFilter.h>
 #include <m2Timer.h>
-
-
+#include <mitkImageCast.h>
+#include <mitkLayoutAnnotationRenderer.h>
+#include <mitkLookupTableProperty.h>
+#include <mitkNodePredicateAnd.h>
+#include <mitkNodePredicateNot.h>
+#include <mitkNodePredicateProperty.h>
 
 const std::string m2Data::VIEW_ID = "org.mitk.views.m2.Data";
 
@@ -62,12 +53,8 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   InitRangePoolingStrategyComboBox();
   InitSmoothingStrategyComboBox();
 
-  auto serviceRef = m2::CommunicationService::Instance();
+  auto serviceRef = m2::UIUtils::Instance();
   connect(serviceRef, SIGNAL(UpdateImage(qreal, qreal)), this, SLOT(OnGenerateImageData(qreal, qreal)));
-  connect(serviceRef,
-          SIGNAL(RequestProcessingNodes(const QString &)),
-          this,
-          SLOT(OnProcessingNodesRequested(const QString &)));
 
   connect(m_Controls.btnGrabIonImage,
           &QAbstractButton::clicked,
@@ -85,7 +72,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 void m2Data::InitNormalizationStrategyComboBox()
 {
   auto cb = Controls()->CBNormalization;
-  for (unsigned int i = 0; i < m2::NormalizationStrategyTypeNames.size(); ++i)  
+  for (unsigned int i = 0; i < m2::NormalizationStrategyTypeNames.size(); ++i)
     cb->addItem(m2::NormalizationStrategyTypeNames[i].c_str(), {i});
 
   auto defaultValue = static_cast<unsigned int>(m2::NormalizationStrategyType::None);
@@ -100,9 +87,9 @@ m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
 void m2Data::InitRangePoolingStrategyComboBox()
 {
   auto cb = Controls()->CBImagingStrategy;
-  for (unsigned int i = 0; i < m2::RangePoolingStrategyTypeNames.size(); ++i)  
+  for (unsigned int i = 0; i < m2::RangePoolingStrategyTypeNames.size(); ++i)
     cb->addItem(m2::RangePoolingStrategyTypeNames[i].c_str(), {i});
-    
+
   auto defaultValue = static_cast<unsigned int>(m2::RangePoolingStrategyType::Maximum);
   cb->setCurrentIndex(defaultValue);
   cb->removeItem(static_cast<unsigned int>(m2::RangePoolingStrategyType::None));
@@ -116,9 +103,9 @@ m2::RangePoolingStrategyType m2Data::GuiToRangePoolingStrategyType()
 void m2Data::InitSmoothingStrategyComboBox()
 {
   auto cb = Controls()->CBSmoothing;
-  for (unsigned int i = 0; i < m2::SmoothingTypeNames.size(); ++i)  
+  for (unsigned int i = 0; i < m2::SmoothingTypeNames.size(); ++i)
     cb->addItem(m2::SmoothingTypeNames[i].c_str(), {i});
-  
+
   auto defaultValue = static_cast<unsigned int>(m2::SmoothingType::None);
   cb->setCurrentIndex(defaultValue);
 }
@@ -131,9 +118,9 @@ m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
 void m2Data::InitBaselineCorrectionStrategyComboBox()
 {
   auto cb = Controls()->CBBaselineCorrection;
-  for (unsigned int i = 0; i < m2::BaselineCorrectionTypeNames.size(); ++i)  
+  for (unsigned int i = 0; i < m2::BaselineCorrectionTypeNames.size(); ++i)
     cb->addItem(m2::BaselineCorrectionTypeNames[i].c_str(), {i});
-  
+
   auto defaultValue = static_cast<unsigned int>(m2::BaselineCorrectionType::None);
   cb->setCurrentIndex(defaultValue);
 }
@@ -171,50 +158,6 @@ void m2Data::OnCreatePrevImage()
   }
 }
 
-void m2Data::OnProcessingNodesRequested(const QString &id)
-{
-  auto nodes = AllNodes();
-  ApplySettingsToNodes(nodes);
-  emit m2::CommunicationService::Instance()->BroadcastProcessingNodes(id, nodes);
-}
-
-void m2Data::OnGrabIonImageFinished(mitk::DataNode * /*dataNode*/, mitk::Image * /*image*/) {}
-
-m2Data::NodesVectorType::Pointer m2Data::AllNodes()
-{
-  // Create a container vor all nodes that should be processed
-  auto nodesToProcess = itk::VectorContainer<unsigned int, mitk::DataNode::Pointer>::New();
-  // if (!m_Controls.checkBoxOnlyComboBoxSelection->isChecked())
-  { // is checked: all nodes that fit the predicate are processed
-    auto predicate =
-      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
-                                  mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")));
-
-    auto processableNodes = GetDataStorage()->GetSubset(predicate);
-
-    for (auto node : processableNodes->CastToSTLConstContainer())
-    {
-      bool visibility;
-      if (node->GetBoolProperty("visible", visibility))
-        if (visibility)
-          nodesToProcess->push_back(node);
-    }
-  }
-  // else
-  // { // or only the current index is used
-  //   nodesToProcess->clear();
-  //   auto nodes = this->m_Controls.MassSpecDataNodeSelectionWidget->GetSelectedNodes();
-  //   if (!nodes.empty())
-  //   {
-  //     for (auto n : nodes)
-  //     {
-  //       nodesToProcess->push_back(n);
-  //     }
-  //   }
-  // }
-  return nodesToProcess;
-}
-
 void m2Data::ApplySettingsToNodes(m2Data::NodesVectorType::Pointer v)
 {
   for (auto dataNode : *v)
@@ -243,7 +186,7 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
     data->SetUseToleranceInPPM(m_Controls.rbtnTolPPM->isChecked());
 
     berry::IPreferences::Pointer preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+      berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
 
     data->SetNumberOfBins(preferences->Get("bins", "10000").toUInt());
 
@@ -256,7 +199,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
   const bool initializeNew = m2Data::Controls()->chkBxInitNew->isChecked();
 
   // get the selection
-  auto nodesToProcess = this->AllNodes();
+  auto nodesToProcess = m2::UIUtils::AllNodes(GetDataStorage());
   if (nodesToProcess->empty())
     return;
 
@@ -266,7 +209,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
     bool isPpm = Controls()->rbtnTolPPM->isChecked();
     xRangeTol = isPpm ? m2::PartPerMillionToFactor(xRangeTol) * xRangeCenter : xRangeTol;
   }
-  emit m2::CommunicationService::Instance()->RangeChanged(xRangeCenter, xRangeTol);
+  emit m2::UIUtils::Instance()->RangeChanged(xRangeCenter, xRangeTol);
 
   auto flag = std::make_shared<std::atomic<bool>>(0);
   QString labelText = str(boost::format("%.4f +/- %.2f") % xRangeCenter % xRangeTol).c_str();
@@ -310,7 +253,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
         continue;
 
       mitk::Image::Pointer maskImage;
-      auto maskNode = FindChildNodeWithNameContaining(dataNode, "mask");
+      auto maskNode = FindChildNodeWithNameContaining(dataNode, Controls()->maskSubstring->text().toStdString());
 
       if (maskNode && Controls()->chkBxUseMask->isChecked())
         maskImage = dynamic_cast<mitk::Image *>(maskNode->GetData());
@@ -519,7 +462,7 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
     this->RequestRenderWindowUpdate();
 
     SpectrumImageNodeAdded(node);
-    emit m2::CommunicationService::Instance()->SpectrumImageNodeAdded(node);
+    emit m2::UIUtils::Instance()->SpectrumImageNodeAdded(node);
   }
 }
 
