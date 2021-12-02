@@ -24,55 +24,55 @@ namespace m2
   class M2AIACORE_EXPORT Peak final
   {
   public:
-    double GetX() const { return GetXSum() / double(m_x.size()); }
-    double GetXSum() const { return std::accumulate(m_x.data(), m_x.data() + m_x.size(), double(0)); }
+    double GetX() const { return GetXSum() / double(m_count); }
+    double GetXSum() const { return m_xSum; }
     
-    double GetY() const { return GetYSum() / double(m_y.size()); }
-    double GetYSum() const { return std::accumulate(m_y.data(), m_y.data() + m_y.size(), double(0)); }
-    double GetYMax() const { return *std::max_element(m_y.data(), m_y.data() + m_y.size()); }
+    double GetY() const { return GetYSum() / double(m_count); }
+    double GetYSum() const { return m_ySum; }
+
+    double GetYMax() const { return m_yMax; }
     
     double GetFwhm() const
     {
-      return std::accumulate(m_fwhm.data(), m_fwhm.data() + m_fwhm.size(), double(0)) / double(m_fwhm.size());
+      return m_fwhmSum / double(m_count);
     }
-    unsigned int GetCount() const { return m_x.size(); }
+    unsigned int GetCount() const { return m_count; }
     unsigned int GetIndex() const
     {
-      return std::round(std::accumulate(m_indexes.data(), m_indexes.data() + m_indexes.size(), double(0)) /
-                        double(m_indexes.size()));
+      return std::round( m_indexSum / double(m_count));
     }
 
     Peak InsertFwhm(const Peak &other){
-      m_fwhm.insert(std::end(m_fwhm),std::begin(other.m_fwhm), std::end(other.m_fwhm));
+      m_fwhmSum += other.m_fwhmSum;
       return *this;
     }
 
     Peak InsertFwhm(double fwhm){
-      m_fwhm.push_back(fwhm);
+      m_fwhmSum += fwhm;
       return *this;
     }
 
     Peak Insert(const Peak &other){
-      m_x.insert(std::end(m_x),std::begin(other.m_x), std::end(other.m_x));
-      m_y.insert(std::end(m_y),std::begin(other.m_y), std::end(other.m_y));
-      m_indexes.insert(std::end(m_indexes),std::begin(other.m_indexes), std::end(other.m_indexes));
+      m_xSum += other.m_xSum;
+      m_ySum += other.m_ySum;
+      m_indexSum += other.m_indexSum;
+      m_count += other.m_count;
       return *this;
     }
 
     Peak Insert(unsigned int i, double x, double y){
-      m_indexes.push_back(i);
-      m_x.push_back(x);
-      m_y.push_back(y);
+      m_xSum += x;
+      m_ySum += y;
+      m_indexSum += i;
+      ++m_count;
       return *this;
     }
 
     Peak() = default;
     Peak(const Peak&) = default;
-    Peak(unsigned int index, double x, double y, double fwhm = 0){
-      m_indexes.push_back(index);
-      m_x.push_back(x);
-      m_y.push_back(y);
-      if(fwhm != 0) m_fwhm.push_back(fwhm);
+    Peak(unsigned int index, double x, double y, double fwhm = 0):
+    m_xSum(x), m_ySum(y), m_indexSum(index), m_count(1){
+      if(fwhm != 0) m_fwhmSum += fwhm;
     }
     friend bool operator<(const Peak &lhs, const Peak &rhs) { return lhs.GetX() < rhs.GetX(); }
     friend bool operator==(const Peak &lhs, const Peak &rhs) { return lhs.GetX() == rhs.GetX(); }
@@ -82,10 +82,12 @@ namespace m2
     }
 
   protected:
-    std::vector<double> m_x;
-    std::vector<double> m_y;
-    std::vector<double> m_fwhm;
-    std::vector<unsigned int> m_indexes;
+    double m_xSum;
+    double m_ySum;
+    double m_yMax;
+    unsigned int m_indexSum;
+    unsigned int m_count;
+    double m_fwhmSum;
   };
 
 } // namespace m2
