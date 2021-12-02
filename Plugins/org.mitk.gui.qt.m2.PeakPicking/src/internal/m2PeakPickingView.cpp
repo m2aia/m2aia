@@ -26,13 +26,13 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QMessageBox>
 
 // m2
-#include <m2UIUtils.h>
 #include <m2CoreCommon.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2IonImageReference.h>
 #include <m2MultiSliceFilter.h>
 #include <m2PcaImageFilter.h>
 #include <m2TSNEImageFilter.h>
+#include <m2UIUtils.h>
 #include <signal/m2MedianAbsoluteDeviation.h>
 #include <signal/m2PeakDetection.h>
 
@@ -69,35 +69,34 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.cbOverviewSpectra->addItems({"Skyline", "Mean", "Sum"});
   m_Controls.cbOverviewSpectra->setCurrentIndex(1);
 
-  connect(
-    m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPeakPicking);
+  connect(m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPeakPicking);
 
   connect(m_Controls.btnPCA, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPCA);
   connect(m_Controls.btnTSNE, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartTSNE);
 
-  if (auto button = m_Controls.tableWidget->findChild<QAbstractButton *>(QString(), Qt::FindDirectChildrenOnly))
-  {
-    // this button is not a normal button, it doesn't paint text or icon
-    // so it is not easy to show text on it, the simplest way is tooltip
-    button->setToolTip("Select/deselect all");
+  // if (auto button = m_Controls.tableWidget->findChild<QAbstractButton *>(QString(), Qt::FindDirectChildrenOnly))
+  // {
+  // this button is not a normal button, it doesn't paint text or icon
+  // so it is not easy to show text on it, the simplest way is tooltip
+  // button->setToolTip("Select/deselect all");
 
-    // disconnect the connected slots to the tableview (the "selectAll" slot)
-    disconnect(button, Q_NULLPTR, m_Controls.tableWidget, Q_NULLPTR);
-    // connect "clear" slot to it, here I use QTableWidget's clear, you can connect your own
-    auto tableWidget = m_Controls.tableWidget;
-    bool status = true;
-    connect(button,
-            &QAbstractButton::clicked,
-            m_Controls.tableWidget,
-            [tableWidget, status]() mutable
+  // disconnect the connected slots to the tableview (the "selectAll" slot)
+  // disconnect(button, Q_NULLPTR, m_Controls.tableWidget, Q_NULLPTR);
+  // connect "clear" slot to it, here I use QTableWidget's clear, you can connect your own
+  auto tableWidget = m_Controls.tableWidget;
+  bool status = true;
+  connect(m_Controls.selectDeselectAll,
+          &QAbstractButton::clicked,
+          m_Controls.tableWidget,
+          [tableWidget, status]() mutable
+          {
+            for (int i = 0; i < tableWidget->rowCount(); ++i)
             {
-              for (int i = 0; i < tableWidget->rowCount(); ++i)
-              {
-                tableWidget->item(i, 0)->setCheckState(status ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
-              }
-              status = !status;
-            });
-  }
+              tableWidget->item(i, 0)->setCheckState(status ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
+            }
+            status = !status;
+          });
+  // }
 
   const auto itemHandler = [this](QTableWidgetItem *item)
   {
@@ -123,9 +122,8 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
 
 void m2PeakPickingView::OnStartPeakPicking()
 {
-
   m_ReceivedNodes = m2::UIUtils::AllNodes(GetDataStorage());
-  
+
   if (m_Connection)
     disconnect(m_Connection);
   m_Controls.imageSource->clear();
@@ -141,11 +139,11 @@ void m2PeakPickingView::OnStartPeakPicking()
         auto &peakList = imageBase->GetPeaks();
         peakList.clear();
 
-        unsigned i =0 ;
+        unsigned i = 0;
         for (auto &x : imageBase->GetXAxis())
           peakList.emplace_back(i++, x, 0);
-        
-        m_PeakLists.push_back(peakList);       
+
+        m_PeakLists.push_back(peakList);
       }
       else
       {
@@ -196,7 +194,7 @@ void m2PeakPickingView::OnStartPeakPicking()
         m_PeakLists.push_back(peakList);
 
         emit m2::UIUtils::Instance()->OverviewSpectrumChanged(node.GetPointer(),
-                                                                           m2::OverviewSpectrumType::PeakIndicators);
+                                                              m2::OverviewSpectrumType::PeakIndicators);
       }
     }
   OnImageSelectionChangedUpdatePeakList(0);
@@ -251,9 +249,9 @@ void m2PeakPickingView::OnStartPCA()
       temporaryImages.back()->Initialize(imageBase);
 
       imageBase->GetImage(peakList[row].GetX(),
-                             imageBase->ApplyTolerance(peakList[row].GetX()),
-                             imageBase->GetMaskImage(),
-                             temporaryImages.back());
+                          imageBase->ApplyTolerance(peakList[row].GetX()),
+                          imageBase->GetMaskImage(),
+                          temporaryImages.back());
       filter->SetInput(inputIdx, temporaryImages.back());
       ++inputIdx;
     }

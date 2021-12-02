@@ -365,6 +365,13 @@
      </column>
     </widget>
    </item>
+   <item>
+    <widget class="QPushButton" name="selectDeselectAll">
+     <property name="text">
+      <string>Select/Deselect all</string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
