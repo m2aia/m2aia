@@ -17,6 +17,9 @@ See LICENSE.txt for details.
 #include <mitkIOUtil.h>
 #include <mitkImageCast.h>
 
+#include <mitkImageReadAccessor.h>
+#include <mitkImageWriteAccessor.h>
+
 
 void m2::SubdivideImage2DFilter::Update()
 {
@@ -85,8 +88,11 @@ void m2::SubdivideImage2DFilter::GenerateData()
       MITK_INFO << "InFilter " << static_cast<mitk::Image*>(output.GetPointer())->GetGeometry()->GetOrigin();
       
       
-      char *outputStart = static_cast<char *>(output->GetData());
-      char *inputStart = static_cast<char *>(input->GetData());
+      mitk::ImageWriteAccessor outAcc(output);
+      mitk::ImageReadAccessor inAcc(input);
+
+      char *outputStart = static_cast<char *>(outAcc.GetData());
+      const char *inputStart = static_cast<const char *>(inAcc.GetData());
 
       for (unsigned row = 0; row < tileHeight; ++row)
       {
