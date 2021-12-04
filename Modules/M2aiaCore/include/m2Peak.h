@@ -82,12 +82,12 @@ namespace m2
     }
 
   protected:
-    double m_xSum;
-    double m_ySum;
-    double m_yMax;
-    unsigned int m_indexSum;
-    unsigned int m_count;
-    double m_fwhmSum;
+    double m_xSum = 0;
+    double m_ySum = 0;
+    double m_yMax = 0;
+    unsigned int m_indexSum = 0;
+    unsigned int m_count = 0;
+    double m_fwhmSum = 0;
   };
 
 } // namespace m2
