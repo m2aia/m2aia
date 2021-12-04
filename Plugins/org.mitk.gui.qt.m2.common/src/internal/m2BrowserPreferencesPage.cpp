@@ -76,6 +76,8 @@ void m2BrowserPreferencesPage::CreateQtControl(QWidget* parent)
 	connect(m_Ui->transformixButton, SIGNAL(clicked()), this, SLOT(OnTransformixButtonClicked()));
 
 	connect(m_Ui->spnBxBins, SIGNAL(valueChanged(const QString &)), this, SLOT(OnBinsSpinBoxValueChanged(const QString &)));
+	connect(m_Ui->useMaxIntensity, SIGNAL(toggled(bool)), this, SLOT(OnUseMaxIntensity(bool)));
+	connect(m_Ui->useMinIntensity, SIGNAL(toggled(bool)), this, SLOT(OnUseMinIntensity(bool)));
 
 	this->Update();
 }
@@ -191,9 +193,20 @@ bool m2BrowserPreferencesPage::PerformOk()
 	return true;
 }
 
+void m2BrowserPreferencesPage::OnUseMaxIntensity(bool v){
+	m_Preferences->PutBool("useMaxIntensity", v);
+}
+
+void m2BrowserPreferencesPage::OnUseMinIntensity(bool v){
+	m_Preferences->PutBool("useMinIntensity", v);
+}
+
 void m2BrowserPreferencesPage::Update()
 {
 	
+	m_Ui->useMaxIntensity->setChecked(m_Preferences->GetBool("useMaxIntensity", false));
+	m_Ui->useMinIntensity->setChecked(m_Preferences->GetBool("useMinIntensity", false));
+
 	auto bins = m_Preferences->Get("bins", "");
 	if(bins.isEmpty())
 		m_Preferences->Put("bins", m_Ui->spnBxBins->text());

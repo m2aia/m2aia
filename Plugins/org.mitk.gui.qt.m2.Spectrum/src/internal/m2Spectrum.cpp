@@ -18,10 +18,12 @@ See LICENSE.txt for details.
 
 #include <QApplication>
 #include <QValueAxis>
+#include <berryIPreferences.h>
+#include <berryPlatform.h>
 #include <berryPlatformUI.h>
 #include <iostream>
-#include <m2UIUtils.h>
 #include <m2ImzMLSpectrumImage.h>
+#include <m2UIUtils.h>
 #include <mitkLookupTableProperty.h>
 #include <mitkStatusBar.h>
 #include <qlabel.h>
@@ -87,19 +89,23 @@ void m2Spectrum::DrawSelectedArea()
     chart->legend()->markers(m_SelectedAreaLeft)[0]->setVisible(false);
   }
 
+  UpdateSelectedArea();
+}
+
+void m2Spectrum::UpdateSelectedArea()
+{
   if (m_SelectedAreaLower)
   {
-    // auto c = m_Controls.chartView->chart();
-    auto yAx = std::numeric_limits<float>::max();
-
     m_SelectedAreaLower->clear();
-    *m_SelectedAreaLower << QPointF(m_SelectedAreaStartX, 0) << QPointF(m_SelectedAreaEndX, 0);
+    *m_SelectedAreaLower << QPointF(m_SelectedAreaStartX, m_yAxis->min())
+                         << QPointF(m_SelectedAreaEndX, m_yAxis->min());
 
     m_SelectedAreaLeft->clear();
-    *m_SelectedAreaLeft << QPointF(m_SelectedAreaStartX, 0) << QPointF(m_SelectedAreaStartX, yAx);
+    *m_SelectedAreaLeft << QPointF(m_SelectedAreaStartX, m_yAxis->min())
+                        << QPointF(m_SelectedAreaStartX, m_yAxis->max());
 
     m_SelectedAreaRight->clear();
-    *m_SelectedAreaRight << QPointF(m_SelectedAreaEndX, 0) << QPointF(m_SelectedAreaEndX, yAx);
+    *m_SelectedAreaRight << QPointF(m_SelectedAreaEndX, m_yAxis->min()) << QPointF(m_SelectedAreaEndX, m_yAxis->max());
 
     m_Controls.chartView->repaint();
   }
@@ -168,7 +174,7 @@ void m2Spectrum::CreateLevelData(const mitk::DataNode *node)
         s.push_back(p);
         s.push_back({p.x(), -0.3});
       };
-      }
+    }
 
     for (const auto &kv : artifacts)
     {
@@ -407,14 +413,17 @@ void m2Spectrum::OnMouseDoubleClick(
 {
   Q_UNUSED(pos)
   const unsigned numSeries = m_LineSeries.size() + m_ScatterSeries.size() + m_PeakSeries.size();
-  if(!numSeries) return;
+  if (!numSeries)
+    return;
 
   if (intValue < m_yAxis->min())
   {
+    // Double click below plot area (x-axis)
     m_xAxis->setRange(m_CurrentMinMZ, m_CurrentMaxMZ);
   }
   else if (mz < m_xAxis->min())
   {
+    // Double click left to plot area (y-axis)
     m_yAxis->setRange(0, m_CurrentMaxIntensity);
   }
   else
@@ -594,7 +603,7 @@ void m2Spectrum::CreateQChartViewMenu()
           this,
           [this](bool s)
           {
-            MITK_INFO << m_yAxis << " "  << m_xAxis;
+            MITK_INFO << m_yAxis << " " << m_xAxis;
             if (m_yAxis)
               m_yAxis->setTitleVisible(s);
             if (m_xAxis)
@@ -868,6 +877,57 @@ void m2Spectrum::OnRangeChangedAxisX(qreal min, qreal max)
   }
 
   axis->blockSignals(false);
+
+  // #25 auto zoom y axis on zoom x axis
+
+  berry::IPreferences::Pointer preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  if (preferences->GetBool("useMaxIntensity", false) || preferences->GetBool("useMinIntensity", false))
+  {
+    double maxY = 0;
+    double minY = std::numeric_limits<double>::max();
+    for (auto &kv : m_LineSeries)
+    {
+      auto points = kv.second->points();
+      if (points.empty())
+        continue;
+      auto p = points.begin();
+      // start of window
+      while (p != points.end() && p->x() < min)
+        ++p;
+      while (p != points.end() && p->x() <= max)
+      {
+        maxY = std::max(maxY, p->y());
+        minY = std::min(minY, p->y());
+        ++p;
+      }
+    }
+
+    for (auto &kv : m_PeakSeries)
+    {
+      auto points = kv.second->points();
+      if (points.empty())
+        continue;
+      auto p = points.begin();
+      // start of window
+      while (p != points.end() && p->x() < min)
+        ++p;
+      while (p != points.end() && p->x() <= max)
+      {
+        maxY = std::max(maxY, p->y());
+        minY = std::max(minY, p->y());
+        ++p;
+      }
+    }
+    if (preferences->GetBool("useMaxIntensity", false))
+    {
+      m_yAxis->setMax(maxY * 1.1);
+    }
+    if (preferences->GetBool("useMinIntensity", false))
+    {
+      m_yAxis->setMin(minY * 0.9);
+    }
+  }
 }
 
 void m2Spectrum::OnRangeChangedAxisY(qreal min, qreal max)
@@ -883,6 +943,7 @@ void m2Spectrum::OnRangeChangedAxisY(qreal min, qreal max)
   {
     axis->setMin(0);
   }
+  UpdateSelectedArea();
 
   axis->blockSignals(false);
 }
@@ -912,8 +973,7 @@ void m2Spectrum::OnUpdateScatterSeries(const mitk::DataNode *node)
 void m2Spectrum::UpdateLineSeriesWindow(const mitk::DataNode *node)
 {
   if (node)
-  { 
-
+  {
     const auto &typeLevelData = m_LineTypeLevelData[node][m_CurrentOverviewSpectrumType];
     const auto &d = typeLevelData.at(m_Level[node]);
 
@@ -940,7 +1000,6 @@ void m2Spectrum::UpdateLineSeriesWindow(const mitk::DataNode *node)
 
 void m2Spectrum::UpdateAxisLabels(const mitk::DataNode *node, bool remove)
 {
-
   MITK_INFO << "Update axis";
 
   if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
@@ -959,7 +1018,7 @@ void m2Spectrum::UpdateAxisLabels(const mitk::DataNode *node, bool remove)
   {
     label.append(l + "; ");
   }
-  
+
   m_xAxis->setTitleText(label);
   switch (m_CurrentOverviewSpectrumType)
   {

@@ -61,6 +61,9 @@ public slots:
 
 	void OnBinsSpinBoxValueChanged(const QString &);
 
+	void OnUseMinIntensity(bool v);
+	void OnUseMaxIntensity(bool v);
+
 	void CreateQtControl(QWidget* parent) override;
 	QWidget* GetQtControl() const override;
 	void Init(berry::IWorkbench::Pointer) override;

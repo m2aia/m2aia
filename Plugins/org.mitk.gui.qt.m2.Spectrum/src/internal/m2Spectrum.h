@@ -75,6 +75,7 @@ protected:
     std::vector<double> GetXAxis;
     QColor Color = {0, 0, 0, 0};
   };
+  void UpdateSelectedArea();
 
 protected slots:
   void OnDataNodeReceived(const mitk::DataNode *node);
