@@ -29,9 +29,9 @@ namespace m2
      * \param data
      */
 
-    static void FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data);
+    static void ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data);
 
-    static void SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data);
+    static void ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer data);
 
     //static std::string WriteMetaData(m2::ImzMLSpectrumImage::Pointer val, std::string &path);
 

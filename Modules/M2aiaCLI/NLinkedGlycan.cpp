@@ -49,7 +49,7 @@ int main(int /*argc*/, char *argv[])
   std::map<mitk::BaseData *, std::vector<m2::Peak>> pixelPeaks;
   for (auto I : {imagePNG1, imagePNG2, imageControl})
   {
-    m2::ImzMLParser::SlowReadMetaData(I);
+    
     const auto &source = I->GetImzMLSpectrumImageSource();
     auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source.m_BinaryDataPath);
     I->SetBaselineCorrectionStrategy(m2::BaselineCorrectionType::TopHat);

@@ -654,8 +654,8 @@ namespace m2
     object->SetImportMode(SpectrumFormatType::None);
     {
       m2::Timer t("Parsing imzML");
-      m2::ImzMLParser::FastReadMetaData(object);
-      m2::ImzMLParser::SlowReadMetaData(object);
+      m2::ImzMLParser::ReadImageMetaData(object);
+      m2::ImzMLParser::ReadImageSpectrumMetaData(object);
     }
 
     {
@@ -684,9 +684,9 @@ namespace m2
 
     if (!object->GetProperty("processed") && !object->GetProperty("continuous"))
     {
-      MITK_ERROR << "Set the continous (IMS:1000030) or processed (IMS:1000031) property in the ImzML "
+      MITK_ERROR << "Set the continuos (IMS:1000030) or processed (IMS:1000031) property in the ImzML "
                     "fileContent element.";
-      MITK_ERROR << "Fallback to continous (MS:1000030)";
+      MITK_ERROR << "Fallback to continuos (MS:1000030)";
       object->SetImportMode(m2::SpectrumFormatType::ContinuousProfile);
     }
 

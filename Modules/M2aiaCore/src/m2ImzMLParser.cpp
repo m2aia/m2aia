@@ -16,7 +16,6 @@ See LICENSE.txt for details.
 #include <future>
 #include <m2ImzMLParser.h>
 #include <math.h>
-//#include <mitkImzMLXMLTemplate.h>
 #include <iterator>
 #include <m2Timer.h>
 #include <numeric>
@@ -64,7 +63,7 @@ auto m2::ImzMLParser::findLine(std::ifstream &f, std::string name, std::string s
   return -1;
 }
 
-void m2::ImzMLParser::FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
+void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 {
   std::ifstream f;
   std::vector<std::string> stack, context_stack;
@@ -467,7 +466,7 @@ void m2::ImzMLParser::FastReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
   }
 }
 
-void m2::ImzMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
+void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer data)
 {
   std::ifstream f;
   std::vector<std::string> stack, context_stack;
@@ -515,7 +514,7 @@ void m2::ImzMLParser::SlowReadMetaData(m2::ImzMLSpectrumImage::Pointer data)
       }
     };
 
-    const auto evaluateAccession = [](const auto &line, const auto &accession, const auto &dict) -> bool {
+    const auto  evaluateAccession = [](const auto &line, const auto &accession, const auto &dict) -> bool {
       auto keyFuncPairIt = dict.find(accession);
       if (keyFuncPairIt != dict.end())
       {
