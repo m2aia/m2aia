@@ -67,6 +67,24 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
   QShortcut *shortcutRight = new QShortcut(QKeySequence(Qt::Key_Right), parent);
   connect(shortcutRight, SIGNAL(activated()), this, SLOT(OnCreateNextImage()));
+
+  QShortcut *shortcutUp = new QShortcut(QKeySequence(Qt::Key_Up), parent);
+  connect(shortcutUp,
+          &QShortcut::activated,
+          [this]()
+          {
+            m_Controls.spnBxTol->setValue(m_Controls.spnBxTol->value() * 1.1);
+            OnGenerateImageData(m_Controls.spnBxMz->value(), -1);
+          });
+
+  QShortcut *shortcutDown = new QShortcut(QKeySequence(Qt::Key_Down), parent);
+  connect(shortcutDown,
+          &QShortcut::activated,
+          [this]()
+          {
+            m_Controls.spnBxTol->setValue(m_Controls.spnBxTol->value() * 0.9);
+            OnGenerateImageData(m_Controls.spnBxMz->value(), -1);
+          });
 }
 
 void m2Data::InitNormalizationStrategyComboBox()
@@ -132,30 +150,24 @@ m2::BaselineCorrectionType m2Data::GuiToBaselineCorrectionStrategyType()
 
 void m2Data::OnCreateNextImage()
 {
-  if (m_IonImageReference)
-  {
-    auto center = m_IonImageReference->mz;
+  auto center = m_Controls.spnBxMz->value();
     auto offset = m_Controls.spnBxTol->value();
     if (m_Controls.rbtnTolPPM->isChecked())
     {
       offset = m2::PartPerMillionToFactor(offset) * center;
     }
     this->OnGenerateImageData(center + offset, -1);
-  }
 }
 
 void m2Data::OnCreatePrevImage()
 {
-  if (m_IonImageReference)
-  {
-    auto center = m_IonImageReference->mz;
+  auto center = m_Controls.spnBxMz->value();
     auto offset = m_Controls.spnBxTol->value();
     if (m_Controls.rbtnTolPPM->isChecked())
     {
       offset = m2::PartPerMillionToFactor(offset) * center;
     }
     this->OnGenerateImageData(center - offset, -1);
-  }
 }
 
 void m2Data::ApplySettingsToNodes(m2Data::NodesVectorType::Pointer v)
