@@ -235,8 +235,8 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
   std::vector<std::vector<double>> sumT;
 
   p->SetPropertyValue<unsigned>("spectral depth", xs.size());
-  p->SetPropertyValue<double>("xs_start", xs.front());
-  p->SetPropertyValue<double>("xs_end", xs.back());
+  p->SetPropertyValue<double>("x_min", xs.front());
+  p->SetPropertyValue<double>("x_max", xs.back());
 
   skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));
   sumT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));
