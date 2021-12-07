@@ -32,7 +32,7 @@ int main(int argc, char **argv)
 
   app.setSingleMode(true);
   app.setApplicationName("M2aia Workbench");
-  app.setOrganizationName("University of Applied Sciences");
+  app.setOrganizationName("Mannheim University of Applied Sciences");
 
   #if defined __GNUC__ && !defined __clang__
     auto library = QFileInfo(argv[0]).dir().path() + "/../lib/plugins/liborg_blueberry_core_expressions.so";

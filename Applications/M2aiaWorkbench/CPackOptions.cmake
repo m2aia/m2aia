@@ -9,6 +9,7 @@ set(CPACK_PACKAGE_VERSION_MAJOR "2021")
 set(CPACK_PACKAGE_VERSION_MINOR "12")
 # Patch versioning
 set(CPACK_PACKAGE_VERSION_PATCH "00")
+set(CPACK_PACKAGE_VENDOR "Mannheim University of Applied Sciences")
 
 # this should result in names like 2011.09, 2012.06, ...
 # version has to be set explicitly to avoid such things as CMake creating the install directory "M2aiaWorkbench 2021.."
