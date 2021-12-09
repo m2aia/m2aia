@@ -100,18 +100,11 @@ public:
 public slots:
   void OnCreateNextImage();
   void OnCreatePrevImage();
-  
-
-  /**
-   * @brief GUI side invocation of an ion image grab.
-   * Update render window text annotation.
-   * Configures I/O strategy state of the mass spec image.
-   *
-   * @param mz Center of the mass range window
-   * @param tol Tolerance (tol) to control mass range window that is concidred.
-   */
+  void OnIncreaseTolerance();
+  void OnDecreaseTolerance();
+  void OnRenderSpectrumImages(double min, double max);
   void OnGenerateImageData(qreal mz, qreal tol);
-  
+  mitk::Image::Pointer OnApplyCastImage(mitk::Image::Pointer image);
 
 signals:
   void SendNodes(NodesVectorType::Pointer vec);
@@ -120,10 +113,10 @@ protected:
 
 	mitk::DataNode::Pointer FindChildNodeWithNameContaining(mitk::DataNode::Pointer & parent, const std::string & subStr);
 
-
   virtual void OnSelectionChanged(berry::IWorkbenchPart::Pointer part,
                                   const QList<mitk::DataNode::Pointer> &nodes) override;
   void UpdateLevelWindow(const mitk::DataNode *node);
+  void UpdateSpectrumImageTable(const mitk::DataNode* node);
   virtual void NodeAdded(const mitk::DataNode *node) override;
   void OpenSlideImageNodeAdded(const mitk::DataNode *node);
   void ImzMLImageNodeAdded(const mitk::DataNode *node);
@@ -144,11 +137,12 @@ protected:
 
   Ui::imsDataControls m_Controls;
   QWidget * m_Parent = nullptr;
+  bool m_InitializeNewNode = false;
 
   QThreadPool m_pool;
   m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Maximum;
 
-  m2::IonImageReference::Pointer m_IonImageReference;
+  // m2::IonImageReference::Pointer m_IonImageReference;
   /*!
    * Main element holding a list of DataNodes containing PointSet objects.
    * Thes selected node in the combobox may be in focus of the processing controlled by this view.
@@ -160,4 +154,6 @@ protected:
   std::vector<mitk::TextAnnotation2D::Pointer> m_TextAnnotations;
   std::vector<mitk::ColorBarAnnotation::Pointer> m_ColorBarAnnotations;
   void UpdateTextAnnotations(std::string text);
+
+  const int FROM_GUI = -1;
 };

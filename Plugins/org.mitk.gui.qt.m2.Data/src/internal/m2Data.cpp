@@ -56,10 +56,19 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   auto serviceRef = m2::UIUtils::Instance();
   connect(serviceRef, SIGNAL(UpdateImage(qreal, qreal)), this, SLOT(OnGenerateImageData(qreal, qreal)));
 
-  connect(m_Controls.btnGrabIonImage,
+  connect(m_Controls.btnCreateImage,
           &QAbstractButton::clicked,
           this,
-          [&] { OnGenerateImageData(m_Controls.spnBxMz->value(), -1); });
+          [&] { OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI); });
+
+  connect(m_Controls.btnCreateImageToNewNode,
+          &QAbstractButton::clicked,
+          this,
+          [&]
+          {
+            m_InitializeNewNode = true;
+            OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
+          });
 
   // step through
   QShortcut *shortcutLeft = new QShortcut(QKeySequence(Qt::Key_Left), parent);
@@ -69,83 +78,94 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   connect(shortcutRight, SIGNAL(activated()), this, SLOT(OnCreateNextImage()));
 
   QShortcut *shortcutUp = new QShortcut(QKeySequence(Qt::Key_Up), parent);
-  connect(shortcutUp,
-          &QShortcut::activated,
-          [this]()
-          {
-            m_Controls.spnBxTol->setValue(m_Controls.spnBxTol->value() * 1.1);
-            OnGenerateImageData(m_Controls.spnBxMz->value(), -1);
-          });
+  connect(shortcutUp, &QShortcut::activated, this, &m2Data::OnIncreaseTolerance);
 
   QShortcut *shortcutDown = new QShortcut(QKeySequence(Qt::Key_Down), parent);
-  connect(shortcutDown,
-          &QShortcut::activated,
-          [this]()
-          {
-            m_Controls.spnBxTol->setValue(m_Controls.spnBxTol->value() * 0.9);
-            OnGenerateImageData(m_Controls.spnBxMz->value(), -1);
-          });
+  connect(shortcutDown, &QShortcut::activated, this, &m2Data::OnDecreaseTolerance);
 }
 
 void m2Data::InitNormalizationStrategyComboBox()
 {
+  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto defaultValue = preferences->GetInt("NormalizationStrategy", static_cast<unsigned int>(m2::NormalizationStrategyType::None));
   auto cb = Controls()->CBNormalization;
   for (unsigned int i = 0; i < m2::NormalizationStrategyTypeNames.size(); ++i)
     cb->addItem(m2::NormalizationStrategyTypeNames[i].c_str(), {i});
-
-  auto defaultValue = static_cast<unsigned int>(m2::NormalizationStrategyType::None);
   cb->setCurrentIndex(defaultValue);
 }
 
 m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
 {
-  return static_cast<m2::NormalizationStrategyType>(this->Controls()->CBNormalization->currentData().toUInt());
+  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto value = this->Controls()->CBNormalization->currentData().toUInt();
+  preferences->PutInt("NormalizationStrategy", value);
+  return static_cast<m2::NormalizationStrategyType>(value);
 }
 
 void m2Data::InitRangePoolingStrategyComboBox()
 {
+  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto defaultValue = preferences->GetInt("RangePoolingStrategy", static_cast<unsigned int>(m2::RangePoolingStrategyType::Maximum));
   auto cb = Controls()->CBImagingStrategy;
   for (unsigned int i = 0; i < m2::RangePoolingStrategyTypeNames.size(); ++i)
-    cb->addItem(m2::RangePoolingStrategyTypeNames[i].c_str(), {i});
-
-  auto defaultValue = static_cast<unsigned int>(m2::RangePoolingStrategyType::Maximum);
+    cb->addItem(m2::RangePoolingStrategyTypeNames[i].c_str(), {i}); // add i as data
   cb->setCurrentIndex(defaultValue);
-  cb->removeItem(static_cast<unsigned int>(m2::RangePoolingStrategyType::None));
 }
 
 m2::RangePoolingStrategyType m2Data::GuiToRangePoolingStrategyType()
 {
-  return static_cast<m2::RangePoolingStrategyType>(this->Controls()->CBImagingStrategy->currentData().toUInt());
+  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto value = this->Controls()->CBImagingStrategy->currentData().toUInt();
+  preferences->PutInt("RangePoolingStrategy", value);
+  return static_cast<m2::RangePoolingStrategyType>(value);
 }
 
 void m2Data::InitSmoothingStrategyComboBox()
 {
+  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto defaultValue = preferences->GetInt("SmoothingStrategy", static_cast<unsigned int>(m2::SmoothingType::None));
   auto cb = Controls()->CBSmoothing;
   for (unsigned int i = 0; i < m2::SmoothingTypeNames.size(); ++i)
     cb->addItem(m2::SmoothingTypeNames[i].c_str(), {i});
-
-  auto defaultValue = static_cast<unsigned int>(m2::SmoothingType::None);
   cb->setCurrentIndex(defaultValue);
 }
 
 m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
 {
-  return static_cast<m2::SmoothingType>(this->Controls()->CBSmoothing->currentData().toUInt());
+  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto value = this->Controls()->CBSmoothing->currentData().toUInt();
+  preferences->PutInt("SmoothingStrategy", value);
+  return static_cast<m2::SmoothingType>(value);
 }
 
 void m2Data::InitBaselineCorrectionStrategyComboBox()
 {
+  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto defaultValue = preferences->GetInt("BaselineCorrectionStrategy", static_cast<unsigned int>(m2::BaselineCorrectionType::None));
   auto cb = Controls()->CBBaselineCorrection;
   for (unsigned int i = 0; i < m2::BaselineCorrectionTypeNames.size(); ++i)
     cb->addItem(m2::BaselineCorrectionTypeNames[i].c_str(), {i});
-
-  auto defaultValue = static_cast<unsigned int>(m2::BaselineCorrectionType::None);
   cb->setCurrentIndex(defaultValue);
 }
 
 m2::BaselineCorrectionType m2Data::GuiToBaselineCorrectionStrategyType()
 {
-  return static_cast<m2::BaselineCorrectionType>(this->Controls()->CBBaselineCorrection->currentData().toUInt());
+  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto value = this->Controls()->CBBaselineCorrection->currentData().toUInt();
+  preferences->PutInt("BaselineCorrectionStrategy", value);
+  return static_cast<m2::BaselineCorrectionType>(value);
+}
+
+void m2Data::OnDecreaseTolerance()
+{
+  m_Controls.spnBxTol->setValue(m_Controls.spnBxTol->value() * 0.9);
+  OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
+}
+
+void m2Data::OnIncreaseTolerance()
+{
+  m_Controls.spnBxTol->setValue(m_Controls.spnBxTol->value() * 1.1);
+  OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
 }
 
 void m2Data::OnCreateNextImage()
@@ -156,7 +176,7 @@ void m2Data::OnCreateNextImage()
     {
       offset = m2::PartPerMillionToFactor(offset) * center;
     }
-    this->OnGenerateImageData(center + offset, -1);
+  this->OnGenerateImageData(center + offset, FROM_GUI);
 }
 
 void m2Data::OnCreatePrevImage()
@@ -167,7 +187,7 @@ void m2Data::OnCreatePrevImage()
     {
       offset = m2::PartPerMillionToFactor(offset) * center;
     }
-    this->OnGenerateImageData(center - offset, -1);
+  this->OnGenerateImageData(center - offset, FROM_GUI);
 }
 
 void m2Data::ApplySettingsToNodes(m2Data::NodesVectorType::Pointer v)
@@ -208,8 +228,6 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
 
 void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
 {
-  const bool initializeNew = m2Data::Controls()->chkBxInitNew->isChecked();
-
   // get the selection
   auto nodesToProcess = m2::UIUtils::AllNodes(GetDataStorage());
   if (nodesToProcess->empty())
@@ -244,13 +262,6 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
   this->UpdateTextAnnotations(labelText.toStdString());
   this->ApplySettingsToNodes(nodesToProcess);
 
-  // all images share a new created ion image reference object
-  // this ensures unified coloring across multiple images
-  // the object is set as the currentIonImageReference during the
-  // OnIonImageGrab method call. An extra action is required to add this
-  // current object to the permament ion image reference vector.
-  m_IonImageReference = m2::IonImageReference::New(xRangeCenter, xRangeTol, "");
-
   for (mitk::DataNode::Pointer dataNode : *nodesToProcess)
   {
     if (m2::SpectrumImageBase::Pointer data = dynamic_cast<m2::SpectrumImageBase *>(dataNode->GetData()))
@@ -279,7 +290,6 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
       // all connected signals must be disconnected to make sure that the future is not kept
       // alive after the 'finished-callback' is processed.
       auto future = std::make_shared<QFutureWatcher<mitk::Image::Pointer>>();
-      data->SetCurrentIonImageReference(m_IonImageReference);
 
       //*************** Worker Finished Callback ******************//
       // capture holds a copy of the smartpointer, so it will stay alive. Make the lambda mutable to
@@ -288,7 +298,86 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
       {
         auto image = future->result();
 
-        if (this->m_Controls.chkBxInitNew->isChecked())
+        if (m_InitializeNewNode)
+        {
+          auto newImage = OnApplyCastImage(image);
+          auto dataNodeNew = mitk::DataNode::New();
+          auto lut = mitk::LookupTable::New();
+          lut->SetType(mitk::LookupTable::LookupTableType::GRAYSCALE_TRANSPARENT);
+          dataNodeNew->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
+          dataNodeNew->SetData(image);
+          dataNodeNew->SetVisibility(false);
+          this->GetDataStorage()->Add(dataNodeNew);
+          dataNodeNew->SetName(labelText.toStdString());
+          UpdateLevelWindow(dataNodeNew);
+        }
+        else
+        {
+          UpdateLevelWindow(dataNode);
+          UpdateSpectrumImageTable(dataNode);
+          dataNode->SetProperty("x_range_center", image->GetProperty("x_range_center"));
+          dataNode->SetProperty("x_range_tol", image->GetProperty("x_range_tol"));
+          this->RequestRenderWindowUpdate();
+        }
+
+        m_InitializeNewNode = false;
+        future->disconnect();
+      };
+
+      //*************** Worker Block******************//
+      const auto futureWorker = [xRangeCenter, xRangeTol, data, maskImage, this]()
+      {
+        m2::Timer t("Create image @[" + std::to_string(xRangeCenter) + " " + std::to_string(xRangeTol) + "]");
+        if (m_InitializeNewNode)
+        {
+          auto geom = data->GetGeometry()->Clone();
+          auto image = mitk::Image::New();
+          image->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), *geom);
+          data->GetImage(xRangeCenter, xRangeTol, maskImage, image);
+          return image;
+        }
+        else
+        {
+          data->GetImage(xRangeCenter, xRangeTol, maskImage, data);
+          mitk::Image::Pointer imagePtr = data.GetPointer();
+          return imagePtr;
+        }
+      };
+
+      //*************** Start Worker ******************//
+
+      connect(future.get(), &QFutureWatcher<mitk::Image::Pointer>::finished, future.get(), futureFinished);
+      future->setFuture(QtConcurrent::run(&m_pool, futureWorker));
+    }
+  }
+}
+
+void m2Data::UpdateSpectrumImageTable(const mitk::DataNode *node)
+{
+  if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  {
+    // auto widgets = m_Parent->findChildren<Qm2ImageColorWidget *>("Qm2ImageColorWidget");
+    // MITK_INFO << widgets.count();
+    //  if(!widgets.count() || widgets.front()->visibilityCheckBox()->isChecked()){
+    //    MITK_INFO << widgets.back();
+    //    auto c = m_Controls.verticalLayout->count();
+    //    m_Controls.verticalLayout->insertWidget(c-1-widgets.count(), new Qm2ImageColorWidget(m_Parent));
+
+    //  }
+  }
+  //   auto item = m_Controls.tableWidget->item(0, 1);
+  //   std::string xLabel = image->GetPropertyValue<std::string>("x_label");
+  //   double center = image->GetPropertyValue<double>("x_range_center");
+  //   double tol = image->GetPropertyValue<double>("x_range_tol");
+  //   QString labelText = str(boost::format(xLabel + " %.2f +/- %.2f Da") % center % tol).c_str();
+  //   item->setText(labelText);
+
+  // }
+
+  // item = m_Controls.tableWidget->item(0, 0)->setData()
+}
+
+mitk::Image::Pointer m2Data::OnApplyCastImage(mitk::Image::Pointer image)
         {
           using SourceImageType = itk::Image<m2::DisplayImagePixelType, 3>;
           auto Caster = [&image](auto *itkImage)
@@ -330,64 +419,13 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
             Caster(itkIonImage.GetPointer());
           }
 
-          auto dataNode = mitk::DataNode::New();
-          auto lut = mitk::LookupTable::New();
-          lut->SetType(mitk::LookupTable::LookupTableType::GRAYSCALE_TRANSPARENT);
-          dataNode->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
-          dataNode->SetData(image);
-          this->GetDataStorage()->Add(dataNode);
-          if (nodesToProcess->size() == 1)
-            dataNode->SetName(labelText.toStdString());
-          else
-            dataNode->SetName(dataNode->GetName() + "\n" + labelText.toStdString());
+  return image;
         }
-        else
-        {
-          UpdateLevelWindow(dataNode);
-        }
-        dataNode->SetProperty("x_range_center", image->GetProperty("x_range_center"));
-        dataNode->SetProperty("x_range_tol", image->GetProperty("x_range_tol"));
-        mitk::LevelWindow lw;
-        dataNode->GetLevelWindow(lw);
-        lw.SetToImageRange(image);
-        dataNode->SetLevelWindow(lw);
 
-        this->RequestRenderWindowUpdate();
-        future->disconnect();
-      };
-
-      //*************** Worker Block******************//
-      const auto futureWorker = [xRangeCenter, xRangeTol, data, maskImage, initializeNew, this]()
+void m2Data::OnRenderSpectrumImages(double min, double max)
       {
-        m2::Timer t("Create image @[" + std::to_string(xRangeCenter) + " " + std::to_string(xRangeTol) + "]");
-        if (initializeNew)
-        {
-          auto geom = data->GetGeometry()->Clone();
-          auto image = mitk::Image::New();
-          image->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), *geom);
-          data->GetImage(xRangeCenter, xRangeTol, maskImage, image);
-          return image;
-        }
-        else
-        {
-          data->GetImage(xRangeCenter, xRangeTol, maskImage, data);
-          mitk::Image::Pointer imagePtr = data.GetPointer();
-          return imagePtr;
-        }
-      };
-
-      //*************** Start Worker ******************//
-
-      connect(future.get(), &QFutureWatcher<mitk::Image::Pointer>::finished, future.get(), futureFinished);
-      future->setFuture(QtConcurrent::run(&m_pool, futureWorker));
-
-      // if the future main process finished, we need to update the data nodes and their properties to
-      // correctly visualize the new ion image. It requires an update on the level window propery and
-      // a 'new init' if the data node is binary.
-
-      // future->waitForFinished();
-    }
-  }
+  Q_UNUSED(min);
+  Q_UNUSED(max);
 }
 
 void m2Data::UpdateTextAnnotations(std::string text)
@@ -452,6 +490,8 @@ void m2Data::UpdateLevelWindow(const mitk::DataNode *node)
     mitk::LevelWindow lw;
     node->GetLevelWindow(lw);
     lw.SetAuto(msImageBase);
+    const auto max = lw.GetRangeMax();
+    lw.SetWindowBounds(0, max);
     const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
   }
 }
