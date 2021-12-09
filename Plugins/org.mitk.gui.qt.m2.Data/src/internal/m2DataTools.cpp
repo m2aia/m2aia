@@ -60,9 +60,7 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
     m_Controls.ReferenceSelectionForScaleBar->SetPopUpTitel(QString("Image"));
   }
 
-  // disable image references
-  m_Controls.imageRefGroup->setVisible(false);
-
+  
   // disable reference point set
   m_Controls.refPointSetGroup->setVisible(false);
 
