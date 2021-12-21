@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/M2aiaApplication">
+        <file>icon.ico</file>
+        <file>icon.png</file>
+        <file>defaultWatermark.png</file>
+    </qresource>
+</RCC>

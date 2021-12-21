@@ -35,7 +35,7 @@ set(CACHED_RESOURCE_FILES
 )
 
 set(QRC_FILES
-  resources/org_mitk_gui_qt_m2_application.qrc
+  resources/M2aiaApplication.qrc
 )
 
 # set(CPP_FILES)
