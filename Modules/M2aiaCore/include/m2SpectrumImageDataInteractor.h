@@ -26,21 +26,22 @@ See LICENSE.txt for details.
 #include <mitkPointSet.h>
 #include <mitkStateMachineAction.h>
 
-namespace mitk
+namespace m2
 {
   // Inherit from DataInteratcor, this provides functionality of a state machine and configurable inputs.
-  class M2AIACORE_EXPORT MSDataObjectInteractor : public DataInteractor
+  class M2AIACORE_EXPORT SpectrumImageDataInteractor : public mitk::DataInteractor
   {
   public:
-    mitkClassMacro(MSDataObjectInteractor, DataInteractor) itkFactorylessNewMacro(Self) itkCloneMacro(Self)
+    mitkClassMacro(SpectrumImageDataInteractor, mitk::DataInteractor) itkFactorylessNewMacro(Self) itkCloneMacro(Self)
 
-      protected : MSDataObjectInteractor();
-    ~MSDataObjectInteractor() override;
+      protected : SpectrumImageDataInteractor();
+    ~SpectrumImageDataInteractor() override;
 
     void ConnectActionsAndFunctions() override;
     void ConfigurationChanged() override;
 
   private:
-    void AddPoint(StateMachineAction *, InteractionEvent *);
+    void SelectSingleSpectrumByPoint(mitk::StateMachineAction *, mitk::InteractionEvent *);
+    bool IsOver(const mitk::InteractionEvent *);
   };
 } // namespace mitk

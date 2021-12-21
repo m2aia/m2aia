@@ -4,6 +4,7 @@ set(H_FILES
   include/m2ISpectrumDataAccess.h
   include/m2SpectrumImageBase.h
   include/m2SpectrumImageStack.h
+  include/m2SpectrumImageDataInteractor.h
 
   include/m2IonImageReference.h
   include/m2ImzMLSpectrumImage.h
@@ -14,7 +15,6 @@ set(H_FILES
   include/m2ElxUtil.h
   include/m2ElxRegistrationHelper.h
 
-  include/mitkMassSpecImageInteractor.h
   include/mitkImage3DSliceToImage2DFilter.h
   include/mitkImage2DToImage3DSliceFilter.h
   include/m2SubdivideImage2DFilter.h
@@ -29,9 +29,6 @@ set(H_FILES
   include/signal/m2RunningMedian.h
   include/signal/m2SignalCommon.h
   include/signal/m2Smoothing.h
-  
-  
-
 )
 
 set(CPP_FILES
@@ -48,9 +45,10 @@ set(CPP_FILES
   mitkImage3DSliceToImage2DFilter.cpp
   mitkImage2DToImage3DSliceFilter.cpp
   m2SubdivideImage2DFilter.cpp
+  m2SpectrumImageDataInteractor.cpp
 )
 
 set(RESOURCE_FILES
-#  Interactions/msiInteraction.xml
-#  Interactions/msiInteractionConfig.xml
+  Interactions/SpectrumDataInteractor.xml
+  Interactions/SpectrumDataInteractorConfig.xml
 )

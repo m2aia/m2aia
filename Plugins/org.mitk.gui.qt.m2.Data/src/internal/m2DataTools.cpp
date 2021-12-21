@@ -30,11 +30,7 @@ See LICENSE.txt for details.
 
 const std::string m2DataTools::VIEW_ID = "org.mitk.views.m2.DataTools";
 
-// 20201023: custom selection service did not work as expected
-// void m2DataTools::SetSelectionProvider()
-//{
-//  this->GetSite()->SetSelectionProvider(m_SelectionProvider);
-//}
+
 
 void m2DataTools::CreateQtPartControl(QWidget *parent)
 {
@@ -58,6 +54,14 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
     m_Controls.ReferenceSelectionForScaleBar->SetSelectionIsOptional(true);
     m_Controls.ReferenceSelectionForScaleBar->SetEmptyInfo(QString("Reference image selection"));
     m_Controls.ReferenceSelectionForScaleBar->SetPopUpTitel(QString("Image"));
+
+    m_Controls.ReferenceSelectionForDataInteraction->SetDataStorage(GetDataStorage());
+    m_Controls.ReferenceSelectionForDataInteraction->SetNodePredicate(
+      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
+                                  mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+    m_Controls.ReferenceSelectionForDataInteraction->SetSelectionIsOptional(true);
+    m_Controls.ReferenceSelectionForDataInteraction->SetEmptyInfo(QString("Reference image selection"));
+    m_Controls.ReferenceSelectionForDataInteraction->SetPopUpTitel(QString("Image"));
   }
 
   
@@ -67,6 +71,7 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
   connect(m_Controls.btnEqualizeLW, &QAbstractButton::clicked, this ,&m2DataTools::OnEqualizeLW);
   connect(m_Controls.resetTiling, &QAbstractButton::clicked, this, &m2DataTools::OnResetTiling);
   connect(m_Controls.applyTiling, &QAbstractButton::clicked, this, &m2DataTools::OnApplyTiling);
+  connect(m_Controls.toggleDataInteractor, &QAbstractButton::toggled, this, &m2DataTools::OnToggleDataInteraction);
   
 
   // scale bar
@@ -206,6 +211,37 @@ void m2DataTools::OnEqualizeLW()
   }
 
   RequestRenderWindowUpdate();
+}
+
+void m2DataTools::OnToggleDataInteraction(bool checked)
+{
+  if (auto node = m_Controls.ReferenceSelectionForDataInteraction->GetSelectedNode())
+  {
+    if (checked)
+    {
+      m_Controls.toggleDataInteractor->setText("Deactivate");
+      m_DataInteractor = node->GetDataInteractor();
+      // If no data Interactor is present create a new one
+      if (m_DataInteractor.IsNull())
+      {
+        // Create PointSetData Interactor
+        m_DataInteractor = m2::SpectrumImageDataInteractor::New();
+        // Load the according state machine for regular point set interaction
+        m_DataInteractor->LoadStateMachine("PointSet.xml");
+        // Set the configuration file that defines the triggers for the transitions
+        m_DataInteractor->SetEventConfig("PointSetConfig.xml");
+        // set the DataNode (which already is added to the DataStorage
+        m_DataInteractor->SetDataNode(node);
+      }
+    }
+    else
+    {
+      m_Controls.toggleDataInteractor->setText("Activate");
+      node->SetDataInteractor(nullptr);
+      m_DataInteractor = nullptr;
+    }
+    // emit EditPointSets(checked);
+  }
 }
 
 void m2DataTools::OnApplyTiling()

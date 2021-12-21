@@ -1,11 +1,6 @@
 <config>
-  <!--   Set a maximal number of points here:
-  <param name="MaxPoints" value="4"/>
-  -->
-
   <event_variant class="MousePressEvent" name="AddPointClick">
     <attribute name="EventButton" value="LeftMouseButton"/>
-    <attribute name="Modifiers" value="alt"/> 
+    <!-- <attribute name="Modifiers" value="alt"/>  -->
   </event_variant>
-
 </config>
