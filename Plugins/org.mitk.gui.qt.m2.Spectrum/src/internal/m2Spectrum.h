@@ -16,15 +16,18 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #pragma once
 
-#include <qlegendmarker.h>
-#include <qscatterseries.h>
-#include <qslider.h>
-#include <berryISelectionListener.h>
-#include <QmitkAbstractView.h>
-#include <m2SpectrumImageBase.h>
 #include "m2ChartView.h"
 #include "m2Crosshair.h"
 #include "ui_m2Spectrum.h"
+#include <QmitkAbstractView.h>
+#include <berryISelectionListener.h>
+#include <m2SpectrumImageBase.h>
+#include "Qm2SpectrumChartDataProvider.h"
+#include <qlegendmarker.h>
+#include <qscatterseries.h>
+#include <qslider.h>
+
+#include <berryIPreferences.h>
 
 class QMenu;
 class QActionGroup;
@@ -41,7 +44,7 @@ class m2Spectrum : public QmitkAbstractView
 
 public:
   static const std::string VIEW_ID;
-  ~m2Spectrum(){}
+  ~m2Spectrum() {}
 
 protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
@@ -49,32 +52,11 @@ protected:
   void CreateQChartViewMenu();
   m2Crosshair *m_Crosshair;
 
-  std::map<const mitk::DataNode *, QtCharts::QLineSeries *> m_PeakSeries;
-  std::map<const mitk::DataNode *, std::map<m2::OverviewSpectrumType, QVector<QPointF>>> m_PeakTypeData;
-
-  std::map<const mitk::DataNode *, QtCharts::QLineSeries *> m_LineSeries;
-  std::map<const mitk::DataNode *, std::map<m2::OverviewSpectrumType, std::vector<QVector<QPointF>>>>
-    m_LineTypeLevelData;
-  std::map<const mitk::DataNode *, unsigned> m_Level;
-
-  std::map<const mitk::DataNode *, QtCharts::QScatterSeries *> m_ScatterSeries;
-
-  void OnUpdateScatterSeries(const mitk::DataNode *);
+  std::map<const mitk::DataNode *, std::shared_ptr<Qm2SpectrumChartDataProvider>> m_DataProvider;
+  
   void UpdateLineSeriesWindow(const mitk::DataNode *);
   void UpdateAxisLabels(const mitk::DataNode *, bool remove = false);
   void UpdateZoomLevel(const mitk::DataNode *);
-
-  void SetDefaultLineSeriesStyle(QtCharts::QLineSeries *);
-  void SetDefaultScatterSeriesStyle(QtCharts::QScatterSeries *);
-
-  void CreateLevelData(const mitk::DataNode *node);
-  void CreatePeakData(const mitk::DataNode *node);
-
-  struct BiasedSereisContainer : public std::map<m2::OverviewSpectrumType, QtCharts::QXYSeries *>
-  {
-    std::vector<double> GetXAxis;
-    QColor Color = {0, 0, 0, 0};
-  };
   void UpdateSelectedArea();
 
 protected slots:
@@ -87,34 +69,34 @@ protected slots:
 
   void OnAxisXTicksChanged(int v);
   void OnAxisYTicksChanged(int v);
+  // void OnSpectrumArtifactChanged(const mitk::DataNode *, m2::SpectrumType);
 
   void OnMousePress(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod);
   void OnMouseMove(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod);
   void OnMouseRelease(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod);
   void OnMouseDoubleClick(QPoint pos, qreal mz, qreal intValue, Qt::MouseButton button, Qt::KeyboardModifiers mod);
-  void OnMouseWheel(QPoint pos, qreal mz, qreal intValue, int angle, Qt::KeyboardModifiers mod);
-  void OnOverviewSpectrumChanged(const mitk::DataNode *node, m2::OverviewSpectrumType specType);
+  void OnMouseWheel(QPoint pos, qreal mz, qreal intValue, int angle, Qt::KeyboardModifiers mod);  
 
   void OnRangeChangedAxisX(qreal min, qreal max);
   void OnRangeChangedAxisY(qreal min, qreal max);
 
 protected:
+  void OnPropertyListModified(const itk::Object *caller, const itk::EventObject &event);
+
   unsigned int m_yAxisTicks = 4;
   unsigned int m_xAxisTicks = 9;
 
-  const std::unordered_map<mitk::DataNode *, BiasedSereisContainer> &GetDataAssociatedSeries()
-  {
-    return m_DataAssociatedSeriesMap;
-  }
+  berry::IPreferences::Pointer m_M2aiaPreferences;
 
-  void UpdateSeriesMinMaxValues();
-
+  void UpdateGlobalMinMaxValues();
+  void UpdateLocalMinMaxValues(double minX, double maxX);
   void SetSelectedAreaStartX(double v) { m_SelectedAreaStartX = v; }
   void SetSelectedAreaEndX(double v) { m_SelectedAreaEndX = v; }
   void DrawSelectedArea();
+  void AutoZoomUseLocalExtremaY();
 
-protected:
-  std::unordered_map<mitk::DataNode *, BiasedSereisContainer> m_DataAssociatedSeriesMap;
+
+  const std::vector<double> m_Scales = {1.0, 2.0, 4.0, 8.0, 16.0};
   QtCharts::QLineSeries *m_SelectedAreaLeft = nullptr;
   QtCharts::QLineSeries *m_SelectedAreaRight = nullptr;
   QtCharts::QLineSeries *m_SelectedAreaLower = nullptr;
@@ -125,7 +107,7 @@ protected:
   double m_CurrentMousePosMz = 0;
   double m_CurrentVisibleDataPoints = 0;
 
-  m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Mean;
+  m2::SpectrumType m_CurrentOverviewSpectrumType = m2::SpectrumType::Mean;
   bool m_CurrentOverviewSpectrumTypeChanged = false;
 
   virtual void SetFocus() override {}
@@ -146,9 +128,13 @@ protected:
   double m_LastMz = -1;
   double m_LastTol = -1;
 
-  double m_CurrentMaxIntensity;
-  double m_CurrentMaxMZ;
-  double m_CurrentMinMZ;
+  double m_GlobalMinimumY;
+  double m_GlobalMaximumY;
+  double m_GlobalMaximumX;
+  double m_GlobalMinimumX;
+
+  double m_LocalMaximumY;
+  double m_LocalMinimumY;
 
   double m_MouseDragCenterPos = 0;
   double m_MouseDragLowerDelta = 0;
@@ -174,5 +160,4 @@ private:
   QtCharts::QValueAxis *m_yAxis;
 
   QVector<QString> m_xAxisTitels;
-
 };
