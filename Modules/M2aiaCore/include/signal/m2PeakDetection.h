@@ -17,17 +17,10 @@ See LICENSE.txt for details.
 
 #include <M2aiaCoreExports.h>
 #include <m2CoreCommon.h>
-#include <algorithm>
-#include <cmath>
-#include <functional>
-#include <iomanip>
-#include <iostream>
-#include <limits>
-#include <m2Peak.h>
 #include <signal/m2MedianAbsoluteDeviation.h>
-#include <numeric>
-#include <tuple>
+#include <signal/m2Binning.h>
 #include <vector>
+
 
 namespace m2
 {
@@ -61,67 +54,7 @@ namespace m2
       }
     }
 
-    template <class PeakItFirst,class PeakItLast, class OutIterType>
-    inline void binPeaks(
-      PeakItFirst s, PeakItLast e, OutIterType output, double tolerance, bool absoluteDistance = false)
-    {
-      if (s == e)
-        return;
-
-      unsigned int size = 0;
-      const auto accPeak = std::accumulate(s, e, Peak());
-      const auto meanX = accPeak.GetX();
-
-      bool dirty = false;
-      decltype(s) i = s;
-      while (i != e)
-      {
-        if (std::abs(i->GetX() - meanX) >= ((meanX * tolerance) * (!absoluteDistance) + (absoluteDistance * tolerance)))
-        {
-          dirty = true;
-          break;
-        }
-        ++i;
-      }
-
-      if (dirty && size >= 2)
-      {
-        decltype(s) pivot;
-        {
-          decltype(s) s0 = s;
-          decltype(s) s1 = std::next(s);
-          pivot = s1;
-          double max = 0; // max distance of mz neighbors is split position
-          while (s1 != e)
-          {
-            if (s1->GetX() - s0->GetX() > max)
-            {
-              max = s1->GetX() - s0->GetX();
-              pivot = s1;
-            }
-            ++s1;
-            ++s0;
-          }
-        }
-
-        binPeaks(s, pivot, output, tolerance, absoluteDistance);
-        binPeaks(pivot, e, output, tolerance, absoluteDistance);
-      }
-      else
-      {
-        // output a new peak
-        m2::Peak newPeak = *s;
-        ++s;
-
-        std::for_each(s, e, [&newPeak](const Peak &p) {
-          newPeak.Insert(p);
-        });
-
-        (*output) = newPeak;
-        ++output;
-      }
-    };
-
+    
     template <typename IntsItFirst, typename IntsItLast, typename MzsItFirst, typename PeakMzIntDestItFirst>
     inline auto localMaxima(IntsItFirst intsInFirst,
                             IntsItLast intsInLast,
