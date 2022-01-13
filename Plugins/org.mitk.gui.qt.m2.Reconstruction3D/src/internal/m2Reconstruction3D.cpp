@@ -110,8 +110,8 @@ void m2Reconstruction3D::OnStartStacking()
   }
 
   // prepare stacks
-  auto spectrumImageStack1 = m2::SpectrumImageStack::New(m2::MicroMetreToMilliMetre(m_Controls.spinBoxZSpacing->value()));
-  auto spectrumImageStack2 = m2::SpectrumImageStack::New(m2::MicroMetreToMilliMetre(m_Controls.spinBoxZSpacing->value()));
+  auto spectrumImageStack1 = m2::SpectrumImageStack::New(m2::MicroMeterToMilliMeter(m_Controls.spinBoxZSpacing->value()));
+  auto spectrumImageStack2 = m2::SpectrumImageStack::New(m2::MicroMeterToMilliMeter(m_Controls.spinBoxZSpacing->value()));
   /*
    * Two modalities
    * M2 is optional

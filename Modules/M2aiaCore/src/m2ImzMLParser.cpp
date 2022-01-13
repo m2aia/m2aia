@@ -310,8 +310,8 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
         // Only IMS:1000046 was set (should be standard)
         auto v = data->GetPropertyValue<double>("pixel size x");
         double sqs = std::sqrt(v);
-        data->SetPropertyValue<double>("pixel size x", m2::MicroMetreToMilliMetre(sqs));
-        data->SetPropertyValue<double>("pixel size y", m2::MicroMetreToMilliMetre(sqs));
+        data->SetPropertyValue<double>("pixel size x", m2::MicroMeterToMilliMeter(sqs));
+        data->SetPropertyValue<double>("pixel size y", m2::MicroMeterToMilliMeter(sqs));
         data->SetPropertyValue<double>("squared pixel size", v);
       }
       else if (data->GetPropertyValue<double>("pixel size y") > 0 && data->GetPropertyValue<double>("pixel size x") > 0)
@@ -320,20 +320,20 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
         // Note IMS:1000047 is used in a false way
         // -> in this case assumed to take the y value
         // if pixel size y is used > do not sqrt
-        auto pixelSizeXInMilliMetre = m2::MicroMetreToMilliMetre(data->GetPropertyValue<double>("pixel size x"));
-        auto pixelSizeYInMilliMetre = m2::MicroMetreToMilliMetre(data->GetPropertyValue<double>("pixel size y"));
+        auto pixelSizeXInMilliMetre = m2::MicroMeterToMilliMeter(data->GetPropertyValue<double>("pixel size x"));
+        auto pixelSizeYInMilliMetre = m2::MicroMeterToMilliMeter(data->GetPropertyValue<double>("pixel size y"));
         data->SetPropertyValue("pixel size x", pixelSizeXInMilliMetre);
         data->SetPropertyValue("pixel size y", pixelSizeYInMilliMetre);
       }
 
       if (data->GetPropertyValue<double>("pixel size z") < 0)
       {
-        data->SetPropertyValue("pixel size z", m2::MicroMetreToMilliMetre(10));
+        data->SetPropertyValue("pixel size z", m2::MicroMeterToMilliMeter(10));
         data->SetPropertyValue<unsigned>("max count of pixel z", 1);
       }
       else
       {
-        auto pixelSizeZInMilliMetre = m2::MicroMetreToMilliMetre(data->GetPropertyValue<double>("pixel size z"));
+        auto pixelSizeZInMilliMetre = m2::MicroMeterToMilliMeter(data->GetPropertyValue<double>("pixel size z"));
         data->SetPropertyValue("pixel size z", pixelSizeZInMilliMetre);
       }
 
@@ -541,7 +541,7 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
 
       context_map["spectrumList"] = [&](auto line) {
         unsigned count = std::stoul(attributValue(line, "count", value));
-        data->SetPropertyValue<unsigned>("number of measurments", count);
+        data->SetPropertyValue<unsigned>("number of measurements", count);
         spectra.resize(count);
       };
 
@@ -694,7 +694,7 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
             s.index.SetElement(2, worldToIndexMap[static_cast<unsigned>(s.world.z)]);
 
           data->SetPropertyValue<unsigned>("max count of pixel z", zCount);
-          data->SetPropertyValue<double>("pixel size z", m2::MicroMetreToMilliMetre(zSpacing));
+          data->SetPropertyValue<double>("pixel size z", m2::MicroMeterToMilliMeter(zSpacing));
         }
       }
       else
@@ -707,7 +707,7 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
         {
           data->SetPropertyValue<unsigned>("max count of pixel z", uniques.size());
           // is set to 10 micrometers fix (can be changed in app)
-          data->SetPropertyValue<double>("pixel size z", m2::MicroMetreToMilliMetre(10)); 
+          data->SetPropertyValue<double>("pixel size z", m2::MicroMeterToMilliMeter(10)); 
         }
       }
     }

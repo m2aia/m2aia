@@ -15,28 +15,20 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #include <Poco/SHA1Engine.h>
-#include <algorithm>
-#include <boost/algorithm/hex.hpp>
 #include <boost/progress.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
-#include <future>
 #include <itksys/SystemTools.hxx>
 #include <m2ImzMLEngine.h>
 #include <m2ImzMLImageIO.h>
-#include <m2ImzMLTemplate.h>
 #include <m2ImzMLParser.h>
+#include <m2ImzMLTemplate.h>
 #include <m2Timer.h>
-#include <mitkIOMimeTypes.h>
 #include <mitkIOUtil.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
-#include <mitkLocaleSwitch.h>
-#include <mitkProgressBar.h>
-#include <numeric>
 #include <signal/m2PeakDetection.h>
 #include <signal/m2Pooling.h>
-#include <thread>
 
 template <class ConversionType, class ItFirst, class ItLast, class OStreamType>
 void writeData(ItFirst itFirst, ItLast itLast, OStreamType &os)

@@ -261,9 +261,9 @@ namespace m2
     fsmImage->SetPropertyValue<double>("origin y", meta[8]);
     fsmImage->SetPropertyValue<double>("origin z", 0);
 
-    fsmImage->SetPropertyValue<double>("spacing_x", m2::MicroMetreToMilliMetre(meta[0])); // x_delta
-    fsmImage->SetPropertyValue<double>("spacing_y", m2::MicroMetreToMilliMetre(meta[1])); // y_delta
-    fsmImage->SetPropertyValue<double>("spacing_z", m2::MicroMetreToMilliMetre(10));
+    fsmImage->SetPropertyValue<double>("spacing_x", m2::MicroMeterToMilliMeter(meta[0])); // x_delta
+    fsmImage->SetPropertyValue<double>("spacing_y", m2::MicroMeterToMilliMeter(meta[1])); // y_delta
+    fsmImage->SetPropertyValue<double>("spacing_z", m2::MicroMeterToMilliMeter(10));
 
     fsmImage->SetPropertyValue<double>("wavelength_delta", meta[2]); // z_delta
     fsmImage->SetPropertyValue<double>("wavelength_start", meta[3]); // z_start
