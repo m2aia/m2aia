@@ -55,6 +55,7 @@ namespace m2
     Peak Insert(const Peak &other){
       m_xSum += other.m_xSum;
       m_ySum += other.m_ySum;
+      m_yMax = std::max(m_yMax, other.m_yMax);
       m_indexSum += other.m_indexSum;
       m_count += other.m_count;
       return *this;
@@ -64,6 +65,7 @@ namespace m2
       m_xSum += x;
       m_ySum += y;
       m_indexSum += i;
+      m_yMax = std::max(y, m_yMax);
       ++m_count;
       return *this;
     }
@@ -71,7 +73,7 @@ namespace m2
     Peak() = default;
     Peak(const Peak&) = default;
     Peak(unsigned int index, double x, double y, double fwhm = 0):
-    m_xSum(x), m_ySum(y), m_indexSum(index), m_count(1){
+    m_xSum(x), m_ySum(y), m_yMax(y), m_indexSum(index) , m_count(1){
       if(fwhm != 0) m_fwhmSum += fwhm;
     }
     friend bool operator<(const Peak &lhs, const Peak &rhs) { return lhs.GetX() < rhs.GetX(); }
