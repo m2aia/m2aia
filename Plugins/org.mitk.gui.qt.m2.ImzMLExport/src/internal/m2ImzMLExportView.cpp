@@ -43,25 +43,39 @@ void m2ImzMLExportView::UpdateExportSettings(const mitk::DataNode *node)
 {
   if (auto image = dynamic_cast<m2::ImzMLSpectrumImage *>(node->GetData()))
   {
-    auto exportMode =
-      static_cast<m2::SpectrumFormatType>(m_Controls.cmbBxOutputMode->currentData(Qt::UserRole).toUInt());
-    image->SetExportMode(exportMode);
-    image->SetYOutputType(
-      static_cast<m2::NumericType>(m_Controls.cmbBxOutputDatatypeInt->currentData(Qt::UserRole).toUInt()));
-    image->SetXOutputType(
-      static_cast<m2::NumericType>(m_Controls.cmbBxOutputDatatypeMz->currentData(Qt::UserRole).toUInt()));
+    auto format = static_cast<m2::SpectrumFormat>(m_Controls.cmbBxOutputMode->currentData(Qt::UserRole).toUInt());
+    image->GetExportSpectrumType().Format = format;
+    
+    auto yType = static_cast<m2::NumericType>(m_Controls.cmbBxOutputDatatypeInt->currentData(Qt::UserRole).toUInt());
+    image->GetExportSpectrumType().YAxisType = yType;
 
-    switch (exportMode)
+    auto xType = static_cast<m2::NumericType>(m_Controls.cmbBxOutputDatatypeMz->currentData(Qt::UserRole).toUInt());
+    image->GetExportSpectrumType().XAxisType = xType;
+
+
+    image->SetPropertyValue<bool>("imzML.bounds", m_Controls.ckBxBounds->isChecked());
+    if (m_Controls.ckBxBounds->isChecked())
     {
-      case m2::SpectrumFormatType::ContinuousProfile:
+      image->SetPropertyValue<double>("imzML.bounds.lower", m_Controls.spBxLower->value());
+      image->SetPropertyValue<double>("imzML.bounds.upper", m_Controls.spBxUpper->value());
+    }
+    else
+    {
+      image->RemoveProperty("imzML.bounds.lower");
+      image->RemoveProperty("imzML.bounds.upper");
+    }
+
+    switch (format)
+    {
+      case m2::SpectrumFormat::ContinuousProfile:
         m_Controls.labelInfo->setText(
           "Modified intensity values are stored , according to M2aia's Data view settings.");
         break;
-      case m2::SpectrumFormatType::ContinuousCentroid:
+      case m2::SpectrumFormat::ContinuousCentroid:
         m_Controls.labelInfo->setText(
           "Centroid spectra are stored based on peak picking result of the Peak Picking view.");
         break;
-      case m2::SpectrumFormatType::ProcessedCentroid:
+      case m2::SpectrumFormat::ProcessedCentroid:
         m_Controls.labelInfo->setText(
           "Export centroid spectra in processed fashion. Spectral preprocessing is applied\n"
           "as specified in m2Data view. Peak picking is applied for each pixel spectrum\n"
@@ -70,12 +84,6 @@ void m2ImzMLExportView::UpdateExportSettings(const mitk::DataNode *node)
       default:
         break;
     }
-
-    /* if (auto imzMLImage = dynamic_cast<m2::ImzMLSpectrumImage *>(image))
-     {
-       imzMLImage->SetPeakPickingHalfWindowSize(m_Controls.spnBxPeakPickingHWS->value());
-       imzMLImage->SetPeakPickingSNR(m_Controls.spnBxSNR->value());
-     }*/
   }
 }
 
@@ -94,9 +102,9 @@ void m2ImzMLExportView::CreateQtPartControl(QWidget *parent)
   m_Controls.setupUi(parent);
 
   m_Controls.cmbBxOutputMode->addItem("Continuous Profile",
-                                      static_cast<unsigned>(m2::SpectrumFormatType::ContinuousProfile));
+                                      static_cast<unsigned>(m2::SpectrumFormat::ContinuousProfile));
   m_Controls.cmbBxOutputMode->addItem("Continuous Centroid",
-                                      static_cast<unsigned>(m2::SpectrumFormatType::ContinuousCentroid));
+                                      static_cast<unsigned>(m2::SpectrumFormat::ContinuousCentroid));
   // m_Controls.cmbBxOutputMode->addItem("Continuous Centroid (filter monoisotopic peaks)",
   // static_cast<unsigned>(m2::ImzMLFormatType::ContinuousMonoisotopicCentroid));
   // m_Controls.cmbBxOutputMode->addItem("Processed Centroid",
