@@ -158,7 +158,7 @@ void m2PeakPickingView::OnStartPeakPicking()
         xs = imageBase->GetXAxis();
 
         auto mad = m2::Signal::mad(ys);
-        std::vector<m2::Peak> peaks;
+        auto & peaks = imageBase->GetPeaks();
         m2::Signal::localMaxima(std::begin(ys),
                                 std::end(ys),
                                 std::begin(xs),
@@ -174,24 +174,7 @@ void m2PeakPickingView::OnStartPeakPicking()
                                            m_Controls.sbDistance->value());
         }
 
-        // visualization
-        auto &outputvec = imageBase->PeakIndicators();
-        outputvec.clear();
-        outputvec.resize(imageBase->GetXAxis().size(), 0.0);
-
-        // true peak list
-        auto &peakList = imageBase->GetPeaks();
-        peakList.clear();
-
-        for (auto &p : peaks)
-        {
-          outputvec[p.GetIndex()] = 0.0005;
-          peakList.push_back(p);
-
-          // m_Controls.tableWidget->setItem()
-        }
-
-        m_PeakLists.push_back(peakList);
+        m_PeakLists.push_back(peaks);
 
         emit m2::UIUtils::Instance()->OverviewSpectrumChanged(node.GetPointer(),
                                                               m2::SpectrumType::None);
