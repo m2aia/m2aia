@@ -39,7 +39,8 @@ namespace m2
     {
       auto newMin = spectrumImage->GetPropertyValue<double>("x_min");
       auto newMax = spectrumImage->GetPropertyValue<double>("x_max");
-      auto xLabel = spectrumImage->GetPropertyValue<std::string>("x_label");
+      auto xLabel = spectrumImage->GetSpectrumType().XAxisLabel;
+      
       auto currentMax = GetPropertyValue<double>("x_max");
       auto currentMin = GetPropertyValue<double>("x_min");
       if (newMin < currentMin)
@@ -47,7 +48,7 @@ namespace m2
       if (newMax > currentMax)
         SetPropertyValue<double>("x_max", newMax);
 
-      this->SetPropertyValue<std::string>("x_label", xLabel);
+      this->GetSpectrumType().XAxisLabel = xLabel;
     }
     else
     {
@@ -104,16 +105,26 @@ namespace m2
 
   void SpectrumImageStack::InitializeProcessor()
   {
-    SetImportMode(m2::SpectrumFormatType::None);
+    if(m_SliceTransformers.empty()){
+      MITK_ERROR("SpectrumImageStack::InitializeProcessor") << "No transformer found!";
+      return;
+    }
+
+    // assign import spectrum type based on first transformer
+    // this must be equally for all slices/images
+    auto movingImage = m_SliceTransformers.begin()->second->GetMovingImage().GetPointer();
+    if(auto specImage =dynamic_cast<m2::SpectrumImageBase *>(movingImage))
+      m_SpectrumType.Format = specImage->GetSpectrumType().Format;
+    
+    
     for (auto &kv : m_SliceTransformers)
     {
       const auto &transformer = kv.second;
       auto specImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer());
-      if (GetImportMode() == m2::SpectrumFormatType::None)
-        SetImportMode(specImage->GetImportMode());
-      else if (GetImportMode() != specImage->GetImportMode())
+      
+      if (m_SpectrumType.Format != specImage->GetSpectrumType().Format)
       {
-        MITK_WARN("SpectrumImageStack::InitializeProcessor") << "Different import modes detected";
+        MITK_ERROR("SpectrumImageStack::InitializeProcessor") << "Different import modes detected";
       }
     }
   }

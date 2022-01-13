@@ -20,7 +20,8 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  enum class SpectrumFormatType : unsigned int
+
+  enum class SpectrumFormat : unsigned int
   {
     None = 0,
     ContinuousProfile = 1,
@@ -29,7 +30,25 @@ namespace m2
     ProcessedCentroid = 8
   };
 
-  enum class OverviewSpectrumType : unsigned int
+  inline std::string to_string(const SpectrumFormat &type) noexcept
+  {
+    switch (type)
+    {
+      case SpectrumFormat::ContinuousProfile:
+        return "ContinuousProfile";
+      case SpectrumFormat::ProcessedProfile:
+        return "ProcessedProfile";
+      case SpectrumFormat::ContinuousCentroid:
+        return "ContinuousCentroid";
+      case SpectrumFormat::ProcessedCentroid:
+        return "ProcessedCentroid";
+      case SpectrumFormat::None:
+        return "None";
+    }
+    return "";
+  }
+
+  enum class SpectrumType : unsigned int
   {
     None = 0,
     Mean = 1,
@@ -37,14 +56,40 @@ namespace m2
     Maximum = 3,
     Sum = 4,
     Variance = 5,
-    PeakIndicators = 6
   };
+
+  inline std::string to_string(const SpectrumType &type) noexcept
+  {
+    switch (type)
+    {
+      case SpectrumType::None:return "None";
+      case SpectrumType::Mean: return "Mean";
+      case SpectrumType::Median: return "Median";
+      case SpectrumType::Maximum: return "Maximum";
+      case SpectrumType::Sum: return "Sum";
+      case SpectrumType::Variance: return "Variance";
+    }
+    return "";
+  }
+
 
   enum class NumericType : unsigned int
   {
     Float = 0,
     Double = 1
   };
+
+  inline std::string to_string(const NumericType &type) noexcept
+  {
+    switch (type)
+    {
+      case NumericType::Float:
+        return "Float";
+      case NumericType::Double:
+        return "Double";
+    }
+    return "";
+  }
 
   inline double MicroMeterToMilliMeter(double x) { return x * 10e-4; }
   inline double ToMicroMeter(double x) { return x * 10e3; }
@@ -128,24 +173,24 @@ namespace m2
 
 } // namespace m2
 
-inline m2::SpectrumFormatType operator|(m2::SpectrumFormatType lhs, m2::SpectrumFormatType rhs)
+inline m2::SpectrumFormat operator|(m2::SpectrumFormat lhs, m2::SpectrumFormat rhs)
 {
-  return static_cast<m2::SpectrumFormatType>(static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(lhs) |
-                                             static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(rhs));
+  return static_cast<m2::SpectrumFormat>(static_cast<std::underlying_type<m2::SpectrumFormat>::type>(lhs) |
+                                             static_cast<std::underlying_type<m2::SpectrumFormat>::type>(rhs));
 }
 
-inline m2::SpectrumFormatType operator|=(m2::SpectrumFormatType lhs, m2::SpectrumFormatType rhs)
+inline m2::SpectrumFormat operator|=(m2::SpectrumFormat lhs, m2::SpectrumFormat rhs)
 {
   return lhs | rhs;
 }
 
-inline m2::SpectrumFormatType operator&(m2::SpectrumFormatType lhs, m2::SpectrumFormatType rhs)
+inline m2::SpectrumFormat operator&(m2::SpectrumFormat lhs, m2::SpectrumFormat rhs)
 {
-  return static_cast<m2::SpectrumFormatType>(static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(lhs) &
-                                             static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(rhs));
+  return static_cast<m2::SpectrumFormat>(static_cast<std::underlying_type<m2::SpectrumFormat>::type>(lhs) &
+                                             static_cast<std::underlying_type<m2::SpectrumFormat>::type>(rhs));
 }
 
-inline bool any(m2::SpectrumFormatType lhs)
+inline bool any(m2::SpectrumFormat lhs)
 {
-  return static_cast<std::underlying_type<m2::SpectrumFormatType>::type>(lhs) != 0;
+  return static_cast<std::underlying_type<m2::SpectrumFormat>::type>(lhs) != 0;
 }

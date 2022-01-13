@@ -20,6 +20,7 @@ See LICENSE.txt for details.
 #include <mitkLookupTableProperty.h>
 #include <mitkOperation.h>
 
+
 double m2::SpectrumImageBase::ApplyTolerance(double xValue) const
 {
   if (this->GetUseToleranceInPPM())
@@ -93,22 +94,17 @@ void m2::SpectrumImageBase::ApplyGeometryOperation(mitk::Operation *op)
 
 m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::SkylineSpectrum()
 {
-  return m_SpectraArtifacts[m2::OverviewSpectrumType::Maximum];
-}
-
-m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::PeakIndicators()
-{
-  return m_SpectraArtifacts[m2::OverviewSpectrumType::PeakIndicators];
+  return m_SpectraArtifacts[(SpectrumType::Maximum)];
 }
 
 m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::MeanSpectrum()
 {
-  return m_SpectraArtifacts[m2::OverviewSpectrumType::Mean];
+  return m_SpectraArtifacts[(SpectrumType::Mean)];
 }
 
 m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::SumSpectrum()
 {
-  return m_SpectraArtifacts[m2::OverviewSpectrumType::Sum];
+  return m_SpectraArtifacts[(SpectrumType::Sum)];
 }
 
 m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetXAxis()

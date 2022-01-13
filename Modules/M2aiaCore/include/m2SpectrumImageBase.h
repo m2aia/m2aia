@@ -21,7 +21,7 @@ See LICENSE.txt for details.
 #include <m2ISpectrumDataAccess.h>
 #include <m2IonImageReference.h>
 #include <m2Peak.h>
-#include <signal/m2SignalCommon.h>
+#include <m2SpectrumInfo.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
 
@@ -52,7 +52,7 @@ namespace m2
     using ImageArtifactMapType = std::map<std::string, mitk::BaseData::Pointer>;
     using SpectrumArtifactDataType = double;
     using SpectrumArtifactVectorType = std::vector<SpectrumArtifactDataType>;
-    using SpectrumArtifactMapType = std::map<m2::OverviewSpectrumType, SpectrumArtifactVectorType>;
+    using SpectrumArtifactMapType = std::map<m2::SpectrumType, SpectrumArtifactVectorType>;
     using IonImageReferenceVectorType = std::vector<IonImageReference::Pointer>;
     using PeaksVectorType = std::vector<m2::Peak>;
     using TransformParameterVectorType = std::vector<std::string>;
@@ -74,26 +74,16 @@ namespace m2
     itkSetMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
 
+
+
+
+
+
+    itkSetMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
+    itkGetConstReferenceMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
+
     itkSetMacro(SmoothingHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(SmoothingHalfWindowSize, unsigned int);
-
-    itkSetEnumMacro(ExportMode, SpectrumFormatType);
-    itkGetEnumMacro(ExportMode, SpectrumFormatType);
-
-    itkSetEnumMacro(ImportMode, SpectrumFormatType);
-    itkGetEnumMacro(ImportMode, SpectrumFormatType);
-
-    itkSetEnumMacro(XOutputType, NumericType);
-    itkGetEnumMacro(XOutputType, NumericType);
-
-    itkSetEnumMacro(YOutputType, NumericType);
-    itkGetEnumMacro(YOutputType, NumericType);
-
-    itkSetEnumMacro(XInputType, NumericType);
-    itkGetEnumMacro(XInputType, NumericType);
-
-    itkSetEnumMacro(YInputType, NumericType);
-    itkGetEnumMacro(YInputType, NumericType);
 
     itkSetMacro(BinningTolerance, double);
     itkGetConstReferenceMacro(BinningTolerance, double);
@@ -169,9 +159,13 @@ namespace m2
     inline void SaveModeOff() const { this->m_InSaveMode = false; }
     double ApplyTolerance(double xValue) const;
 
-    void SetElxRegistrationHelper(const std::shared_ptr<m2::ElxRegistrationHelper> & d){
-      m_ElxRegistrationHelper = d;
-    }
+    const SpectrumInfo &GetSpectrumType() const { return m_SpectrumType; }
+    SpectrumInfo &GetSpectrumType() { return m_SpectrumType; }
+    void SetSpectrumType(const SpectrumInfo &other) { m_SpectrumType = other; }
+
+    SpectrumInfo &GetExportSpectrumType() { return m_ExportSpectrumType; }
+    const SpectrumInfo &GetExportSpectrumType() const { return m_ExportSpectrumType; }
+    void SetExportSpectrumType(const SpectrumInfo &other) { m_ExportSpectrumType = other; }
 
   protected:
     bool mutable m_InSaveMode = false;
@@ -198,12 +192,9 @@ namespace m2
     BaselineCorrectionType m_BaselineCorrectionStrategy;
     SmoothingType m_SmoothingStrategy;
 
-    NumericType m_YOutputType = NumericType::Float;
-    NumericType m_XOutputType = NumericType::Float;
-    NumericType m_YInputType;
-    NumericType m_XInputType;
-    SpectrumFormatType m_ExportMode = SpectrumFormatType::ContinuousProfile;
-    SpectrumFormatType m_ImportMode;
+    SpectrumInfo m_SpectrumType;
+    SpectrumInfo m_ExportSpectrumType;
+
     /**
      * @brief Vector of ion images associated with this ims file. E.g. peaks or individual picked ion
      * images.

@@ -62,7 +62,7 @@ public:
    *
    * @return SpectrumImageBase::OverviewSpectrumType
    */
-  m2::OverviewSpectrumType GetOverviewSpectrumType() { return m_CurrentOverviewSpectrumType; }
+  m2::SpectrumType GetOverviewSpectrumType() { return m_CurrentOverviewSpectrumType; }
 
   /**
    * @brief
@@ -140,7 +140,7 @@ protected:
   bool m_InitializeNewNode = false;
 
   QThreadPool m_pool;
-  m2::OverviewSpectrumType m_CurrentOverviewSpectrumType = m2::OverviewSpectrumType::Maximum;
+  m2::SpectrumType m_CurrentOverviewSpectrumType = m2::SpectrumType::Maximum;
 
   // m2::IonImageReference::Pointer m_IonImageReference;
   /*!

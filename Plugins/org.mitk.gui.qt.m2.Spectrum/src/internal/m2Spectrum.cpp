@@ -34,14 +34,6 @@ See LICENSE.txt for details.
 
 const std::string m2Spectrum::VIEW_ID = "org.mitk.views.m2.Spectrum";
 
-void m2Spectrum::OnOverviewSpectrumChanged(const mitk::DataNode *node, m2::OverviewSpectrumType specType)
-{
-  if (specType == m2::OverviewSpectrumType::PeakIndicators)
-  {
-    OnUpdateScatterSeries(node);
-  }
-}
-
 void m2Spectrum::DrawSelectedArea()
 {
   if (!m_xAxis)

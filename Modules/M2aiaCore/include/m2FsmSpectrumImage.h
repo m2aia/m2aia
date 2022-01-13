@@ -68,7 +68,7 @@ namespace m2
 
   private:
     SpectrumVectorType m_Spectra;
-    m2::SpectrumFormatType m_ImportMode = m2::SpectrumFormatType::ContinuousProfile;
+    m2::SpectrumFormat m_ImportMode = m2::SpectrumFormat::ContinuousProfile;
     using m2::SpectrumImageBase::InternalClone;
     bool m_ImageAccessInitialized = false;
     bool m_ImageGeometryInitialized = false;

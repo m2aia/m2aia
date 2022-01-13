@@ -29,7 +29,7 @@ class m2CoreMappingsTestSuite : public mitk::TestFixture
   CPPUNIT_TEST_SUITE_END();
 
 private:
-  void Switch(m2::SpectrumFormatType e)
+  void Switch(m2::SpectrumFormat e)
   {
 #pragma push
 #ifdef _WIN32
@@ -40,11 +40,11 @@ private:
 #endif
     switch (e)
     {
-      case m2::SpectrumFormatType::ContinuousCentroid:
-      case m2::SpectrumFormatType::ContinuousProfile:
-      case m2::SpectrumFormatType::ProcessedCentroid:
-      case m2::SpectrumFormatType::ProcessedProfile:
-      case m2::SpectrumFormatType::None:
+      case m2::SpectrumFormat::ContinuousCentroid:
+      case m2::SpectrumFormat::ContinuousProfile:
+      case m2::SpectrumFormat::ProcessedCentroid:
+      case m2::SpectrumFormat::ProcessedProfile:
+      case m2::SpectrumFormat::None:
         // add your new case here
         {
           //////////////////////////////////////////////////////////////////////
@@ -63,7 +63,7 @@ private:
 #pragma GCC diagnostic pop
   }
 
-  void Switch(m2::OverviewSpectrumType e)
+  void Switch(m2::SpectrumType e)
   {
 #pragma push
 #ifdef _WIN32
@@ -74,13 +74,12 @@ private:
 #endif
     switch (e)
     {
-      case m2::OverviewSpectrumType::None:
-      case m2::OverviewSpectrumType::Maximum:
-      case m2::OverviewSpectrumType::Mean:
-      case m2::OverviewSpectrumType::Median:
-      case m2::OverviewSpectrumType::PeakIndicators:
-      case m2::OverviewSpectrumType::Sum:
-      case m2::OverviewSpectrumType::Variance:
+      case m2::SpectrumType::None:
+      case m2::SpectrumType::Maximum:
+      case m2::SpectrumType::Mean:
+      case m2::SpectrumType::Median:
+      case m2::SpectrumType::Sum:
+      case m2::SpectrumType::Variance:
         // add your new case here
         {
           //////////////////////////////////////////////////////////////////////
@@ -136,9 +135,9 @@ private:
 public:
   void CreateSwitches()
   {
-    Switch(m2::SpectrumFormatType::None);
+    Switch(m2::SpectrumFormat::None);
     Switch(m2::NumericType::Float);
-    Switch(m2::OverviewSpectrumType::None);
+    Switch(m2::SpectrumType::None);
     
   }
 };

@@ -347,6 +347,7 @@ m2::FsmSpectrumImage::~FsmSpectrumImage()
 m2::FsmSpectrumImage::FsmSpectrumImage()
 {
   MITK_INFO << GetStaticNameOfClass() << " created!";
-  this->SetPropertyValue<std::string>("x_label", "cm^-1");
-  SetImportMode(m2::SpectrumFormatType::ContinuousProfile);
+  
+  m_SpectrumType.XAxisLabel = "cm^-1";
+  m_SpectrumType.Format = m2::SpectrumFormat::ContinuousProfile;
 }

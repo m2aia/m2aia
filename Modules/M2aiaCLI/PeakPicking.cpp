@@ -89,7 +89,7 @@ int main(int argc, char *argv[])
   }
   if (auto sImage = dynamic_cast<m2::SpectrumImageBase *>(image.GetPointer()))
   {
-    if (sImage->GetImportMode() != m2::SpectrumFormatType::ContinuousProfile)
+    if (sImage->GetSpectrumType().Format != m2::SpectrumFormat::ContinuousProfile)
     {
       MITK_ERROR << "Only imzML files in continuous profile mode are accepted for peak picking!";
       return 1;
@@ -108,9 +108,9 @@ int main(int argc, char *argv[])
     sImage->SetTolerance(tol);
     sImage->SetBinningTolerance(binning_tol);
 
-    sImage->SetExportMode(m2::SpectrumFormatType::ProcessedCentroid);
-    sImage->SetYOutputType(static_cast<m2::NumericType>(m2::CORE_MAPPINGS.at(y_output_type)));
-    sImage->SetXOutputType(static_cast<m2::NumericType>(m2::CORE_MAPPINGS.at(x_output_type)));
+    sImage->GetExportSpectrumType().Format = (m2::SpectrumFormat::ProcessedCentroid);
+    sImage->GetExportSpectrumType().YAxisType = (static_cast<m2::NumericType>(m2::CORE_MAPPINGS.at(y_output_type)));
+    sImage->GetExportSpectrumType().XAxisType = (static_cast<m2::NumericType>(m2::CORE_MAPPINGS.at(x_output_type)));
 
     if (auto imzMLImage = dynamic_cast<m2::ImzMLSpectrumImage *>(sImage))
     {

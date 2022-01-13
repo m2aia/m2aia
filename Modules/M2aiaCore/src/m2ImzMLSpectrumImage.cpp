@@ -73,11 +73,11 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::G
   p->GetMetaDataDictionary()["x_range_tol"] = mdTol;
 
   // Profile (continuous) spectrum
-  const auto importMode = p->GetImportMode();
+  const auto spectrumType = p->GetSpectrumType();
   const unsigned t = p->GetNumberOfThreads();
   const bool useNormalization = p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None;
 
-  if (importMode == m2::SpectrumFormatType::ContinuousProfile)
+  if (spectrumType.Format == m2::SpectrumFormat::ContinuousProfile)
   {
     // xRangeCenter subrange
     const auto mzs = p->GetXAxis();
@@ -163,7 +163,8 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::G
         });
     }
   }
-  else if (any(importMode & (m2::SpectrumFormatType::ContinuousCentroid | m2::SpectrumFormatType::ProcessedCentroid)))
+  else if (any(spectrumType.Format &
+               (m2::SpectrumFormat::ContinuousCentroid | m2::SpectrumFormat::ProcessedCentroid)))
   {
     for (auto &source : p->GetImzMLSpectrumImageSourceList())
     {
@@ -223,16 +224,14 @@ void m2::ImzMLSpectrumImage::InitializeProcessor()
   auto mzValueTypeString = GetPropertyValue<std::string>("m/z array value type");
   if (mzValueTypeString.compare("32-bit float") == 0)
   {
-    SetXInputType(m2::NumericType::Float);
+    m_SpectrumType.XAxisType = m2::NumericType::Float;
     if (intensitiesDataTypeString.compare("32-bit float") == 0)
     {
-      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<float, float>(this));
-      SetYInputType(m2::NumericType::Float);
+      m_SpectrumType.YAxisType = m2::NumericType::Float;
     }
     else if (intensitiesDataTypeString.compare("64-bit float") == 0)
     {
-      SetYInputType(m2::NumericType::Double);
-      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<float, double>(this));
+      m_SpectrumType.YAxisType = m2::NumericType::Double;
     }
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
@@ -248,16 +247,14 @@ void m2::ImzMLSpectrumImage::InitializeProcessor()
   }
   else if (mzValueTypeString.compare("64-bit float") == 0)
   {
-    SetXInputType(m2::NumericType::Double);
+    m_SpectrumType.XAxisType = m2::NumericType::Double;
     if (intensitiesDataTypeString.compare("32-bit float") == 0)
     {
-      SetYInputType(m2::NumericType::Float);
-      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<double, float>(this));
+      m_SpectrumType.YAxisType = m2::NumericType::Float;
     }
     else if (intensitiesDataTypeString.compare("64-bit float") == 0)
     {
-      SetYInputType(m2::NumericType::Double);
-      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<double, double>(this));
+      m_SpectrumType.YAxisType = m2::NumericType::Double;
     }
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
@@ -285,6 +282,9 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
 {
   this->m_Processor->InitializeImageAccess();
   this->SetImageAccessInitialized(true);
+
+  // by default set the export type to import type.
+  SetExportSpectrumType(GetSpectrumType());
 }
 
 m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLSpectrumImage *A,
@@ -292,7 +292,7 @@ m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLS
                                                                 const char stackAxis)
 {
   auto C = m2::ImzMLSpectrumImage::New();
-  C->SetImportMode(A->GetImportMode());
+  C->SetSpectrumType(A->GetSpectrumType());
   {
     auto A_mzGroup = A->GetPropertyValue<std::string>("mzGroupName");
     auto A_mzValueType = A->GetPropertyValue<std::string>(A_mzGroup + " value type");
@@ -534,32 +534,25 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
   m_Smoother.Initialize(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize());
   m_BaselineSubstractor.Initialize(p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
-  const auto importMode = p->GetImportMode();
-  if (importMode == m2::SpectrumFormatType::ProcessedProfile)
+  const auto spectrumType = p->GetSpectrumType();
+
+  MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << m2::to_string(spectrumType);
+
+  if (spectrumType.Format == m2::SpectrumFormat::ProcessedProfile)
   {
-    MITK_INFO << "Processed Profile";
-    mitkThrow() << R"(
+    mitkThrow() << m2::ImzMLSpectrumImage::GetStaticNameOfClass() << R"(
 		This ImzML file seems to contain profile spectra in a processed memory order. 
 		This is not supported in M2aia! If there are really individual m/z axis for
 		each spectrum, please resample the m/z axis and create one that is commonly
 		used for all spectra. Save it as continuous ImzML!)";
     InitializeImageAccessProcessedProfile();
   }
-  else if (importMode == m2::SpectrumFormatType::ContinuousProfile)
-  {
-    MITK_INFO << "Continuous Profile";
+  else if (spectrumType.Format == m2::SpectrumFormat::ContinuousProfile)
     InitializeImageAccessContinuousProfile();
-  }
-  else if (importMode == m2::SpectrumFormatType::ProcessedCentroid)
-  {
-    MITK_INFO << "Processed Centroid";
+  else if (spectrumType.Format == m2::SpectrumFormat::ProcessedCentroid)
     InitializeImageAccessProcessedCentroid();
-  }
-  else if (importMode == m2::SpectrumFormatType::ContinuousCentroid)
-  {
-    MITK_INFO << "Continuous Centroid";
+  else if (spectrumType.Format == m2::SpectrumFormat::ContinuousCentroid)
     InitializeImageAccessContinuousCentroid();
-  }
 
   // DEFAULT
   // INITIALIZE MASK, INDEX, NORMALIZATION IMAGES
@@ -1053,12 +1046,12 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::G
 
 m2::ImzMLSpectrumImage::~ImzMLSpectrumImage()
 {
-  MITK_INFO << GetStaticNameOfClass() << " destroyed!";
+  MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << " destroyed!";
 }
 
 m2::ImzMLSpectrumImage::ImzMLSpectrumImage() : m2::SpectrumImageBase()
 {
-  MITK_INFO << GetStaticNameOfClass() << " created!";
-  this->SetPropertyValue<std::string>("x_label", "m/z");
-  this->SetExportMode(m2::SpectrumFormatType::ContinuousProfile);
+  MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << " created!";
+  m_SpectrumType.XAxisLabel = "m/z";
+  m_ExportSpectrumType.XAxisLabel = "m/z";
 }

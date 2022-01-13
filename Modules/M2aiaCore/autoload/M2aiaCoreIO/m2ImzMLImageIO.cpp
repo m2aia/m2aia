@@ -150,13 +150,23 @@ namespace m2
     // write mzs
     {
       auto &source = sourceList.front();
-      // write mass axis
-      input->GetSpectrum(0, mzs, ints, sourceId);
+      // input->GetSpectrum(0, mzs, ints, sourceId); // get x axis
+      // bounds = {0, mzs.size()};
+      // image properties
+      auto useLimits = input->GetExportSpectrumType().UseLimits;
+
+      // Bounds of sub-spectrum
+      if (useLimits)
+      {
+        auto xLimMin = input->GetExportSpectrumType().XLimMin;
+        auto xLimMax = input->GetExportSpectrumType().XLimMax;
+        bounds = m2::Signal::Subrange(mzs, xLimMin, xLimMax);
+      }
 
       source.m_Spectra[0].mzOffset = 16;
       source.m_Spectra[0].mzLength = mzs.size();
 
-      switch (input->GetXOutputType())
+      switch (input->GetExportSpectrumType().XAxisType)
       {
         case m2::NumericType::Float:
           writeData<float>(std::begin(mzs), std::end(mzs), b);
@@ -187,7 +197,7 @@ namespace m2
           s.intOffset = offset;
           s.intLength = ints.size();
 
-          switch (input->GetYOutputType())
+          switch (input->GetExportSpectrumType().YAxisType)
           {
             case m2::NumericType::Float:
               writeData<float>(std::begin(ints), std::end(ints), b);
@@ -238,7 +248,7 @@ namespace m2
       source.m_Spectra[0].mzOffset = 16;
       source.m_Spectra[0].mzLength = mzs.size();
 
-      switch (input->GetXOutputType())
+      switch (input->GetExportSpectrumType().XAxisType)
       {
         case m2::NumericType::Float:
           writeData<float>(std::begin(mzs), std::end(mzs), b);
@@ -291,7 +301,7 @@ namespace m2
           s.intOffset = offset;
           s.intLength = ints.size();
 
-          switch (input->GetYOutputType())
+          switch (input->GetExportSpectrumType().YAxisType)
           {
             case m2::NumericType::Float:
               writeData<float>(std::begin(ints), std::end(ints), b);
@@ -370,7 +380,7 @@ namespace m2
             }
           }
 
-          switch (input->GetXOutputType())
+          switch (input->GetExportSpectrumType().XAxisType)
           {
             case m2::NumericType::Float:
               writeData<float>(begin(xs), end(xs), b);
@@ -385,7 +395,7 @@ namespace m2
           source.m_Spectra[spectrumId].intOffset = offset;
           source.m_Spectra[spectrumId].intLength = peaks.size();
 
-          switch (input->GetYOutputType())
+          switch (input->GetExportSpectrumType().YAxisType)
           {
             case m2::NumericType::Float:
               writeData<float>(begin(ys), end(ys), b);
@@ -434,7 +444,7 @@ namespace m2
       std::vector<double> mzs;
       std::vector<double> ints;
 
-      using m2::SpectrumFormatType;
+      using m2::SpectrumFormat;
 
       // copy the whole source meta data container; spectra information is
       // updated based on the save mode.
@@ -442,18 +452,18 @@ namespace m2
       // copy of sources is discared after writing
       m2::ImzMLSpectrumImage::SourceListType sourceCopy(input->GetImzMLSpectrumImageSourceList());
       std::string sha1;
-      switch (input->GetExportMode())
+      switch (input->GetExportSpectrumType().Format)
       {
-        case SpectrumFormatType::ContinuousProfile:
+        case SpectrumFormat::ContinuousProfile:
           this->WriteContinuousProfile(sourceCopy);
           break;
-        case SpectrumFormatType::ProcessedCentroid:
+        case SpectrumFormat::ProcessedCentroid:
           this->WriteProcessedCentroid(sourceCopy);
           break;
-        case SpectrumFormatType::ContinuousCentroid:
+        case SpectrumFormat::ContinuousCentroid:
           this->WriteContinuousCentroid(sourceCopy);
           break;
-        case SpectrumFormatType::ProcessedProfile:
+        case SpectrumFormat::ProcessedProfile:
           mitkThrow() << "ProcessedProfile export type is not supported!";
           break;
         default:
@@ -475,24 +485,24 @@ namespace m2
 
       std::map<std::string, std::string> context;
 
-      switch (input->GetExportMode())
+      switch (input->GetExportSpectrumType().Format)
       {
-        case SpectrumFormatType::None:
+        case SpectrumFormat::None:
           mitkThrow() << "SpectrumFormatType::None type is not supported!";
           break;
-        case SpectrumFormatType::ContinuousCentroid:
+        case SpectrumFormat::ContinuousCentroid:
           context["spectrumtype"] = "centroid spectrum";
           context["mode"] = "continuous";
           break;
-        case SpectrumFormatType::ContinuousProfile:
+        case SpectrumFormat::ContinuousProfile:
           context["spectrumtype"] = "profile spectrum";
           context["mode"] = "continuous";
           break;
-        case SpectrumFormatType::ProcessedCentroid:
+        case SpectrumFormat::ProcessedCentroid:
           context["spectrumtype"] = "centroid spectrum";
           context["mode"] = "processed";
           break;
-        case SpectrumFormatType::ProcessedProfile:
+        case SpectrumFormat::ProcessedProfile:
           context["spectrumtype"] = "profile spectrum";
           context["mode"] = "processed";
           break;
@@ -505,7 +515,8 @@ namespace m2
       context["sha1sum"] = sha1string;
       unsigned mzBytes = 0;
       unsigned intBytes = 0;
-      switch (input->GetXOutputType())
+
+      switch (input->GetExportSpectrumType().XAxisType)
       {
         case m2::NumericType::Double:
           context["mz_data_type"] = "64-bit float";
@@ -517,7 +528,7 @@ namespace m2
           break;
       }
 
-      switch (input->GetYOutputType())
+      switch (input->GetExportSpectrumType().YAxisType)
       {
         case m2::NumericType::Double:
           context["int_data_type"] = "64-bit float";
@@ -642,8 +653,8 @@ namespace m2
     source.m_ImzMLDataPath = this->GetInputLocation();
     source.m_BinaryDataPath = pathWithoutExtension + ".ibd";
     object->GetImzMLSpectrumImageSourceList().emplace_back(source);
+    object->GetSpectrumType().Format = SpectrumFormat::None;
 
-    object->SetImportMode(SpectrumFormatType::None);
     {
       m2::Timer t("Parsing imzML");
       m2::ImzMLParser::ReadImageMetaData(object);
@@ -666,20 +677,21 @@ namespace m2
   void ImzMLImageIO::EvaluateSpectrumFormatType(m2::SpectrumImageBase *object)
   {
     if (object->GetProperty("continuous") && object->GetProperty("profile spectrum"))
-      object->SetImportMode(m2::SpectrumFormatType::ContinuousProfile);
+      object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
     else if (object->GetProperty("processed") && object->GetProperty("profile spectrum"))
-      object->SetImportMode(m2::SpectrumFormatType::ProcessedProfile);
+      object->GetSpectrumType().Format = m2::SpectrumFormat::ProcessedProfile;
     else if (object->GetProperty("continuous") && object->GetProperty("centroid spectrum"))
-      object->SetImportMode(m2::SpectrumFormatType::ContinuousCentroid);
+      object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousCentroid;
     else if (object->GetProperty("processed") && object->GetProperty("centroid spectrum"))
-      object->SetImportMode(m2::SpectrumFormatType::ProcessedCentroid);
+      object->GetSpectrumType().Format = m2::SpectrumFormat::ProcessedCentroid;
 
     if (!object->GetProperty("processed") && !object->GetProperty("continuous"))
     {
       MITK_ERROR << "Set the continuos (IMS:1000030) or processed (IMS:1000031) property in the ImzML "
                     "fileContent element.";
       MITK_ERROR << "Fallback to continuos (MS:1000030)";
-      object->SetImportMode(m2::SpectrumFormatType::ContinuousProfile);
+
+      object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
     }
 
     if (!object->GetProperty("centroid spectrum") && !object->GetProperty("profile spectrum"))
@@ -687,7 +699,7 @@ namespace m2
       MITK_ERROR << "Set the profile spectrum (MS:1000127) or centroid spectrum (MS:1000128) property in the ImzML "
                     "fileContent element.";
       MITK_ERROR << "Fallback to profile spectrum (MS:1000127)";
-      object->SetImportMode(m2::SpectrumFormatType::ContinuousProfile);
+      object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
     }
   }
 

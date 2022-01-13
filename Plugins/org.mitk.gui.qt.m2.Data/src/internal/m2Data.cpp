@@ -249,7 +249,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
 
     if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
-      std::string xLabel = image->GetPropertyValue<std::string>("x_label");
+      std::string xLabel = image->GetSpectrumType().XAxisLabel;
       labelText = "[" + QString(xLabel.c_str()) + "]" + labelText;
     }
     labelText = QString(node->GetName().c_str()) + "\n" + labelText;

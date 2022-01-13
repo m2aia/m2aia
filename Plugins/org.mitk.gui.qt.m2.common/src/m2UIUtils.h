@@ -64,7 +64,7 @@ namespace m2
      */
     void UpdateImage(qreal x, qreal tol);
 
-    void OverviewSpectrumChanged(const mitk::DataNode *, m2::OverviewSpectrumType);
+    void OverviewSpectrumChanged(const mitk::DataNode *, m2::SpectrumType);
     
   
   private:

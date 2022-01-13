@@ -80,7 +80,7 @@ int main(int argc, char *argv[])
   }
   if (auto sImage = dynamic_cast<m2::SpectrumImageBase *>(image.GetPointer()))
   {
-    if (sImage->GetImportMode() != m2::SpectrumFormatType::ContinuousProfile)
+    if (sImage->GetSpectrumType().Format != m2::SpectrumFormat::ContinuousProfile)
     {
       MITK_ERROR << "Only imzML files in continuous profile mode are accepted for processing!";
       return 1;
@@ -95,9 +95,10 @@ int main(int argc, char *argv[])
     sImage->SetNormalizationStrategy(static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(norm)));
     sImage->InitializeImageAccess();
     
-    sImage->SetExportMode(m2::SpectrumFormatType::ContinuousProfile);
-    sImage->SetYOutputType(static_cast<m2::NumericType>(m2::CORE_MAPPINGS.at(y_output_type)));
-    sImage->SetXOutputType(static_cast<m2::NumericType>(m2::CORE_MAPPINGS.at(x_output_type)));
+    sImage->GetExportSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
+    sImage->GetExportSpectrumType().YAxisType = static_cast<m2::NumericType>(m2::CORE_MAPPINGS.at(y_output_type));
+    sImage->GetExportSpectrumType().XAxisType = static_cast<m2::NumericType>(m2::CORE_MAPPINGS.at(x_output_type));
+    
 
     mitk::IOUtil::Save(sImage, argsMap["output"].ToString());
   }

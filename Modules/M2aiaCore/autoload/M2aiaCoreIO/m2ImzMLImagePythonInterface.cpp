@@ -62,7 +62,7 @@ extern "C"
 
   M2AIACOREIO_EXPORT u_int32_t GetSpectrumType(m2::sys::ImageHandle *handle)
   {
-    return (u_int32_t)(handle->m_Image->GetImportMode());
+    return (u_int32_t)(handle->m_Image->GetSpectrumType().Format);
   }
 
   M2AIACOREIO_EXPORT u_int32_t GetSpectrumDepth(m2::sys::ImageHandle *handle)
@@ -78,7 +78,7 @@ extern "C"
 
   M2AIACOREIO_EXPORT u_int32_t GetYDataTypeSizeInBytes(m2::sys::ImageHandle *handle)
   {
-    auto id = handle->m_Image->GetYInputType();
+    auto id = handle->m_Image->GetSpectrumType().YAxisType;
     if (id == m2::NumericType::Float)
     {
       return sizeof(float);

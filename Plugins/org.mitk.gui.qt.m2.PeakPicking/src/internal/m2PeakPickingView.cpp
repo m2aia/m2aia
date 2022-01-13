@@ -133,7 +133,7 @@ void m2PeakPickingView::OnStartPeakPicking()
     if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
       m_Controls.imageSource->addItem(node->GetName().c_str());
-      if (imageBase->GetImportMode() != m2::SpectrumFormatType::ContinuousProfile)
+      if (imageBase->GetSpectrumType().Format != m2::SpectrumFormat::ContinuousProfile)
       {
         QMessageBox::warning(nullptr, "Warning", "Centroid data are not supported for peak picking operations!");
         auto &peakList = imageBase->GetPeaks();
@@ -194,7 +194,7 @@ void m2PeakPickingView::OnStartPeakPicking()
         m_PeakLists.push_back(peakList);
 
         emit m2::UIUtils::Instance()->OverviewSpectrumChanged(node.GetPointer(),
-                                                              m2::OverviewSpectrumType::PeakIndicators);
+                                                              m2::SpectrumType::None);
       }
     }
   OnImageSelectionChangedUpdatePeakList(0);
