@@ -218,7 +218,7 @@ berry::WorkbenchWindowAdvisor *QmitkM2aiaAppWorkbenchAdvisor::CreateWorkbenchWin
   advisor->ShowMitkVersionInfo(false);
   advisor->ShowMemoryIndicator(true);
   advisor->SetProductName("M²aia Workbench");
-  advisor->SetWindowIcon(":/org.mitk.gui.qt.m2.application/icon.ico");
+  advisor->SetWindowIcon(":/M2aiaApplication/icon.ico");
 
   return advisor;
 }
