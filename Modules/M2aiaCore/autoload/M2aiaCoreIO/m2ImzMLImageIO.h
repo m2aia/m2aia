@@ -17,12 +17,13 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #pragma once
 
 #include <M2aiaCoreIOExports.h>
-#include <m2ImzMLSpectrumImage.h>
+
 #include <mitkAbstractFileIO.h>
 #include <mitkIOMimeTypes.h>
 #include <mitkImage.h>
 #include <mitkItkImageIO.h>
 
+#include <m2ImzMLSpectrumImage.h>
 
 
 namespace m2

@@ -134,18 +134,25 @@ namespace m2
   void ImzMLImageIO::WriteContinuousProfile(m2::ImzMLSpectrumImage::SourceListType &sourceList) const
   {
     const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
+    const char * category = "ImzMLImageIO::WriteContinuousProfile";
+    MITK_INFO(category) << "ImzMLImageSource list size " << sourceList.size();
 
-    MITK_INFO << "ImzMLImageSource list size " << sourceList.size();
+    // WHAT A MESS 
     std::vector<float> mzs;
     std::vector<float> ints;
 
-    // Output file stream for ibd
+    std::ifstream ibd(input->GetImzMLSpectrumImageSource().m_BinaryDataPath, std::ofstream::binary);
     std::ofstream b(GetIBDOutputPath(), std::ofstream::binary | std::ofstream::app);
 
     unsigned sourceId = 0;
     unsigned long long offset = 16;
     unsigned long long offsetDelta = 0;
-    // b.seekp(offset);
+
+    // Used for min/max limits on x axis
+    std::pair<unsigned int, unsigned int> bounds;
+
+    boost::progress_display show_progress(std::accumulate(std::begin(sourceList),std::end(sourceList),0, [](auto s, m2::ImzMLSpectrumImage::ImzMLImageSource source){
+      return s + source.m_Spectra.size();}) + 1);
 
     // write mzs
     {
@@ -164,25 +171,30 @@ namespace m2
       }
 
       source.m_Spectra[0].mzOffset = 16;
-      source.m_Spectra[0].mzLength = mzs.size();
+      source.m_Spectra[0].mzLength = bounds.second;
 
+      auto start = std::begin(mzs) + bounds.first;
+      auto end = std::end(mzs) + bounds.first + bounds.second;
       switch (input->GetExportSpectrumType().XAxisType)
       {
         case m2::NumericType::Float:
-          writeData<float>(std::begin(mzs), std::end(mzs), b);
-          offsetDelta = source.m_Spectra[0].mzLength * sizeof(float);
+          // input->GetProcessor()
+          writeData<float>(start, end, b);
+          offsetDelta = bounds.second * sizeof(float);
           break;
         case m2::NumericType::Double:
-          writeData<double>(std::begin(mzs), std::end(mzs), b);
-          offsetDelta = source.m_Spectra[0].mzLength * sizeof(double);
+          writeData<double>(start, end, b);
+          offsetDelta = bounds.second * sizeof(double);
           break;
       }
       offset += offsetDelta;
+      ++show_progress;
     }
+
+    MITK_INFO("ImzMLImageIO::WriteContinuousProfile") << "Write x axis done!";
 
     for (auto &source : sourceList)
     {
-      ;
       for (size_t id = 0; id < source.m_Spectra.size(); ++id)
       {
         auto &s = source.m_Spectra[id];
@@ -195,27 +207,32 @@ namespace m2
           input->GetSpectrum(id, mzs, ints, sourceId);
 
           s.intOffset = offset;
-          s.intLength = ints.size();
+          s.intLength = bounds.second;
+
+          auto start = std::begin(ints) + bounds.first;
+          auto end = std::end(ints) + bounds.first + bounds.second;
 
           switch (input->GetExportSpectrumType().YAxisType)
           {
             case m2::NumericType::Float:
-              writeData<float>(std::begin(ints), std::end(ints), b);
-              offsetDelta = s.intLength * sizeof(float);
+              writeData<float>(start, end, b);
+              offsetDelta = bounds.second * sizeof(float);
               break;
             case m2::NumericType::Double:
-              writeData<double>(std::begin(ints), std::end(ints), b);
-              offsetDelta = s.intLength * sizeof(double);
+              writeData<double>(start, end, b);
+              offsetDelta = bounds.second * sizeof(double);
               break;
           }
 
           offset += offsetDelta;
         }
         b.flush();
+        ++show_progress;
       }
       ++sourceId;
     }
   }
+
   void ImzMLImageIO::WriteContinuousCentroid(m2::ImzMLSpectrumImage::SourceListType &sourceList) const
   {
     const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
@@ -233,6 +250,9 @@ namespace m2
     unsigned long long offset = 16;
     unsigned long long offsetDelta = 0;
     b.seekp(offset);
+
+    boost::progress_display show_progress(std::accumulate(std::begin(sourceList),std::end(sourceList),0, [](auto s, m2::ImzMLSpectrumImage::ImzMLImageSource source){
+      return s + source.m_Spectra.size();}) + 1);
     // write mzs
     {
       auto &source = sourceList.front();
@@ -260,7 +280,10 @@ namespace m2
           break;
       }
       offset += offsetDelta;
+      ++show_progress;
     }
+
+    MITK_INFO("ImzMLImageIO") << "Write x axis done!";
 
     for (auto &source : sourceList)
     {
@@ -285,7 +308,7 @@ namespace m2
             }
             else
             {
-              auto tol = input->ApplyTolerance(mzs[i]) ;
+              auto tol = input->ApplyTolerance(mzs[i]);
               auto subRes = m2::Signal::Subrange(mzs, mzs[i] - tol, mzs[i] + tol);
               auto s = std::next(std::begin(ints), subRes.first);
               auto e = std::next(s, subRes.second);
@@ -316,6 +339,7 @@ namespace m2
           offset += offsetDelta;
         }
         b.flush();
+        ++show_progress;
       }
       ++sourceId;
     }
