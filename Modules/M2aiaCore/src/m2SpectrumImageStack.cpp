@@ -18,6 +18,7 @@ See LICENSE.txt for details.
 #include <itkSignedMaurerDistanceMapImageFilter.h>
 #include <itksys/SystemTools.hxx>
 #include <m2ImzMLSpectrumImage.h>
+#include <m2SpectrumImageProcessor.h>
 #include <m2SpectrumImageStack.h>
 #include <mitkExtractSliceFilter.h>
 #include <mitkIOUtil.h>

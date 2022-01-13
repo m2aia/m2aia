@@ -19,9 +19,12 @@ See LICENSE.txt for details.
 #include <m2SpectrumImageBase.h>
 #include <signal/m2Baseline.h>
 #include <signal/m2Smoothing.h>
+#include <m2SpectrumImageProcessor.h>
 
 namespace m2
 {
+ 
+
   class M2AIACORE_EXPORT ImzMLSpectrumImage final : public SpectrumImageBase
   {
   public:
@@ -36,6 +39,8 @@ namespace m2
 
     using BinaryDataOffsetType = unsigned long long;
     using BinaryDataLengthType = unsigned long;
+
+    void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
 
     /**
      * @brief The BinarySpectrumMetaData structure holds meta data for a single spectrum.
@@ -90,7 +95,10 @@ namespace m2
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
     void InitializeProcessor() override;
-    void GetSpectrum(unsigned int id, std::vector<float> & xs, std::vector<float> & ys, unsigned int source = 0) const override;
+    void GetSpectrum(unsigned int id,
+                     std::vector<float> &xs,
+                     std::vector<float> &ys,
+                     unsigned int source = 0) const override;
 
     template <class OffsetType, class LengthType, class DataType>
     static void binaryDataToVector(std::ifstream &f, OffsetType offset, LengthType length, DataType *vec) noexcept
@@ -98,6 +106,27 @@ namespace m2
       f.seekg(offset);
       f.read((char *)vec, length * sizeof(DataType));
     }
+
+    inline void GetXValues(unsigned int id, std::vector<double> &xs, unsigned int source = 0)
+    {
+      m_Processor->GetXValues(id, xs, source);
+    }
+
+    inline void GetXValues(unsigned int id, std::vector<float> &xs, unsigned int source = 0)
+    {
+      m_Processor->GetXValues(id, xs, source);
+    }
+
+    inline void GetYValues(unsigned int id, std::vector<double> &ys, unsigned int source = 0)
+    {
+      m_Processor->GetYValues(id, ys, source);
+    }
+
+    inline void GetYValues(unsigned int id, std::vector<float> &ys, unsigned int source = 0)
+    {
+      m_Processor->GetYValues(id, ys, source);
+    }
+
 
     static m2::ImzMLSpectrumImage::Pointer Combine(const m2::ImzMLSpectrumImage *A,
                                                    const m2::ImzMLSpectrumImage *B,
@@ -115,32 +144,57 @@ namespace m2
 
     ImzMLSpectrumImage();
     ~ImzMLSpectrumImage() override;
-  };
 
-  template <class MassAxisType, class IntensityType>
-  class ImzMLSpectrumImage::ImzMLImageProcessor : public ImzMLSpectrumImage::ProcessorBase
-  {
-  private:
-    friend class ImzMLSpectrumImage;
-    m2::ImzMLSpectrumImage *p;
+    template <class MassAxisType, class IntensityType>
+    class Processor : public m2::ProcessorBase
+    {
+    private:
+      friend class ImzMLSpectrumImage;
+      m2::ImzMLSpectrumImage *p;
 
-  public:
-    explicit ImzMLImageProcessor(m2::ImzMLSpectrumImage *owner) : p(owner) {}
-    void GetImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) override;
-    void GetSpectrumPrivate(unsigned int id, std::vector<float> &xd, std::vector<float> &yd, unsigned int source) override;
+    public:
+      explicit Processor(m2::ImzMLSpectrumImage *owner) : p(owner) {}
+      void GetImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image);
+      // void GetSpectrumPrivate(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int) override {}
 
-    void InitializeImageAccess() override;
-    void InitializeImageAccessContinuousProfile();
-    void InitializeImageAccessProcessedProfile() {}
-    void InitializeImageAccessContinuousCentroid();
-    void InitializeImageAccessProcessedCentroid();
+      void InitializeImageAccess();
+      void InitializeGeometry();
+      void InitializeImageAccessContinuousProfile();
+      void InitializeImageAccessProcessedProfile() {}
+      void InitializeImageAccessContinuousCentroid();
+      void InitializeImageAccessProcessedCentroid();
 
-    void InitializeGeometry() override;
 
-    using XIteratorType = typename std::vector<MassAxisType>::iterator;
-    using YIteratorType = typename std::vector<IntensityType>::iterator;
-    m2::Signal::SmoothingFunctor<IntensityType> m_Smoother;
-    m2::Signal::BaselineFunctor<IntensityType> m_BaselineSubstractor;
+      using XIteratorType = typename std::vector<MassAxisType>::iterator;
+      using YIteratorType = typename std::vector<IntensityType>::iterator;
+      m2::Signal::SmoothingFunctor<IntensityType> m_Smoother;
+      m2::Signal::BaselineFunctor<IntensityType> m_BaselineSubstractor;
+
+      virtual void GetYValues(unsigned int id, std::vector<float> &yd, unsigned int source = 0)
+      {
+        GetYValues<float>(id, yd, source);
+      }
+      virtual void GetYValues(unsigned int id, std::vector<double> &yd, unsigned int source = 0)
+      {
+        GetYValues<double>(id, yd, source);
+      }
+      virtual void GetXValues(unsigned int id, std::vector<float> &yd, unsigned int source = 0)
+      {
+        GetXValues<float>(id, yd, source);
+      }
+      virtual void GetXValues(unsigned int id, std::vector<double> &yd, unsigned int source = 0)
+      {
+        GetXValues<double>(id, yd, source);
+      }
+
+    private:
+      template <class OutputType>
+      void GetYValues(unsigned int id, std::vector<OutputType> &yd, unsigned int source = 0);
+      template <class OutputType>
+      void GetXValues(unsigned int id, std::vector<OutputType> &xd, unsigned int source = 0);
+    };
+
+    std::unique_ptr<ProcessorBase> m_Processor;
   };
 
 } // namespace m2

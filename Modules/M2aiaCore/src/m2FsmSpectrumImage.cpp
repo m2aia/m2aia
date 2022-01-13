@@ -28,6 +28,11 @@ See LICENSE.txt for details.
 #include <signal/m2RunningMedian.h>
 #include <signal/m2Smoothing.h>
 
+
+void m2::FsmSpectrumImage::GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const{
+  m_Processor->GetImagePrivate(mz, tol, mask, img);
+}
+
 void m2::FsmSpectrumImage::FsmProcessor::GetImagePrivate(double cmInv,
                                                             double tol,
                                                             const mitk::Image *mask,
@@ -40,7 +45,7 @@ void m2::FsmSpectrumImage::FsmProcessor::GetImagePrivate(double cmInv,
   mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
   std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>> maskAccess;
 
-  // const auto _NormalizationStrategy = p->GetNormalizationStrategy();
+  MITK_INFO("FSM") << "Image generation started!";
 
   if (mask)
   {
@@ -92,7 +97,7 @@ void m2::FsmSpectrumImage::FsmProcessor::GetImagePrivate(double cmInv,
 
 void m2::FsmSpectrumImage::InitializeProcessor()
 {
-  this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new FsmProcessor(this));
+  this->m_Processor.reset((m2::ProcessorBase *)new FsmProcessor(this));
 }
 
 void m2::FsmSpectrumImage::InitializeGeometry()

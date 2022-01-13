@@ -138,11 +138,10 @@ mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage()
   return nullptr;
 }
 
-void m2::SpectrumImageBase::GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
+void m2::SpectrumImageBase::GetImage(double /*x*/, double /*tol*/, const mitk::Image */*mask*/, mitk::Image */*img*/) const
 {
-  m_Processor->GetImagePrivate(mz, tol, mask, img);  
+  MITK_WARN("SpectrumImageBase") << "Get image is not implemented in derived class!";
 }
 
 m2::SpectrumImageBase::~SpectrumImageBase() {}
-
 m2::SpectrumImageBase::SpectrumImageBase() : mitk::Image() {}

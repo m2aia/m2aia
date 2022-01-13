@@ -16,36 +16,19 @@ See LICENSE.txt for details.
 
 #include <M2aiaCoreExports.h>
 #include <itkMetaDataObject.h>
-#include <m2ElxRegistrationHelper.h>
 #include <m2CoreCommon.h>
+#include <m2ElxRegistrationHelper.h>
 #include <m2ISpectrumDataAccess.h>
 #include <m2IonImageReference.h>
 #include <m2Peak.h>
 #include <m2SpectrumInfo.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
+#include <mitkImageStatisticsHolder.h>
+#include <signal/m2SignalCommon.h>
 
 namespace m2
 {
-  /**
-   * SpectrumImageBase is a mitk::Image class extended to work with spectral image acquistion modalities.
-   *
-   * Spectrum image is a composition of:
-   * - data access utilities (SpectrumDataAccess)
-   * - list of meta data (property list)
-   * - additional (required) images (e.g. IndexImage, NormalizationImage for visualization)
-   * - overview spectra (e.g. MeanSpectrum or SkylineSpectrum).
-   *
-   * Data initialization is implementation dependent of the different spectrum image format types (e.g. ImzML, FSM)
-   *
-   * To be consistent with other derived SpectrumImage types the following properties are recommended:
-   * - Provide an index image, where each pixel represents the index of the spectrum reference vector.
-   * - Provide a normalization image, so that normalization constants can be generated once during initialization.
-   * - Provide a mask image, where each pixel represents a Boolean/Label value that guarantees valid or invalid image
-   *regions.
-   * - Provide overview spectra (Skyline, Mean)
-   **/
-
   class M2AIACORE_EXPORT SpectrumImageBase : public ISpectrumDataAccess, public mitk::Image
   {
   public:
@@ -71,10 +54,24 @@ namespace m2
     itkSetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
     itkGetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
 
-    itkSetMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
-    itkGetConstReferenceMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
+    virtual void GetXValues(unsigned int /*id*/, std::vector<double> &/*xs*/, unsigned int /*source*/ = 0)
+    {
+      MITK_WARN(GetStaticNameOfClass()) << "GetXValues[double] is not implemented!";
+    }
 
+    virtual void GetXValues(unsigned int /*id*/, std::vector<float> &/*xs*/, unsigned int /*source*/ = 0)
+    {
+      MITK_WARN(GetStaticNameOfClass()) << "GetXValues[float] is not implemented!";
+    }
 
+    virtual void GetYValues(unsigned int /*id*/, std::vector<double> &/*ys*/, unsigned int /*source*/ = 0)
+    {
+      MITK_WARN(GetStaticNameOfClass()) << "GetYValues[double] is not implemented!";
+    }   
+    virtual void GetYValues(unsigned int /*id*/, std::vector<float> &/*ys*/, unsigned int /*source*/ = 0)
+    {
+      MITK_WARN(GetStaticNameOfClass()) << "GetYValues[float] is not implemented!";
+    }
 
 
 
@@ -96,7 +93,7 @@ namespace m2
 
     itkSetMacro(UseToleranceInPPM, bool);
     itkGetConstReferenceMacro(UseToleranceInPPM, bool);
-    
+
     itkGetMacro(Peaks, PeaksVectorType &);
     itkGetConstReferenceMacro(Peaks, PeaksVectorType);
 
@@ -139,18 +136,17 @@ namespace m2
     SpectrumArtifactVectorType &SkylineSpectrum();
     SpectrumArtifactVectorType &SumSpectrum();
     SpectrumArtifactVectorType &MeanSpectrum();
-    SpectrumArtifactVectorType &PeakIndicators();
     SpectrumArtifactVectorType &GetXAxis();
     const SpectrumArtifactVectorType &GetXAxis() const;
 
     void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
-    void InsertImageArtifact(const std::string & key, mitk::Image * img);
+    void InsertImageArtifact(const std::string &key, mitk::Image *img);
 
     template <class T>
     void SetPropertyValue(const std::string &key, const T &value);
 
     template <class T>
-    const T GetPropertyValue(const std::string &key) const;
+    const T GetPropertyValue(const std::string &key, T def = T()) const;
 
     void ApplyGeometryOperation(mitk::Operation *);
     void ApplyMoveOriginOperation(const mitk::Vector3D &v);
@@ -158,6 +154,8 @@ namespace m2
     inline void SaveModeOn() const { this->m_InSaveMode = true; }
     inline void SaveModeOff() const { this->m_InSaveMode = false; }
     double ApplyTolerance(double xValue) const;
+
+    void SetElxRegistrationHelper(const std::shared_ptr<m2::ElxRegistrationHelper> &d) { m_ElxRegistrationHelper = d; }
 
     const SpectrumInfo &GetSpectrumType() const { return m_SpectrumType; }
     SpectrumInfo &GetSpectrumType() { return m_SpectrumType; }
@@ -178,7 +176,7 @@ namespace m2
     bool m_UseExternalNormalization = false;
     bool m_UseToleranceInPPM = false;
 
-    std::shared_ptr<m2::ElxRegistrationHelper> m_ElxRegistrationHelper;   
+    std::shared_ptr<m2::ElxRegistrationHelper> m_ElxRegistrationHelper;
 
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
@@ -187,7 +185,7 @@ namespace m2
     PeaksVectorType m_Peaks;
 
     ImageArtifactMapType m_ImageArtifacts;
-    SpectrumArtifactMapType m_SpectraArtifacts;
+    SpectrumArtifactMapType m_SpectraArtifacts;    
 
     BaselineCorrectionType m_BaselineCorrectionStrategy;
     SmoothingType m_SmoothingStrategy;
@@ -215,13 +213,6 @@ namespace m2
     ~SpectrumImageBase() override;
     bool m_IsDataAccessInitialized = false;
 
-    /*
-     * ProcessorBase
-     * This nasted class has to be inherited by all MSDataObject sub-types
-     *
-     * */
-    class ProcessorBase;
-    std::unique_ptr<ProcessorBase> m_Processor;
     SpectrumArtifactVectorType m_XAxis;
   };
 
@@ -247,7 +238,7 @@ inline void m2::SpectrumImageBase::SetPropertyValue(const std::string &key, cons
 }
 
 template <class T>
-inline const T m2::SpectrumImageBase::GetPropertyValue(const std::string &key) const
+inline const T m2::SpectrumImageBase::GetPropertyValue(const std::string &key, T def) const
 {
   auto dd = this->GetPropertyList();
   const mitk::GenericProperty<T> *entry = dynamic_cast<mitk::GenericProperty<T> *>(dd->GetProperty(key));
@@ -258,16 +249,6 @@ inline const T m2::SpectrumImageBase::GetPropertyValue(const std::string &key) c
   else
   {
     MITK_WARN << "No meta data object found! " << key;
-    return T(0);
+    return def;
   }
 }
-
-class m2::SpectrumImageBase::ProcessorBase
-{
-public:
-  virtual void GetImagePrivate(double mz, double tol, const Image *mask, Image *image) = 0;
-  virtual void GetSpectrumPrivate(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int source = 0) = 0;
-  virtual void InitializeImageAccess() = 0;
-  virtual void InitializeGeometry() = 0;
-  virtual ~ProcessorBase() = default;
-};

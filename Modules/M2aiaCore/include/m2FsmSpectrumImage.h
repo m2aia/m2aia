@@ -19,6 +19,7 @@ See LICENSE.txt for details.
 #include <algorithm>
 #include <array>
 #include <m2SpectrumImageBase.h>
+#include <m2SpectrumImageProcessor.h>
 #include <mitkDataNode.h>
 #include <mitkITKImageImport.h>
 #include <mitkImage.h>
@@ -42,6 +43,9 @@ namespace m2
 
     itkSetEnumMacro(ImageAccessInitialized, bool);
     itkGetEnumMacro(ImageAccessInitialized, bool);
+
+    void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
+    
 
     struct SpectrumData
     {
@@ -76,9 +80,10 @@ namespace m2
     FsmSpectrumImage();
     ~FsmSpectrumImage() override;
     class FsmProcessor;
+    std::unique_ptr<m2::ProcessorBase> m_Processor;
   };
 
-  class FsmSpectrumImage::FsmProcessor : public m2::SpectrumImageBase::ProcessorBase
+  class FsmSpectrumImage::FsmProcessor : public m2::ProcessorBase
   {
   private:
     friend class FsmSpectrumImage;
@@ -86,14 +91,36 @@ namespace m2
 
   public:
     explicit FsmProcessor(m2::FsmSpectrumImage *owner) : p(owner) {}
+    
+    void GetYValues(unsigned int id, std::vector<float> & data, unsigned int /*source*/ = 0) 
+    {
+      data = p->m_Spectra[id].data;
+    }
+    
+    void GetYValues(unsigned int id, std::vector<double> & data, unsigned int /*source*/ = 0) 
+    {
+      const auto & d = p->m_Spectra[id].data;
+      data.resize(d.size());
+      std::copy(std::begin(d), std::end(d), std::begin(data));
+    }
+    
+    void GetXValues(unsigned int /*id*/, std::vector<float> & data, unsigned int /*source*/ = 0) 
+    {
+      const auto & d = p->GetXAxis();
+      data.resize(d.size());
+      std::copy(std::begin(d), std::end(d), std::begin(data));
+    }
+    
+    void GetXValues(unsigned int /*id*/, std::vector<double> & data, unsigned int /*source*/ = 0) 
+    {
+      data = p->GetXAxis();
+    }
+    
     void GetImagePrivate(double mz, double tol, const mitk::Image *mask, mitk::Image *image) override;
-    void GetSpectrumPrivate(unsigned int,
-                              std::vector<float> &,
-                              std::vector<float> &,
-                              unsigned int) override{}
-
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
   };
+
+  
 
 } // namespace m2

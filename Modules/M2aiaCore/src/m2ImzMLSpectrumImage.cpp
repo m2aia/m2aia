@@ -17,6 +17,7 @@ See LICENSE.txt for details.
 #include <itkBarrier.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2Process.hpp>
+#include <m2SpectrumImageProcessor.h>
 #include <m2Timer.h>
 #include <mitkImageAccessByItk.h>
 #include <mitkImagePixelReadAccessor.h>
@@ -31,6 +32,10 @@ See LICENSE.txt for details.
 #include <signal/m2Pooling.h>
 #include <signal/m2RunningMedian.h>
 #include <signal/m2Smoothing.h>
+
+void m2::ImzMLSpectrumImage::GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const{
+  m_Processor->GetImagePrivate(mz, tol, mask, img);
+}
 
 m2::ImzMLSpectrumImage::ImzMLImageSource &m2::ImzMLSpectrumImage::GetImzMLSpectrumImageSource(unsigned int i)
 {
@@ -48,10 +53,10 @@ const m2::ImzMLSpectrumImage::ImzMLImageSource &m2::ImzMLSpectrumImage::GetImzML
 }
 
 template <class MassAxisType, class IntensityType>
-void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::GetImagePrivate(double xRangeCenter,
-                                                                                               double xRangeTol,
-                                                                                               const mitk::Image *mask,
-                                                                                               mitk::Image *destImage)
+void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::GetImagePrivate(double xRangeCenter,
+                                                                                     double xRangeTol,
+                                                                                     const mitk::Image *mask,
+                                                                                     mitk::Image *destImage)
 {
   AccessByItk(destImage, [](auto itkImg) { itkImg->FillBuffer(0); });
   using namespace m2;
@@ -228,20 +233,23 @@ void m2::ImzMLSpectrumImage::InitializeProcessor()
     if (intensitiesDataTypeString.compare("32-bit float") == 0)
     {
       m_SpectrumType.YAxisType = m2::NumericType::Float;
+      this->m_Processor.reset((ProcessorBase *)new Processor<float, float>(this));
     }
     else if (intensitiesDataTypeString.compare("64-bit float") == 0)
     {
       m_SpectrumType.YAxisType = m2::NumericType::Double;
+      this->m_Processor.reset((ProcessorBase *)new Processor<float, double>(this));
     }
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
-      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<float, long int>(this));
+      MITK_ERROR(GetStaticNameOfClass()) << "Using 32-bit integer. Not implemented!";
+      // this->m_Processor.reset((ProcessorBase *)new Processor<float, long int>(this));
       // SetYInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
-      this->m_Processor.reset(
-        (m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<float, long long int>(this));
+      MITK_ERROR(GetStaticNameOfClass()) << "Using 64-bit integer. Not implemented!";
+      // this->m_Processor.reset((ProcessorBase *)new Processor<float, long long int>(this));
       // SetYInputType(m2::NumericType::Double);
     }
   }
@@ -251,20 +259,23 @@ void m2::ImzMLSpectrumImage::InitializeProcessor()
     if (intensitiesDataTypeString.compare("32-bit float") == 0)
     {
       m_SpectrumType.YAxisType = m2::NumericType::Float;
+      this->m_Processor.reset((ProcessorBase *)new Processor<double, float>(this));
     }
     else if (intensitiesDataTypeString.compare("64-bit float") == 0)
     {
       m_SpectrumType.YAxisType = m2::NumericType::Double;
+      this->m_Processor.reset((ProcessorBase *)new Processor<double, double>(this));
     }
     else if (intensitiesDataTypeString.compare("32-bit integer") == 0)
     {
-      this->m_Processor.reset((m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<double, long int>(this));
+      MITK_ERROR(GetStaticNameOfClass()) << "Using 32-bit integer. Not implemented!";
+      // this->m_Processor.reset((ProcessorBase *)new Processor<double, long int>(this));
       // SetYInputType(m2::NumericType::Double);
     }
     else if (intensitiesDataTypeString.compare("64-bit integer") == 0)
     {
-      this->m_Processor.reset(
-        (m2::SpectrumImageBase::ProcessorBase *)new ImzMLImageProcessor<double, long long int>(this));
+      // this->m_Processor.reset((ProcessorBase *)new Processor<double, long long int>(this));
+      MITK_ERROR(GetStaticNameOfClass()) << "Using 64-bit integer. Not implemented!";
       // SetYInputType(m2::NumericType::Double);
     }
   }
@@ -401,7 +412,7 @@ m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLS
   const auto &B_sources = B->GetImzMLSpectrumImageSourceList();
 
   C_sources = A_sources;
-  MITK_INFO << "Merge sources";
+  MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << "Merge sources";
 
   std::transform(std::begin(B_sources),
                  std::end(B_sources),
@@ -427,7 +438,7 @@ m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLS
 }
 
 template <class MassAxisType, class IntensityType>
-void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::InitializeGeometry()
+void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeGeometry()
 {
   auto &imageArtifacts = p->GetImageArtifacts();
 
@@ -527,10 +538,9 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 }
 
 template <class MassAxisType, class IntensityType>
-void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::InitializeImageAccess()
+void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeImageAccess()
 {
   //////////---------------------------
-
   m_Smoother.Initialize(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize());
   m_BaselineSubstractor.Initialize(p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
@@ -590,7 +600,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 }
 
 template <class MassAxisType, class IntensityType>
-void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::InitializeImageAccessContinuousProfile()
+void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeImageAccessContinuousProfile()
 {
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
 
@@ -640,6 +650,8 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 
           // Read data from file ------------
           binaryDataToVector(f, spectrum.intOffset, spectrum.intLength, ints.data());
+
+          // std::transform(std::begin(ints),std::end(ints),std::begin(ints),[](auto & a){return std::log(a);});
 
           if (ints.front() == 0)
             ints[0] = ints[1];
@@ -712,7 +724,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 }
 
 template <class MassAxisType, class IntensityType>
-void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::InitializeImageAccessContinuousCentroid()
+void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeImageAccessContinuousCentroid()
 {
   const auto normalizationStrategy = p->GetNormalizationStrategy();
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
@@ -807,7 +819,7 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
 }
 
 template <class MassAxisType, class IntensityType>
-void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::InitializeImageAccessProcessedCentroid()
+void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeImageAccessProcessedCentroid()
 {
   std::vector<std::list<m2::Peak>> peaksT(p->GetNumberOfThreads());
   for (auto &source : p->GetImzMLSpectrumImageSourceList())
@@ -948,7 +960,6 @@ void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::I
     p->SetPropertyValue<double>("x_min", mzAxis.front());
     p->SetPropertyValue<double>("x_max", mzAxis.back());
     p->SetPropertyValue<unsigned>("spectral depth (bins of overview spectrum)", mzAxis.size());
-    
   }
 }
 
@@ -957,73 +968,128 @@ void m2::ImzMLSpectrumImage::GetSpectrum(unsigned int id,
                                          std::vector<float> &ys,
                                          unsigned int source) const
 {
-  m_Processor->GetSpectrumPrivate(id, xs, ys, source);
+  m_Processor->GetXValues(id, xs, source);
+  m_Processor->GetYValues(id, ys, source);
 }
 
 template <class MassAxisType, class IntensityType>
-void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::GetSpectrumPrivate(
-  unsigned int id, std::vector<float> &xd, std::vector<float> &yd, unsigned int sourceId)
+template <class OutputType>
+void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::GetXValues(unsigned int id,
+                                                                                          std::vector<OutputType> &xd,
+                                                                                          unsigned int sourceId)
 {
-  mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> normAcc(p->GetNormalizationImage());
-
   const auto &source = p->m_SourcesList[sourceId];
-  std::ifstream f;
-  f.open(source.m_BinaryDataPath, std::ios::binary);
+  std::ifstream f(source.m_BinaryDataPath, std::ios::binary);
 
-  const auto importMode = p->GetImportMode();
   const auto &spectrum = source.m_Spectra[id];
-  const auto &length = spectrum.intLength;
-  const auto &ysOffset = spectrum.intOffset;
+  const auto &length = spectrum.mzLength;
+  const auto &offset = spectrum.mzOffset;
 
-  std::vector<IntensityType> ys;
-  ys.resize(length);
-  binaryDataToVector(f, ysOffset, length, ys.data());
-
-  if (any(importMode & m2::SpectrumFormatType::ContinuousProfile | m2::SpectrumFormatType::ProcessedProfile))
+  if (std::is_same<MassAxisType, OutputType>::value)
   {
-    // Profile spectrum may require processing
-    if (p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None)
-      std::transform(std::begin(ys),
-                     std::end(ys),
-                     std::begin(ys),
-                     [&spectrum](auto &v) { return v / spectrum.normalizationFactor; });
-
-    m_Smoother(std::begin(ys), std::end(ys));
-    decltype(ys) baseline(length);
-    m_BaselineSubstractor(std::begin(ys), std::end(ys), std::begin(baseline));
-  }
-
-  yd.resize(length);
-  xd.resize(length);
-
-  std::copy(std::begin(ys), std::end(ys), std::begin(yd));
-
-  // continuous data -> mass axis already exist and can be used directly
-  if (any(importMode & m2::SpectrumFormatType::ContinuousCentroid | m2::SpectrumFormatType::ContinuousProfile))
-  {
-    auto &xAxis = p->GetXAxis();
-    std::copy(std::begin(xAxis), std::end(xAxis), std::begin(xd));
+    xd.resize(length);
+    binaryDataToVector(f, offset, length, xd.data());
   }
   else
   {
-    // processed data -> mass axis for individual pixels
-    const auto &xsOffset = spectrum.mzOffset;
-    if (p->GetXInputType() == m2::NumericType::Float)
-    {
-      // float must be converted to output type "double"
-      std::vector<MassAxisType> xs;
-      xs.resize(length);
-      binaryDataToVector(f, xsOffset, length, xs.data());
-      std::copy(std::begin(xs), std::end(xs), std::begin(xd));
-    }
-    else if (p->GetXInputType() == m2::NumericType::Double)
-    {
-      // copy directly
-      xd.resize(length);
-      binaryDataToVector(f, xsOffset, length, xd.data());
-    }
+    std::vector<MassAxisType> xs;
+    xs.resize(length);
+    binaryDataToVector(f, offset, length, xs.data());
+    // copy and convert
+    xd.resize(length);
+    std::copy(std::begin(xs), std::end(xs), std::begin(xd));
   }
 }
+
+template <class MassAxisType, class IntensityType>
+template <class OutputType>
+void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::GetYValues(unsigned int id,
+                                                                                          std::vector<OutputType> &yd,
+                                                                                          unsigned int sourceId)
+{
+  const auto &source = p->m_SourcesList[sourceId];
+  std::ifstream f(source.m_BinaryDataPath, std::ios::binary);
+
+  const auto &spectrum = source.m_Spectra[id];
+  const auto &length = spectrum.intLength;
+  const auto &offset = spectrum.intOffset;
+
+  mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
+  
+  {
+    std::vector<IntensityType> ys;
+    ys.resize(length);
+    binaryDataToVector(f, offset, length, ys.data());
+    if (p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None)
+    { // check if it is not NormalizationStrategy::None.
+      IntensityType norm = normAccess.GetPixelByIndex(spectrum.index + source.m_Offset);
+      std::transform(std::begin(ys), std::end(ys), std::begin(ys), [&norm](auto &v) { return v / norm; });
+    }
+
+    // ----- Smoothing
+    m_Smoother(std::begin(ys), std::end(ys));
+
+    // ----- Baseline Substraction
+    std::vector<IntensityType> baseline(length);
+    m_BaselineSubstractor(std::begin(ys), std::end(ys), std::begin(baseline));
+    // copy and convert
+    yd.resize(length);
+    std::copy(std::begin(ys), std::end(ys), std::begin(yd));
+  }
+}
+
+// template <class MassAxisType, class IntensityType>
+// void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::GetSpectrumPrivate(
+//   unsigned int id, std::vector<float> &xd, std::vector<float> &yd, unsigned int sourceId)
+// {
+//   mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3> normAcc(p->GetNormalizationImage());
+
+//   const auto &source = p->m_SourcesList[sourceId];
+//   std::ifstream f;
+//   f.open(source.m_BinaryDataPath, std::ios::binary);
+
+//   const auto &spectrumType = p->GetSpectrumType();
+//   const auto &spectrum = source.m_Spectra[id];
+//   const auto &length = spectrum.intLength;
+//   const auto &ysOffset = spectrum.intOffset;
+
+//   std::vector<IntensityType> ys;
+//   ys.resize(length);
+//   binaryDataToVector(f, ysOffset, length, ys.data());
+
+//   // No preprocessing is applied for single spectrum export
+//   yd.resize(length);
+//   xd.resize(length);
+
+//   std::copy(std::begin(ys), std::end(ys), std::begin(yd));
+
+//   // continuous data -> mass axis already exist and can be used directly
+//   if (any(spectrumType.Format & m2::SpectrumFormatType::ContinuousCentroid |
+//   m2::SpectrumFormatType::ContinuousProfile))
+//   {
+//     auto &xAxis = p->GetXAxis();
+//     std::copy(std::begin(xAxis), std::end(xAxis), std::begin(xd));
+//   }
+//   else
+//   {
+//     // processed data -> mass axis for individual pixels
+//     const auto &xsOffset = spectrum.mzOffset;
+//     if (spectrumType.XAxisType == m2::NumericType::Float)
+//     {
+//       // float must be converted to output type "double"
+//       std::vector<MassAxisType> xs;
+//       xs.resize(length);
+//       binaryDataToVector(f, xsOffset, length, xs.data());
+//       std::copy(std::begin(xs), std::end(xs), std::begin(xd));
+//     }
+//     else if (spectrumType.XAxisType == m2::NumericType::Double)
+//     {
+//       // copy directly
+//       xd.resize(length);
+//       binaryDataToVector(f, xsOffset, length, xd.data());
+//     }
+//   }
+// }
 
 // template <class MassAxisType, class IntensityType>
 // void m2::ImzMLSpectrumImage::ImzMLImageProcessor<MassAxisType, IntensityType>::GrabMassPrivate(
