@@ -98,7 +98,7 @@ int main(int /*argc*/, char *argv[])
     auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source.m_BinaryDataPath);
     for (const auto &p : binPeaks)
       I->GetPeaks().push_back(p);
-    I->SetExportMode(m2::SpectrumFormatType::ContinuousCentroid);
+    I->GetExportSpectrumType().Format = m2::SpectrumFormat::ContinuousCentroid;
     //mitk::IOUtil::Save(I, "D:\\" + filename + "_testresult.imzML");
   }
 
@@ -116,7 +116,8 @@ int main(int /*argc*/, char *argv[])
     pngAll->SetTolerance(25);
 
 	//mitk::IOUtil::Save(pngAll->GetNormalizationImage(), "D:/CombiResult_normalization.nrrd");    
-    pngAll->SetExportMode(m2::SpectrumFormatType::ContinuousCentroid);
+    // pngAll->SetExportMode(m2::SpectrumFormatType::ContinuousCentroid);
+  pngAll->GetExportSpectrumType().Format = m2::SpectrumFormat::ContinuousCentroid;
 	mitk::IOUtil::Save(pngAll, out_path);
   }
   catch (std::exception &e)
