@@ -139,6 +139,7 @@ namespace m2
   const auto Find = [](const auto &str, const auto &searchString, auto defaultValue, auto &map)
   {
     auto p = str.find(searchString);
+    MITK_INFO << p << " " << searchString;
     decltype(defaultValue) converted;
 
     if (p != std::string::npos)
@@ -167,7 +168,7 @@ namespace m2
       buffer << defaultValue;
 
     map[searchString] = buffer.str();
-    MITK_WARN << "Using default value \t\"(" << searchString << ") " << map[searchString] << "\"";
+    MITK_WARN << "Using default value \t\"(" << searchString << " " << map[searchString] << ")\"";
     return defaultValue;
   };
 
