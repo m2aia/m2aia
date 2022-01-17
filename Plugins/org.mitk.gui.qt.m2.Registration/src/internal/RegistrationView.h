@@ -55,9 +55,18 @@ protected:
 
   char m_ModalityId = 'A';
   
+  struct RegistrationEntity{
+    QmitkSingleNodeSelectionWidget * m_ImageSelection;
+    QmitkSingleNodeSelectionWidget * m_PointSetSelection;
+    std::vector<QmitkSingleNodeSelectionWidget *> m_Attachments;
+    mitk::DataNode::Pointer m_ResultNode;
+    std::vector<mitk::DataNode::Pointer> m_ResultAttachments;
+  };
+
 
   Ui::RegistrationViewControls m_Controls;
-  std::map<char, std::vector<QmitkSingleNodeSelectionWidget *>> m_MovingModalities;
+  std::map<char, RegistrationEntity> m_MovingEntities;
+  RegistrationEntity m_FixedEntity;
 
   QmitkSingleNodeSelectionWidget *m_FixedImageSingleNodeSelection;
   QmitkSingleNodeSelectionWidget *m_FixedPointSetSingleNodeSelection;
@@ -66,7 +75,11 @@ protected:
   std::map<int,std::vector<std::string>> m_ParameterFiles, m_DefaultParameterFiles;
 
   void StartRegistration();
+  void FinishedRegistration();
   void AddNewModalityTab();
+
+
+
 };
 
 #endif // Registration_h

@@ -84,24 +84,25 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
 
   m_ParameterFiles = m_DefaultParameterFiles;
 
-  connect(m_Controls.registrationStrategy,
-          qOverload<int>(&QComboBox::currentIndexChanged),
-          this,
-          [this](auto currentIndex)
-          {
-            m_ParameterFileEditorControls.rigidText->setText(m_ParameterFiles[currentIndex][0].c_str());
-            m_ParameterFileEditorControls.deformableText->setText(m_ParameterFiles[currentIndex][1].c_str());
+  connect(
+    m_Controls.registrationStrategy,
+    qOverload<int>(&QComboBox::currentIndexChanged),
+    this,
+    [this](auto currentIndex)
+    {
+      m_ParameterFileEditorControls.rigidText->setText(m_ParameterFiles[currentIndex][0].c_str());
+      m_ParameterFileEditorControls.deformableText->setText(m_ParameterFiles[currentIndex][1].c_str());
 
-            switch (currentIndex)
-            {
-              case 0:
-                m_Controls.label->setText("SliceImageData [NxM] or [NxMx1], MuliModal, MultiMetric, Rigid + Deformable");
-                break;
-              case 1:
-                m_Controls.label->setText("VolumeImageData [NxMxD], MultiModal, MultiMetric, Rigid+Deformable");
-                break;
-            }
-          });
+      switch (currentIndex)
+      {
+        case 0:
+          m_Controls.label->setText("SliceImageData [NxM] or [NxMx1], MuliModal, MultiMetric, Rigid + Deformable");
+          break;
+        case 1:
+          m_Controls.label->setText("VolumeImageData [NxMxD], MultiModal, MultiMetric, Rigid+Deformable");
+          break;
+      }
+    });
 
   m_Controls.registrationStrategy->setCurrentIndex(1);
 
@@ -230,9 +231,8 @@ void RegistrationView::AddNewModalityTab()
   imageSelection->SetSelectionIsOptional(true);
   imageSelection->SetEmptyInfo(QString("Select image"));
   imageSelection->SetPopUpTitel(QString("Select image node"));
-  // m_Controls.movingImageData->insertWidget(0, m_MovingImageSingleNodeSelection);
   controls.widgetList->insertWidget(1, imageSelection);
-  m_MovingModalities[modalityId].push_back(imageSelection);
+  m_MovingEntities[modalityId].m_ImageSelection = imageSelection;
 
   auto pointSetSelection = new QmitkSingleNodeSelectionWidget();
   pointSetSelection->SetDataStorage(GetDataStorage());
@@ -242,8 +242,17 @@ void RegistrationView::AddNewModalityTab()
   pointSetSelection->SetSelectionIsOptional(true);
   pointSetSelection->SetEmptyInfo(QString("Select point set"));
   pointSetSelection->SetPopUpTitel(QString("Select point set node"));
-  controls.movingPointSetData->addWidget(pointSetSelection);
-  m_MovingModalities[modalityId].push_back(pointSetSelection);
+  controls.referencePointSetData->addWidget(pointSetSelection);
+  m_MovingEntities[modalityId].m_PointSetSelection = pointSetSelection;
+
+  auto attSelection = new QmitkSingleNodeSelectionWidget();
+  attSelection->SetDataStorage(GetDataStorage());
+  attSelection->SetNodePredicate(mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")));
+  attSelection->SetSelectionIsOptional(true);
+  attSelection->SetEmptyInfo(QString("Select attached mask"));
+  attSelection->SetPopUpTitel(QString("Select attached mask"));
+  controls.attachmentLayout->addWidget(attSelection);
+  m_MovingEntities[modalityId].m_Attachments.push_back(attSelection);
 
   connect(controls.addMovingPointSet,
           &QPushButton::clicked,
@@ -307,6 +316,15 @@ QString RegistrationView::GetElastixPathFromPreferences() const
   return preferences.IsNotNull() ? preferences->Get("elastix", "") : "";
 }
 
+void RegistrationView::FinishedRegistration()
+{
+  // create volume node
+  if (m_Controls.chkBxRecon->isChecked())
+  {
+
+  }
+}
+
 void RegistrationView::StartRegistration()
 {
   // check if
@@ -330,21 +348,18 @@ void RegistrationView::StartRegistration()
   if (auto node = m_FixedPointSetSingleNodeSelection->GetSelectedNode())
     fixedPointSet = dynamic_cast<mitk::PointSet *>(node->GetData());
 
-  // const auto rigid = m_Controls.rigidText->toPlainText().toStdString();
-  // const auto deformable = m_Controls.deformableText->toPlainText().toStdString();
-
-  for (const auto kv : m_MovingModalities)
+  for (const auto &kv : m_MovingEntities)
   {
     MITK_INFO << "Process modality with ID [" << kv.first << "] ";
     mitk::Image::Pointer movingImage;
     mitk::PointSet::Pointer movingPointSet;
 
-    if (auto movingPointSetNode = kv.second.at(1)->GetSelectedNode())
+    if (auto movingPointSetNode = kv.second.m_PointSetSelection->GetSelectedNode())
     {
       movingPointSet = dynamic_cast<mitk::PointSet *>(movingPointSetNode->GetData());
     }
 
-    auto movingImageNode = kv.second.at(0)->GetSelectedNode();
+    auto movingImageNode = kv.second.m_ImageSelection->GetSelectedNode();
     if (movingImageNode)
     {
       movingImage = dynamic_cast<mitk::Image *>(movingImageNode->GetData());
@@ -353,7 +368,7 @@ void RegistrationView::StartRegistration()
     try
     {
       auto currentIndex = m_Controls.registrationStrategy->currentIndex();
-      auto f = std::make_shared<QFutureWatcher<mitk::Image::Pointer>>();
+      auto f = std::make_shared<QFutureWatcher<void>>();
       std::list<std::string> queue;
 
       std::function<void(std::string)> statusCallback = [=](std::string v) mutable
@@ -368,8 +383,7 @@ void RegistrationView::StartRegistration()
         m_Controls.labelStatus->setText(s);
       };
 
-      f->setFuture(QtConcurrent::run(
-        [=]() -> mitk::Image::Pointer
+      f->setFuture(QtConcurrent::run([=]() 
         {
           m2::ElxRegistrationHelper helper;
           std::vector<std::string> parameterFiles;
@@ -388,12 +402,31 @@ void RegistrationView::StartRegistration()
           helper.UseMovingImageSpacing(m_Controls.keepSpacings->isChecked());
           helper.SetStatusCallback(statusCallback);
           helper.GetRegistration();
-          return helper.WarpImage(movingImage);
+          auto warpedImage = helper.WarpImage(movingImage);
+
+          auto node = mitk::DataNode::New();
+          node->SetData(warpedImage);
+          node->SetName(movingImageNode->GetName()  + "_warped_image");
+          m_MovingEntities[kv.first].m_ResultNode = node;
+
+          MITK_INFO << "Attachments: " << m_MovingEntities[kv.first].m_Attachments.size();
+          for (const QmitkSingleNodeSelectionWidget * attSel : m_MovingEntities[kv.first].m_Attachments)
+          {
+            auto node = attSel->GetSelectedNode();
+            
+            if(auto labelSetImage = dynamic_cast<mitk::Image *>(node->GetData())){
+                auto warpedMask = helper.WarpImage(labelSetImage, "short", 1);
+                auto resNode = mitk::DataNode::New();
+                resNode->SetData(warpedMask);
+                resNode->SetName(node->GetName() + "_warped_mask");
+                m_MovingEntities[kv.first].m_ResultAttachments.push_back(resNode);
+            }
+          }
         }));
 
       // started
       connect(f.get(),
-              &QFutureWatcher<mitk::Image::Pointer>::started,
+              &QFutureWatcher<void>::started,
               [=]()
               {
                 statusCallback("Running ...");
@@ -401,16 +434,27 @@ void RegistrationView::StartRegistration()
               });
 
       connect(f.get(),
-              &QFutureWatcher<mitk::Image::Pointer>::finished,
+              &QFutureWatcher<void>::finished,
               [=]() mutable
               {
-                auto node = mitk::DataNode::New();
-                node->SetData(f->result());
-                node->SetName("Warped Image");
-                this->GetDataStorage()->Add(node, movingImageNode);
+                {
+                  MITK_INFO << "Add moving image node";
+                  auto node = m_MovingEntities[kv.first].m_ResultNode;
+                  this->GetDataStorage()->Add(node, movingImageNode);
+                }
+
+                MITK_INFO << "Add attachments";
+                for(auto node : m_MovingEntities[kv.first].m_ResultAttachments){
+                  this->GetDataStorage()->Add(node, movingImageNode);
+                  MITK_INFO << node->GetName();
+                }
+                
+
 
                 m_Controls.btnStartRegistration->setEnabled(true);
                 statusCallback("Completed");
+
+                
 
                 f.reset();
               });
