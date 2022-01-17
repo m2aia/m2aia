@@ -17,7 +17,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #ifndef Registration_h
 #define Registration_h
 
-#include "ui_MovingModalityWidgetControls.h"
+#include "ui_RegistrationEntityWidgetControls.h"
 #include "ui_RegistrationViewControls.h"
 #include <QmitkAbstractView.h>
 #include <QDialog>
@@ -54,6 +54,7 @@ protected:
   QString GetElastixPathFromPreferences() const;
 
   char m_ModalityId = 'A';
+  QWidget *m_Parent;
   
   struct RegistrationEntity{
     QmitkSingleNodeSelectionWidget * m_ImageSelection;
@@ -61,6 +62,7 @@ protected:
     std::vector<QmitkSingleNodeSelectionWidget *> m_Attachments;
     mitk::DataNode::Pointer m_ResultNode;
     std::vector<mitk::DataNode::Pointer> m_ResultAttachments;
+    QSpinBox * m_Index;
   };
 
 
@@ -75,10 +77,10 @@ protected:
   std::map<int,std::vector<std::string>> m_ParameterFiles, m_DefaultParameterFiles;
 
   void StartRegistration();
-  void FinishedRegistration();
   void AddNewModalityTab();
 
-
+  public slots:
+  void PostProcessReconstruction();
 
 };
 
