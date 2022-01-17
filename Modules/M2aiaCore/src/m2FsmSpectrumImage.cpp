@@ -260,7 +260,7 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
       BaselineSubstractor.Initialize(p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
       float val = 1;
-      std::vector<float> baseline;
+      std::vector<float> baseline(xs.size());
 
       auto &spectra = p->GetSpectra();
 
