@@ -347,6 +347,14 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
         data->SetPropertyValue("pixel size x", pixelSizeXInMilliMetre);
         data->SetPropertyValue("pixel size y", pixelSizeYInMilliMetre);
       }
+      
+      if (data->GetPropertyValue<double>("pixel size y") <= 0 && data->GetPropertyValue<double>("pixel size x") <= 0){
+        data->SetPropertyValue("pixel size x", m2::MicroMeterToMilliMeter(10));
+        data->SetPropertyValue("pixel size y", m2::MicroMeterToMilliMeter(10));
+        data->SetPropertyValue("pixel size info", std::string("Pixel size x and y are default values, due to missing imzTags IMS:1000046 and IMS:1000047!"));
+        MITK_WARN << "No pixel size found, set x and y spacing to 10 microns!";
+      }
+     
 
       if (data->GetPropertyValue<double>("pixel size z") < 0)
       {
@@ -359,15 +367,6 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
         data->SetPropertyValue("pixel size z", pixelSizeZInMilliMetre);
       }
 
-      if (data->GetPropertyValue<double>("pixel size y") < 0)
-      {
-        if (data->GetProperty("pixel size x"))
-        {
-          auto squar_size = data->GetPropertyValue<double>("pixel size x");
-          data->SetPropertyValue<double>("pixel size x", std::sqrt(squar_size)); // default to 100 micro meter
-          data->SetPropertyValue<double>("pixel size y", std::sqrt(squar_size)); // default to 100 micro meter
-        }
-      }
 
       // in reading mode, only one source is possible
 
