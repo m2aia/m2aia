@@ -10,7 +10,7 @@ set(INTERNAL_CPP_FILES
 set(UI_FILES
   src/internal/RegistrationViewControls.ui
   src/internal/ParameterFileEditorDialog.ui
-  src/internal/MovingModalityWidgetControls.ui
+  src/internal/RegistrationEntityWidgetControls.ui
 )
 
 set(MOC_H_FILES

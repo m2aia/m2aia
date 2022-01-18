@@ -457,11 +457,14 @@ void m2Spectrum::UpdateLocalMinMaxValues(double minX, double maxX)
 
 void m2Spectrum::UpdateGlobalMinMaxValues()
 {
+  if(m_DataProvider.empty()) return;
+
   m_GlobalMinimumX = std::numeric_limits<double>::max();
   m_GlobalMaximumX = std::numeric_limits<double>::min();
 
   m_GlobalMinimumY = std::numeric_limits<double>::max();
   m_GlobalMaximumY = std::numeric_limits<double>::min();
+
 
   for (const auto &provider : m_DataProvider)
   {
@@ -484,6 +487,8 @@ void m2Spectrum::UpdateGlobalMinMaxValues()
       m_GlobalMaximumY = std::max(m_GlobalMaximumY, minmaxY.second->y());
     }
   }
+
+  
   auto useMinIntensity = m_M2aiaPreferences->GetBool("useMinIntensity", false);
   if (!useMinIntensity)
     m_GlobalMinimumY = 0;
@@ -778,6 +783,8 @@ void m2Spectrum::OnLegnedHandleMarkerClicked()
 
 void m2Spectrum::OnResetView()
 {
+  if(m_DataProvider.empty()) return;
+  
   UpdateGlobalMinMaxValues();
   m_xAxis->setRange(m_GlobalMinimumX, m_GlobalMaximumX);
   m_yAxis->setRange(m_GlobalMinimumY * 0.9, m_GlobalMaximumY * 1.1);
