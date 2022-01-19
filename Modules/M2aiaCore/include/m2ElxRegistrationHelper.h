@@ -73,6 +73,7 @@ namespace m2
 
     void GetRegistration();
     std::vector<std::string> GetTransformation() const;
+    void SetTransformations(const std::vector<std::string> & trafos);
     void SetStatusCallback(const std::function<void(std::string)> & callback);
     
     mitk::Image::Pointer GetFixedImage() const{

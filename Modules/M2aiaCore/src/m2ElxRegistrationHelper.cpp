@@ -308,6 +308,11 @@ std::vector<std::string> m2::ElxRegistrationHelper::GetTransformation() const
   return m_Transformations;
 }
 
+void m2::ElxRegistrationHelper::SetTransformations(const std::vector<std::string> & transforms)
+{
+  m_Transformations = transforms;
+}
+
 mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Pointer data,
                                                           const std::string &pixelType,
                                                           const unsigned char &interpolationOrder) const

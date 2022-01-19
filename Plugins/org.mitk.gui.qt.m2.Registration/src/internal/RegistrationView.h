@@ -63,6 +63,7 @@ protected:
     mitk::DataNode::Pointer m_ResultNode;
     std::vector<mitk::DataNode::Pointer> m_ResultAttachments;
     QSpinBox * m_Index;
+    std::vector<std::string> m_Transformations;
   };
 
 
@@ -77,6 +78,7 @@ protected:
   std::map<int,std::vector<std::string>> m_ParameterFiles, m_DefaultParameterFiles;
 
   void StartRegistration();
+  void Registration(RegistrationEntity & entity);
   void AddNewModalityTab();
 
   public slots:
