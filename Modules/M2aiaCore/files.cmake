@@ -11,6 +11,7 @@ set(H_FILES
   include/m2ImzMLParser.h
   include/m2FsmSpectrumImage.h
   include/m2Timer.h
+  include/m2SpectrumInfo.h
 
   include/m2ElxUtil.h
   include/m2ElxRegistrationHelper.h
@@ -24,6 +25,7 @@ set(H_FILES
   include/signal/m2MedianAbsoluteDeviation.h
   include/signal/m2Morphology.h
   include/signal/m2Normalization.h
+  include/signal/m2Binning.h
   include/signal/m2PeakDetection.h
   include/signal/m2Pooling.h
   include/signal/m2RunningMedian.h
