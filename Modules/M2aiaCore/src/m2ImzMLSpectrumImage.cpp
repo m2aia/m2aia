@@ -821,13 +821,16 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
 template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeImageAccessProcessedCentroid()
 {
+  MITK_INFO("m2::ImzMLSpectrumImage") << "Start InitializeImageAccessProcessedCentroid";
   std::vector<std::list<m2::Peak>> peaksT(p->GetNumberOfThreads());
   for (auto &source : p->GetImzMLSpectrumImageSourceList())
   {
+
     auto &spectra = source.m_Spectra;
     const auto &T = p->GetNumberOfThreads();
     const auto &binsN = p->GetNumberOfBins();
-    std::vector<double> xMin(T, std::numeric_limits<double>::max()), xMax(T, 0);
+    std::vector<double> xMin(T, std::numeric_limits<double>::max());
+    std::vector<double> xMax(T, std::numeric_limits<double>::min());
     std::vector<std::vector<double>> xT(T, std::vector<double>(binsN, 0));
     std::vector<std::vector<double>> yT(T, std::vector<double>(binsN, 0));
     std::vector<std::vector<double>> yMaxT(T, std::vector<double>(binsN, 0));
@@ -836,8 +839,8 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
     auto barrier = itk::Barrier::New();
     barrier->Initialize(T);
 
-    double max = 1;
-    double min = 0;
+    double max = std::numeric_limits<double>::min();
+    double min = std::numeric_limits<double>::max();
     double binSize = 1;
     const auto normalizationStrategy = p->GetNormalizationStrategy();
     auto accNorm =
