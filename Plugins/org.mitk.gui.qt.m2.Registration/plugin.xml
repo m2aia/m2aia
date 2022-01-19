@@ -2,7 +2,7 @@
 <plugin>
 
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.m2.registration"
+    <view id="org.mitk.views.m2.Registration"
           name="Registration"
           class="RegistrationView"
           category="Spectrum imaging"
