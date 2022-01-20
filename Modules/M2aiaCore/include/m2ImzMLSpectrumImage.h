@@ -164,6 +164,28 @@ namespace m2
       void InitializeImageAccessContinuousCentroid();
       void InitializeImageAccessProcessedCentroid();
 
+      
+      static double GetNormalizationFactor(m2::NormalizationStrategyType strategy, MassAxisType * xFirst, MassAxisType * xLast, IntensityType * yFirst, IntensityType * yLast){
+               using namespace std;
+            switch (strategy)
+            {
+              case m2::NormalizationStrategyType::Median:
+                return m2::Signal::Median(yFirst, yLast);
+              case m2::NormalizationStrategyType::TIC:
+                return m2::Signal::TotalIonCurrent(xFirst, xLast, yFirst);
+              case m2::NormalizationStrategyType::Sum:
+                return accumulate(yFirst, yLast, double(0.0));
+              case m2::NormalizationStrategyType::Mean:
+                return accumulate(yFirst, yLast, double(0.0)) / double(std::distance(yFirst, yLast));
+              case m2::NormalizationStrategyType::Max:
+                return *max_element(yFirst, yLast);
+              case m2::NormalizationStrategyType::InFile:
+              default:
+                return 1;
+
+            }
+      }
+
 
       using XIteratorType = typename std::vector<MassAxisType>::iterator;
       using YIteratorType = typename std::vector<IntensityType>::iterator;

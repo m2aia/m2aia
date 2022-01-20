@@ -46,10 +46,12 @@ namespace m2
     TIC = 1,
     Median = 2,
     InFile = 3,
-    Sum = 4
+    Sum = 4,
+    Mean = 5,
+    Max = 6
   };
 
-  const std::array<std::string, 5> NormalizationStrategyTypeNames = {"None", "TIC", "Median", "InFile", "Sum"};
+  const std::array<std::string, 7> NormalizationStrategyTypeNames = {"None", "TIC", "Median", "InFile", "Sum", "Mean", "Max"};
 
   enum class BaselineCorrectionType : unsigned int
   {
