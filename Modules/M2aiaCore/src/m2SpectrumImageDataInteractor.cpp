@@ -55,10 +55,9 @@ void m2::SpectrumImageDataInteractor::SelectSingleSpectrumByPoint(mitk::StateMac
     // modifies the node properties, so just listen to itk::ModifiedEvent, which is triggered 
     // on property changes, this will directly invoke an observer callback.
     // known observers in: m2Spectrum.cpp
-    this->GetDataNode()->SetStringProperty("m2.singlespectrum.id", std::to_string(id).c_str());
-
-    
-
-
+    if(auto baseProp = this->GetDataNode()->GetProperty("m2.singlespectrum.id")){
+      auto prop = dynamic_cast<mitk::StringProperty *>(baseProp);
+      prop->SetValue(std::to_string(id).c_str());
+    }
   }
 }

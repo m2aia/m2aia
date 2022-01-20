@@ -16,24 +16,56 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #pragma once
 
-#include "m2ChartView.h"
-#include "m2Crosshair.h"
-#include "ui_m2Spectrum.h"
 #include <QmitkAbstractView.h>
 #include <berryISelectionListener.h>
+#include <berryIPreferences.h>
+
+#include <itkCommand.h>
+
+#include "m2ChartView.h"
+#include "m2Crosshair.h"
 #include <m2SpectrumImageBase.h>
+#include "ui_m2Spectrum.h"
 #include "Qm2SpectrumChartDataProvider.h"
 #include <qlegendmarker.h>
 #include <qscatterseries.h>
 #include <qslider.h>
 
-#include <berryIPreferences.h>
+
 
 class QMenu;
 class QActionGroup;
 namespace QtCharts
 {
   class QValueAxis;
+}
+namespace itk{
+  template<class T>
+  class NodeMemberCommand : public itk::MemberCommand<T>{
+    public:
+
+    const mitk::DataNode * m_Node;
+
+    /** Standard class typedefs. */
+    typedef NodeMemberCommand        Self;
+    typedef itk::SmartPointer< Self >  Pointer;
+
+    /** Method for creation through the object factory. */
+    itkNewMacro(Self);
+
+    /** Run-time type information (and related methods). */
+    itkTypeMacro(NodeMemberCommand, itk::MemberCommand);
+
+    virtual void SetNode(const mitk::DataNode * node ){m_Node = node;}
+      
+    void Execute(itk::Object */* caller */, const itk::EventObject & event) ITK_OVERRIDE{
+      itk::MemberCommand<T>::Execute(m_Node,event);
+    }
+
+    void Execute(const itk::Object */* caller */, const itk::EventObject & event) ITK_OVERRIDE{
+      itk::MemberCommand<T>::Execute(m_Node,event);
+    }
+  };
 }
 
 class m2Spectrum : public QmitkAbstractView
@@ -81,7 +113,7 @@ protected slots:
   void OnRangeChangedAxisY(qreal min, qreal max);
 
 protected:
-  void OnPropertyListModified(const itk::Object *caller, const itk::EventObject &event);
+  void OnPropertyChanged(const itk::Object *caller, const itk::EventObject &event);
 
   unsigned int m_yAxisTicks = 4;
   unsigned int m_xAxisTicks = 9;
