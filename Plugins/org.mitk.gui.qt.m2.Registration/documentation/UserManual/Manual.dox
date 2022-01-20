@@ -1,17 +1,27 @@
 /**
-\page org_mitk_gui_qt_m2_Registration The M2Registration
+\page org_mitk_gui_qt_m2_Registration The M2aia Registration View
 
-\imageMacro{icon.png,"Icon of M2Registration",2.00}
+\imageMacro{icon.svg,"Icon of M2aia Registration View",2.00}
 
 \tableofcontents
 
 \section org_mitk_gui_qt_m2_Registration Overview
-Describe the features of your awesome plugin here
+
+This view provides interactive image registration utilities. 
+It is based on the <a href="https://github.com/SuperElastix/elastix/releases">elastix</a> toolkit. 
+To understand and adjust the registration parameters, read the <a href="https://github.com/SuperElastix/elastix/releases/download/5.0.0/elastix-5.0.0-manual.pdf">elastix documentation</a>.
+
 <ul>
-<li>Increases productivity
-<li>Creates beautiful images
-<li>Generates PhD thesis
-<li>Brings world peace
+    <li>Multi-modal registration for slice and volume data.
+    <li>Help the registration process by adding pair-wise point correspondences in the moving and fixed images.
+    <li>Save registration transformation parameters.
+    <li>Load and apply registration transformation parameters.
+    <li>Perform 3D reconstructions for slice data (experimental).
 </ul>
+
+
+\section org_mitk_gui_qt_m2_Registration MultimodalRegistration
+
+
 
 */

@@ -59,7 +59,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ElxUtil.h>
 #include <ui_ParameterFileEditorDialog.h>
 
-const std::string RegistrationView::VIEW_ID = "org.mitk.views.m2.registration";
+const std::string RegistrationView::VIEW_ID = "org.mitk.views.m2.Registration";
 
 void RegistrationView::SetFocus() {}
 

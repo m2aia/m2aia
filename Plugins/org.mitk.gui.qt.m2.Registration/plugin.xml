@@ -6,7 +6,7 @@
           name="Registration"
           class="RegistrationView"
           category="Spectrum imaging"
-          icon="resources/noun_opticalillusion_1262005.svg" />
+          icon="resources/icon.svg" />
   </extension>
 
 </plugin>
