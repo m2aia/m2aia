@@ -349,8 +349,8 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
       }
       
       if (data->GetPropertyValue<double>("pixel size y") <= 0 && data->GetPropertyValue<double>("pixel size x") <= 0){
-        data->SetPropertyValue("pixel size x", m2::MicroMeterToMilliMeter(10));
-        data->SetPropertyValue("pixel size y", m2::MicroMeterToMilliMeter(10));
+        data->SetPropertyValue("pixel size x", m2::MicroMeterToMilliMeter(50));
+        data->SetPropertyValue("pixel size y", m2::MicroMeterToMilliMeter(50));
         data->SetPropertyValue("pixel size info", std::string("Pixel size x and y are default values, due to missing imzTags IMS:1000046 and IMS:1000047!"));
         MITK_WARN << "No pixel size found, set x and y spacing to 10 microns!";
       }
@@ -366,12 +366,6 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
         auto pixelSizeZInMilliMetre = m2::MicroMeterToMilliMeter(data->GetPropertyValue<double>("pixel size z"));
         data->SetPropertyValue("pixel size z", pixelSizeZInMilliMetre);
       }
-
-
-      // in reading mode, only one source is possible
-
-      // data->SetIsContinuous();
-      // data->SetIsProfileSpectrum();
       // -------- END META DATA --------
     }
 
