@@ -159,6 +159,7 @@ void m2PeakPickingView::OnStartPeakPicking()
 
         auto mad = m2::Signal::mad(ys);
         auto & peaks = imageBase->GetPeaks();
+        peaks.clear();
         m2::Signal::localMaxima(std::begin(ys),
                                 std::end(ys),
                                 std::begin(xs),
