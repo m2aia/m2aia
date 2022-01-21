@@ -4,9 +4,9 @@ set(CPACK_PACKAGE_EXECUTABLES "M2aiaWorkbench;M2aiaWorkbench")
 set(CPACK_PACKAGE_NAME "M2aiaWorkbench")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "M²aia - Mass spectrometry imaging applications for interactive analysis in MITK.")
 # Major version is the year of release
-set(CPACK_PACKAGE_VERSION_MAJOR "2021")
+set(CPACK_PACKAGE_VERSION_MAJOR "2022")
 # Minor version is the month of release
-set(CPACK_PACKAGE_VERSION_MINOR "12")
+set(CPACK_PACKAGE_VERSION_MINOR "01")
 # Patch versioning
 set(CPACK_PACKAGE_VERSION_PATCH "00")
 set(CPACK_PACKAGE_VENDOR "Mannheim University of Applied Sciences")
