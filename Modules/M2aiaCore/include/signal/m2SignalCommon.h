@@ -16,6 +16,7 @@ See LICENSE.txt for details.
 #pragma once
 #include <M2aiaCoreExports.h>
 #include <map>
+#include <array>
 #include <string>
 
 namespace m2

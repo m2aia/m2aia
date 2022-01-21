@@ -25,6 +25,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <map>
 #include <mitkDataNode.h>
 #include <string>
+#include <array>
 
 /**
  * @brief This helper class provides level spectrum data and utilities to receive subspectra.
