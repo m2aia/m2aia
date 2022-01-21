@@ -60,14 +60,14 @@ extern "C"
               data);
   }
 
-  M2AIACOREIO_EXPORT u_int32_t GetSpectrumType(m2::sys::ImageHandle *handle)
+  M2AIACOREIO_EXPORT unsigned int GetSpectrumType(m2::sys::ImageHandle *handle)
   {
-    return (u_int32_t)(handle->m_Image->GetSpectrumType().Format);
+    return (unsigned int)(handle->m_Image->GetSpectrumType().Format);
   }
 
-  M2AIACOREIO_EXPORT u_int32_t GetSpectrumDepth(m2::sys::ImageHandle *handle)
+  M2AIACOREIO_EXPORT unsigned int GetSpectrumDepth(m2::sys::ImageHandle *handle)
   {
-    return (u_int32_t)(handle->m_Image->GetXAxis().size());
+    return (unsigned int)(handle->m_Image->GetXAxis().size());
   }
 
   M2AIACOREIO_EXPORT void GetXAxis(m2::sys::ImageHandle *handle, double *data)
@@ -76,7 +76,7 @@ extern "C"
     std::copy(xAxis.begin(), xAxis.end(), data);
   }
 
-  M2AIACOREIO_EXPORT u_int32_t GetYDataTypeSizeInBytes(m2::sys::ImageHandle *handle)
+  M2AIACOREIO_EXPORT unsigned int GetYDataTypeSizeInBytes(m2::sys::ImageHandle *handle)
   {
     auto id = handle->m_Image->GetSpectrumType().YAxisType;
     if (id == m2::NumericType::Float)
@@ -93,7 +93,7 @@ extern "C"
     }
   }
 
-  M2AIACOREIO_EXPORT void GetSpectrum(m2::sys::ImageHandle *handle, u_int32_t id, float *xd, float *yd)
+  M2AIACOREIO_EXPORT void GetSpectrum(m2::sys::ImageHandle *handle, unsigned int id, float *xd, float *yd)
   {
     std::vector<float> xs, ys;
     handle->m_Image->GetSpectrum(id, xs, ys);
@@ -108,7 +108,7 @@ extern "C"
     std::copy(p, p + 3, pixelPosition);
   }
 
-  M2AIACOREIO_EXPORT u_int32_t GetNumberOfSpectra(m2::sys::ImageHandle *handle)
+  M2AIACOREIO_EXPORT unsigned int GetNumberOfSpectra(m2::sys::ImageHandle *handle)
   {
     return handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra.size();
   }
