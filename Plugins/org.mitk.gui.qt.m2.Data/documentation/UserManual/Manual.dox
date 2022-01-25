@@ -7,66 +7,79 @@
 \tableofcontents
 
 \section m2_DATA_Introduction Introduction
-This view offers the possibility to interact with Mass Spectrometry Imaging (MSI) data and is the starting point for all MSI related data interactions.\n
+This is the main view of the M²aia extension. In the "Spectrum Imaging" perspective this view is attached to the window layout and can't be closed.
+It provides accessible controls for the signal processing methods. Before loading any kind of spectrum data, this view has to be initialized (once opened in a new M²aia session). 
+It will trigger image initialization and the creation of overview spectra and normalization maps.\n\n
 
-\section m2_DATA_Usage Usage
-Before loading any kind of MSI data, make sure that this view is initialized (once opend in a new M2aia session).\n\n
+\section m2_DATA_Preferences Preferences
+Before start working, take a look at the preferences menu (Application menu>Window->Preferences or CTRL+P). 
+Here you can find helpful features and, if required, provide paths executables for the registration utilities.
+If elastix is provided in the system PATH environment variable, it can be skipped.
 
-The typical workflow has following steps/sections:\n\n
-(1) <b>Initialization - Pre-Initialization settings</b>:\n
-If the imzML data is in centroid spectrum data format, peak binning tolerance can be set.\n\n
+\section m2_DATA_Import Image Import
+M²aia can handle Mass spectrometry image (*.imzML) and Infrared Spectroscopy image (*.fsm) data. 
+Depending on the data structures, different artifacts are generated on image import:\n
+<ul>
+    <li>Profile Data: Mean and overviews spectra, as well as the normalization maps, are calculated.</li>
+    <li>Centroid Data: Binning is applied to all kind of centroid data. Number of bins can be adapted in the preferences.</li>
+</ul>
+\remark Binning is only applied for centroid visualization in the spectrum view. Data access, e.g. for imaging, will use raw data.\n\n
 
-(2) <b>Initializtion - Behaviour for interaction with multiple MS images</b>:\n
-If multiple MS images with overlapping m/z axes are present, an ion image grab will automatically be applied to all data nodes matching the offered options.\n
-<i>Only visible:</i> Interaction is restricted to nodes makred visible in the data manager.\n
-<i>Only selection:</i> Interaction is restricted to nodes provided by the selection box.\n\n
 
-(2.1) <b>MS image selection box (at bottom of the Data view)</b>: Required in multiple MS image interaction. This can be ignored for single MS image interaction.\n\n
+\section m2_DATA_SignalProcessing Signal processing
 
-(3) <b>Imaging</b>:\n
-\remark Due to M2aia's lazy loading strategie (load MSI data only on demand) signal processing may take place in different situations:\n
+\remark Due to M²aia's lazy loading strategy (load MSI data only on demand) signal processing may take place in different situations:\n
 (a) During initialization of an MS image to calculate overview spectra and normalization maps.\n
-(b) During the creation of an ion image.\n
+(b) During the imaging process.\n\n
+Details can be found in the original publication [1].
 
 
-(3.1) <b>Normalization</b>:\n
-You can choose between normalization strategies:\n
-<i>No normalization:</i> no normalization is applied\n
-<i>In-file normalization:</i> Normalization based on the normalization constants defined in the imzML file.\n\n
-<i>TIC normalization:</i> Total ion count normalization (respects differents step widths on the m/z axis)\n
-<i>Sum normalization:</i> Sum of intensities along the m/z axis\n
+<b>Normalization</b>\n
+Initialization of normalization maps during image import. To change the normalization strategy, a re-import of the same data is required.
+You can choose between pixel-wise normalization strategies:\n
+<ul>
+    <li>No normalization: no normalization is applied.</li>
+    <li>In-file: Normalization based on the normalization constants defined in the imzML file.</li>
+    <li>TIC: Total ion count normalization (respects difference step widths on x axis).</li>
+    <li>Sum: Sum of intensities.</li>
+    <li>Mean: Mean of intensities.</li>
+    <li>Max: Max of intensities.</li>
+</ul>
 
-\remark The chosen normalization strategie will produce a normalization map (grayscale image of normalization constants for each pixel).\n
-Currently, only a single normalization strategy can be chosen on initialization (see (a)).\n
-During an ion image grab, the normalization strategy can be turned off choosing the 'no normalization' option.\n\n
+\remark Normalization maps are gray scale images and by default added to the Data Manager.
 
+\remark Currently, only a single normalization strategy can be chosen on initialization.
 
-(3.2) <b>Baseline correction</b>:\n
-You can enable Savitzky-Golay signal smoothing. Parameter defines the half window size that is used for processing.\n\n
-
-(3.3) <b>Smoothing</b>:\n
-You can enable TopHat or median baseline correction. Parameter defines the half window size that is used for processing.\n\n
-
-(4) <b>Ion imaging strategy</b>:\n
-Accumultaion method for rang based queries of ion images. Method is applied over an m/z given range (m/z +- Da) for each valid pixel.\n\n
-
-(5) <b>Ion imaging</b>:\n
-Here you can trigger the creation of ion images by defining an m/z range, tolerance is either given by parts per million (ppm) or Daltons (Da).\n\n
-
-Each MS image data node that can be found in the Data Manager has a child node with "_mask" as postfix. This maks can be manipulated using the MultiLabelSegmentation utilities.\n
-You can disable the use of the mask to create ion images for all valid pixels.\n\n
-
-By activating "Initialize new data node", a new data node is created during the ion image process.In this way, multiple ion images of different m/z ranges can be created for visualization or export.\n
-
-\remark Only MS image instances can be exported as imzML files. Newly created nodes can only be exported as one of the typical image formats (.nrrd, .jpg, ...).\n\n
+\remark During imaging, the previously chosen normalization strategy can be 'turned off' choosing the 'no normalization' option.
 
 
+<b>Smoothing</b>\n
+You can enable Savitzky-Golay or Gaussian smoothing. Parameter defines the half window size that is used for processing.
+Smoothing is applied during initialization for creating overview spectra. The strategy can be changed without to reload the data. 
+This changes are not represented in the spectrum view.\n\n
+
+<b>Baseline correction</b>\n
+You can enable TopHat or median baseline correction. Parameter defines the half window size that is used for processing.
+The strategy can be changed without to reload the data. This changes are not represented in the spectrum view.\n\n
+
+\section m2_DATA_Imaging Imaging
+\remark Behavior for interaction with multiple MS images: if multiple spectrum images with overlapping x axes are present, imaging will be applied for all visible spectrum images.
+
+<b>Pooling</b>\n
+Accumulation method for rang based queries of images. Pooling is applied over given range on the x axis (e.g. m/z +- Da) in each valid pixel.\n
+For interactive imaging queries, use ALT+left click and drag area in spectrum view. If centroid data are queried, empty ranges for single pixels are possible, resulting in zero valued pixels in the result image.\n\n
+
+<b>Create image</b>\n
+Here you can trigger imaging by defining x range wih position and tolerance.\n\n
+
+By checking the "Use labels" box, it is possible to specify regions of interest (ROI) using label-image masks. To define which child mask should be used, a regular expression can be defined.
+To create a new or edit a existing label image use the Segmentation or MultiLabel Segmentation view. Label images have to be child nodes of the original spectrum image node.\n
+
+"Create new image node", can be used to create pooled images as stand alone nodes. The resulting data type is determined by the corresponding drop down menu.\n
 The chosen data type will be assigned to the resulting images. If any data type except 'double' is chosen, ion image pixel values will be rescaled to support the available value range of each data type, e.g. if 'unsigned char' is selected, all pixel will be rescaled to a new value range of 0-255.\n
 Rescaling is necessary for supporting the volume visualization utilities.\n\n
 
-(6) <b>Ion image reference</b>:\n
-You can name ion images to add those to the Ions view (shortcut: Ctrl+I). The last created ion image is committed to be addable.\n\n
+[1] J. Cordes et al., “M2aia—Interactive, fast, and memory-efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data,” GigaScience, vol. 10, no. 7, p. giab049, Jul. 2021, doi: 10.1093/gigascience/giab049.
 
-(7) <b>Reference points</b>:\n
-You can add a point set and define reference points in the image.
+
 */
