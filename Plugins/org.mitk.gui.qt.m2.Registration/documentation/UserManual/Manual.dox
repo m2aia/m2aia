@@ -1,11 +1,11 @@
 /**
-\page org_mitk_gui_qt_m2_Registration The M²aia Registration View
+\page org_mitk_views_m2_Registration The M²aia Registration View
 
 \imageMacro{icon.svg,"Icon of M²aia Registration View",2.00}
 
 \tableofcontents
 
-\section org_mitk_gui_qt_m2_Registration Overview
+\section m2_Registration_Overview Overview
 
 This view provides interactive image registration utilities. 
 It is based on the <a href="https://github.com/SuperElastix/elastix/releases">elastix</a> toolkit. 
@@ -20,7 +20,21 @@ To understand and adjust the registration parameters, read the <a href="https://
 </ul>
 
 
-\section org_mitk_gui_qt_m2_Registration MultimodalRegistration
+\section m2_Registration_Usage Usage
+
+<ol>
+    <li>Select a fixed image.
+    <li>Select one or multiple moving images. If there are moving image-related image artifacts (e.g. captions/annotations), select them as attachments to transform these images after registration.
+    <li>Select slice or volume registration strategy.
+</ol>
+
+
+\section m2_Registration_Problems Problems
+<ul>
+    <li>Registration looks bad due to morphological deformations of two adjacent images: Add pair wise and corresponding points for both modalities using the point set interaction view. This will help to guide the registration.
+    <li>Registration looks bad due to unrealistic deformations: Open the parameter file editor and adjust the "GridSpacing" related properties.
+</ul>
+
 
 
 

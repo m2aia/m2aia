@@ -73,10 +73,10 @@ For interactive imaging queries, use ALT+left click and drag area in spectrum vi
 Here you can trigger imaging by defining x range wih position and tolerance.\n\n
 
 By checking the "Use labels" box, it is possible to specify regions of interest (ROI) using label-image masks. To define which child mask should be used, a regular expression can be defined.
-To create a new or edit a existing label image use the Segmentation or MultiLabel Segmentation view. Label images have to be child nodes of the original spectrum image node.\n
+To create a new or edit a existing label image use the Segmentation or MultiLabel Segmentation view. Label images have to be child nodes of the original spectrum image node.\n\n
 
-"Create new image node", can be used to create pooled images as stand alone nodes. The resulting data type is determined by the corresponding drop down menu.\n
-The chosen data type will be assigned to the resulting images. If any data type except 'double' is chosen, ion image pixel values will be rescaled to support the available value range of each data type, e.g. if 'unsigned char' is selected, all pixel will be rescaled to a new value range of 0-255.\n
+"Create new image node", can be used to create pooled images as stand alone nodes. The resulting data type is determined by the corresponding drop down menu. The chosen data type will be assigned to the resulting images. 
+If any data type except 'double' is chosen, ion image pixel values will be rescaled to support the available value range of each data type, e.g. if 'unsigned char' is selected, all pixel will be rescaled to a new value range of 0-255.
 Rescaling is necessary for supporting the volume visualization utilities.\n\n
 
 [1] J. Cordes et al., “M2aia—Interactive, fast, and memory-efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data,” GigaScience, vol. 10, no. 7, p. giab049, Jul. 2021, doi: 10.1093/gigascience/giab049.
