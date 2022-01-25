@@ -1,7 +1,7 @@
 /**
-\page org_mitk_views_m2_peakpicking The M2aia PeakPicking View
+\page org_mitk_views_m2_peakpicking The M²aia PeakPicking View
 
-\imageMacro{noun_analysis_3405381.svg, "Icon of the M2aia PeakPicking View", 3.00}
+\imageMacro{noun_analysis_3405381.svg, "Icon of the M²aia PeakPicking View", 3.00}
 
 \tableofcontents
 
@@ -13,14 +13,14 @@ This view allows to looks for peaks in overview spectra (continuous profile spec
 A peak is a local maximum above a user defined noise threshold. Noise is computed by the Median Absolute Deviation (MAD).
 
 \remark
-This view respects MSI data node selection behavior defined in the M2aia Data view.\n
+This view respects MSI data node selection behavior defined in the M²aia Data view.\n
 
 
 It is possible to filter monoisotopic peaks in peak list. It is based on the Poisson model for isotopic patterns described in Breen et al. [1]. \n\n
 
 
 \section m2_PeakPicking_Export Export continuous centroid data (imzML)
-It is possible to export a peak picked version of your continuous profile data set using M2aia's ImzML Export view. 
+It is possible to export a peak picked version of your continuous profile data set using M²aia's ImzML Export view. 
 
 \remark
 Peak pick a overview spectrum first.
