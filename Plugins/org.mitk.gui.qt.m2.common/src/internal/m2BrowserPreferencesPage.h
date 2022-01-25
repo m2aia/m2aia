@@ -64,6 +64,10 @@ public slots:
 	void OnUseMinIntensity(bool v);
 	void OnUseMaxIntensity(bool v);
 
+	void OnShowIndexImage(bool v);
+	void OnShowNormalizationImage(bool v);
+	void OnShowMaskImage(bool v);
+
 	void CreateQtControl(QWidget* parent) override;
 	QWidget* GetQtControl() const override;
 	void Init(berry::IWorkbench::Pointer) override;

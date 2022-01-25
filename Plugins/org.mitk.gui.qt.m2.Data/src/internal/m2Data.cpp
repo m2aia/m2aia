@@ -48,6 +48,9 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   m_Controls.setupUi(parent);
   m_Parent = parent;
 
+  m_M2aiaPreferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+
   InitBaselineCorrectionStrategyComboBox();
   InitNormalizationStrategyComboBox();
   InitRangePoolingStrategyComboBox();
@@ -86,8 +89,10 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
 void m2Data::InitNormalizationStrategyComboBox()
 {
-  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-  auto defaultValue = preferences->GetInt("NormalizationStrategy", static_cast<unsigned int>(m2::NormalizationStrategyType::None));
+  auto preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto defaultValue =
+    preferences->GetInt("NormalizationStrategy", static_cast<unsigned int>(m2::NormalizationStrategyType::None));
   auto cb = Controls()->CBNormalization;
   for (unsigned int i = 0; i < m2::NormalizationStrategyTypeNames.size(); ++i)
     cb->addItem(m2::NormalizationStrategyTypeNames[i].c_str(), {i});
@@ -96,7 +101,8 @@ void m2Data::InitNormalizationStrategyComboBox()
 
 m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
 {
-  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
   auto value = this->Controls()->CBNormalization->currentData().toUInt();
   preferences->PutInt("NormalizationStrategy", value);
   return static_cast<m2::NormalizationStrategyType>(value);
@@ -104,8 +110,10 @@ m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
 
 void m2Data::InitRangePoolingStrategyComboBox()
 {
-  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-  auto defaultValue = preferences->GetInt("RangePoolingStrategy", static_cast<unsigned int>(m2::RangePoolingStrategyType::Maximum));
+  auto preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto defaultValue =
+    preferences->GetInt("RangePoolingStrategy", static_cast<unsigned int>(m2::RangePoolingStrategyType::Maximum));
   auto cb = Controls()->CBImagingStrategy;
   for (unsigned int i = 0; i < m2::RangePoolingStrategyTypeNames.size(); ++i)
     cb->addItem(m2::RangePoolingStrategyTypeNames[i].c_str(), {i}); // add i as data
@@ -114,7 +122,8 @@ void m2Data::InitRangePoolingStrategyComboBox()
 
 m2::RangePoolingStrategyType m2Data::GuiToRangePoolingStrategyType()
 {
-  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
   auto value = this->Controls()->CBImagingStrategy->currentData().toUInt();
   preferences->PutInt("RangePoolingStrategy", value);
   return static_cast<m2::RangePoolingStrategyType>(value);
@@ -122,7 +131,8 @@ m2::RangePoolingStrategyType m2Data::GuiToRangePoolingStrategyType()
 
 void m2Data::InitSmoothingStrategyComboBox()
 {
-  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
   auto defaultValue = preferences->GetInt("SmoothingStrategy", static_cast<unsigned int>(m2::SmoothingType::None));
   auto cb = Controls()->CBSmoothing;
   for (unsigned int i = 0; i < m2::SmoothingTypeNames.size(); ++i)
@@ -132,7 +142,8 @@ void m2Data::InitSmoothingStrategyComboBox()
 
 m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
 {
-  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
   auto value = this->Controls()->CBSmoothing->currentData().toUInt();
   preferences->PutInt("SmoothingStrategy", value);
   return static_cast<m2::SmoothingType>(value);
@@ -140,8 +151,10 @@ m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
 
 void m2Data::InitBaselineCorrectionStrategyComboBox()
 {
-  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-  auto defaultValue = preferences->GetInt("BaselineCorrectionStrategy", static_cast<unsigned int>(m2::BaselineCorrectionType::None));
+  auto preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto defaultValue =
+    preferences->GetInt("BaselineCorrectionStrategy", static_cast<unsigned int>(m2::BaselineCorrectionType::None));
   auto cb = Controls()->CBBaselineCorrection;
   for (unsigned int i = 0; i < m2::BaselineCorrectionTypeNames.size(); ++i)
     cb->addItem(m2::BaselineCorrectionTypeNames[i].c_str(), {i});
@@ -150,7 +163,8 @@ void m2Data::InitBaselineCorrectionStrategyComboBox()
 
 m2::BaselineCorrectionType m2Data::GuiToBaselineCorrectionStrategyType()
 {
-  auto preferences = berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
   auto value = this->Controls()->CBBaselineCorrection->currentData().toUInt();
   preferences->PutInt("BaselineCorrectionStrategy", value);
   return static_cast<m2::BaselineCorrectionType>(value);
@@ -608,8 +622,8 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   lw.SetToMaxWindowSize();
   const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
 
-  //  if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
-  //  {
+  if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  {
   //    // and add as child node
   //    if (spectrumImage->GetImageArtifacts().find("references") != std::end(spectrumImage->GetImageArtifacts()))
   //    {
@@ -624,35 +638,39 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   //    }
 
   // -------------- add Mask to datastorage --------------
-  //   if(spectrumImage->GetMaskImage()){
-  //     auto helperNode = mitk::DataNode::New();
-  //     helperNode->SetName(node->GetName() + "_mask");
-  //     helperNode->SetVisibility(true);
-  //     helperNode->SetData(spectrumImage->GetMaskImage());
+    if (m_M2aiaPreferences->GetBool("showMaskImage", true) && spectrumImage->GetMaskImage())
+    {
+      auto helperNode = mitk::DataNode::New();
+      helperNode->SetName(node->GetName() + "_mask");
+      helperNode->SetVisibility(true);
+      helperNode->SetData(spectrumImage->GetMaskImage());
 
-  //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-  //   }
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    }
 
-  //   // -------------- add Index to datastorage --------------
-  //   if(spectrumImage->GetIndexImage()){
-  //     auto helperNode = mitk::DataNode::New();
-  //     helperNode->SetName(node->GetName() + "_index");
-  //     helperNode->SetVisibility(false);
-  //     helperNode->SetData(spectrumImage->GetIndexImage());
+    // -------------- add Index to datastorage --------------
+    if (m_M2aiaPreferences->GetBool("showIndexImage", true) && spectrumImage->GetIndexImage())
+    {
+      auto helperNode = mitk::DataNode::New();
+      helperNode->SetName(node->GetName() + "_index");
+      helperNode->SetVisibility(false);
+      helperNode->SetData(spectrumImage->GetIndexImage());
 
-  //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-  //   }
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    }
 
-  //   // -------------- add Normalization to datastorage --------------
-  //   if(spectrumImage->GetNormalizationImage()){
-  //     auto helperNode = mitk::DataNode::New();
-  //     helperNode->SetName(node->GetName() + "_normalization");
-  //     helperNode->SetVisibility(false);
-  //     helperNode->SetData(spectrumImage->GetNormalizationImage());
+    // -------------- add Normalization to datastorage --------------
 
-  //     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-  //   }
-  //  }
+    if (m_M2aiaPreferences->GetBool("showNormalizationImage", true) && spectrumImage->GetNormalizationImage())
+    {
+      auto helperNode = mitk::DataNode::New();
+      helperNode->SetName(node->GetName() + "_normalization");
+      helperNode->SetVisibility(false);
+      helperNode->SetData(spectrumImage->GetNormalizationImage());
+
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    }
+  }
 }
 
 void m2Data::NodeRemoved(const mitk::DataNode *node)

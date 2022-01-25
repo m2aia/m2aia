@@ -22,6 +22,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkDataStorageComboBoxWithSelectNone.h>
 #include <QmitkPointListWidget.h>
 #include <berryISelectionListener.h>
+#include <berryIPreferences.h>
 #include <itkVectorContainer.h>
 #include <m2UIUtils.h>
 #include <m2ImzMLSpectrumImage.h>

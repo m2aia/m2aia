@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>504</width>
-    <height>307</height>
+    <height>554</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -156,6 +156,44 @@
     <widget class="QCheckBox" name="useMinIntensity">
      <property name="text">
       <string>Enable use min intensity in x range</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line_3">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>Below mentioned image artifacts are generated on import of spectrum images and visibility can be toggled</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="chkBxMaskImage">
+     <property name="text">
+      <string>Show mask image</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="chkBxIndexImage">
+     <property name="text">
+      <string>Show index image</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="chkBxNormalizationImage">
+     <property name="text">
+      <string>Show normalization image</string>
      </property>
     </widget>
    </item>
