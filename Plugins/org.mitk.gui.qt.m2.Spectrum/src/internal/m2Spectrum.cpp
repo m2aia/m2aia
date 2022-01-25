@@ -520,7 +520,7 @@ void m2Spectrum::UpdateGlobalMinMaxValues()
     }
   }
 
-  auto useMinIntensity = m_M2aiaPreferences->GetBool("useMinIntensity", false);
+  auto useMinIntensity = m_M2aiaPreferences->GetBool("useMinIntensity", true);
   if (!useMinIntensity)
     m_GlobalMinimumY = 0;
 
@@ -729,14 +729,14 @@ void m2Spectrum::CreateQChartView()
 
 void m2Spectrum::AutoZoomUseLocalExtremaY()
 {
-  if (m_M2aiaPreferences->GetBool("useMaxIntensity", false) || m_M2aiaPreferences->GetBool("useMinIntensity", false))
+  if (m_M2aiaPreferences->GetBool("useMaxIntensity", true) || m_M2aiaPreferences->GetBool("useMinIntensity", true))
   {
-    if (m_M2aiaPreferences->GetBool("useMaxIntensity", false))
+    if (m_M2aiaPreferences->GetBool("useMaxIntensity", true))
     {
       m_yAxis->setMax(m_LocalMaximumY * 1.1);
     } // else use just current zoom, no adaptions.
 
-    if (m_M2aiaPreferences->GetBool("useMinIntensity", false))
+    if (m_M2aiaPreferences->GetBool("useMinIntensity", true))
     {
       m_yAxis->setMin(m_LocalMinimumY * 0.9);
     }
