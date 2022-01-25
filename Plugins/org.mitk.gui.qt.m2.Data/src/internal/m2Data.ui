@@ -638,37 +638,37 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_14">
         <item>
-       <widget class="QCheckBox" name="chkBxUseMask">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimumSize">
-         <size>
-          <width>150</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>150</width>
-          <height>16777215</height>
-         </size>
-        </property>
-        <property name="text">
+         <widget class="QCheckBox" name="chkBxUseMask">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>150</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
            <string>Use labels</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
+          </property>
+          <property name="checked">
+           <bool>false</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QLabel" name="labelTextRegexStatus">
           <property name="styleSheet">
-           <string notr="true">txt: rgb(138, 226, 52)</string>
+           <string notr="true"/>
           </property>
           <property name="text">
            <string>OK</string>
@@ -749,9 +749,6 @@
       </item>
      </layout>
     </widget>
-   </item>
-   <item>
-    <widget class="QListWidget" name="listWidget"/>
    </item>
    <item>
     <spacer name="verticalSpacer">
