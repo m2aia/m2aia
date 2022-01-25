@@ -85,6 +85,23 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
   QShortcut *shortcutDown = new QShortcut(QKeySequence(Qt::Key_Down), parent);
   connect(shortcutDown, &QShortcut::activated, this, &m2Data::OnDecreaseTolerance);
+
+  connect(m_Controls.maskSubstring,
+          &QLineEdit::textChanged,
+          [this](const QString &c)
+          {
+            auto allNodes = m2::UIUtils::AllNodes(GetDataStorage());
+            bool v = false;
+            for (auto node : *allNodes)
+            {
+              v |= FindChildNodeRegex(node, c.toStdString()).IsNotNull();
+
+              if (v)
+                m_Controls.labelTextRegexStatus->setText("OK");
+              else
+                m_Controls.labelTextRegexStatus->setText("None");
+            }
+          });
 }
 
 void m2Data::InitNormalizationStrategyComboBox()
@@ -185,22 +202,22 @@ void m2Data::OnIncreaseTolerance()
 void m2Data::OnCreateNextImage()
 {
   auto center = m_Controls.spnBxMz->value();
-    auto offset = m_Controls.spnBxTol->value();
-    if (m_Controls.rbtnTolPPM->isChecked())
-    {
-      offset = m2::PartPerMillionToFactor(offset) * center;
-    }
+  auto offset = m_Controls.spnBxTol->value();
+  if (m_Controls.rbtnTolPPM->isChecked())
+  {
+    offset = m2::PartPerMillionToFactor(offset) * center;
+  }
   this->OnGenerateImageData(center + offset, FROM_GUI);
 }
 
 void m2Data::OnCreatePrevImage()
 {
   auto center = m_Controls.spnBxMz->value();
-    auto offset = m_Controls.spnBxTol->value();
-    if (m_Controls.rbtnTolPPM->isChecked())
-    {
-      offset = m2::PartPerMillionToFactor(offset) * center;
-    }
+  auto offset = m_Controls.spnBxTol->value();
+  if (m_Controls.rbtnTolPPM->isChecked())
+  {
+    offset = m2::PartPerMillionToFactor(offset) * center;
+  }
   this->OnGenerateImageData(center - offset, FROM_GUI);
 }
 
@@ -290,15 +307,10 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
         continue;
 
       mitk::Image::Pointer maskImage;
-      auto maskNode = FindChildNodeWithNameContaining(dataNode, Controls()->maskSubstring->text().toStdString());
+      auto maskNode = FindChildNodeRegex(dataNode, Controls()->maskSubstring->text().toStdString());
 
       if (maskNode && Controls()->chkBxUseMask->isChecked())
         maskImage = dynamic_cast<mitk::Image *>(maskNode->GetData());
-
-      // if it is null, it's the first time an ion image is grabbed - disable visibility
-      // so that the level window works fine for the ion image and not for the mask
-      if (maskNode && maskNode->GetProperty("x_value") == nullptr)
-        maskNode->SetVisibility(false);
 
       // The smartpointer will stay alive until all captured copies are relesed. Additional
       // all connected signals must be disconnected to make sure that the future is not kept
@@ -392,52 +404,52 @@ void m2Data::UpdateSpectrumImageTable(const mitk::DataNode *node)
 }
 
 mitk::Image::Pointer m2Data::OnApplyCastImage(mitk::Image::Pointer image)
-        {
-          using SourceImageType = itk::Image<m2::DisplayImagePixelType, 3>;
-          auto Caster = [&image](auto *itkImage)
-          {
-            SourceImageType::Pointer srcImage;
+{
+  using SourceImageType = itk::Image<m2::DisplayImagePixelType, 3>;
+  auto Caster = [&image](auto *itkImage)
+  {
+    SourceImageType::Pointer srcImage;
 
-            mitk::CastToItkImage(image, srcImage);
-            using ImageType = typename std::remove_pointer<decltype(itkImage)>::type;
-            using FilterType = itk::RescaleIntensityImageFilter<SourceImageType, ImageType>;
-            auto filter = FilterType::New();
-            filter->SetInput(srcImage);
-            filter->SetOutputMinimum(0);
-            filter->SetOutputMaximum(std::numeric_limits<typename ImageType::PixelType>::max());
-            filter->Update();
-            mitk::CastToMitkImage(filter->GetOutput(), image);
-          };
+    mitk::CastToItkImage(image, srcImage);
+    using ImageType = typename std::remove_pointer<decltype(itkImage)>::type;
+    using FilterType = itk::RescaleIntensityImageFilter<SourceImageType, ImageType>;
+    auto filter = FilterType::New();
+    filter->SetInput(srcImage);
+    filter->SetOutputMinimum(0);
+    filter->SetOutputMaximum(std::numeric_limits<typename ImageType::PixelType>::max());
+    filter->Update();
+    mitk::CastToMitkImage(filter->GetOutput(), image);
+  };
 
-          auto id = m_Controls.cmbBxType->currentIndex();
-          if (id == 0)
-          {
-            // do nothing
-          }
-          else if (id == 1)
-          {
-            using TargetImageType = itk::Image<unsigned char, 3>;
-            TargetImageType::Pointer itkIonImage;
-            Caster(itkIonImage.GetPointer());
-          }
-          else if (id == 2)
-          {
-            using TargetImageType = itk::Image<unsigned short, 3>;
-            TargetImageType::Pointer itkIonImage;
-            Caster(itkIonImage.GetPointer());
-          }
-          else if (id == 3)
-          {
-            using TargetImageType = itk::Image<unsigned int, 3>;
-            TargetImageType::Pointer itkIonImage;
-            Caster(itkIonImage.GetPointer());
-          }
+  auto id = m_Controls.cmbBxType->currentIndex();
+  if (id == 0)
+  {
+    // do nothing
+  }
+  else if (id == 1)
+  {
+    using TargetImageType = itk::Image<unsigned char, 3>;
+    TargetImageType::Pointer itkIonImage;
+    Caster(itkIonImage.GetPointer());
+  }
+  else if (id == 2)
+  {
+    using TargetImageType = itk::Image<unsigned short, 3>;
+    TargetImageType::Pointer itkIonImage;
+    Caster(itkIonImage.GetPointer());
+  }
+  else if (id == 3)
+  {
+    using TargetImageType = itk::Image<unsigned int, 3>;
+    TargetImageType::Pointer itkIonImage;
+    Caster(itkIonImage.GetPointer());
+  }
 
   return image;
-        }
+}
 
 void m2Data::OnRenderSpectrumImages(double min, double max)
-      {
+{
   Q_UNUSED(min);
   Q_UNUSED(max);
 }
@@ -466,13 +478,21 @@ void m2Data::UpdateTextAnnotations(std::string text)
   }
 }
 
-mitk::DataNode::Pointer m2Data::FindChildNodeWithNameContaining(mitk::DataNode::Pointer &parent,
-                                                                const std::string &subStr)
+mitk::DataNode::Pointer m2Data::FindChildNodeRegex(mitk::DataNode::Pointer &parent, std::string regexString)
 {
   auto deriv = this->GetDataStorage()->GetDerivations(parent.GetPointer(), nullptr, true);
-  for (auto p : *deriv)
-    if (p->GetName().find(subStr) != std::string::npos)
-      return p;
+  try
+  {
+    for (auto p : *deriv)
+    {
+      if (std::regex_match(p->GetName(), std::regex{regexString.c_str()}))
+        return p;
+    }
+  }
+  catch (std::exception &e)
+  {
+    MITK_WARN << e.what();
+  }
   return nullptr;
 }
 
@@ -624,20 +644,20 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
 
   if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-  //    // and add as child node
-  //    if (spectrumImage->GetImageArtifacts().find("references") != std::end(spectrumImage->GetImageArtifacts()))
-  //    {
-  //      auto helperNode = mitk::DataNode::New();
-  //      helperNode->SetName(node->GetName());
-  //      helperNode->SetVisibility(false);
-  //      helperNode->SetData(spectrumImage->GetImageArtifacts()["references"]);
-  //      helperNode->SetFloatProperty("point 2D size",
-  //                                   spectrumImage->GetGeometry()->GetSpacing()[0] * 3);              // x spacing
-  //      helperNode->SetFloatProperty("pointsize", spectrumImage->GetGeometry()->GetSpacing()[0] * 3); // x spacing
-  //      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-  //    }
+    //    // and add as child node
+    //    if (spectrumImage->GetImageArtifacts().find("references") != std::end(spectrumImage->GetImageArtifacts()))
+    //    {
+    //      auto helperNode = mitk::DataNode::New();
+    //      helperNode->SetName(node->GetName());
+    //      helperNode->SetVisibility(false);
+    //      helperNode->SetData(spectrumImage->GetImageArtifacts()["references"]);
+    //      helperNode->SetFloatProperty("point 2D size",
+    //                                   spectrumImage->GetGeometry()->GetSpacing()[0] * 3);              // x spacing
+    //      helperNode->SetFloatProperty("pointsize", spectrumImage->GetGeometry()->GetSpacing()[0] * 3); // x spacing
+    //      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    //    }
 
-  // -------------- add Mask to datastorage --------------
+    // -------------- add Mask to datastorage --------------
     if (m_M2aiaPreferences->GetBool("showMaskImage", true) && spectrumImage->GetMaskImage())
     {
       auto helperNode = mitk::DataNode::New();

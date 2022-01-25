@@ -16,6 +16,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #pragma once
 #include "ui_m2Data.h"
+
+#include <regex>
+
 #include <QThreadPool>
 #include <QmitkAbstractView.h>
 #include <QmitkDataStorageComboBox.h>
@@ -112,7 +115,7 @@ signals:
 
 protected:
 
-	mitk::DataNode::Pointer FindChildNodeWithNameContaining(mitk::DataNode::Pointer & parent, const std::string & subStr);
+	mitk::DataNode::Pointer FindChildNodeRegex(mitk::DataNode::Pointer & parent, std::string regexString);
 
   virtual void OnSelectionChanged(berry::IWorkbenchPart::Pointer part,
                                   const QList<mitk::DataNode::Pointer> &nodes) override;
@@ -157,4 +160,6 @@ protected:
   void UpdateTextAnnotations(std::string text);
 
   const int FROM_GUI = -1;
+
+  berry::IPreferences::Pointer m_M2aiaPreferences;
 };
