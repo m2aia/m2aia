@@ -148,6 +148,14 @@ void m2Spectrum::OnMassRangeChanged(qreal x, qreal tol)
 
 // }
 
+void m2Spectrum::OnPeakListChanged(const itk::Object *caller, const itk::EventObject &)
+{
+  if (auto node = dynamic_cast<const mitk::DataNode *>(caller))
+  {
+    m_DataProvider[node]->UpdateGroup("Peaks",m_xAxis->min(), m_xAxis->max());
+  }
+}
+
 void m2Spectrum::OnPropertyChanged(const itk::Object *caller, const itk::EventObject &)
 {
   if (auto node = dynamic_cast<const mitk::DataNode *>(caller))
@@ -187,8 +195,14 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
 {
   if (!node)
     return;
-  if (/* auto imageBase = */ dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
+    // observer image modifications
+    auto imageModifiedCommand = itk::NodeMemberCommand<m2Spectrum>::New();
+    imageModifiedCommand->SetNode(node);
+    imageModifiedCommand->SetCallbackFunction(this, &m2Spectrum::OnPeakListChanged);
+    imageBase->AddObserver(m2::PeakListModifiedEvent(), imageModifiedCommand);
+
     auto chart = m_Controls.chartView->chart();
     auto provider = std::make_shared<Qm2SpectrumChartDataProvider>(node);
     m_DataProvider.emplace(node, provider);

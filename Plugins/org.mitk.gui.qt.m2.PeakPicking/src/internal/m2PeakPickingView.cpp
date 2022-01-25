@@ -73,6 +73,13 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
 
   connect(m_Controls.btnPCA, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPCA);
   connect(m_Controls.btnTSNE, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartTSNE);
+  connect(m_Controls.sliderSNR, &ctkSliderWidget::valueChanged, this, &m2PeakPickingView::OnStartPeakPicking);
+  connect(m_Controls.sliderHWS, &ctkSliderWidget::valueChanged, this, &m2PeakPickingView::OnStartPeakPicking);
+  connect(m_Controls.sliderCOR, &ctkSliderWidget::valueChanged, this, &m2PeakPickingView::OnStartPeakPicking);
+  m_Controls.sliderCOR->setMinimum(0.0);
+  m_Controls.sliderCOR->setMaximum(1.0);
+  m_Controls.sliderCOR->setValue(0.95);
+  m_Controls.sliderCOR->setSingleStep(0.01);
 
   // if (auto button = m_Controls.tableWidget->findChild<QAbstractButton *>(QString(), Qt::FindDirectChildrenOnly))
   // {
@@ -164,21 +171,19 @@ void m2PeakPickingView::OnStartPeakPicking()
                                 std::end(ys),
                                 std::begin(xs),
                                 std::back_inserter(peaks),
-                                m_Controls.sbHalfWindowSize->value(),
-                                mad * m_Controls.sbSNR->value());
+                                m_Controls.sliderHWS->value(),
+                                mad * m_Controls.sliderSNR->value());
         if (m_Controls.ckbMonoisotopic->isChecked())
         {
           peaks = m2::Signal::monoisotopic(peaks,
                                            {3, 4, 5, 6, 7, 8, 9, 10},
-                                           m_Controls.sbMinCor->value(),
+                                           m_Controls.sliderCOR->value(),
                                            m_Controls.sbTolerance->value(),
                                            m_Controls.sbDistance->value());
         }
+        imageBase->PeakListModified();
 
         m_PeakLists.push_back(peaks);
-
-        emit m2::UIUtils::Instance()->OverviewSpectrumChanged(node.GetPointer(),
-                                                              m2::SpectrumType::None);
       }
     }
   OnImageSelectionChangedUpdatePeakList(0);

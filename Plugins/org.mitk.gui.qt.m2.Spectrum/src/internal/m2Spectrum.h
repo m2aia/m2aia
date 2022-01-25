@@ -114,6 +114,7 @@ protected slots:
 
 protected:
   void OnPropertyChanged(const itk::Object *caller, const itk::EventObject &event);
+  void OnPeakListChanged(const itk::Object *caller, const itk::EventObject &event);
 
   unsigned int m_yAxisTicks = 4;
   unsigned int m_xAxisTicks = 9;

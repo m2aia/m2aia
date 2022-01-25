@@ -21,6 +21,14 @@ See LICENSE.txt for details.
 #include <mitkOperation.h>
 
 
+namespace m2{
+  itkEventMacroDefinition(PeakListModifiedEvent, itk::AnyEvent)
+}
+
+void m2::SpectrumImageBase::PeakListModified(){
+  InvokeEvent(m2::PeakListModifiedEvent());
+}
+
 double m2::SpectrumImageBase::ApplyTolerance(double xValue) const
 {
   if (this->GetUseToleranceInPPM())

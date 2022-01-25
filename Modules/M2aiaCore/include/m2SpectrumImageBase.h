@@ -165,6 +165,8 @@ namespace m2
     const SpectrumInfo &GetExportSpectrumType() const { return m_ExportSpectrumType; }
     void SetExportSpectrumType(const SpectrumInfo &other) { m_ExportSpectrumType = other; }
 
+    virtual void PeakListModified();
+
   protected:
     bool mutable m_InSaveMode = false;
     double m_Tolerance = 10;
@@ -215,6 +217,9 @@ namespace m2
 
     SpectrumArtifactVectorType m_XAxis;
   };
+
+  itkEventMacroDeclaration(PeakListModifiedEvent, itk::AnyEvent)
+  
 
 } // namespace m2
 
