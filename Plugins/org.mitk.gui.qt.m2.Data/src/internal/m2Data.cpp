@@ -556,6 +556,7 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
 {
   if (auto openSlideIOHelper = dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
   {
+    const auto name = node->GetName();
     auto dialog = new m2OpenSlideImageIOHelperDialog(m_Parent);
     dialog->SetOpenSlideImageIOHelperObject(openSlideIOHelper);
     auto result = dialog->exec();
@@ -591,7 +592,7 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
           {
             auto node = mitk::DataNode::New();
             node->SetData(I);
-            node->SetName("tile_" + std::to_string(k));
+            node->SetName(name + "_tile_" + std::to_string(k));
             this->GetDataStorage()->Add(node);
             ++k;
           }
