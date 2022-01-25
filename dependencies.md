@@ -25,8 +25,7 @@ sudo apt-get install -q -y --no-install-recommends \
     libglu1-mesa-dev \
     libopenslide-dev 
 ```
-To run M²aia on Ubuntu 18.04 zou have to provide the Qt libraries >= Qt 5.12.9.
-Installers can be found in the [Qt 5.12] archive. In this example Qt is installed in the system folder ```/opt/``` folder to provide multi-user access.
+To run M²aia on Ubuntu 18.04 you have to provide Qt 5.12 libraries >= Qt 5.12.9. Installers can be found in the [Qt 5.12] archive. In this example Qt is installed in the system folder ```/opt/``` to provide multi-user access.
 
 To propergate the libraryes system wide, you can add a new entry
 
@@ -36,7 +35,7 @@ and add a single line e.g. pointing to
 
 ``` /opt/Qt5.12/5.12.9/gcc_64/lib ```
 
-Finally you have to run ```ldconfig``` to promote the new library search path.
+Finally, you have to run ```ldconfig``` to promote the new library search path.
 
 
 [Qt 5.12]: https://download.qt.io/archive/qt/5.12/
