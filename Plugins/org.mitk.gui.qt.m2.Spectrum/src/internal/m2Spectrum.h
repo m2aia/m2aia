@@ -58,11 +58,11 @@ namespace itk{
 
     virtual void SetNode(const mitk::DataNode * node ){m_Node = node;}
       
-    void Execute(itk::Object */* caller */, const itk::EventObject & event) ITK_OVERRIDE{
+    void Execute(itk::Object *, const itk::EventObject & event) ITK_OVERRIDE{
       itk::MemberCommand<T>::Execute(m_Node,event);
     }
 
-    void Execute(const itk::Object */* caller */, const itk::EventObject & event) ITK_OVERRIDE{
+    void Execute(const itk::Object *, const itk::EventObject & event) ITK_OVERRIDE{
       itk::MemberCommand<T>::Execute(m_Node,event);
     }
   };
