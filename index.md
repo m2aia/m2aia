@@ -16,7 +16,7 @@ Downloads
 | M²aia             |   elastix [3]  |
 |:------------------|:------------------|
 | [v2021.07](https://github.com/jtfcordes/M2aia/releases/tag/v2021.07.00) | [5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0)|
-| [master](http://data.jtfc.de/master/) | [5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0)|
+| [latest](http://data.jtfc.de/master/) | [5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0)|
 
 [View all releases on github](https://github.com/jtfcordes/M2aia/releases)
 
