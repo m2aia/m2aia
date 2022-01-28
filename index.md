@@ -6,19 +6,24 @@ M²aia provides features for
 * Image interaction and visualization
 * Signal processing: Normalization, baseline correction, smoothing and peak picking
 * Image segmentation
-* [Dimensionality reduction](https://dx.doi.org/10.17504/protocols.io.bwybpfsn)
-* multi-modal 2D registration and 3D MSI reconstruction
-
+* Dimensionality reduction
+* Multi-modal 2D registration
+* 3D MSI reconstruction
 
 Downloads
 ---------
 
-| M²aia             |   elastix [3]  |
-|:------------------|:------------------|
-| [v2021.07](https://github.com/jtfcordes/M2aia/releases/tag/v2021.07.00) | [5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0)|
-| [latest](http://data.jtfc.de/latest/) | [5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0)|
+### Latest/Nightly installers and packages for M²aia
 
-[View all releases on github](https://github.com/jtfcordes/M2aia/releases)
+[[M²aia:latest](http://data.jtfc.de/latest/)]
+
+Using registration utilities requires [elastix 5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0).
+
+### Releases
+
+[[M²aia:v2021.07](https://github.com/jtfcordes/M2aia/releases/tag/v2021.07.00)]
+
+[[M²aia:Archive](https://github.com/jtfcordes/M2aia/releases)]
 
 Cite M²aia
 ----------
