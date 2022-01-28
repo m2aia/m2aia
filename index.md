@@ -15,7 +15,7 @@ Downloads
 
 |Installers and packages for M²aia||
 |---|---|
-|**Latest/Nightly**|[[M²aia:latest](http://data.jtfc.de/latest/)] <object data="http://data.jtfc.de/latest/ubuntu18_04/builddate"></object>  |
+|**Latest/Nightly**|[[M²aia:latest](http://data.jtfc.de/latest/)]|
 |**Releases**|[[M²aia:v2021.07](https://github.com/jtfcordes/M2aia/releases/tag/v2021.07.00)]|
 ||[[M²aia:Archive](https://github.com/jtfcordes/M2aia/releases)]|
 
