@@ -191,7 +191,7 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
             targetKey = "intensityGroupName";
           }
 
-          if(gLine.find("MS:1000127") != npos){
+          if(gLine.find("MS:1000127") != npos || gLine.find("MS:1000128") != npos){
             std::string spectype;
             attributValue(gLine, "name", spectype);
             data->SetPropertyValue<std::string>(spectype, "");  
