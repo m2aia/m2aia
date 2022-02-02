@@ -659,7 +659,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
     //    }
 
     // -------------- add Mask to datastorage --------------
-    if (m_M2aiaPreferences->GetBool("showMaskImage", true) && spectrumImage->GetMaskImage())
+    if (m_M2aiaPreferences->GetBool("showMaskImage", false) && spectrumImage->GetMaskImage())
     {
       auto helperNode = mitk::DataNode::New();
       helperNode->SetName(node->GetName() + "_mask");
@@ -670,7 +670,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
     }
 
     // -------------- add Index to datastorage --------------
-    if (m_M2aiaPreferences->GetBool("showIndexImage", true) && spectrumImage->GetIndexImage())
+    if (m_M2aiaPreferences->GetBool("showIndexImage", false) && spectrumImage->GetIndexImage())
     {
       auto helperNode = mitk::DataNode::New();
       helperNode->SetName(node->GetName() + "_index");
@@ -682,7 +682,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
 
     // -------------- add Normalization to datastorage --------------
 
-    if (m_M2aiaPreferences->GetBool("showNormalizationImage", true) && spectrumImage->GetNormalizationImage())
+    if (m_M2aiaPreferences->GetBool("showNormalizationImage", false) && spectrumImage->GetNormalizationImage())
     {
       auto helperNode = mitk::DataNode::New();
       helperNode->SetName(node->GetName() + "_normalization");

@@ -80,9 +80,9 @@ void m2BrowserPreferencesPage::CreateQtControl(QWidget* parent)
 	connect(m_Ui->useMinIntensity, SIGNAL(toggled(bool)), this, SLOT(OnUseMinIntensity(bool)));
 
     // image artifacts
-    connect(m_Ui->chkBxIndexImage, SIGNAL(toggled(bool)), this, SLOT(OnUseMinIntensity(bool)));
-    connect(m_Ui->chkBxMaskImage, SIGNAL(toggled(bool)), this, SLOT(OnUseMinIntensity(bool)));
-    connect(m_Ui->chkBxNormalizationImage, SIGNAL(toggled(bool)), this, SLOT(OnUseMinIntensity(bool)));
+    connect(m_Ui->chkBxIndexImage, SIGNAL(toggled(bool)), this, SLOT(OnShowIndexImage(bool)));
+    connect(m_Ui->chkBxMaskImage, SIGNAL(toggled(bool)), this, SLOT(OnShowMaskImage(bool)));
+    connect(m_Ui->chkBxNormalizationImage, SIGNAL(toggled(bool)), this, SLOT(OnShowNormalizationImage(bool)));
 
 	this->Update();
 }
@@ -224,9 +224,9 @@ void m2BrowserPreferencesPage::Update()
     m_Ui->useMaxIntensity->setChecked(m_Preferences->GetBool("useMaxIntensity", true));
     m_Ui->useMinIntensity->setChecked(m_Preferences->GetBool("useMinIntensity", true));
 
-    m_Ui->chkBxIndexImage->setChecked(m_Preferences->GetBool("showIndexImage", true));
-    m_Ui->chkBxMaskImage->setChecked(m_Preferences->GetBool("showMaskImage", true));
-    m_Ui->chkBxNormalizationImage->setChecked(m_Preferences->GetBool("showNormalizationImage", true));
+    m_Ui->chkBxIndexImage->setChecked(m_Preferences->GetBool("showIndexImage", false));
+    m_Ui->chkBxMaskImage->setChecked(m_Preferences->GetBool("showMaskImage", false));
+    m_Ui->chkBxNormalizationImage->setChecked(m_Preferences->GetBool("showNormalizationImage", false));
 	
 
 	auto bins = m_Preferences->Get("bins", "");
