@@ -38,7 +38,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 // mitk
 #include <mitkIOUtil.h>
 #include <mitkImage.h>
-#include <mitkImage3DSliceToImage2DFilter.h>
 #include <mitkImageAccessByItk.h>
 #include <mitkImageCast.h>
 #include <mitkImageReadAccessor.h>

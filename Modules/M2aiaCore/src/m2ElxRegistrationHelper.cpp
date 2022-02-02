@@ -2,8 +2,11 @@
 #include <m2ElxDefaultParameterFiles.h>
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
-#include <mitkImage2DToImage3DSliceFilter.h>
-#include <mitkImage3DSliceToImage2DFilter.h>
+#include <mitkImageReadAccessor.h>
+#include <mitkImageWriteAccessor.h>
+#include <mitkImage.h>
+#include <numeric>
+#include <algorithm>
 
 m2::ElxRegistrationHelper::~ElxRegistrationHelper() {}
 
@@ -21,25 +24,45 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image
   {
     const auto dims = image->GetDimension();
     const auto sizeZ = image->GetDimensions()[2];
-
+    auto geom3D = image->GetSlicedGeometry();
+    auto n = std::accumulate(image->GetDimensions(), image->GetDimensions()+2, 1, std::multiplies<>()) * image->GetPixelType().GetSize();
     if (dims == 3 && sizeZ == 1)
     {
-      auto filter = mitk::Image3DSliceToImage2DFilter::New();
-      filter->SetInput(image);
-      filter->Update();
-      return {filter->GetOutput()};
+      // 3D => 2D volume (3rd dim is 1)
+      auto output = mitk::Image::New();
+      output->Initialize(image->GetPixelType(),2, image->GetDimensions());
+      output->GetSlicedGeometry()->SetSpacing(geom3D->GetSpacing());
+      output->GetSlicedGeometry()->SetOrigin(geom3D->GetOrigin());
+      output->GetSlicedGeometry()->SetDirectionVector(geom3D->GetDirectionVector());
+      mitk::ImageReadAccessor iAcc(image);
+      mitk::ImageWriteAccessor oAcc(output);
+      std::copy((const char *)iAcc.GetData(), (const char *)iAcc.GetData()+n, (char *)oAcc.GetData());
+      return output;
     }
     else if (dims == 2)
     {
+      // Keep 2D volume
       return const_cast<mitk::Image *>(image);
     }
     else if (dims == 3 && sizeZ > 1)
     {
+      // Keep 3D volume
       return const_cast<mitk::Image *>(image);
     }
     else if (dims == 4)
     {
-      mitkThrow() << "3D+t Images are not supported!";
+      // 4D => 3D volume (4th dim is > 0)
+      // TODO: enable Selection of time step != 0
+      auto output = mitk::Image::New();
+      output->Initialize(image->GetPixelType(),3, image->GetDimensions());
+      output->GetSlicedGeometry()->SetSpacing(geom3D->GetSpacing());
+      output->GetSlicedGeometry()->SetOrigin(geom3D->GetOrigin());
+      output->GetSlicedGeometry()->SetDirectionVector(geom3D->GetDirectionVector());
+      mitk::ImageReadAccessor iAcc(image);
+      mitk::ImageWriteAccessor oAcc(output);
+      std::copy((const char *)iAcc.GetData(), (const char *)iAcc.GetData()+n, (char *)oAcc.GetData());
+      MITK_WARN << "3D+t Images are not well supported! Time step 0 selected.";
+      return output;
     }
   }
   mitkThrow() << "Image data is null!";
@@ -49,12 +72,20 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice3DData(const mitk::Image
 {
   if (image)
   {
+    auto geom3D = image->GetSlicedGeometry();
+    auto n = std::accumulate(image->GetDimensions(), image->GetDimensions()+2, 1, std::multiplies<>()) * image->GetPixelType().GetSize();
     if (image->GetDimension() == 2)
     {
-      auto filter = mitk::Image2DToImage3DSliceFilter::New();
-      filter->SetInput(image);
-      filter->Update();
-      return {filter->GetOutput()};
+      unsigned int d[3]{image->GetDimensions()[0],image->GetDimensions()[1],1};
+      auto output = mitk::Image::New();
+      output->Initialize(image->GetPixelType(), 3, d);
+      output->GetSlicedGeometry()->SetSpacing(geom3D->GetSpacing());
+      output->GetSlicedGeometry()->SetOrigin(geom3D->GetOrigin());
+      output->GetSlicedGeometry()->SetDirectionVector(geom3D->GetDirectionVector());
+      mitk::ImageReadAccessor iAcc(image);
+      mitk::ImageWriteAccessor oAcc(output);
+      std::copy((const char *)iAcc.GetData(), (const char *)iAcc.GetData()+n, (char *)oAcc.GetData());
+      return output;
     }
     else
     {

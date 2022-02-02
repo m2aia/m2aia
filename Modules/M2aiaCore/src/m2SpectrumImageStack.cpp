@@ -23,8 +23,6 @@ See LICENSE.txt for details.
 #include <mitkExtractSliceFilter.h>
 #include <mitkIOUtil.h>
 #include <mitkITKImageImport.h>
-#include <mitkImage2DToImage3DSliceFilter.h>
-#include <mitkImage3DSliceToImage2DFilter.h>
 #include <mitkImageAccessByItk.h>
 #include <mitkImageReadAccessor.h>
 #include <mitkImageWriteAccessor.h>

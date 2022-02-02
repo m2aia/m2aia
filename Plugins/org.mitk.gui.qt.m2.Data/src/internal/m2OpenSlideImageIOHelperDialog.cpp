@@ -30,7 +30,6 @@ See LICENSE.txt for details.
 #include <mitkDataNode.h>
 #include <mitkExtractSliceFilter.h>
 #include <mitkImage.h>
-#include <mitkImage2DToImage3DSliceFilter.h>
 #include <mitkImageCast.h>
 #include <mitkImageStatisticsHolder.h>
 #include <mitkItkImageIO.h>
