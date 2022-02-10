@@ -450,8 +450,9 @@ void RegistrationView::Registration(RegistrationEntity & entity)
   mitk::Image::Pointer fixedImage;
   mitk::Image::Pointer movingImage;
 
-  if (auto node = m_FixedImageSingleNodeSelection->GetSelectedNode())
-    fixedImage = dynamic_cast<mitk::Image *>(node->GetData());
+  auto fixedImageNode = m_FixedImageSingleNodeSelection->GetSelectedNode();
+  if (fixedImageNode)
+    fixedImage = dynamic_cast<mitk::Image *>(fixedImageNode->GetData());
 
   if (auto node = m_FixedPointSetSingleNodeSelection->GetSelectedNode())
     fixedPointSet = dynamic_cast<mitk::PointSet *>(node->GetData());
@@ -462,6 +463,7 @@ void RegistrationView::Registration(RegistrationEntity & entity)
   auto movingImageNode = entity.m_ImageSelection->GetSelectedNode();
   if (movingImageNode)
     movingImage = dynamic_cast<mitk::Image *>(movingImageNode->GetData());
+
   
 
   try
@@ -487,8 +489,11 @@ void RegistrationView::Registration(RegistrationEntity & entity)
 
       // copy valid and discard empty parameterfiles
       for (auto &p : m_ParameterFiles[currentIndex])
-        if (!p.empty())
           parameterFiles.push_back(p);
+
+      if(!m_Controls.chkBxUseDeformableRegistration->isChecked() || parameterFiles.back().empty()){
+        parameterFiles.pop_back();
+      }
 
       // setup and run
       helper.SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
@@ -501,9 +506,10 @@ void RegistrationView::Registration(RegistrationEntity & entity)
       helper.GetRegistration();
       auto warpedImage = helper.WarpImage(movingImage);
 
+      auto timeString = itksys::SystemTools::GetCurrentDateTime("%H%M");
       auto node = mitk::DataNode::New();
       node->SetData(warpedImage);
-      node->SetName(movingImageNode->GetName() + "_warped_image");
+      node->SetName(movingImageNode->GetName() + "_warped"+timeString);
       entity.m_ResultNode = node;
       entity.m_Transformations = helper.GetTransformation();
 
@@ -512,26 +518,37 @@ void RegistrationView::Registration(RegistrationEntity & entity)
       {
         if (auto node = attSel->GetSelectedNode())
         {
-          if (auto labelSetImage = dynamic_cast<mitk::Image *>(node->GetData()))
+          if (auto labelSetImage = dynamic_cast<mitk::LabelSetImage *>(node->GetData()))
           {
-            auto warpedMask = helper.WarpImage(labelSetImage, "short", 1);
+            auto wapred = helper.WarpImage(labelSetImage, "short", 1);
             auto resNode = mitk::DataNode::New();
-            resNode->SetData(warpedMask);
-            resNode->SetName(node->GetName() + "_warped_mask");
+            resNode->SetData(wapred);
+            resNode->SetName(node->GetName() + "_warped_mask"+timeString);
+            entity.m_ResultAttachments.push_back(resNode);
+          }else if (auto image = dynamic_cast<mitk::Image *>(node->GetData())){
+            auto warped = helper.WarpImage(image, "float", 1);
+            auto resNode = mitk::DataNode::New();
+            resNode->SetData(warped);
+            resNode->SetName(node->GetName() + "_warped_att_"+timeString);
             entity.m_ResultAttachments.push_back(resNode);
           }
         }
       }
     }
 
+    mitk::DataNode * parentNode = movingImageNode;
+    if(m_Controls.chkBxAttachToFixedImage->isChecked()){
+      parentNode = fixedImageNode;
+    }
+
     MITK_INFO << "Add moving image node";
     auto node = entity.m_ResultNode;
-    this->GetDataStorage()->Add(node, movingImageNode);
+    this->GetDataStorage()->Add(node, parentNode);
 
     MITK_INFO << "Add attachments";
     for (auto node : entity.m_ResultAttachments)
     {
-      this->GetDataStorage()->Add(node, movingImageNode);
+      this->GetDataStorage()->Add(node, parentNode);
       MITK_INFO << node->GetName();
     }
 
