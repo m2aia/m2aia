@@ -160,7 +160,7 @@ namespace m2
       void InitializeImageAccess();
       void InitializeGeometry();
       void InitializeImageAccessContinuousProfile();
-      void InitializeImageAccessProcessedProfile() {}
+      void InitializeImageAccessProcessedProfile();
       void InitializeImageAccessContinuousCentroid();
       void InitializeImageAccessProcessedCentroid();
 
