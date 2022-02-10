@@ -113,7 +113,7 @@ extern "C"
     return spectrum.mzLength;
   }
 
-  M2AIACOREIO_EXPORT void GetSpectrumPosition(m2::sys::ImageHandle *handle, unsigned int spectrumId, int *pixelPosition)
+  M2AIACOREIO_EXPORT void GetSpectrumPosition(m2::sys::ImageHandle *handle, unsigned int spectrumId, unsigned int *pixelPosition)
   {
     auto &spectrum = handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra[spectrumId];
     auto *p = spectrum.index.GetIndex();
