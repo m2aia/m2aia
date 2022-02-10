@@ -1,12 +1,12 @@
+#include <algorithm>
 #include <clocale>
 #include <m2ElxDefaultParameterFiles.h>
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
+#include <mitkImage.h>
 #include <mitkImageReadAccessor.h>
 #include <mitkImageWriteAccessor.h>
-#include <mitkImage.h>
 #include <numeric>
-#include <algorithm>
 
 m2::ElxRegistrationHelper::~ElxRegistrationHelper() {}
 
@@ -25,18 +25,19 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image
     const auto dims = image->GetDimension();
     const auto sizeZ = image->GetDimensions()[2];
     auto geom3D = image->GetSlicedGeometry();
-    auto n = std::accumulate(image->GetDimensions(), image->GetDimensions()+2, 1, std::multiplies<>()) * image->GetPixelType().GetSize();
+    auto n = std::accumulate(image->GetDimensions(), image->GetDimensions() + 2, 1, std::multiplies<>()) *
+             image->GetPixelType().GetSize();
     if (dims == 3 && sizeZ == 1)
     {
       // 3D => 2D volume (3rd dim is 1)
       auto output = mitk::Image::New();
-      output->Initialize(image->GetPixelType(),2, image->GetDimensions());
+      output->Initialize(image->GetPixelType(), 2, image->GetDimensions());
       output->GetSlicedGeometry()->SetSpacing(geom3D->GetSpacing());
       output->GetSlicedGeometry()->SetOrigin(geom3D->GetOrigin());
       output->GetSlicedGeometry()->SetDirectionVector(geom3D->GetDirectionVector());
       mitk::ImageReadAccessor iAcc(image);
       mitk::ImageWriteAccessor oAcc(output);
-      std::copy((const char *)iAcc.GetData(), (const char *)iAcc.GetData()+n, (char *)oAcc.GetData());
+      std::copy((const char *)iAcc.GetData(), (const char *)iAcc.GetData() + n, (char *)oAcc.GetData());
       return output;
     }
     else if (dims == 2)
@@ -54,13 +55,13 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image
       // 4D => 3D volume (4th dim is > 0)
       // TODO: enable Selection of time step != 0
       auto output = mitk::Image::New();
-      output->Initialize(image->GetPixelType(),3, image->GetDimensions());
+      output->Initialize(image->GetPixelType(), 3, image->GetDimensions());
       output->GetSlicedGeometry()->SetSpacing(geom3D->GetSpacing());
       output->GetSlicedGeometry()->SetOrigin(geom3D->GetOrigin());
       output->GetSlicedGeometry()->SetDirectionVector(geom3D->GetDirectionVector());
       mitk::ImageReadAccessor iAcc(image);
       mitk::ImageWriteAccessor oAcc(output);
-      std::copy((const char *)iAcc.GetData(), (const char *)iAcc.GetData()+n, (char *)oAcc.GetData());
+      std::copy((const char *)iAcc.GetData(), (const char *)iAcc.GetData() + n, (char *)oAcc.GetData());
       MITK_WARN << "3D+t Images are not well supported! Time step 0 selected.";
       return output;
     }
@@ -73,10 +74,11 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice3DData(const mitk::Image
   if (image)
   {
     auto geom3D = image->GetSlicedGeometry();
-    auto n = std::accumulate(image->GetDimensions(), image->GetDimensions()+2, 1, std::multiplies<>()) * image->GetPixelType().GetSize();
+    auto n = std::accumulate(image->GetDimensions(), image->GetDimensions() + 2, 1, std::multiplies<>()) *
+             image->GetPixelType().GetSize();
     if (image->GetDimension() == 2)
     {
-      unsigned int d[3]{image->GetDimensions()[0],image->GetDimensions()[1],1};
+      unsigned int d[3]{image->GetDimensions()[0], image->GetDimensions()[1], 1};
       auto output = mitk::Image::New();
       output->Initialize(image->GetPixelType(), 3, d);
       output->GetSlicedGeometry()->SetSpacing(geom3D->GetSpacing());
@@ -84,7 +86,7 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice3DData(const mitk::Image
       output->GetSlicedGeometry()->SetDirectionVector(geom3D->GetDirectionVector());
       mitk::ImageReadAccessor iAcc(image);
       mitk::ImageWriteAccessor oAcc(output);
-      std::copy((const char *)iAcc.GetData(), (const char *)iAcc.GetData()+n, (char *)oAcc.GetData());
+      std::copy((const char *)iAcc.GetData(), (const char *)iAcc.GetData() + n, (char *)oAcc.GetData());
       return output;
     }
     else
@@ -122,13 +124,13 @@ void m2::ElxRegistrationHelper::SetMaskData(mitk::Image *fixed, mitk::Image *mov
     return;
   }
 
-  if (!CheckDimensions(fixed) && !CheckDimensions(moving))
-  {
-    MITK_ERROR << "Fixed mask image [" << m2::ElxUtil::GetShape(fixed) << "] and moving mask image ["
-               << m2::ElxUtil::GetShape(moving) << "]! This is yet not implemented.\n"
-               << "Shape has to be [NxMx1]";
-    return;
-  }
+  // if (!CheckDimensions(fixed) && !CheckDimensions(moving))
+  // {
+  //   MITK_ERROR << "Fixed mask image [" << m2::ElxUtil::GetShape(fixed) << "] and moving mask image ["
+  //              << m2::ElxUtil::GetShape(moving) << "]! This is yet not implemented.\n"
+  //              << "Shape has to be [NxMx1]";
+  //   return;
+  // }
 
   m_FixedMask = fixed;
   m_MovingMask = moving;
@@ -155,10 +157,10 @@ void m2::ElxRegistrationHelper::SetImageData(mitk::Image *fixed, mitk::Image *mo
   if (fixed == nullptr || moving == nullptr)
     mitkThrow() << "Can not proceed: fixed is [" << fixed << "]; moving is [" << moving << "]";
 
-  if (!CheckDimensions(fixed) && !CheckDimensions(moving))
-    mitkThrow() << "Fixed image [" << m2::ElxUtil::GetShape(fixed) << "] and moving image ["
-                << m2::ElxUtil::GetShape(moving) << "]! This is yet not implemented.\n"
-                << "Shape has to be [NxMx1]";
+  // if (!CheckDimensions(fixed) && !CheckDimensions(moving))
+  //   mitkThrow() << "Fixed image [" << m2::ElxUtil::GetShape(fixed) << "] and moving image ["
+  //               << m2::ElxUtil::GetShape(moving) << "]! This is yet not implemented.\n"
+  //               << "Shape has to be [NxMx1]";
 
   m_FixedImage = fixed;
   m_MovingImage = moving;
@@ -223,7 +225,6 @@ void m2::ElxRegistrationHelper::GetRegistration()
     mitkThrow() << "Elastix executable not found!";
 
   CreateWorkingDirectory();
-  
 
   if (m_RegistrationParameters.empty())
     m_RegistrationParameters.push_back(m2::Elx::Rigid());
@@ -263,16 +264,43 @@ void m2::ElxRegistrationHelper::GetRegistration()
     m_StatusFunction("Parameter file written: " + targetParamterFilePath);
   }
 
+  std::string inputLocationMovingImage;
   const auto movingResultPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "result.0.nrrd"});
   const auto movingMaskResultPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "result.nrrd"});
-
-  const auto fixedPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "fixed.nrrd"});
   const auto movingPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "moving.nrrd"});
-  mitk::IOUtil::Save(GetSlice2DData(m_MovingImage), movingPath);
-  m_StatusFunction("Moving image written: " + movingPath);
-  mitk::IOUtil::Save(GetSlice2DData(m_FixedImage), fixedPath);
-  m_StatusFunction("Fixed image written: " + fixedPath);
+  auto convertedMovingImage = GetSlice2DData(m_MovingImage);
 
+  m_MovingImage->GetPropertyList()->GetStringProperty("MITK.IO.reader.inputlocation", inputLocationMovingImage);
+  if (convertedMovingImage == m_MovingImage &&                                 // check if no conversion
+      itksys::SystemTools::FileExists(inputLocationMovingImage) &&             // file is still available
+      itksys::SystemTools::CreateSymlink(inputLocationMovingImage, movingPath) //  check if symlinking pass
+  )
+  {
+    m_StatusFunction("Moving image linked: " + movingPath);
+  }
+  else
+  {
+    mitk::IOUtil::Save(convertedMovingImage, movingPath);
+    m_StatusFunction("Moving image written: " + movingPath);
+  }
+
+  std::string inputLocationFixedImage;
+  auto convertedFixedImage = GetSlice2DData(m_FixedImage);
+  const auto fixedPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "fixed.nrrd"});
+  m_FixedImage->GetPropertyList()->GetStringProperty("MITK.IO.reader.inputlocation", inputLocationFixedImage);
+
+  if (convertedFixedImage == m_FixedImage &&                                   // check if no conversion
+      itksys::SystemTools::FileExists(inputLocationFixedImage) &&              // file is still available
+      itksys::SystemTools::CreateSymlink(inputLocationFixedImage, fixedPath) //  check if symlinking pass
+  )
+  {
+    m_StatusFunction("Fixed image linked: " + fixedPath);
+  }
+  else
+  {
+    mitk::IOUtil::Save(convertedFixedImage, fixedPath);
+    m_StatusFunction("Fixed image written: " + fixedPath);
+  }
 
   // START THE REGISTRATION
   Poco::Process::Args args;
@@ -305,16 +333,14 @@ void m2::ElxRegistrationHelper::GetRegistration()
     args.insert(args.end(), {"-p", parameterFile});
   }
 
-  
   m_StatusFunction("Registration started ...");
-  
+
   Poco::Pipe oPipe;
   Poco::ProcessHandle ph(Poco::Process::launch(exeElastix, args, nullptr, &oPipe, nullptr));
   oPipe.close();
   ph.wait();
-  
+
   m_StatusFunction("Registration finished.");
-  
 
   for (unsigned int i = 0; i < m_RegistrationParameters.size(); ++i)
   {
@@ -339,12 +365,12 @@ std::vector<std::string> m2::ElxRegistrationHelper::GetTransformation() const
   return m_Transformations;
 }
 
-void m2::ElxRegistrationHelper::SetTransformations(const std::vector<std::string> & transforms)
+void m2::ElxRegistrationHelper::SetTransformations(const std::vector<std::string> &transforms)
 {
   m_Transformations = transforms;
 }
 
-mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Pointer data,
+mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Pointer inputData,
                                                           const std::string &pixelType,
                                                           const unsigned char &interpolationOrder) const
 {
@@ -354,6 +380,8 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Poi
 
   CreateWorkingDirectory();
   m_StatusFunction("Directory created: " + m_WorkingDirectory);
+
+  auto data = GetSlice2DData(inputData);
 
   if (!CheckDimensions(data))
   {
