@@ -65,15 +65,21 @@ extern "C"
     return (unsigned int)(handle->m_Image->GetSpectrumType().Format);
   }
 
-  M2AIACOREIO_EXPORT unsigned int GetSpectrumDepth(m2::sys::ImageHandle *handle)
+  M2AIACOREIO_EXPORT unsigned int GetSizeInBytesOfYAxisType(m2::sys::ImageHandle *handle)
   {
-    return (unsigned int)(handle->m_Image->GetXAxis().size());
+    return m2::to_bytes(handle->m_Image->GetSpectrumType().YAxisType);
   }
 
   M2AIACOREIO_EXPORT void GetXAxis(m2::sys::ImageHandle *handle, double *data)
   {
     auto &xAxis = handle->m_Image->GetXAxis();
     std::copy(xAxis.begin(), xAxis.end(), data);
+  }
+
+  M2AIACOREIO_EXPORT unsigned int GetXAxisDepth(m2::sys::ImageHandle *handle)
+  {
+    auto &xAxis = handle->m_Image->GetXAxis();
+    return xAxis.size();
   }
 
   M2AIACOREIO_EXPORT unsigned int GetYDataTypeSizeInBytes(m2::sys::ImageHandle *handle)
@@ -101,7 +107,13 @@ extern "C"
     std::copy(ys.begin(), ys.end(), yd);
   }
 
-  M2AIACOREIO_EXPORT void GetPixelPosition(m2::sys::ImageHandle *handle, unsigned int spectrumId, int *pixelPosition)
+  M2AIACOREIO_EXPORT unsigned int  GetSpectrumDepth(m2::sys::ImageHandle *handle, unsigned int id)
+  {
+    const auto & spectrum = handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra[id];
+    return spectrum.mzLength;
+  }
+
+  M2AIACOREIO_EXPORT void GetSpectrumPosition(m2::sys::ImageHandle *handle, unsigned int spectrumId, int *pixelPosition)
   {
     auto &spectrum = handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra[spectrumId];
     auto *p = spectrum.index.GetIndex();

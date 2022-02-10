@@ -91,6 +91,18 @@ namespace m2
     return "";
   }
 
+  inline unsigned int to_bytes(const NumericType &type) noexcept
+  {
+    switch (type)
+    {
+      case NumericType::Float:
+        return sizeof(float);
+      case NumericType::Double:
+        return sizeof(double);
+    }
+    return 0;
+  }
+
   inline double MicroMeterToMilliMeter(double x) { return x * 10e-4; }
   inline double ToMicroMeter(double x) { return x * 10e3; }
   inline double PartPerMillionToFactor(double x) { return x * 10e-6; }
@@ -139,7 +151,6 @@ namespace m2
   const auto Find = [](const auto &str, const auto &searchString, auto defaultValue, auto &map)
   {
     auto p = str.find(searchString);
-    MITK_INFO << p << " " << searchString;
     decltype(defaultValue) converted;
 
     if (p != std::string::npos)
@@ -157,7 +168,7 @@ namespace m2
       else
         buffer >> converted;
 
-      MITK_INFO << searchString << " " << converted;
+      MITK_DEBUG << searchString << " " << converted;
       return converted;
     }
 
