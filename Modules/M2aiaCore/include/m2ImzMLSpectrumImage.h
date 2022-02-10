@@ -160,9 +160,30 @@ namespace m2
       void InitializeImageAccess();
       void InitializeGeometry();
       void InitializeImageAccessContinuousProfile();
-      void InitializeImageAccessProcessedProfile();
+
+      /**
+       * @brief Provides optimized access to centroid data.
+       * No binning is applied. Normalization factors are provided.
+       */
       void InitializeImageAccessContinuousCentroid();
+
+      /**
+       * @brief See InitializeImageAccessProcessedData()       
+       */
+      void InitializeImageAccessProcessedProfile();
+
+      /**
+       * @brief See InitializeImageAccessProcessedData()       
+       */
       void InitializeImageAccessProcessedCentroid();
+
+      /**
+       * @brief Provides acces to processed centroid and processed profile spectra.
+       * It includes binning for visualization purposes of the overview spectra
+       * and invokes the calculation of normalization factors, but no further 
+       * signal-processing is supported here.
+       */
+      void InitializeImageAccessProcessedData();
 
       
       static double GetNormalizationFactor(m2::NormalizationStrategyType strategy, MassAxisType * xFirst, MassAxisType * xLast, IntensityType * yFirst, IntensityType * yLast){
