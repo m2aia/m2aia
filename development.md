@@ -2,11 +2,8 @@
 Setup for development
 -----------
 
-M²aia in app preferences
-- add path to local installation of elastix and transformix executabels (https://github.com/SuperElastix/elastix/releases)
-
 Supported Platforms:
-- System requirments: https://docs.mitk.org/nightly/SupportedPlatformsPage.html
+- System requirments: ([https://docs.mitk.org/nightly/SupportedPlatformsPage.html](https://docs.mitk.org/nightly/SupportedPlatformsPage.html))
 
 
 Build Instructions:
@@ -78,3 +75,10 @@ Run "Generate"
 `Click "Open Project"`
 
 Now you can start the development. https://docs.mitk.org/nightly/FirstSteps.html
+
+Post-Build Configuration:
+-------------------
+Download elastix: ([https://github.com/SuperElastix/elastix/releases](https://github.com/SuperElastix/elastix/releases))
+
+Start M²aia, go to in app preferences:
+- add path to local installation of elastix and transformix executables
