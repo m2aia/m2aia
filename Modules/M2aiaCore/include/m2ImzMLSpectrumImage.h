@@ -19,6 +19,7 @@ See LICENSE.txt for details.
 #include <m2SpectrumImageBase.h>
 #include <signal/m2Baseline.h>
 #include <signal/m2Smoothing.h>
+#include <signal/m2Transformer.h>
 #include <m2SpectrumImageProcessor.h>
 
 namespace m2
@@ -212,6 +213,8 @@ namespace m2
       using YIteratorType = typename std::vector<IntensityType>::iterator;
       m2::Signal::SmoothingFunctor<IntensityType> m_Smoother;
       m2::Signal::BaselineFunctor<IntensityType> m_BaselineSubstractor;
+      m2::Signal::IntensityTransformationFunctor<IntensityType> m_Transformer;
+
 
       virtual void GetYValues(unsigned int id, std::vector<float> &yd, unsigned int source = 0)
       {
