@@ -8,7 +8,7 @@ Supported platforms: see [https://docs.mitk.org/nightly/SupportedPlatformsPage.h
 Requirements: 
 
 * On Windows: Visual Studio (Community Edition) 2019 (2022 usually also works) ([link](https://visualstudio.microsoft.com/de/vs/community))
-* Qt 5.12.x (select at leasqtt Qt Charts, Qt WebEngine and Qt Script) ([Qt download](https://www.qt.io/download-thank-you))
+* Qt 5.12.x (select at least Qt Charts, Qt WebEngine and Qt Script) ([Qt download](https://www.qt.io/download-thank-you))
 * latest version of [CMake](https://cmake.org/download)
 * [Git](https://git-scm.com/download/)
 * [doxygen](https://www.doxygen.nl/download.html)
@@ -85,7 +85,7 @@ Post-Build Configuration
 To configure the M2aia registration plugin:
 - Start M²aia 
 - from the main menuof M²aia choose Window/Preferences - the Preferences dialog will appear.
-- on the left pane of the Preferences dialog select M2aia
+- on the left pane of the Preferences dialog select M²aia
 - add the paths to the local installation of elastix and transformix executables: 
   - These can be found in M2aiaWorkDir/build/ep/bin 
   - or you can install them from the [elastix-repository](https://github.com/SuperElastix/elastix/releases) to a directory of your choice.
