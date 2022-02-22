@@ -662,7 +662,7 @@ namespace m2
 
   std::vector<mitk::BaseData::Pointer> ImzMLImageIO::DoRead()
   {
-    MITK_INFO << "Start reading imzML...";
+    // MITK_INFO << "Start reading imzML...";
 
     std::string mzGroupId, intGroupId;
     auto object = m2::ImzMLSpectrumImage::New();
@@ -680,17 +680,17 @@ namespace m2
     object->GetSpectrumType().Format = SpectrumFormat::None;
 
     {
-      m2::Timer t("Parsing imzML");
+      // m2::Timer t("Parsing imzML");
       m2::ImzMLParser::ReadImageMetaData(object);
       m2::ImzMLParser::ReadImageSpectrumMetaData(object);
     }
 
     {
-      m2::Timer t("Initialize placeholder images and spectra");
+      // m2::Timer t("Initialize placeholder images and spectra");
       object->InitializeGeometry();
     }
     {
-      m2::Timer t("Load external data");
+      // m2::Timer t("Load external data");
       EvaluateSpectrumFormatType(object);
       LoadAssociatedData(object);
     }
