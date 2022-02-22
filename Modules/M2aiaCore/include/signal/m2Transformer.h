@@ -16,8 +16,8 @@ See LICENSE.txt for details.
 #pragma once
 #include <M2aiaCoreExports.h>
 #include <functional>
-#include <m2SignalCommon.h>
 #include <math.h>
+#include <signal/m2SignalCommon.h>
 
 namespace m2
 {
@@ -42,10 +42,10 @@ namespace m2
         switch (m_strategy)
         {
           case m2::IntensityTransformationType::Log10:
-            std::transform(start, end, start, [](const auto & a){return std::log10(a);});
+            std::transform(start, end, start, [](const auto & a){return std::log10(a+1);});
             break;
           case m2::IntensityTransformationType::Log2:
-            std::transform(start, end, start, [](const auto & a){return std::log2(a);});
+            std::transform(start, end, start, [](const auto & a){return std::log2(a+1);});
             break;
           case m2::IntensityTransformationType::SquareRoot:
             std::transform(start, end, start, [](const auto & a){return std::sqrt(a);});

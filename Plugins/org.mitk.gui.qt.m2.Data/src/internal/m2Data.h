@@ -92,11 +92,13 @@ public:
   void ApplySettingsToImage(m2::SpectrumImageBase *image);
 
   void InitNormalizationStrategyComboBox();
+  void InitIntensityTransformationStrategyComboBox();
   void InitRangePoolingStrategyComboBox();
   void InitSmoothingStrategyComboBox();
   void InitBaselineCorrectionStrategyComboBox();
   
   m2::NormalizationStrategyType GuiToNormalizationStrategyType();
+  m2::IntensityTransformationType GuiToIntensityTransformationStrategyType();
   m2::RangePoolingStrategyType GuiToRangePoolingStrategyType();  
   m2::SmoothingType GuiToSmoothingStrategyType();  
   m2::BaselineCorrectionType GuiToBaselineCorrectionStrategyType();

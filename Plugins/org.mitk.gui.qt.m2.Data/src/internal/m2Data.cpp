@@ -55,6 +55,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   InitNormalizationStrategyComboBox();
   InitRangePoolingStrategyComboBox();
   InitSmoothingStrategyComboBox();
+  InitIntensityTransformationStrategyComboBox();
 
   auto serviceRef = m2::UIUtils::Instance();
   connect(serviceRef, SIGNAL(UpdateImage(qreal, qreal)), this, SLOT(OnGenerateImageData(qreal, qreal)));
@@ -123,6 +124,27 @@ m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
   auto value = this->Controls()->CBNormalization->currentData().toUInt();
   preferences->PutInt("NormalizationStrategy", value);
   return static_cast<m2::NormalizationStrategyType>(value);
+}
+
+void m2Data::InitIntensityTransformationStrategyComboBox()
+{
+  auto preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto defaultValue =
+    preferences->GetInt("IntensityTransformationStrategy", static_cast<unsigned int>(m2::IntensityTransformationType::None));
+  auto cb = Controls()->CBTransformation;
+  for (unsigned int i = 0; i < m2::IntensityTransformationTypeNames.size(); ++i)
+    cb->addItem(m2::IntensityTransformationTypeNames[i].c_str(), {i});
+  cb->setCurrentIndex(defaultValue);
+}
+
+m2::IntensityTransformationType m2Data::GuiToIntensityTransformationStrategyType()
+{
+  auto preferences =
+    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto value = this->Controls()->CBTransformation->currentData().toUInt();
+  preferences->PutInt("IntensityTransformationStrategy", value);
+  return static_cast<m2::IntensityTransformationType>(value);
 }
 
 void m2Data::InitRangePoolingStrategyComboBox()
@@ -238,6 +260,7 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
     data->SetBaselineCorrectionStrategy(GuiToBaselineCorrectionStrategyType());
     data->SetSmoothingStrategy(GuiToSmoothingStrategyType());
     data->SetRangePoolingStrategy(GuiToRangePoolingStrategyType());
+    data->SetIntensityTransformationStrategy(GuiToIntensityTransformationStrategyType());
 
     if (data->GetSmoothingStrategy() == m2::SmoothingType::Gaussian)
     {

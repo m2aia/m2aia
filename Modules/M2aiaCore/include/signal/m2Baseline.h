@@ -32,6 +32,7 @@ namespace m2
     private:
       BaselineCorrectionType m_strategy;
       int m_hws;
+      const std::function<ItValueType(const ItValueType &, const ItValueType &)> substractBaseline = [](const ItValueType & a, const ItValueType &b){return std::max(ItValueType(0),a-b);};
 
     public:
       void Initialize(BaselineCorrectionType strategy, int hws)
@@ -50,12 +51,11 @@ namespace m2
             m2::Signal::Erosion(start, end, m_hws, baseline_start);
             m2::Signal::Dilation(
               baseline_start, std::next(baseline_start, distance(start, end)), m_hws, baseline_start);
-            std::transform(start, end, baseline_start, start, std::minus<>());
+            std::transform(start, end, baseline_start, start, substractBaseline);
             break;
           case m2::BaselineCorrectionType::Median:
             m2::RunMedian::apply(start, end, m_hws, baseline_start);
-            std::transform(start, end, baseline_start, start, std::minus<>());
-
+            std::transform(start, end, baseline_start, start, substractBaseline);
             break;
           case m2::BaselineCorrectionType::None:
             break;

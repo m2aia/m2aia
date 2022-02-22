@@ -161,6 +161,9 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::GetImagePri
             // ----- Baseline Substraction
             m_BaselineSubstractor(std::begin(ints), std::end(ints), std::begin(baseline));
 
+            // ----- Intensity Transformation
+            m_Transformer(std::begin(ints), std::end(ints));
+
             // ----- Pool the range
             const auto val = Signal::RangePooling<IntensityType>(s, e, p->GetRangePoolingStrategy());
 
