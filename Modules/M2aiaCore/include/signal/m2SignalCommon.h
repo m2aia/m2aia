@@ -63,6 +63,16 @@ namespace m2
 
   const std::array<std::string, 3> BaselineCorrectionTypeNames = {"None", "TopHat", "Median"};
 
+  enum class IntensityTransformationType : unsigned int
+  {
+    None = 0,
+    Log2 = 1,
+    Log10 = 2,
+    SquareRoot = 3
+  };
+
+  const std::array<std::string, 4> IntensityTransformationTypeNames = {"None", "Log2", "Log10", "SquareRoot"};
+
   //////////////////////////////////////////////////////////////////////
   /////////////////// ATTENTION ////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
@@ -86,5 +96,8 @@ namespace m2
 
   const std::map<const std::string, unsigned int> POOLING_MAPPINGS{
     {"None", 0}, {"Mean", 1}, {"Median", 2}, {"Maximum", 3}, {"Sum", 4}};
+
+  const std::map<const std::string, unsigned int> INTENSITYTRANSFORMATION_MAPPINGS{
+    {"None", 0}, {"Log2", 1}, {"Log10", 2}, {"SquareRoot", 3}};
 
 } // namespace m2

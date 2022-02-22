@@ -171,6 +171,7 @@ extern "C"
     const auto norm = m2::Find(params, "normalization", "None"s, pMap);
     const auto pool = m2::Find(params, "pooling", "Maximum"s, pMap);
     const auto tol = m2::Find(params, "tolerance", double(0), pMap);
+    const auto intTransform = m2::Find(params, "transform", "None"s, pMap);
     const auto threads = m2::Find(params, "threads", int(itk::MultiThreader::GetGlobalDefaultNumberOfThreads()), pMap);
 
     for (auto &p : pMap)
