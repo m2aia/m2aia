@@ -32,6 +32,7 @@ See LICENSE.txt for details.
 #include <signal/m2Pooling.h>
 #include <signal/m2RunningMedian.h>
 #include <signal/m2Smoothing.h>
+#include <signal/m2Transformer.h>
 
 void m2::ImzMLSpectrumImage::GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
@@ -159,6 +160,9 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::GetImagePri
 
             // ----- Baseline Substraction
             m_BaselineSubstractor(std::begin(ints), std::end(ints), std::begin(baseline));
+
+            // ----- Intensity Transformation
+            m_Transformer(std::begin(ints), std::end(ints));
 
             // ----- Pool the range
             const auto val = Signal::RangePooling<IntensityType>(s, e, p->GetRangePoolingStrategy());
@@ -544,6 +548,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
   //////////---------------------------
   m_Smoother.Initialize(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize());
   m_BaselineSubstractor.Initialize(p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
+  m_Transformer.Initialize(p->GetIntensityTransformationStrategy());
 
   const auto spectrumType = p->GetSpectrumType();
 
@@ -693,6 +698,8 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
 
           m_Smoother(std::begin(ints), std::end(ints));
           m_BaselineSubstractor(std::begin(ints), std::end(ints), std::begin(baseline));
+          m_Transformer(std::begin(ints), std::end(ints));
+          
 
           std::transform(std::begin(ints), std::end(ints), sumT.at(t).begin(), sumT.at(t).begin(), plus);
           std::transform(std::begin(ints), std::end(ints), skylineT.at(t).begin(), skylineT.at(t).begin(), Maximum);

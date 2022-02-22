@@ -45,6 +45,9 @@ namespace m2
     itkSetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
     itkGetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
 
+    itkSetEnumMacro(IntensityTransformationStrategy, IntensityTransformationType);
+    itkGetEnumMacro(IntensityTransformationStrategy, IntensityTransformationType);
+
     itkSetEnumMacro(RangePoolingStrategy, RangePoolingStrategyType);
     itkGetEnumMacro(RangePoolingStrategy, RangePoolingStrategyType);
 
@@ -189,11 +192,13 @@ namespace m2
     ImageArtifactMapType m_ImageArtifacts;
     SpectrumArtifactMapType m_SpectraArtifacts;    
 
-    BaselineCorrectionType m_BaselineCorrectionStrategy;
-    SmoothingType m_SmoothingStrategy;
+    BaselineCorrectionType m_BaselineCorrectionStrategy = m2::BaselineCorrectionType::None;
+    SmoothingType m_SmoothingStrategy = m2::SmoothingType::None;
+    IntensityTransformationType m_IntensityTransformationStrategy = m2::IntensityTransformationType::None;
 
     SpectrumInfo m_SpectrumType;
     SpectrumInfo m_ExportSpectrumType;
+
 
     /**
      * @brief Vector of ion images associated with this ims file. E.g. peaks or individual picked ion

@@ -28,6 +28,7 @@ set(H_FILES
   include/signal/m2RunningMedian.h
   include/signal/m2SignalCommon.h
   include/signal/m2Smoothing.h
+  include/signal/m2Transformer.h
 )
 
 set(CPP_FILES
