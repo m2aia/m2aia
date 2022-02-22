@@ -1053,9 +1053,14 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::GetYValues(
     // ----- Baseline Substraction
     std::vector<IntensityType> baseline(length);
     m_BaselineSubstractor(std::begin(ys), std::end(ys), std::begin(baseline));
+
+    // ----- Intensity Transformation
+    m_Transformer(std::begin(ys), std::end(ys));
+
     // copy and convert
     yd.resize(length);
     std::copy(std::begin(ys), std::end(ys), std::begin(yd));
+
   }
 }
 
