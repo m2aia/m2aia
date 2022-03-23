@@ -157,39 +157,45 @@ extern "C"
     std::copy(p, p + 3, data);
   }
 
-  M2AIACOREIO_EXPORT m2::sys::ImageHandle *CreateImageHandle(const char *path, const char *paramsPath, bool writeDummy)
+  M2AIACOREIO_EXPORT m2::sys::ImageHandle *CreateImageHandle(const char *path, const char *s, bool writeDummy)
   {
-    auto ifs = std::ifstream(paramsPath);
-    auto params = std::string(std::istreambuf_iterator<char>{ifs}, {});
-    using namespace std::string_literals;
-
-    std::map<std::string, std::string> pMap;
-    const auto bsc_s = m2::Find(params, "baseline-correction", "None"s, pMap);
-    const auto bsc_hw = m2::Find(params, "baseline-correction-hw", int(50), pMap);
-    const auto sm_s = m2::Find(params, "smoothing", "None"s, pMap);
-    const auto sm_hw = m2::Find(params, "smoothing-hw", int(2), pMap);
-    const auto norm = m2::Find(params, "normalization", "None"s, pMap);
-    const auto pool = m2::Find(params, "pooling", "Maximum"s, pMap);
-    const auto tol = m2::Find(params, "tolerance", double(0), pMap);
-    const auto intTransform = m2::Find(params, "transform", "None"s, pMap);
-    const auto threads = m2::Find(params, "threads", int(itk::MultiThreader::GetGlobalDefaultNumberOfThreads()), pMap);
-
-    for (auto &p : pMap)
-    {
-      MITK_INFO << p.first << " " << p.second;
+    std::string parameters;
+    if(itksys::SystemTools::PathExists(s) && itksys::SystemTools::FileExists(s)){
+      auto ifs = std::ifstream(s);
+      parameters = std::string(std::istreambuf_iterator<char>{ifs}, {});
+    }else{
+      parameters = s;
     }
+
+    using namespace std::string_literals;
+    std::map<std::string, std::string> pMap;
+    const auto bsc_s = m2::Find(parameters, "baseline-correction", "None"s, pMap);
+    const auto bsc_hw = m2::Find(parameters, "baseline-correction-hw", int(50), pMap);
+    const auto sm_s = m2::Find(parameters, "smoothing", "None"s, pMap);
+    const auto sm_hw = m2::Find(parameters, "smoothing-hw", int(2), pMap);
+    const auto norm = m2::Find(parameters, "normalization", "None"s, pMap);
+    const auto pool = m2::Find(parameters, "pooling", "Maximum"s, pMap);
+    const auto tol = m2::Find(parameters, "tolerance", double(0), pMap);
+    const auto intTransform = m2::Find(parameters, "transform", "None"s, pMap);
+    const auto threads = m2::Find(parameters, "threads", int(itk::MultiThreader::GetGlobalDefaultNumberOfThreads()), pMap);
+
+    MITK_INFO << "---------------------";
+    MITK_INFO << "Image initialization:";
+    MITK_INFO << "---------------------";
+    for (auto &p : pMap)
+      MITK_INFO << "\t" << p.first << " " << p.second;
 
     if (writeDummy)
     {
       using namespace itksys;
       auto cwd = SystemTools::GetCurrentWorkingDirectory();
-      auto path = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({cwd, "/m2PeakPicking.txt.sample"}));
+      auto path = SystemTools::ConvertToOutputPath(s);
       std::ofstream ofs(path);
       for (auto kv : pMap)
       {
         ofs << "(" << kv.first << " " << kv.second << ")\n";
       }
-      MITK_INFO << "A dummy parameter file was written to " << path;
+      MITK_INFO << "A sample parameter file was written to " << path;
       return nullptr;
     }
 
