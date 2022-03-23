@@ -29,7 +29,6 @@ namespace m2
     {
     public:
       m2::ImzMLSpectrumImage::Pointer m_Image;
-      std::ifstream m_SpectrumIOFileHandle;
     };
 
   } // namespace sys
@@ -157,8 +156,45 @@ extern "C"
     std::copy(p, p + 3, data);
   }
 
-  M2AIACOREIO_EXPORT m2::sys::ImageHandle *CreateImageHandle(const char *path, const char *s, bool writeDummy)
+
+  M2AIACOREIO_EXPORT char * GetMetaDataDictionary(m2::sys::ImageHandle *handle)
   {
+    
+    auto v = handle->m_Image->GetPropertyList();
+    std::string s;
+
+    auto keys = v->GetPropertyKeys();
+    for(auto k : keys){
+      std::string vs;
+      v->GetStringProperty(k.c_str(),vs);
+      s += k;
+      if(!vs.empty())
+        s += " : " + vs;
+      s += "\n";
+    }
+
+
+    auto data = new char[s.length() + 1];
+    std::copy(s.begin(),s.end(), data);
+    data[s.length()] = '\0';
+    return data;
+  }
+
+  M2AIACOREIO_EXPORT void DestroyCharBuffer(std::string * p)
+  {
+    delete p;
+  }
+
+  
+
+  M2AIACOREIO_EXPORT m2::sys::ImageHandle *CreateImageHandle(const char *path, const char *s)
+  {
+
+    if(!itksys::SystemTools::FileExists(path)){
+      MITK_ERROR << "The given path does not exist!\n\t" << std::string(path);
+      return nullptr;
+    }
+
     std::string parameters;
     if(itksys::SystemTools::PathExists(s) && itksys::SystemTools::FileExists(s)){
       auto ifs = std::ifstream(s);
@@ -179,25 +215,11 @@ extern "C"
     const auto intTransform = m2::Find(parameters, "transform", "None"s, pMap);
     const auto threads = m2::Find(parameters, "threads", int(itk::MultiThreader::GetGlobalDefaultNumberOfThreads()), pMap);
 
-    MITK_INFO << "---------------------";
-    MITK_INFO << "Image initialization:";
-    MITK_INFO << "---------------------";
-    for (auto &p : pMap)
-      MITK_INFO << "\t" << p.first << " " << p.second;
-
-    if (writeDummy)
-    {
-      using namespace itksys;
-      auto cwd = SystemTools::GetCurrentWorkingDirectory();
-      auto path = SystemTools::ConvertToOutputPath(s);
-      std::ofstream ofs(path);
-      for (auto kv : pMap)
-      {
-        ofs << "(" << kv.first << " " << kv.second << ")\n";
-      }
-      MITK_INFO << "A sample parameter file was written to " << path;
-      return nullptr;
-    }
+    // MITK_INFO << "---------------------";
+    // MITK_INFO << "Image initialization:";
+    // MITK_INFO << "---------------------";
+    // for (auto &p : pMap)
+    //   MITK_INFO << "\t" << p.first << " " << p.second;
 
     m2::ImzMLImageIO io;
     mitk::AbstractFileReader *reader = &io;
@@ -218,8 +240,8 @@ extern "C"
     sImage->SetNumberOfThreads(threads);
     sImage->InitializeImageAccess();
     sImage->SetTolerance(tol);
-    const auto &source = sImage->GetImzMLSpectrumImageSourceList().front();
-    storage->m_SpectrumIOFileHandle.open(source.m_BinaryDataPath, std::ios::binary);
+    // const auto &source = sImage->GetImzMLSpectrumImageSourceList().front();
+    // storage->m_SpectrumIOFileHandle.open(source.m_BinaryDataPath, std::ios::binary);
 
     return storage;
   }
