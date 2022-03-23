@@ -18,6 +18,26 @@ bool m2::ElxRegistrationHelper::CheckDimensions(const mitk::Image *image) const
   return dims == 3 || dims == 2;
 }
 
+void m2::ElxRegistrationHelper::SymlinkOrWriteNrrd(mitk::Image::Pointer image, std::string targetPath) const{
+  std::string originalImageFilePath;
+  image->GetPropertyList()->GetStringProperty("MITK.IO.reader.inputlocation", originalImageFilePath);
+  auto convertedFixedImage = GetSlice2DData(image);
+
+  if (convertedFixedImage == image &&                                   // check if no conversion
+      itksys::SystemTools::FileExists(originalImageFilePath) &&              // file is still available
+      itksys::SystemTools::GetFilenameLastExtension(originalImageFilePath).compare(".nrrd") == 0 &&
+      itksys::SystemTools::CreateSymlink(originalImageFilePath, targetPath) //  check if symlinking pass
+  )
+  {
+    m_StatusFunction("Image linked: " + originalImageFilePath + " -> " + targetPath);
+  }
+  else
+  {
+    mitk::IOUtil::Save(convertedFixedImage, targetPath);
+    m_StatusFunction("Image written: " + targetPath);
+  }
+}
+
 mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image *image) const
 {
   if (image)
@@ -268,40 +288,14 @@ void m2::ElxRegistrationHelper::GetRegistration()
   const auto movingResultPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "result.0.nrrd"});
   const auto movingMaskResultPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "result.nrrd"});
   const auto movingPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "moving.nrrd"});
+  const auto fixedPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "fixed.nrrd"});
   auto convertedMovingImage = GetSlice2DData(m_MovingImage);
 
-  m_MovingImage->GetPropertyList()->GetStringProperty("MITK.IO.reader.inputlocation", inputLocationMovingImage);
-  if (convertedMovingImage == m_MovingImage &&                                 // check if no conversion
-      itksys::SystemTools::FileExists(inputLocationMovingImage) &&             // file is still available
-      itksys::SystemTools::CreateSymlink(inputLocationMovingImage, movingPath) //  check if symlinking pass
-  )
-  {
-    m_StatusFunction("Moving image linked: " + movingPath);
-  }
-  else
-  {
-    mitk::IOUtil::Save(convertedMovingImage, movingPath);
-    m_StatusFunction("Moving image written: " + movingPath);
-  }
 
-  std::string inputLocationFixedImage;
-  auto convertedFixedImage = GetSlice2DData(m_FixedImage);
-  const auto fixedPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "fixed.nrrd"});
-  m_FixedImage->GetPropertyList()->GetStringProperty("MITK.IO.reader.inputlocation", inputLocationFixedImage);
+  SymlinkOrWriteNrrd(m_MovingImage, movingPath);
+  SymlinkOrWriteNrrd(m_FixedImage, fixedPath);
 
-  if (convertedFixedImage == m_FixedImage &&                                   // check if no conversion
-      itksys::SystemTools::FileExists(inputLocationFixedImage) &&              // file is still available
-      itksys::SystemTools::CreateSymlink(inputLocationFixedImage, fixedPath) //  check if symlinking pass
-  )
-  {
-    m_StatusFunction("Fixed image linked: " + fixedPath);
-  }
-  else
-  {
-    mitk::IOUtil::Save(convertedFixedImage, fixedPath);
-    m_StatusFunction("Fixed image written: " + fixedPath);
-  }
-
+  
   // START THE REGISTRATION
   Poco::Process::Args args;
   args.insert(args.end(), {"-f", fixedPath});

@@ -55,6 +55,7 @@ namespace m2
     mitk::Image::Pointer GetSlice3DData(const mitk::Image *) const;
     void CreateWorkingDirectory() const;
     void RemoveWorkingDirectory() const;
+    void SymlinkOrWriteNrrd(mitk::Image::Pointer image, std::string targetPath) const;
 
     std::function<void(std::string)> m_StatusFunction = [](std::string){};
     
