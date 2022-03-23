@@ -417,7 +417,7 @@ m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLS
   const auto &B_sources = B->GetImzMLSpectrumImageSourceList();
 
   C_sources = A_sources;
-  MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << "Merge sources";
+  // MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << "Merge sources";
 
   std::transform(std::begin(B_sources),
                  std::end(B_sources),
@@ -451,9 +451,9 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeG
                                                  p->GetPropertyValue<unsigned>("max count of pixel y"),
                                                  p->GetPropertyValue<unsigned>("max count of pixel z")};
 
-  std::array<double, 3> imageOrigin = {p->GetPropertyValue<double>("origin x") * 0.001,
-                                       p->GetPropertyValue<double>("origin y") * 0.001,
-                                       p->GetPropertyValue<double>("origin z") * 0.001};
+  std::array<double, 3> imageOrigin = {p->GetPropertyValue<double>("origin x"),
+                                       p->GetPropertyValue<double>("origin y"),
+                                       p->GetPropertyValue<double>("origin z")};
 
   using ImageType = itk::Image<m2::DisplayImagePixelType, 3>;
   auto itkIonImage = ImageType::New();
@@ -552,7 +552,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
 
   const auto spectrumType = p->GetSpectrumType();
 
-  MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << m2::to_string(spectrumType);
+  // MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << m2::to_string(spectrumType);
 
   if (spectrumType.Format == m2::SpectrumFormat::ProcessedProfile)
   {
@@ -608,7 +608,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
 template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeImageAccessProcessedProfile()
 {
-  MITK_INFO("m2::ImzMLSpectrumImage") << "Start InitializeImageAccessProcessedProfile";
+  // MITK_INFO("m2::ImzMLSpectrumImage") << "Start InitializeImageAccessProcessedProfile";
   InitializeImageAccessProcessedData();
 }
 
@@ -643,7 +643,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
   const auto Maximum = [](const auto &a, const auto &b) { return a > b ? a : b; };
   const auto plus = std::plus<>();
 
-  m2::Timer t("Initialize image");
+  // m2::Timer t("Initialize image");
   for (auto &source : p->GetImzMLSpectrumImageSourceList())
   {
     auto &spectra = source.m_Spectra;
@@ -699,7 +699,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
           m_Smoother(std::begin(ints), std::end(ints));
           m_BaselineSubstractor(std::begin(ints), std::end(ints), std::begin(baseline));
           m_Transformer(std::begin(ints), std::end(ints));
-          
+
 
           std::transform(std::begin(ints), std::end(ints), sumT.at(t).begin(), sumT.at(t).begin(), plus);
           std::transform(std::begin(ints), std::end(ints), skylineT.at(t).begin(), skylineT.at(t).begin(), Maximum);
@@ -832,7 +832,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
 template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeImageAccessProcessedCentroid()
 {
-  MITK_INFO("m2::ImzMLSpectrumImage") << "Start InitializeImageAccessProcessedCentroid";
+  // MITK_INFO("m2::ImzMLSpectrumImage") << "Start InitializeImageAccessProcessedCentroid";
   InitializeImageAccessProcessedData();
 }
 
@@ -1138,12 +1138,12 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::GetYValues(
 
 m2::ImzMLSpectrumImage::~ImzMLSpectrumImage()
 {
-  MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << " destroyed!";
+  // MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << " destroyed!";
 }
 
 m2::ImzMLSpectrumImage::ImzMLSpectrumImage() : m2::SpectrumImageBase()
 {
-  MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << " created!";
+  // MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << " created!";
   m_SpectrumType.XAxisLabel = "m/z";
   m_ExportSpectrumType.XAxisLabel = "m/z";
 }

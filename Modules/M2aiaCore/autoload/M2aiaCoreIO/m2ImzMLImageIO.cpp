@@ -662,7 +662,7 @@ namespace m2
 
   std::vector<mitk::BaseData::Pointer> ImzMLImageIO::DoRead()
   {
-    // MITK_INFO << "Start reading imzML...";
+    
 
     std::string mzGroupId, intGroupId;
     auto object = m2::ImzMLSpectrumImage::New();

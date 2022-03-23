@@ -161,14 +161,14 @@ namespace m2
 
       auto e = str.find(end, p);
       auto val = str.substr(s + 1, e - s - 1);
+      map[searchString] = val;  
       std::stringstream buffer(val);
 
       if (std::is_same<decltype(defaultValue), bool>::value)
         buffer >> std::boolalpha >> converted;
       else
         buffer >> converted;
-
-      MITK_DEBUG << searchString << " " << converted;
+      
       return converted;
     }
 
@@ -179,7 +179,6 @@ namespace m2
       buffer << defaultValue;
 
     map[searchString] = buffer.str();
-    MITK_WARN << "Using default value \t\"(" << searchString << " " << map[searchString] << ")\"";
     return defaultValue;
   };
 

@@ -246,7 +246,7 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
   skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));
   sumT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));
 
-  m2::Timer t("Initialize image");
+  // m2::Timer t("Initialize image");
 
   m2::Process::Map(
     p->GetSpectra().size(),
