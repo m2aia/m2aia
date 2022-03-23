@@ -236,12 +236,12 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
       accession_map["IMS:1000053"] = [&](const std::string &line) { // origin x
         attributValue(line, "value", value);
-        data->SetPropertyValue<double>("origin x", std::stoul(value));
+        data->SetPropertyValue<double>("origin x", m2::MicroMeterToMilliMeter(std::stol(value)));
       };
 
       accession_map["IMS:1000054"] = [&](const std::string &line) { // origin y
         attributValue(line, "value", value);
-        data->SetPropertyValue<double>("origin y", std::stoul(value));
+        data->SetPropertyValue<double>("origin y", m2::MicroMeterToMilliMeter(std::stol(value)));
       };
 
       // origin size z
@@ -271,13 +271,9 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
       // -------- PROCESS FILE --------
       {
-        unsigned lineCount = 1;
         while (!f.eof())
         {
           std::getline(f, line); // read the next line
-          if (lineCount == 68)
-            MITK_INFO << 40;
-          ++lineCount;
 
           // assuming spectra meta data after ImzML meta data.
           if (line.find("run") != std::string::npos)
@@ -352,7 +348,7 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
         data->SetPropertyValue("pixel size x", m2::MicroMeterToMilliMeter(50));
         data->SetPropertyValue("pixel size y", m2::MicroMeterToMilliMeter(50));
         data->SetPropertyValue("pixel size info", std::string("Pixel size x and y are default values, due to missing imzTags IMS:1000046 and IMS:1000047!"));
-        MITK_WARN << "No pixel size found, set x and y spacing to 10 microns!";
+        MITK_WARN << "No pixel size found, set x and y spacing to 50 microns!";
       }
      
 
@@ -655,12 +651,12 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
       std::set<unsigned int> uniques;
       if (_ScilsTag3DCoordinateUsed)
       { // check z world uniques
-        MITK_INFO << "SciLs 3D tag found";
+        // MITK_INFO << "SciLs 3D tag found";
         for (auto &s : spectra)
           uniques.insert(s.world.z);
 
-        MITK_INFO << "\t" << uniques.size() << " unique z positions found:";
-        std::copy(std::begin(uniques), std::end(uniques), std::ostream_iterator<unsigned int>{std::cout, ", "});
+        // MITK_INFO << "\t" << uniques.size() << " unique z positions found:";
+        // std::copy(std::begin(uniques), std::end(uniques), std::ostream_iterator<unsigned int>{std::cout, ", "});
 
         std::map<unsigned, unsigned> worldToIndexMap;
         unsigned i = 0;
@@ -676,14 +672,14 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
           diffs_uniques = diffs;
           diffs_uniques.sort();
           diffs_uniques.erase(std::unique(std::begin(diffs_uniques), std::end(diffs_uniques)), std::end(diffs_uniques));
-          MITK_INFO << "\t" << diffs_uniques.size() << " unique z distances found:";
-          std::copy(
-            std::begin(diffs_uniques), std::end(diffs_uniques), std::ostream_iterator<unsigned>{std::cout, ", "});
+          // MITK_INFO << "\t" << diffs_uniques.size() << " unique z distances found:";
+          // std::copy(
+          //   std::begin(diffs_uniques), std::end(diffs_uniques), std::ostream_iterator<unsigned>{std::cout, ", "});
           unsigned maxCount = 0;
           for (auto &uDiff : diffs_uniques)
           {
             unsigned count = std::count(std::begin(diffs), std::end(diffs), uDiff);
-            MITK_INFO << "Different values " << uDiff << " were found " << count << " times.";
+            // MITK_INFO << "Different values " << uDiff << " were found " << count << " times.";
             if (maxCount < count)
             {
               maxCount = count;
