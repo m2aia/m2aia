@@ -162,7 +162,6 @@ extern "C"
     
     auto v = handle->m_Image->GetPropertyList();
     std::string s;
-
     auto keys = v->GetPropertyKeys();
     for(auto k : keys){
       std::string vs;
@@ -172,9 +171,8 @@ extern "C"
         s += " : " + vs;
       s += "\n";
     }
-
-
     auto data = new char[s.length() + 1];
+  
     std::copy(s.begin(),s.end(), data);
     data[s.length()] = '\0';
     return data;
@@ -233,7 +231,7 @@ extern "C"
 
     sImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(m2::SMOOTHING_MAPPINGS.at(sm_s)));
     sImage->SetSmoothingHalfWindowSize(sm_hw);
-
+    sImage->SetIntensityTransformationStrategy(static_cast<m2::IntensityTransformationType>(m2::INTENSITYTRANSFORMATION_MAPPINGS.at(intTransform)));
     sImage->SetNormalizationStrategy(static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(norm)));
     sImage->SetRangePoolingStrategy(static_cast<m2::RangePoolingStrategyType>(m2::POOLING_MAPPINGS.at(pool)));
 
