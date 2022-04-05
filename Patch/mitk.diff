@@ -768,28 +768,7 @@ index cfecd85744..8c40ae6d85 100644
  {
  }
  
-diff --git a/Modules/CppMicroServices/third_party/jsoncpp.cpp b/Modules/CppMicroServices/third_party/jsoncpp.cpp
-index e4d9ea08a6..d029e60b4a 100644
---- a/Modules/CppMicroServices/third_party/jsoncpp.cpp
-+++ b/Modules/CppMicroServices/third_party/jsoncpp.cpp
-@@ -1725,7 +1725,7 @@ Value::CZString::operator =( const CZString &other )
- bool
- Value::CZString::operator<( const CZString &other ) const
- {
--   if ( cstr_ )
-+   if ( cstr_ && other.cstr_)
-       return strcmp( cstr_, other.cstr_ ) < 0;
-    return index_ < other.index_;
- }
-@@ -1733,7 +1733,7 @@ Value::CZString::operator<( const CZString &other ) const
- bool
- Value::CZString::operator==( const CZString &other ) const
- {
--   if ( cstr_ )
-+   if ( cstr_ && other.cstr_)
-       return strcmp( cstr_, other.cstr_ ) == 0;
-    return index_ == other.index_;
- }
+
 diff --git a/Modules/ImageStatistics/mitkImageStatisticsPredicateHelper.cpp b/Modules/ImageStatistics/mitkImageStatisticsPredicateHelper.cpp
 index 623924f0b3..f549e3610a 100644
 --- a/Modules/ImageStatistics/mitkImageStatisticsPredicateHelper.cpp

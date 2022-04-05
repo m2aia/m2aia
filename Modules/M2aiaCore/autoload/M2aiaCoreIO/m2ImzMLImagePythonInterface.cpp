@@ -42,7 +42,7 @@ extern "C"
     handle->m_Image->GetImage(mz, tol, nullptr, handle->m_Image);
     auto w = handle->m_Image->GetDimension(0);
     auto h = handle->m_Image->GetDimension(1);
-    mitk::ImageReadAccessor acc(handle->m_Image);
+    mitk::ImageReadAccessor acc(handle->m_Image.GetPointer());
     std::copy((m2::DisplayImagePixelType *)(acc.GetData()),
               (m2::DisplayImagePixelType *)(acc.GetData()) + w * h,
               data);
@@ -53,7 +53,7 @@ extern "C"
     handle->m_Image->GetImage(mz, tol, nullptr, handle->m_Image);
     auto w = handle->m_Image->GetDimension(0);
     auto h = handle->m_Image->GetDimension(1);
-    mitk::ImageReadAccessor acc(handle->m_Image);
+    mitk::ImageReadAccessor acc(handle->m_Image.GetPointer());
     std::copy((m2::DisplayImagePixelType *)(acc.GetData()),
               (m2::DisplayImagePixelType *)(acc.GetData()) + w * h,
               data);
@@ -211,7 +211,7 @@ extern "C"
     const auto pool = m2::Find(parameters, "pooling", "Maximum"s, pMap);
     const auto tol = m2::Find(parameters, "tolerance", double(0), pMap);
     const auto intTransform = m2::Find(parameters, "transform", "None"s, pMap);
-    const auto threads = m2::Find(parameters, "threads", int(itk::MultiThreader::GetGlobalDefaultNumberOfThreads()), pMap);
+    const auto threads = m2::Find(parameters, "threads", int(itk::MultiThreaderBase::GetGlobalDefaultNumberOfThreads()), pMap);
 
     // MITK_INFO << "---------------------";
     // MITK_INFO << "Image initialization:";
@@ -228,7 +228,6 @@ extern "C"
 
     sImage->SetBaselineCorrectionStrategy(static_cast<m2::BaselineCorrectionType>(m2::BASECOR_MAPPINGS.at(bsc_s)));
     sImage->SetBaseLineCorrectionHalfWindowSize(bsc_hw);
-
     sImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(m2::SMOOTHING_MAPPINGS.at(sm_s)));
     sImage->SetSmoothingHalfWindowSize(sm_hw);
     sImage->SetIntensityTransformationStrategy(static_cast<m2::IntensityTransformationType>(m2::INTENSITYTRANSFORMATION_MAPPINGS.at(intTransform)));

@@ -14,6 +14,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
+#include <itkMultiThreaderBase.h>
 #include <M2aiaCoreExports.h>
 #include <itkMetaDataObject.h>
 #include <m2CoreCommon.h>
@@ -185,7 +186,7 @@ namespace m2
 
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
-    unsigned int m_NumberOfThreads = itk::MultiThreader::GetGlobalDefaultNumberOfThreads();
+    unsigned int m_NumberOfThreads = itk::MultiThreaderBase::GetGlobalMaximumNumberOfThreads();
     // unsigned int m_NumberOfThreads = 2;
     PeaksVectorType m_Peaks;
 
@@ -223,7 +224,7 @@ namespace m2
     SpectrumArtifactVectorType m_XAxis;
   };
 
-  itkEventMacroDeclaration(PeakListModifiedEvent, itk::AnyEvent)
+  itkEventMacroDeclaration(PeakListModifiedEvent, itk::AnyEvent);
   
 
 } // namespace m2

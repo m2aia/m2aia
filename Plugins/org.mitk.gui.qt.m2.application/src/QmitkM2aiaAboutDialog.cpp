@@ -20,7 +20,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QPushButton>
 #include <itkConfigure.h>
 #include <mitkVersion.h>
-#include <vtkConfigure.h>
 #include <vtkVersionMacros.h>
 #include <mitkM2aiaVersion.h>
 

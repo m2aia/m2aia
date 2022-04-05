@@ -17,7 +17,6 @@ See LICENSE.txt for details.
 
 #include <M2aiaDimensionReductionExports.h>
 #include <eigen3/Eigen/Dense>
-#include <itkBarrier.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2MassSpecVisualizationFilter.h>
 #include <mitkImage.h>

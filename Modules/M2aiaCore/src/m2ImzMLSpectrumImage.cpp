@@ -14,7 +14,6 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 
-#include <itkBarrier.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2Process.hpp>
 #include <m2SpectrumImageProcessor.h>
@@ -852,12 +851,6 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
     std::vector<std::vector<double>> yMaxT(T, std::vector<double>(binsN, 0));
     std::vector<std::vector<unsigned int>> hT(T, std::vector<unsigned int>(binsN, 0));
 
-    auto barrier = itk::Barrier::New();
-    barrier->Initialize(T);
-
-    double max = std::numeric_limits<double>::min();
-    double min = std::numeric_limits<double>::max();
-    double binSize = 1;
     const auto normalizationStrategy = p->GetNormalizationStrategy();
     auto accNorm =
       std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
@@ -867,11 +860,8 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
                      T,
                      [&](unsigned int t, unsigned int a, unsigned int b)
                      {
-                       std::ifstream f(source.m_BinaryDataPath, std::ios::binary);
-
+                      std::ifstream f(source.m_BinaryDataPath, std::ios::binary);
                        std::vector<MassAxisType> mzs;
-                       std::vector<IntensityType> ints;
-
                        std::list<m2::Peak> peaks, tempList;
                        // find x min/max
                        for (unsigned i = a; i < b; i++)
@@ -884,17 +874,26 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
                          xMax[t] = std::max(xMax[t], (double)mzs.back());
                        }
 
-                       barrier->Wait();
+                     });
 
-                       if (t == 0)
-                       {
-                         // find overall min/max
-                         max = *std::max_element(std::begin(xMax), std::end(xMax));
-                         min = *std::min_element(std::begin(xMin), std::end(xMin));
-                         binSize = (max - min) / double(binsN);
-                       }
+                       
+    // find overall min/max
+    double binSize = 1;
+    double max = std::numeric_limits<double>::min();
+    double min = std::numeric_limits<double>::max();
 
-                       barrier->Wait();
+    max = *std::max_element(std::begin(xMax), std::end(xMax));
+    min = *std::min_element(std::begin(xMin), std::end(xMin));
+    binSize = (max - min) / double(binsN);
+
+  
+    m2::Process::Map(spectra.size(),
+                     T,
+                     [&](unsigned int t, unsigned int a, unsigned int b)
+                     {
+                       std::ifstream f(source.m_BinaryDataPath, std::ios::binary);
+                       std::vector<MassAxisType> mzs;
+                       std::vector<IntensityType> ints;
 
                        for (unsigned i = a; i < b; i++)
                        {

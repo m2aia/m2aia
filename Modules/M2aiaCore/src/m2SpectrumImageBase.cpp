@@ -22,7 +22,7 @@ See LICENSE.txt for details.
 
 
 namespace m2{
-  itkEventMacroDefinition(PeakListModifiedEvent, itk::AnyEvent)
+  itkEventMacroDefinition(PeakListModifiedEvent, itk::AnyEvent);
 }
 
 void m2::SpectrumImageBase::PeakListModified(){

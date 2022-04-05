@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
   const auto norm = m2::Find(params, "normalization", "None"s, pMap);
   const auto pool = m2::Find(params, "pooling", "Maximum"s, pMap);
   const auto tol = m2::Find(params, "tolerance", double(0), pMap);
-  const auto threads = m2::Find(params, "threads", int(itk::MultiThreader::GetGlobalDefaultNumberOfThreads()), pMap);
+  const auto threads = m2::Find(params, "threads", int(itk::MultiThreaderBase::GetGlobalDefaultNumberOfThreads()), pMap);
   const auto binning_tol = m2::Find(params, "binning-tolerance", double(0), pMap);
   const auto SNR = m2::Find(params, "SNR", double(1.5), pMap);
   const auto peakpicking_hw = m2::Find(params, "peakpicking-hw", int(5), pMap);

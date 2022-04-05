@@ -14,9 +14,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-
-#ifndef QMITKWelcomePERSPECTIVE_H_
-#define QMITKWelcomePERSPECTIVE_H_
+#pragma once
 
 #include <berryIPerspectiveFactory.h>
 
@@ -33,4 +31,4 @@ public:
   void CreateInitialLayout(berry::IPageLayout::Pointer /*layout*/) override;
 };
 
-#endif /* QMITKWelcomePERSPECTIVE_H_ */
+
