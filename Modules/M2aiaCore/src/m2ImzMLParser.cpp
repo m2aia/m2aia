@@ -159,7 +159,7 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
     };
 
     {
-      // ------ Process a referenceableParameter Group 
+      // ------ Process a referenceableParameter Group
       context_map["referenceableParamGroup"] = [&](const std::string &line)
       {
         std::string refGroupID = "";
@@ -177,7 +177,6 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
           if (gLine.find("MS:1000521") != npos || gLine.find("MS:1000523") != npos)
             attributValue(gLine, "name", name);
-          
 
           if (gLine.find("MS:1000514") != npos)
           {
@@ -191,14 +190,15 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
             targetKey = "intensityGroupName";
           }
 
-          if(gLine.find("MS:1000127") != npos || gLine.find("MS:1000128") != npos){
+          if (gLine.find("MS:1000127") != npos || gLine.find("MS:1000128") != npos)
+          {
             std::string spectype;
             attributValue(gLine, "name", spectype);
-            data->SetPropertyValue<std::string>(spectype, "");  
+            data->SetPropertyValue<std::string>(spectype, "");
           }
         }
-        if(!targetKey.empty()){
-
+        if (!targetKey.empty())
+        {
           data->SetPropertyValue<std::string>(targetKey, refGroupName);
           data->SetPropertyValue<std::string>(refGroupName, refGroupID);
           data->SetPropertyValue<unsigned>(refGroupName + " value type (bytes)", precisionDict[name]);
@@ -226,22 +226,26 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
         attributValue(line, "value", value);
         data->SetPropertyValue<unsigned>("max count of pixel y", std::stoul(value));
       };
-      accession_map["IMS:1000044"] = ValueToUnsignedIntProperty;                     // max dim x
-      accession_map["IMS:1000045"] = ValueToUnsignedIntProperty;                     // max dim y
-      accession_map["IMS:1000046"] = ValueToDoubleProperty;                          // pixel size x
-      accession_map["IMS:1000047"] = ValueToDoubleProperty;                          // pixel size y
-      accession_map["IMS:X1"] = accession_map["M2:0000001"] = ValueToDoubleProperty; // origin x
-      accession_map["IMS:X2"] = accession_map["M2:0000002"] = ValueToDoubleProperty; // origin y
-      accession_map["IMS:X3"] = accession_map["M2:0000003"] = ValueToDoubleProperty; // origin z
+      accession_map["IMS:1000044"] = ValueToUnsignedIntProperty; // max dim x
+      accession_map["IMS:1000045"] = ValueToUnsignedIntProperty; // max dim y
+      accession_map["IMS:1000046"] = ValueToDoubleProperty;      // pixel size x
+      accession_map["IMS:1000047"] = ValueToDoubleProperty;      // pixel size y
 
-      accession_map["IMS:1000053"] = [&](const std::string &line) { // origin x
-        attributValue(line, "value", value);
-        data->SetPropertyValue<double>("origin x", m2::MicroMeterToMilliMeter(std::stol(value)));
-      };
+      accession_map["IMS:X1"] = accession_map["M2:0000001"] =
+        accession_map["IMS:1000053"] = [&](const std::string &line) { // origin x
+          attributValue(line, "value", value);
+          data->SetPropertyValue<double>("origin x", m2::MicroMeterToMilliMeter(std::stol(value)));
+        };
 
-      accession_map["IMS:1000054"] = [&](const std::string &line) { // origin y
+      accession_map["IMS:X2"] = accession_map["M2:0000002"] =
+        accession_map["IMS:1000054"] = [&](const std::string &line) { // origin y
+          attributValue(line, "value", value);
+          data->SetPropertyValue<double>("origin y", m2::MicroMeterToMilliMeter(std::stol(value)));
+        };
+
+      accession_map["IMS:X3"] = accession_map["M2:0000003"] = [&](const std::string &line) { // origin y
         attributValue(line, "value", value);
-        data->SetPropertyValue<double>("origin y", m2::MicroMeterToMilliMeter(std::stol(value)));
+        data->SetPropertyValue<double>("origin z", m2::MicroMeterToMilliMeter(std::stol(value)));
       };
 
       // origin size z
@@ -343,14 +347,16 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
         data->SetPropertyValue("pixel size x", pixelSizeXInMilliMetre);
         data->SetPropertyValue("pixel size y", pixelSizeYInMilliMetre);
       }
-      
-      if (data->GetPropertyValue<double>("pixel size y") <= 0 && data->GetPropertyValue<double>("pixel size x") <= 0){
+
+      if (data->GetPropertyValue<double>("pixel size y") <= 0 && data->GetPropertyValue<double>("pixel size x") <= 0)
+      {
         data->SetPropertyValue("pixel size x", m2::MicroMeterToMilliMeter(50));
         data->SetPropertyValue("pixel size y", m2::MicroMeterToMilliMeter(50));
-        data->SetPropertyValue("pixel size info", std::string("Pixel size x and y are default values, due to missing imzTags IMS:1000046 and IMS:1000047!"));
+        data->SetPropertyValue(
+          "pixel size info",
+          std::string("Pixel size x and y are default values, due to missing imzTags IMS:1000046 and IMS:1000047!"));
         MITK_WARN << "No pixel size found, set x and y spacing to 50 microns!";
       }
-     
 
       if (data->GetPropertyValue<double>("pixel size z") < 0)
       {
