@@ -165,7 +165,7 @@ void m2PeakPickingView::OnStartPeakPicking()
         xs = imageBase->GetXAxis();
 
         auto mad = m2::Signal::mad(ys);
-        auto & peaks = imageBase->GetPeaks();
+        auto &peaks = imageBase->GetPeaks();
         peaks.clear();
         m2::Signal::localMaxima(std::begin(ys),
                                 std::end(ys),
@@ -321,26 +321,34 @@ void m2PeakPickingView::OnStartTSNE()
       // const auto &peakList = imageBase->GetPeaks();
       size_t index = 0;
 
-      itk::VectorImage<m2::DisplayImagePixelType, 3>::Pointer pcaImageItk;
-      mitk::CastToItkImage(pcaImage, pcaImageItk);
-
-      auto adaptor = VectorImageAdaptorType::New();
+      mitk::ImageReadAccessor racc(pcaImage);
+      auto *inputData = static_cast<const DisplayImageType::PixelType *>(racc.GetData());
 
       std::vector<mitk::Image::Pointer> bufferedImages(pcaComponents);
-      unsigned int i = 0;
+      unsigned int n = pcaImage->GetDimensions()[0] * pcaImage->GetDimensions()[1] * pcaImage->GetDimensions()[2];
       for (auto &I : bufferedImages)
       {
-        adaptor->SetExtractComponentIndex(i++);
-        adaptor->SetImage(pcaImageItk);
-        auto caster = itk::ShrinkImageFilter<VectorImageAdaptorType, DisplayImageType>::New();
-        caster->SetInput(adaptor);
+        I = mitk::Image::New();
+        I->Initialize(imageBase);
+        {
+          mitk::ImageWriteAccessor acc(I);
+          auto outCData = static_cast<DisplayImageType::PixelType *>(acc.GetData());
+          for (unsigned int k = 0; k < n; ++k)
+            *(outCData+k) = *(inputData + (k * pcaComponents) + index);
+        }
+
+        DisplayImageType::Pointer cImage;
+        mitk::CastToItkImage(I, cImage);
+
+        auto caster = itk::ShrinkImageFilter<DisplayImageType, DisplayImageType>::New();
+        caster->SetInput(cImage);
         caster->SetShrinkFactor(0, m_Controls.tsne_shrink->value());
         caster->SetShrinkFactor(1, m_Controls.tsne_shrink->value());
         caster->SetShrinkFactor(2, 1);
         caster->Update();
 
+        // Buffer the image
         mitk::CastToMitkImage(caster->GetOutput(), I);
-
         filter->SetInput(index, I);
         ++index;
       }
