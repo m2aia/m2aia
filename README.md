@@ -1,14 +1,27 @@
-![M2aia Logo][logo]
+<a href="https://m2aia.de/">
+  <img src="https://github.com/jtfcordes/M2aia/raw/master/Applications/M2aiaWorkbench/icons/icon.png" alt="M2aia logo" title="M2aia" align="right" height="80" />
+</a>
 
-M²aia (MSI applications for interactive analysis in MITK, [biotools:m2aia][biotools-m2aia], [RRID:SCR_019324][scicrunch-m2aia] is a software tool enabling interactive signal processing and visualisation of mass spectrometry imaging (MSI) datasets. M²aia extends the open source Medical Imaging and Interaction Toolkit ([MITK][mitk]) and provides powerful methods that the MSI community can adopt, exploit and improve further.
+# Welcome to M²aia: a desktop application for mass spectrometry imaging.
 
-More information, downloads, including protocols and build instructions, can be found [here][m2aia].
-*****
+M²aia is open source software, based on the well-known [Medical Imaging Interaction Toolkit (MITK)](https://mitk.org/). The software enables interactive signal-processing and visualization of mass spectrometry imaging (MSI) datasets.
+
+
+## More information ##
+
+More [information][m2aia], [protocols][m2aia], [build instructions][m2aia-build] and [downloads][download] can be found on the [https://m2aia.de][m2aia]. <br/>
+[biotools:m2aia][biotools-m2aia]<br/>
+[RRID:SCR_019324][scicrunch-m2aia]<br/>
+
+## Contact ##
+If you have questions about the application or if you would like to give us feedback, don't hesitate to open a [new issue][contribute] or contact me [directly](mailto:j.cordes@hs-mannheim.de).
+
 
 [![DOI](https://zenodo.org/badge/314852965.svg)](https://zenodo.org/badge/latestdoi/314852965)
 
 [logo]: https://github.com/jtfcordes/M2aia/raw/master/Applications/M2aiaWorkbench/icons/icon.png
 [mitk]: http://mitk.org
+[m2aia-build]: https://m2aia.de/development.html
 [m2aia]: http://m2aia.de
 [itk]: https://itk.org
 [vtk]: https://vtk.org
@@ -17,7 +30,7 @@ More information, downloads, including protocols and build instructions, can be 
 [scicrunch-m2aia]: https://scicrunch.org/resolver/RRID:SCR_019324
 
 [download]: https://m2aia.de
-[contribute]: https://m2aia.de/contribute
+[contribute]: https://github.com/jtfcordes/M2aia/issues
 [cmake]: https://www.cmake.org
-[build]: http://docs.mitk.org/nightly/BuildInstructionsPage.html
-[bugs]: https://phabricator.mitk.org/maniphest/
+
+
