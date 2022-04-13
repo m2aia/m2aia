@@ -36,20 +36,71 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryWorkbenchPlugin.h>
 #include <berryWorkbenchPreferenceConstants.h>
 #include <mitkBaseRenderer.h>
+#include <mitkNodePredicateData.h>
 #include <mitkCameraController.h>
 #include <mitkImage.h>
 #include <mitkM2aiaVersion.h>
 #include <mitkVersion.h>
+#include <mitkIOUtil.h>
+#include <mitkIDataStorageService.h>
 #include <qaction.h>
 #include <qevent.h>
 #include <qtoolbar.h>
 #include <qtoolbutton.h>
 
+#include <internal/QmitkM2aiaApplicationPlugin.h>
 
 QmitkM2aiaAppWorkbenchWindowAdvisor::QmitkM2aiaAppWorkbenchWindowAdvisor(
   berry::WorkbenchAdvisor *wbAdvisor, berry::IWorkbenchWindowConfigurer::Pointer configurer)
   : QmitkExtWorkbenchWindowAdvisor(wbAdvisor, configurer)
 {
+}
+
+void QmitkM2aiaAppWorkbenchWindowAdvisor::loadDataFromDisk(const QStringList &arguments, bool globalReinit)
+{
+  if (!arguments.empty())
+  {
+    auto _context = QmitkM2aiaApplicationPlugin::GetDefault()->GetPluginContext();
+    ctkServiceReference serviceRef = _context->getServiceReference<mitk::IDataStorageService>();
+    if (serviceRef)
+    {
+      mitk::IDataStorageService* dataStorageService = _context->getService<mitk::IDataStorageService>(serviceRef);
+      mitk::DataStorage::Pointer dataStorage = dataStorageService->GetDefaultDataStorage()->GetDataStorage();
+
+      int argumentsAdded = 0;
+      for (int i = 0; i < arguments.size(); ++i)
+      {
+        if (arguments[i].startsWith("--m2."))
+        { //By convention no further files are specified as soon as a flow arguments comes.
+          
+          break;
+        }
+        else if(arguments[i].endsWith(".nrrd") || arguments[i].endsWith(".imzML", Qt::CaseSensitivity::CaseInsensitive))
+        {
+          try
+          {
+            std::string filename = arguments[i].toStdString();
+            mitk::IOUtil::Load(filename);
+            argumentsAdded++;
+          }
+          catch (...)
+          {
+            MITK_WARN << "Failed to load command line argument: " << arguments[i].toStdString();
+          }
+        }
+      } // end for each command line argument
+
+      if (argumentsAdded > 0 && globalReinit)
+      {
+        // calculate bounding geometry
+        mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(dataStorage);
+      }
+    }
+    else
+    {
+      MITK_ERROR << "A service reference for mitk::IDataStorageService does not exist";
+    }
+  }
 }
 
 void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
@@ -63,6 +114,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
   QMainWindow *mainWindow = qobject_cast<QMainWindow *>(window->GetShell()->GetControl());
   mainWindow->setContextMenuPolicy(Qt::PreventContextMenu);
 
+  
   // ==== RenderwindowViewNames ======================
 
   berry::IPreferencesService *prefService = berry::Platform::GetPreferencesService();
@@ -187,6 +239,9 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
     auto m_Preferences = prefService->GetSystemPreferences()->Node("org.mitk.editors.stdmultiwidget");
     m_Preferences->Put("DepartmentLogo", ":/org.mitk.gui.qt.m2.application/defaultWatermark.png");
   }
+
+
+  loadDataFromDisk(berry::Platform::GetApplicationArgs(), true);
 }
 
 void QmitkM2aiaAppWorkbenchAdvisor::Initialize(berry::IWorkbenchConfigurer::Pointer configurer)

@@ -36,12 +36,6 @@ See LICENSE.txt for details.
 
 const std::string m2Data::VIEW_ID = "org.mitk.views.m2.Data";
 
-// 20201023: custom selection service did not work as expected
-// void m2Data::SetSelectionProvider()
-//{
-//  this->GetSite()->SetSelectionProvider(m_SelectionProvider);
-//}
-
 void m2Data::CreateQtPartControl(QWidget *parent)
 {
   // create GUI widgets from the Qt Designer's .ui file
@@ -103,6 +97,57 @@ void m2Data::CreateQtPartControl(QWidget *parent)
                 m_Controls.labelTextRegexStatus->setText("None");
             }
           });
+
+  // Make sure, that data nodes added before this view
+  // is initialized are handled correctly!!
+  auto nodes = this->GetDataStorage()->GetAll();
+  unsigned int count = 0;
+  for (auto n : *nodes)
+  {
+    if (auto I = dynamic_cast<m2::ImzMLSpectrumImage *>(n->GetData()))
+    {
+      if (I->GetImageAccessInitialized())
+      {
+        n->SetVisibility(false);
+      }
+      else
+      {
+        count++;
+        n->SetStringProperty("UpdateRequired", "uninitialized imzML");
+      }
+    }
+  }
+
+  if (count)
+  {
+    
+    auto future = QtConcurrent::run(
+      [parent, this]()
+      {
+        QThread::currentThread()->sleep(1);
+
+      });
+
+      auto watcher = std::make_shared<QFutureWatcher<void>>();
+      watcher->setFuture(future);
+      connect(watcher.get(),&QFutureWatcher<void>::finished,[watcher,this]()mutable{
+        auto nodes = this->GetDataStorage()->GetAll();
+        
+        for (auto n : *nodes)
+        {
+          if (n->GetProperty("UpdateRequired"))
+          {
+            auto I = dynamic_cast<m2::SpectrumImageBase *>(n->GetData());
+            this->ApplySettingsToImage(I);
+            this->GetDataStorage()->Remove(n);
+            this->GetDataStorage()->Add(n);
+          }
+        }
+        mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
+        this->RequestRenderWindowUpdate();
+        watcher.reset();
+      });
+  }
 }
 
 void m2Data::InitNormalizationStrategyComboBox()
@@ -130,8 +175,8 @@ void m2Data::InitIntensityTransformationStrategyComboBox()
 {
   auto preferences =
     berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-  auto defaultValue =
-    preferences->GetInt("IntensityTransformationStrategy", static_cast<unsigned int>(m2::IntensityTransformationType::None));
+  auto defaultValue = preferences->GetInt("IntensityTransformationStrategy",
+                                          static_cast<unsigned int>(m2::IntensityTransformationType::None));
   auto cb = Controls()->CBTransformation;
   for (unsigned int i = 0; i < m2::IntensityTransformationTypeNames.size(); ++i)
     cb->addItem(m2::IntensityTransformationTypeNames[i].c_str(), {i});
@@ -676,9 +721,10 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
     //      helperNode->SetVisibility(false);
     //      helperNode->SetData(spectrumImage->GetImageArtifacts()["references"]);
     //      helperNode->SetFloatProperty("point 2D size",
-    //                                   spectrumImage->GetGeometry()->GetSpacing()[0] * 3);              // x spacing
-    //      helperNode->SetFloatProperty("pointsize", spectrumImage->GetGeometry()->GetSpacing()[0] * 3); // x spacing
-    //      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    //                                   spectrumImage->GetGeometry()->GetSpacing()[0] * 3);              // x
+    //                                   spacing
+    //      helperNode->SetFloatProperty("pointsize", spectrumImage->GetGeometry()->GetSpacing()[0] * 3); // x
+    //      spacing this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
     //    }
 
     // -------------- add Mask to datastorage --------------

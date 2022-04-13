@@ -925,8 +925,10 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
                                           [&spectrum](auto &v) { return v / spectrum.normalizationFactor; });
                          }
 
+
                          for (unsigned int k = 0; k < mzs.size(); ++k)
                          {
+                           // find index of the bin for the k'th m/z value of the pixel
                            auto j = (long)((mzs[k] - min) / binSize);
 
                            if (j >= binsN)

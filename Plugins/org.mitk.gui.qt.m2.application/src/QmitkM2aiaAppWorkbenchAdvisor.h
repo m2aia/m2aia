@@ -41,4 +41,7 @@ public:
   void Initialize(berry::IWorkbenchConfigurer::Pointer configurer);
   
   QString GetInitialWindowPerspectiveId();
+
+  void loadDataFromDisk(const QStringList &arguments, bool globalReinit);
+
 };

@@ -1,7 +1,6 @@
 
 //#include <Eigen/SVD>
 #include <algorithm> // std::sort, std::stable_sort
-
 #include <itkDataObject.h>
 #include <itkImageRegionIterator.h>
 #include <itkIndex.h>
