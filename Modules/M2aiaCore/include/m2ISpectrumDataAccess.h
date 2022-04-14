@@ -32,6 +32,10 @@ namespace m2
                              std::vector<float> &ys,
                              unsigned int sourceIndex = 0) const = 0;
 
+    virtual void GetIntensities(unsigned int id,
+                     std::vector<float> &xs,
+                     unsigned int source = 0) const = 0;
+
     virtual void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const = 0;
   };
 

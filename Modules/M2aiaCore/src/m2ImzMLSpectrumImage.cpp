@@ -994,6 +994,13 @@ void m2::ImzMLSpectrumImage::GetSpectrum(unsigned int id,
   m_Processor->GetYValues(id, ys, source);
 }
 
+void m2::ImzMLSpectrumImage::GetIntensities(unsigned int id,
+                                         std::vector<float> &ys,
+                                         unsigned int source) const
+{
+  m_Processor->GetYValues(id, ys, source);
+}
+
 template <class MassAxisType, class IntensityType>
 template <class OutputType>
 void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::GetXValues(unsigned int id,

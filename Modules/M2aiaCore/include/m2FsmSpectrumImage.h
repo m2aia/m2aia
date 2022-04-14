@@ -69,6 +69,7 @@ namespace m2
     void InitializeGeometry() override;
     void InitializeProcessor() override;
     void GetSpectrum(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int) const override {}
+    void GetIntensities(unsigned int, std::vector<float> &, unsigned int) const override {}
 
   private:
     SpectrumVectorType m_Spectra;

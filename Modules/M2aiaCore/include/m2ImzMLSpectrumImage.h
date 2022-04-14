@@ -100,6 +100,10 @@ namespace m2
                      std::vector<float> &xs,
                      std::vector<float> &ys,
                      unsigned int source = 0) const override;
+    
+    void GetIntensities(unsigned int id,
+                     std::vector<float> &xs,
+                     unsigned int source = 0) const override;
 
     template <class OffsetType, class LengthType, class DataType>
     static void binaryDataToVector(std::ifstream &f, OffsetType offset, LengthType length, DataType *vec) noexcept

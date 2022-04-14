@@ -55,6 +55,7 @@ namespace m2
 
     virtual void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
     virtual void GetSpectrum(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int) const override{}
+    virtual void GetIntensities(unsigned int, std::vector<float> &, unsigned int) const override{}
   };
 
 } // namespace m2
