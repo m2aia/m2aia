@@ -18,6 +18,7 @@ See LICENSE.txt for details.
 #include "m2Data.h"
 
 #include "m2OpenSlideImageIOHelperDialog.h"
+#include <QInputDialog>
 #include <QShortcut>
 #include <QmitkRenderWindow.h>
 #include <QtConcurrent>
@@ -120,33 +121,35 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
   if (count)
   {
-    
     auto future = QtConcurrent::run(
       [parent, this]()
       {
         QThread::currentThread()->sleep(1);
-
       });
 
-      auto watcher = std::make_shared<QFutureWatcher<void>>();
-      watcher->setFuture(future);
-      connect(watcher.get(),&QFutureWatcher<void>::finished,[watcher,this]()mutable{
-        auto nodes = this->GetDataStorage()->GetAll();
-        
-        for (auto n : *nodes)
-        {
-          if (n->GetProperty("UpdateRequired"))
-          {
-            auto I = dynamic_cast<m2::SpectrumImageBase *>(n->GetData());
-            this->ApplySettingsToImage(I);
-            this->GetDataStorage()->Remove(n);
-            this->GetDataStorage()->Add(n);
-          }
-        }
-        mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
-        this->RequestRenderWindowUpdate();
-        watcher.reset();
-      });
+    auto watcher = std::make_shared<QFutureWatcher<void>>();
+    watcher->setFuture(future);
+    connect(watcher.get(),
+            &QFutureWatcher<void>::finished,
+            [watcher, this]() mutable
+            {
+              auto nodes = this->GetDataStorage()->GetAll();
+
+              for (auto n : *nodes)
+              {
+                if (n->GetProperty("UpdateRequired"))
+                {
+                  auto I = dynamic_cast<m2::SpectrumImageBase *>(n->GetData());
+                  this->ApplySettingsToImage(I);
+                  this->GetDataStorage()->Remove(n);
+                  this->GetDataStorage()->Add(n);
+                }
+              }
+              mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
+              this->RequestRenderWindowUpdate();
+              watcher->disconnect();
+              watcher.reset();
+            });
   }
 }
 
@@ -702,6 +705,17 @@ void m2Data::FsmImageNodeAdded(const mitk::DataNode *)
 
 void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
 {
+  auto nodes = GetDataStorage()->GetAll();
+  if (std::any_of(nodes->begin(),
+                  nodes->end(),
+                  [node](auto f) { return f != node && f->GetName().compare(node->GetName()) == 0; }))
+  {
+    bool ok;
+    QString text = QInputDialog::getText(
+      this->m_Parent, tr("Name conflict"), tr("Postfix:"), QLineEdit::Normal, QDir::home().dirName(), &ok);
+    const_cast<mitk::DataNode *>(node)->SetName((node->GetName() + "_" + text.toStdString()).c_str());
+  }
+
   auto lut = mitk::LookupTable::New();
   lut->SetType(mitk::LookupTable::LookupTableType::CIVIDS_TRANSPARENT);
   const_cast<mitk::DataNode *>(node)->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
