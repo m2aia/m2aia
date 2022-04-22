@@ -115,6 +115,13 @@ extern "C"
     }
   }
 
+  M2AIACOREIO_EXPORT void GetIntensities(m2::sys::ImageHandle *handle, unsigned int id, float *yd)
+  {
+    std::vector<float> ys;
+    handle->m_Image->GetIntensities(id, ys);
+    std::copy(ys.begin(), ys.end(), yd);
+  }
+
   M2AIACOREIO_EXPORT unsigned int  GetSpectrumDepth(m2::sys::ImageHandle *handle, unsigned int id)
   {
     const auto & spectrum = handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra[id];
