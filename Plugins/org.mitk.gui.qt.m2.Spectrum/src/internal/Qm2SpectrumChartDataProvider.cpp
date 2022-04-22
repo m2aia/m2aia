@@ -255,6 +255,7 @@ QtCharts::QXYSeries *Qm2SpectrumChartDataProvider::GetGroupSeries(const std::str
   }
   catch (const std::exception &e)
   {
-    mitkThrow() << "Series with name " + groupName + " does not exist!";
+    MITK_INFO << "Series with name " + groupName + " does not exist!";
+    return nullptr;
   }
 }

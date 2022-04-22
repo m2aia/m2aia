@@ -152,7 +152,7 @@ void m2Spectrum::OnPeakListChanged(const itk::Object *caller, const itk::EventOb
 {
   if (auto node = dynamic_cast<const mitk::DataNode *>(caller))
   {
-    m_DataProvider[node]->UpdateGroup("Peaks",m_xAxis->min(), m_xAxis->max());
+    m_DataProvider[node]->UpdateGroup("Peaks", m_xAxis->min(), m_xAxis->max());
   }
 }
 
@@ -209,7 +209,6 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
 
     // Single Spectrum
     {
-
       node->GetPropertyList()->SetStringProperty("m2.singlespectrum.id", "");
       auto prop = node->GetPropertyList()->GetProperty("m2.singlespectrum.id");
       auto propertyModifiedCommand = itk::NodeMemberCommand<m2Spectrum>::New();
@@ -483,8 +482,8 @@ void m2Spectrum::UpdateLocalMinMaxValues(double minX, double maxX)
     }
   }
 
-  MITK_INFO("UpdateLocalMinMaxValues") << minX << " " << maxX;
-  MITK_INFO("UpdateLocalMinMaxValues") << "New local minmax Y: " << m_LocalMinimumY << " " << m_LocalMaximumY;
+  // MITK_INFO("UpdateLocalMinMaxValues") << minX << " " << maxX;
+  // MITK_INFO("UpdateLocalMinMaxValues") << "New local minmax Y: " << m_LocalMinimumY << " " << m_LocalMaximumY;
 }
 
 void m2Spectrum::UpdateGlobalMinMaxValues()
@@ -751,11 +750,31 @@ void m2Spectrum::AutoZoomUseLocalExtremaY()
 
 void m2Spectrum::OnSeriesFocused(const mitk::DataNode *node)
 {
+  for (auto kv : m_DataProvider)
+  {
+    if (kv.first != node)
+    {
+      if (auto series = m_DataProvider[kv.first]->GetGroupSeries("Overview"))
+        SetSeriesVisible(series,false);
+      if (auto series = m_DataProvider[kv.first]->GetGroupSeries("Peaks"))
+        SetSeriesVisible(series,false);
+    }
+  }
+
+  if (auto series = m_DataProvider[node]->GetGroupSeries("Peaks"))
+    SetSeriesVisible(series,true);
+
+  if (auto series = m_DataProvider[node]->GetGroupSeries("Overview"))
+    SetSeriesVisible(series,true);
+
   const auto &data = m_DataProvider[node]->m_Groups["Overview"].GetRawData();
-  const auto xMax = data.front().x();
-  const auto xMin = data.back().x();
+  const auto xMin = data.front().x();
+  const auto xMax = data.back().x();
+  
   m_xAxis->setMin(xMin);
   m_xAxis->setMax(xMax);
+
+  // UpdateLocalMinMaxValues(xMin, xMax);
   AutoZoomUseLocalExtremaY();
 }
 
@@ -777,39 +796,52 @@ void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
   OnResetView();
 }
 
+void m2Spectrum::SetSeriesVisible(QtCharts::QAbstractSeries *series, bool visibility)
+{
+  auto markers = m_chart->legend()->markers();
+  std::vector<QtCharts::QLegendMarker *> series_marker;
+  for (auto marker : markers)
+  {
+    if (marker->series() == series)
+    {
+      // switch (marker->type())
+      marker->series()->setVisible(visibility);
+      marker->setVisible(true);
+
+      // Dim the marker, if series is not visible
+      qreal alpha = 1.0;
+
+      if (!marker->series()->isVisible())
+        alpha = 0.5;
+
+      QColor color;
+      QBrush brush = marker->labelBrush();
+      color = brush.color();
+      color.setAlphaF(alpha);
+      brush.setColor(color);
+      marker->setLabelBrush(brush);
+
+      brush = marker->brush();
+      color = brush.color();
+      color.setAlphaF(alpha);
+      brush.setColor(color);
+      marker->setBrush(brush);
+
+      QPen pen = marker->pen();
+      color = pen.color();
+      color.setAlphaF(alpha);
+      pen.setColor(color);
+      marker->setPen(pen);
+      return;
+    }
+  }
+}
+
 void m2Spectrum::OnLegnedHandleMarkerClicked()
 {
   auto *marker = qobject_cast<QtCharts::QLegendMarker *>(sender());
   Q_ASSERT(marker);
-
-  // switch (marker->type())
-  marker->series()->setVisible(!marker->series()->isVisible());
-  marker->setVisible(true);
-
-  // Dim the marker, if series is not visible
-  qreal alpha = 1.0;
-
-  if (!marker->series()->isVisible())
-    alpha = 0.5;
-
-  QColor color;
-  QBrush brush = marker->labelBrush();
-  color = brush.color();
-  color.setAlphaF(alpha);
-  brush.setColor(color);
-  marker->setLabelBrush(brush);
-
-  brush = marker->brush();
-  color = brush.color();
-  color.setAlphaF(alpha);
-  brush.setColor(color);
-  marker->setBrush(brush);
-
-  QPen pen = marker->pen();
-  color = pen.color();
-  color.setAlphaF(alpha);
-  pen.setColor(color);
-  marker->setPen(pen);
+  SetSeriesVisible(marker->series(), !marker->series()->isVisible());
 }
 
 void m2Spectrum::OnResetView()
@@ -863,6 +895,7 @@ void m2Spectrum::OnRangeChangedAxisX(qreal xMin, qreal xMax)
   auto axis = m_xAxis;
   if (xMax > m_GlobalMaximumX)
   {
+    MITK_INFO("OnRangeChangedAxisX") << xMax << " > " << m_GlobalMaximumX;
     this->m_MouseDragUpperDelta = std::abs(m_GlobalMaximumX - this->m_MouseDragCenterPos);
     axis->blockSignals(true);
     axis->setMax(m_GlobalMaximumX);
@@ -871,20 +904,24 @@ void m2Spectrum::OnRangeChangedAxisX(qreal xMin, qreal xMax)
 
   if (xMin < m_GlobalMinimumX)
   {
+    MITK_INFO("OnRangeChangedAxisX") << xMin << " > " << m_GlobalMinimumX;
     this->m_MouseDragLowerDelta = std::abs(m_GlobalMinimumX - this->m_MouseDragCenterPos);
     axis->blockSignals(true);
     axis->setMin(m_GlobalMinimumX);
     axis->blockSignals(false);
   }
 
-  // check bounds
-  for (auto &provider : m_DataProvider)
-    provider.second->UpdateAllGroups(xMin, xMax);
+  if (!m_BlockAutoScaling)
+  {
+    // check bounds
+    for (auto &provider : m_DataProvider)
+      provider.second->UpdateAllGroups(xMin, xMax);
 
-  // depends on provider update
-  UpdateLocalMinMaxValues(xMin, xMax);
-  // #25 auto zoom y axis on zoom x axis
-  AutoZoomUseLocalExtremaY();
+    // depends on provider update
+    UpdateLocalMinMaxValues(xMin, xMax);
+    // #25 auto zoom y axis on zoom x axis
+    AutoZoomUseLocalExtremaY();
+  }
 }
 
 void m2Spectrum::OnRangeChangedAxisY(qreal min, qreal max)

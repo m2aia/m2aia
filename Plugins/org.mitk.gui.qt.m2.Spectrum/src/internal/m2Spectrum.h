@@ -90,6 +90,7 @@ protected:
   void UpdateAxisLabels(const mitk::DataNode *, bool remove = false);
   void UpdateZoomLevel(const mitk::DataNode *);
   void UpdateSelectedArea();
+  void SetSeriesVisible(QtCharts::QAbstractSeries * series, bool visibility);
 
 protected slots:
   void OnDataNodeReceived(const mitk::DataNode *node);
@@ -154,6 +155,8 @@ protected:
 
   QtCharts::QChart *m_chart = nullptr;
   QtCharts::QAbstractSeries *m_IonImageIndicator = nullptr;
+
+  bool m_BlockAutoScaling = false;
 
   double m_LastDa = 1;
   double m_LastPPM = 75;
