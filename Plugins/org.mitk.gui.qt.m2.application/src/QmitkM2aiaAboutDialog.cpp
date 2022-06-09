@@ -32,7 +32,7 @@ QmitkM2aiaAboutDialog::QmitkM2aiaAboutDialog(QWidget *parent, Qt::WindowFlags f)
   
  
 
-  QPushButton *btnModules = new QPushButton(QIcon(":/QtM2aiaApplication/ModuleView.png"), "Modules");
+  QPushButton *btnModules = new QPushButton(QIcon(":/M2aiaApplication/ModuleView.png"), "Modules");
   m_GUI.m_ButtonBox->addButton(btnModules, QDialogButtonBox::ActionRole);
 
   connect(btnModules, SIGNAL(clicked()), this, SLOT(ShowModules()));

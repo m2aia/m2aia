@@ -846,15 +846,17 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
     const auto &binsN = p->GetNumberOfBins();
     std::vector<double> xMin(T, std::numeric_limits<double>::max());
     std::vector<double> xMax(T, std::numeric_limits<double>::min());
-    std::vector<std::vector<double>> xT(T, std::vector<double>(binsN, 0));
+    
     std::vector<std::vector<double>> yT(T, std::vector<double>(binsN, 0));
     std::vector<std::vector<double>> yMaxT(T, std::vector<double>(binsN, 0));
     std::vector<std::vector<unsigned int>> hT(T, std::vector<unsigned int>(binsN, 0));
+    std::vector<std::vector<double>> xT(T, std::vector<double>(binsN, 0));
 
     const auto normalizationStrategy = p->GetNormalizationStrategy();
     auto accNorm =
       std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
 
+    MITK_INFO << spectra.size();
     // MAP
     m2::Process::Map(spectra.size(),
                      T,
@@ -937,7 +939,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
                              j = 0;
 
                            xT[t][j] += mzs[k];                                   // mass sum
-                           yT[t][j] += ints[k];                                  // intensitiy sum
+                           yT[t][j] += ints[k] < 10e-256 ? 0 : ints[k];              // intensitiy sum
                            yMaxT[t][j] = std::max(yMaxT[t][j], double(ints[k])); // intensitiy max
                            hT[t][j]++;                                           // hits
                          }
@@ -955,6 +957,12 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
         yT[0][k] += yT[i][k];
         yMaxT[0][k] = std::max(yMaxT[0][k], yMaxT[i][k]);
         hT[0][k] += hT[i][k];
+      }
+    }
+
+    for(int i = 0 ; i < binsN; ++i){
+      if(hT[0][i] > 0){
+        MITK_INFO << xT[0][i]/(double)hT[0][i] << " " <<  yT[0][i] << " max(" << yMaxT[0][i] << ") [" << hT[0][i] << "]";
       }
     }
 
@@ -979,6 +987,11 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
       }
     }
 
+    xT.clear();
+    yT.clear();
+    yMaxT.clear();
+    hT.clear();
+    
     p->SetPropertyValue<double>("x_min", mzAxis.front());
     p->SetPropertyValue<double>("x_max", mzAxis.back());
     p->SetPropertyValue<unsigned>("spectral depth (bins of overview spectrum)", mzAxis.size());

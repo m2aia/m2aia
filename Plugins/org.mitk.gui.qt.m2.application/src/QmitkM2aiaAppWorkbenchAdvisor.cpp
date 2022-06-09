@@ -237,7 +237,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
 
   {
     auto m_Preferences = prefService->GetSystemPreferences()->Node("org.mitk.editors.stdmultiwidget");
-    m_Preferences->Put("DepartmentLogo", ":/org.mitk.gui.qt.m2.application/defaultWatermark.png");
+    m_Preferences->Put("DepartmentLogo", ":/M2aiaApplication/defaultWatermark.png");
   }
 
 
@@ -273,7 +273,7 @@ berry::WorkbenchWindowAdvisor *QmitkM2aiaAppWorkbenchAdvisor::CreateWorkbenchWin
   advisor->ShowMitkVersionInfo(false);
   advisor->ShowMemoryIndicator(true);
   advisor->SetProductName("M²aia Workbench");
-  advisor->SetWindowIcon(":/M2aiaApplication/icon.ico");
+  advisor->SetWindowIcon(":/M2aiaApplication/icon.png");
 
   return advisor;
 }
