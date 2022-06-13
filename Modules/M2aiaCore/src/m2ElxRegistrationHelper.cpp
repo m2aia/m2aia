@@ -4,6 +4,8 @@
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
 #include <mitkImage.h>
+#include <mitkImageCast.h>
+#include <mitkImageAccessByItk.h>
 #include <mitkImageReadAccessor.h>
 #include <mitkImageWriteAccessor.h>
 #include <numeric>
@@ -42,35 +44,85 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::GetSlice2DData(const mitk::Image
 {
   if (image)
   {
-    const auto dims = image->GetDimension();
+    const auto dim = image->GetDimension();
+    const auto dimensions = image->GetDimensions();
     const auto sizeZ = image->GetDimensions()[2];
     auto geom3D = image->GetSlicedGeometry();
     auto n = std::accumulate(image->GetDimensions(), image->GetDimensions() + 2, 1, std::multiplies<>()) *
              image->GetPixelType().GetSize();
-    if (dims == 3 && sizeZ == 1)
+    if (dim == 3 && sizeZ == 1)
     {
       // 3D => 2D volume (3rd dim is 1)
       auto output = mitk::Image::New();
-      output->Initialize(image->GetPixelType(), 2, image->GetDimensions());
-      output->GetSlicedGeometry()->SetSpacing(geom3D->GetSpacing());
-      output->GetSlicedGeometry()->SetOrigin(geom3D->GetOrigin());
-      output->GetSlicedGeometry()->SetDirectionVector(geom3D->GetDirectionVector());
+      // output->Initialize(image->GetPixelType(), 2, image->GetDimensions());
+      // output->GetSlicedGeometry()->SetSpacing(geom3D->GetSpacing());
+      // output->GetSlicedGeometry()->SetOrigin(geom3D->GetOrigin());
+      // output->GetSlicedGeometry()->SetDirectionVector(geom3D->GetDirectionVector());
+      // output->GetSlicedGeometry()->SetIndexToWorldTransform(geom3D->GetIndexToWorldTransform());
+
+      AccessByItk(const_cast<mitk::Image *>(image), ([&](auto I) {
+                using ImagePixelType = typename std::remove_pointer<decltype(I)>::type::PixelType;
+                // constexpr auto ImageDimensions = std::remove_pointer<decltype(I)>::type::ImageDimension;
+                using ImageType2D = itk::Image<ImagePixelType, 2>;
+                typename ImageType2D::Pointer outputItk = ImageType2D::New();
+
+                // itk::Image<RGBPixel, 3>::IndexType start;
+                // start[0] = 0;
+                // start[1] = 0;
+                // start[2] = 0;
+
+                // itk::Image<RGBPixel, 3>::SizeType size;
+                // auto dimensions = vectorImage->GetLargestPossibleRegion().GetSize();
+                // size[0] = dimensions[0];
+                // size[1] = dimensions[1];
+                // size[2] = dimensions[2];
+                typename ImageType2D::RegionType region;
+                region.SetSize(typename ImageType2D::SizeType{dimensions[0],dimensions[1]});
+                region.SetIndex(typename ImageType2D::IndexType{0,0});
+
+                outputItk->SetRegions(region);
+                outputItk->Allocate();
+
+                auto s = outputItk->GetSpacing();
+                s[0] = I->GetSpacing()[0];
+                s[1] = I->GetSpacing()[1];
+                outputItk->SetSpacing(s);
+
+                auto o = outputItk->GetOrigin();
+                o[0] = I->GetOrigin()[0];
+                o[1] = I->GetOrigin()[1];
+                outputItk->SetOrigin(o);
+                
+                auto d = outputItk->GetDirection();
+                d[0][0] = I->GetDirection()[0][0];
+                d[0][1] = I->GetDirection()[0][1];
+                d[1][0] = I->GetDirection()[1][0];
+                d[1][1] = I->GetDirection()[1][1];
+
+                outputItk->SetDirection(d);
+                mitk::CastToMitkImage(outputItk, output);
+                
+              }));
+
+
+      // output->GetSlicedGeometry()->SetIndexToWorldTransformByVtkMatrix(geom3D->GetVtkTransform());
+      // output->GetSlicedGeometry()->SetDirectionVector(geom3D->GetDirectionVector());
       mitk::ImageReadAccessor iAcc(image);
       mitk::ImageWriteAccessor oAcc(output);
       std::copy((const char *)iAcc.GetData(), (const char *)iAcc.GetData() + n, (char *)oAcc.GetData());
       return output;
     }
-    else if (dims == 2)
+    else if (dim == 2)
     {
       // Keep 2D volume
       return const_cast<mitk::Image *>(image);
     }
-    else if (dims == 3 && sizeZ > 1)
+    else if (dim == 3 && sizeZ > 1)
     {
       // Keep 3D volume
       return const_cast<mitk::Image *>(image);
     }
-    else if (dims == 4)
+    else if (dim == 4)
     {
       // 4D => 3D volume (4th dim is > 0)
       // TODO: enable Selection of time step != 0
@@ -289,7 +341,7 @@ void m2::ElxRegistrationHelper::GetRegistration()
   const auto movingMaskResultPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "result.nrrd"});
   const auto movingPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "moving.nrrd"});
   const auto fixedPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "fixed.nrrd"});
-  auto convertedMovingImage = GetSlice2DData(m_MovingImage);
+  // auto convertedMovingImage = GetSlice2DData(m_MovingImage);
 
 
   SymlinkOrWriteNrrd(m_MovingImage, movingPath);
