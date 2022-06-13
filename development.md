@@ -32,7 +32,7 @@ git clone https://github.com/mitk/mitk
 git clone https://github.com/jtfcordes/m2aia
 
 cd mitk
-git checkout v2021.10
+git checkout v2022.04
 git apply ../m2aia/Patch/mitk.diff
 ```
 
