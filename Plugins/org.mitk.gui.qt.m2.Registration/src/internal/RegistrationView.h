@@ -58,6 +58,7 @@ protected:
   
   struct RegistrationEntity{
     QmitkSingleNodeSelectionWidget * m_ImageSelection;
+    QmitkSingleNodeSelectionWidget * m_ImageMaskSelection;
     QmitkSingleNodeSelectionWidget * m_PointSetSelection;
     std::vector<QmitkSingleNodeSelectionWidget *> m_Attachments;
     mitk::DataNode::Pointer m_ResultNode;
@@ -68,17 +69,15 @@ protected:
 
 
   Ui::RegistrationViewControls m_Controls;
-  std::map<char, RegistrationEntity> m_MovingEntities;
-  RegistrationEntity m_FixedEntity;
+  std::map<char, std::shared_ptr<RegistrationEntity>> m_MovingEntities;
+  std::shared_ptr<RegistrationEntity> m_FixedEntity;
 
-  QmitkSingleNodeSelectionWidget *m_FixedImageSingleNodeSelection;
-  QmitkSingleNodeSelectionWidget *m_FixedPointSetSingleNodeSelection;
   Ui::elxParameterFileEditor m_ParameterFileEditorControls;
   QDialog * m_ParameterFileEditor;
   std::map<int,std::vector<std::string>> m_ParameterFiles, m_DefaultParameterFiles;
 
   void StartRegistration();
-  void Registration(RegistrationEntity & entity);
+  void Registration(RegistrationEntity * fixed, RegistrationEntity * moving);
   void AddNewModalityTab();
 
   public slots:

@@ -59,6 +59,16 @@
        </layout>
       </item>
       <item>
+       <widget class="QmitkSingleNodeSelectionWidget" name="fixedImageMaskSelection" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item>
        <layout class="QHBoxLayout" name="fixedPointSetData">
         <item>
          <widget class="QPushButton" name="addFixedPointSet">
@@ -143,6 +153,27 @@
           </property>
           <property name="currentIndex">
            <number>-1</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QRadioButton" name="rbAllToOne">
+          <property name="text">
+           <string>all to fixed</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="rbSubsequent">
+          <property name="text">
+           <string>subsequent begin by fixed</string>
           </property>
          </widget>
         </item>

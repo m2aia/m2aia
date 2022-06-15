@@ -188,39 +188,26 @@ void m2::ElxRegistrationHelper::SetPointData(mitk::PointSet *fixed, mitk::PointS
   }
 }
 
-void m2::ElxRegistrationHelper::SetMaskData(mitk::Image *fixed, mitk::Image *moving)
+void m2::ElxRegistrationHelper::SetFixedImageMaskData(mitk::Image *fixed)
 {
-  if (fixed == nullptr || moving == nullptr)
+  if (fixed == nullptr)
   {
-    MITK_WARN << "Can not proceed: fixed mask is [" << fixed << "]; moving mask is [" << moving << "]";
+    MITK_WARN << "Can not proceed: fixed mask is [" << fixed << "]";
     return;
   }
 
-  // if (!CheckDimensions(fixed) && !CheckDimensions(moving))
-  // {
-  //   MITK_ERROR << "Fixed mask image [" << m2::ElxUtil::GetShape(fixed) << "] and moving mask image ["
-  //              << m2::ElxUtil::GetShape(moving) << "]! This is yet not implemented.\n"
-  //              << "Shape has to be [NxMx1]";
-  //   return;
-  // }
-
   m_FixedMask = fixed;
-  m_MovingMask = moving;
 
   // if images were already set, check if geometries fit
-  if (m_FixedImage && m_MovingImage)
+  if (m_FixedImage)
   {
-    if (!(mitk::Equal(*m_FixedImage->GetGeometry(), *m_FixedMask->GetGeometry()) &&
-          mitk::Equal(*m_MovingImage->GetGeometry(), *m_MovingMask->GetGeometry())))
+    if (!mitk::Equal(*m_FixedImage->GetGeometry(), *m_FixedMask->GetGeometry()))
     {
       MITK_ERROR << "Fixed image [" << m2::ElxUtil::GetShape(m_FixedImage) << "] and fixed mask image ["
                  << m2::ElxUtil::GetShape(m_FixedMask) << "].\n"
-                 << "Moving image [" << m2::ElxUtil::GetShape(m_MovingImage) << "] and moving mask image ["
-                 << m2::ElxUtil::GetShape(m_MovingMask) << "].\n"
                  << "Image geometries of mask image and image have to be equal!";
     }
   }
-
   m_UseMasksForRegistration = true;
 }
 
@@ -356,11 +343,11 @@ void m2::ElxRegistrationHelper::GetRegistration()
   if (m_UseMasksForRegistration)
   {
     const auto fixedMaskPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "fixedMask.nrrd"});
-    const auto movingMaskPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "movingMask.nrrd"});
-    mitk::IOUtil::Save(GetSlice2DData(m_MovingMask), movingMaskPath);
     mitk::IOUtil::Save(GetSlice2DData(m_FixedMask), fixedMaskPath);
     args.insert(args.end(), {"-fMask", fixedMaskPath});
-    args.insert(args.end(), {"-mMask", movingMaskPath});
+    // args.insert(args.end(), {"-mMask", movingMaskPath});
+    // const auto movingMaskPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "movingMask.nrrd"});
+    // mitk::IOUtil::Save(GetSlice2DData(m_MovingMask), movingMaskPath);
   }
 
   if (m_UsePointsForRegistration)
@@ -398,7 +385,7 @@ void m2::ElxRegistrationHelper::GetRegistration()
   }
 
   m_StatusFunction("Transformation parameters assimilated");
-  RemoveWorkingDirectory();
+  // RemoveWorkingDirectory();
 }
 
 void m2::ElxRegistrationHelper::SetStatusCallback(const std::function<void(std::string)> &callback)
@@ -426,7 +413,6 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Poi
 
   CreateWorkingDirectory();
   m_StatusFunction("Directory created: " + m_WorkingDirectory);
-
   auto data = GetSlice2DData(inputData);
 
   if (!CheckDimensions(data))
@@ -439,13 +425,13 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Poi
   const auto imagePath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "data.nrrd"});
   const auto resultPath = ElxUtil::JoinPath({m_WorkingDirectory, "/", "result.nrrd"});
 
-  mitk::IOUtil::Save(GetSlice2DData(data), imagePath);
+  mitk::IOUtil::Save(data, imagePath);
   m_StatusFunction("Moving image written: " + imagePath);
 
-  auto newSpacingX = m_MovingImage->GetGeometry()->GetSpacing()[0];
-  auto newSpacingY = m_MovingImage->GetGeometry()->GetSpacing()[1];
-  auto newSpacingZ = m_MovingImage->GetGeometry()->GetSpacing()[2];
-  std::setlocale(LC_NUMERIC, "C");
+  // auto newSpacingX = inputData->GetGeometry()->GetSpacing()[0];
+  // auto newSpacingY = inputData->GetGeometry()->GetSpacing()[1];
+  // auto newSpacingZ = inputData->GetGeometry()->GetSpacing()[2];
+  // std::setlocale(LC_NUMERIC, "C");
 
   // write all transformations
   for (unsigned int i = 0; i < m_Transformations.size(); ++i)
@@ -456,41 +442,41 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Poi
     auto T = m_Transformations[i];
     // adapt target image geometry
 
-    auto size = m2::ElxUtil::GetParameterLine(T, "Size");
-    std::istringstream issSize(size);
-    std::vector<std::string> resultsSize(std::istream_iterator<std::string>{issSize},
-                                         std::istream_iterator<std::string>());
+    // auto size = m2::ElxUtil::GetParameterLine(T, "Size");
+    // std::istringstream issSize(size);
+    // std::vector<std::string> resultsSize(std::istream_iterator<std::string>{issSize},
+    //                                      std::istream_iterator<std::string>());
 
-    const auto sizeX = std::stoi(resultsSize[1]);
-    const auto sizeY = std::stoi(resultsSize[2]);
+    // const auto sizeX = std::stoi(resultsSize[1]);
+    // const auto sizeY = std::stoi(resultsSize[2]);
 
-    const auto spacing = m2::ElxUtil::GetParameterLine(T, "Spacing");
-    std::istringstream iss(spacing);
-    std::vector<std::string> resultsSpacing(std::istream_iterator<std::string>{iss},
-                                            std::istream_iterator<std::string>());
-    const auto spacingX = std::stod(resultsSpacing[1]);
-    const auto spacingY = std::stod(resultsSpacing[2]);
+    // const auto spacing = m2::ElxUtil::GetParameterLine(T, "Spacing");
+    // std::istringstream iss(spacing);
+    // std::vector<std::string> resultsSpacing(std::istream_iterator<std::string>{iss},
+    //                                         std::istream_iterator<std::string>());
+    // const auto spacingX = std::stod(resultsSpacing[1]);
+    // const auto spacingY = std::stod(resultsSpacing[2]);
 
-    const auto newSizeX = (sizeX * spacingX) / newSpacingX;
-    const auto newSizeY = (sizeY * spacingY) / newSpacingY;
+    // const auto newSizeX = (sizeX * spacingX) / newSpacingX;
+    // const auto newSizeY = (sizeY * spacingY) / newSpacingY;
 
-    std::string newSizeString = std::to_string(newSizeX) + " " + std::to_string(newSizeY);
-    std::string newSpacingString = std::to_string(newSpacingX) + " " + std::to_string(newSpacingY);
+    // std::string newSizeString = std::to_string(newSizeX) + " " + std::to_string(newSizeY);
+    // std::string newSpacingString = std::to_string(newSpacingX) + " " + std::to_string(newSpacingY);
 
-    if (resultsSize.size() == 4 && resultsSpacing.size() == 4)
-    {
-      const auto sizeZ = std::stoi(resultsSize[3]);
-      const auto spacingZ = std::stod(resultsSpacing[3]);
-      const auto newSizeZ = (sizeZ * spacingZ) / newSpacingZ;
-      newSizeString += " " + std::to_string(newSizeZ);
-      newSpacingString += " " + std::to_string(newSpacingZ);
-    }
+    // if (resultsSize.size() == 4 && resultsSpacing.size() == 4)
+    // {
+    //   const auto sizeZ = std::stoi(resultsSize[3]);
+    //   const auto spacingZ = std::stod(resultsSpacing[3]);
+    //   const auto newSizeZ = (sizeZ * spacingZ) / newSpacingZ;
+    //   newSizeString += " " + std::to_string(newSizeZ);
+    //   newSpacingString += " " + std::to_string(newSpacingZ);
+    // }
 
     ElxUtil::ReplaceParameter(T, "ResultImagePixelType", "\"" + pixelType + "\"");
     ElxUtil::ReplaceParameter(T, "ResampleInterpolator", "\"FinalBSplineInterpolatorFloat\"");
     ElxUtil::ReplaceParameter(T, "FinalBSplineInterpolationOrder", std::to_string(interpolationOrder));
-    ElxUtil::ReplaceParameter(T, "Spacing", newSpacingString);
-    ElxUtil::ReplaceParameter(T, "Size", newSizeString);
+    // ElxUtil::ReplaceParameter(T, "Spacing", newSpacingString);
+    // ElxUtil::ReplaceParameter(T, "Size", newSizeString);
     if (i == 0)
     {
       ElxUtil::ReplaceParameter(T, "InitialTransformParametersFileName", R"("NoInitialTransform")");
@@ -502,7 +488,7 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Poi
       ElxUtil::ReplaceParameter(T, "InitialTransformParametersFileName", "\"" + initialTransform + "\"");
     }
 
-    MITK_INFO << "Warped image geometry:\n(size) " + newSizeString + "\n(spacing) " + newSpacingString;
+    // MITK_INFO << "Warped image geometry:\n(size) " + newSizeString + "\n(spacing) " + newSpacingString;
     std::ofstream(transformationPath) << T;
   }
 
@@ -530,7 +516,7 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Poi
   {
     MITK_WARN << "Restore slice thickness from input data";
     auto s = result->GetGeometry()->GetSpacing();
-    s[2] = data->GetGeometry()->GetSpacing()[2];
+    s[2] = inputData->GetGeometry()->GetSpacing()[2];
     result->GetGeometry()->SetSpacing(s);
   }
   RemoveWorkingDirectory();

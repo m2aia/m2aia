@@ -113,7 +113,7 @@ public:
 
     m2::ElxRegistrationHelper helper;
     helper.SetImageData(fixed, moving);
-    helper.SetMaskData(fixedMask, movingMask);
+    helper.SetFixedImageMaskData(fixedMask);
     
     {
       helper.SetRegistrationParameters({rigid, deformable});

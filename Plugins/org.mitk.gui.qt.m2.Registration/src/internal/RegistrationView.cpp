@@ -48,9 +48,11 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkNodePredicateProperty.h>
 #include <mitkPointSet.h>
 #include <mitkSceneIO.h>
+#include <mitkImageCast.h>
 
 // itk
 #include <itksys/SystemTools.hxx>
+#include <itkInvertIntensityImageFilter.h>
 
 // m2
 #include <m2ElxDefaultParameterFiles.h>
@@ -67,6 +69,8 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
   m_Parent = parent;
+
+  m_FixedEntity = std::make_shared<RegistrationEntity>();
 
   m_ParameterFileEditor = new QDialog(parent);
   m_ParameterFileEditorControls.setupUi(m_ParameterFileEditor);
@@ -135,23 +139,34 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
 
   connect(m_Controls.btnStartRegistration, &QPushButton::clicked, this, &RegistrationView::StartRegistration);
 
-  m_FixedImageSingleNodeSelection = m_Controls.fixedImageSelection;
-  m_FixedImageSingleNodeSelection->SetDataStorage(GetDataStorage());
-  m_FixedImageSingleNodeSelection->SetNodePredicate(
+  m_FixedEntity->m_ImageSelection = m_Controls.fixedImageSelection;
+  m_FixedEntity->m_ImageSelection->SetDataStorage(GetDataStorage());
+  m_FixedEntity->m_ImageSelection->SetNodePredicate(
     mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::Image>::New(),
                                 mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
-  m_FixedImageSingleNodeSelection->SetSelectionIsOptional(true);
-  m_FixedImageSingleNodeSelection->SetEmptyInfo(QString("Select fixed image"));
-  m_FixedImageSingleNodeSelection->SetPopUpTitel(QString("Select fixed image node"));
+  m_FixedEntity->m_ImageSelection->SetSelectionIsOptional(true);
+  m_FixedEntity->m_ImageSelection->SetEmptyInfo(QString("Select fixed image"));
+  m_FixedEntity->m_ImageSelection->SetPopUpTitel(QString("Select fixed image node"));
 
-  m_FixedPointSetSingleNodeSelection = m_Controls.fixedPointSelection;
-  m_FixedPointSetSingleNodeSelection->SetDataStorage(GetDataStorage());
-  m_FixedPointSetSingleNodeSelection->SetNodePredicate(
+  m_FixedEntity->m_ImageMaskSelection = m_Controls.fixedImageMaskSelection;
+  m_FixedEntity->m_ImageMaskSelection->SetDataStorage(GetDataStorage());
+  m_FixedEntity->m_ImageMaskSelection->SetNodePredicate(
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::Image>::New(),
+                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+  m_FixedEntity->m_ImageMaskSelection->SetSelectionIsOptional(true);
+  m_FixedEntity->m_ImageMaskSelection->SetEmptyInfo(QString("Select fixed image mask"));
+  m_FixedEntity->m_ImageMaskSelection->SetPopUpTitel(QString("Select fixed image mask node"));
+
+  m_FixedEntity->m_PointSetSelection = m_Controls.fixedPointSelection;
+  m_FixedEntity->m_PointSetSelection->SetDataStorage(GetDataStorage());
+  m_FixedEntity->m_PointSetSelection->SetNodePredicate(
     mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::PointSet>::New(),
                                 mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
-  m_FixedPointSetSingleNodeSelection->SetSelectionIsOptional(true);
-  m_FixedPointSetSingleNodeSelection->SetEmptyInfo(QString("Select fixed point set"));
-  m_FixedPointSetSingleNodeSelection->SetPopUpTitel(QString("Select fixed point set node"));
+  m_FixedEntity->m_PointSetSelection->SetSelectionIsOptional(true);
+  m_FixedEntity->m_PointSetSelection->SetEmptyInfo(QString("Select fixed point set"));
+  m_FixedEntity->m_PointSetSelection->SetPopUpTitel(QString("Select fixed point set node"));
+
+  m_FixedEntity->m_Index = m_Controls.fixedIndex;
 
   // m_Controls.movingPointSetData->insertWidget(1, m_MovingPointSetSingleNodeSelection);
 
@@ -187,14 +202,14 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
             auto node = mitk::DataNode::New();
             node->SetData(mitk::PointSet::New());
             node->SetName("FixedPointSet");
-            auto fixedNode = m_FixedImageSingleNodeSelection->GetSelectedNode();
+            auto fixedNode = m_FixedEntity->m_ImageSelection->GetSelectedNode();
             if (fixedNode)
               this->GetDataStorage()->Add(node, fixedNode);
             else
               this->GetDataStorage()->Add(node);
             node->SetFloatProperty("point 2D size", 0.5);
             node->SetProperty("color", mitk::ColorProperty::New(1.0f, 0.0f, 0.0f));
-            this->m_FixedPointSetSingleNodeSelection->SetCurrentSelection({node});
+            this->m_FixedEntity->m_PointSetSelection->SetCurrentSelection({node});
           });
 
   connect(m_Controls.btnEditParameterFiles,
@@ -220,12 +235,11 @@ void RegistrationView::AddNewModalityTab()
   auto page = m_Controls.tabWidget->widget(tabId);
   page->setObjectName(QString(m_ModalityId));
   m_Controls.tabWidget->setCurrentIndex(tabId);
+  m_MovingEntities[modalityId] = std::make_shared<RegistrationEntity>();
 
   connect(controls.btnApplyTransforms,
           &QAbstractButton::clicked,
-          [=]() {
-            Registration(m_MovingEntities[modalityId]);
-          });
+          [=]() { Registration(m_FixedEntity.get(), m_MovingEntities[modalityId].get()); });
 
   auto filter = tr("Elastix Parameterfile (*.txt)");
   connect(controls.btnLoadPreset,
@@ -237,7 +251,7 @@ void RegistrationView::AddNewModalityTab()
             {
               std::string s;
               std::ifstream(paths[0].toStdString()) >> s;
-              m_MovingEntities[modalityId].m_Transformations.push_back(s);
+              m_MovingEntities[modalityId]->m_Transformations.push_back(s);
             }
           });
   connect(controls.btnSaveTransforms,
@@ -246,9 +260,9 @@ void RegistrationView::AddNewModalityTab()
           {
             QString path;
             unsigned int i = 0;
-            for (auto t : m_MovingEntities[modalityId].m_Transformations)
+            for (auto t : m_MovingEntities[modalityId]->m_Transformations)
             {
-              auto name = m_MovingEntities[modalityId].m_ImageSelection->GetSelectedNode()->GetName() + "_transform" +
+              auto name = m_MovingEntities[modalityId]->m_ImageSelection->GetSelectedNode()->GetName() + "_transform" +
                           std::to_string(i) + ".txt";
               auto spath = path.split('/');
               spath.pop_back();
@@ -277,7 +291,18 @@ void RegistrationView::AddNewModalityTab()
   imageSelection->SetEmptyInfo(QString("Select image"));
   imageSelection->SetPopUpTitel(QString("Select image node"));
   controls.widgetList->insertWidget(1, imageSelection);
-  m_MovingEntities[modalityId].m_ImageSelection = imageSelection;
+  m_MovingEntities[modalityId]->m_ImageSelection = imageSelection;
+
+  auto imageMaskSelection = new QmitkSingleNodeSelectionWidget();
+  imageMaskSelection->SetDataStorage(GetDataStorage());
+  imageMaskSelection->SetNodePredicate(
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::Image>::New(),
+                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+  imageMaskSelection->SetSelectionIsOptional(true);
+  imageMaskSelection->SetEmptyInfo(QString("Select image mask"));
+  imageMaskSelection->SetPopUpTitel(QString("Select image mask node"));
+  controls.widgetList->insertWidget(2, imageMaskSelection);
+  m_MovingEntities[modalityId]->m_ImageMaskSelection = imageMaskSelection;
 
   auto pointSetSelection = new QmitkSingleNodeSelectionWidget();
   pointSetSelection->SetDataStorage(GetDataStorage());
@@ -288,7 +313,7 @@ void RegistrationView::AddNewModalityTab()
   pointSetSelection->SetEmptyInfo(QString("Select point set"));
   pointSetSelection->SetPopUpTitel(QString("Select point set node"));
   controls.referencePointSetData->addWidget(pointSetSelection);
-  m_MovingEntities[modalityId].m_PointSetSelection = pointSetSelection;
+  m_MovingEntities[modalityId]->m_PointSetSelection = pointSetSelection;
 
   auto attSelection = new QmitkSingleNodeSelectionWidget();
   attSelection->SetDataStorage(GetDataStorage());
@@ -297,9 +322,9 @@ void RegistrationView::AddNewModalityTab()
   attSelection->SetEmptyInfo(QString("Select attached mask"));
   attSelection->SetPopUpTitel(QString("Select attached mask"));
   controls.attachmentLayout->addWidget(attSelection);
-  m_MovingEntities[modalityId].m_Attachments.push_back(attSelection);
-  m_MovingEntities[modalityId].m_Index = controls.index;
-  m_MovingEntities[modalityId].m_Index->setValue(m_MovingEntities.size());
+  m_MovingEntities[modalityId]->m_Attachments.push_back(attSelection);
+  m_MovingEntities[modalityId]->m_Index = controls.index;
+  m_MovingEntities[modalityId]->m_Index->setValue(m_MovingEntities.size());
 
   connect(controls.addMovingPointSet,
           &QPushButton::clicked,
@@ -368,10 +393,9 @@ void RegistrationView::PostProcessReconstruction()
   // create volume node
 
   {
-    auto image = dynamic_cast<mitk::Image *>(m_MovingEntities.begin()->second.m_ResultNode->GetData());
-
+    MITK_INFO << "***** Initialize new volume *****";
+    auto image = dynamic_cast<mitk::Image *>(m_FixedEntity->m_ImageSelection->GetSelectedNode()->GetData());
     unsigned int dims[3] = {0, 0, 0};
-
     auto newVolume = mitk::Image::New();
 
     dims[0] = image->GetDimensions()[0];
@@ -383,39 +407,43 @@ void RegistrationView::PostProcessReconstruction()
     spacing[2] = m2::MicroMeterToMilliMeter(m_Controls.spinBoxZSpacing->value());
     newVolume->SetSpacing(spacing);
 
+    MITK_INFO << newVolume;
+    
+    MITK_INFO << "***** Init ordered container and set fixe image at position *****";
     std::vector<mitk::Image::Pointer> orderedData(dims[2]);
-    try
-    {
-      auto fixIndex = m_Controls.fixedIndex->value();
-      auto fixedImage = dynamic_cast<mitk::Image *>(m_Controls.fixedImageSelection->GetSelectedNode()->GetData());
-      orderedData[fixIndex] = fixedImage;
+    MITK_INFO << "***** init ordered data vector *****";
+    auto fixIndex = m_Controls.fixedIndex->value();
+    orderedData[fixIndex] = image;
+    MITK_INFO << "***** access index and assign fixed image *****";
+    
 
-      for (auto kv : m_MovingEntities)
-      {
-        if (auto image = dynamic_cast<mitk::Image *>(kv.second.m_ResultNode->GetData()))
-        {
-          orderedData[kv.second.m_Index->value()] = image;
-        }
+    for (auto kv : m_MovingEntities)
+    {
+      auto idx = kv.second->m_Index->value();
+      auto movingImage = dynamic_cast<mitk::Image *>(kv.second->m_ImageSelection->GetSelectedNode()->GetData());
+      
+      if(kv.second->m_Transformations.size()){
+        m2::ElxRegistrationHelper helper;
+        helper.SetTransformations(kv.second->m_Transformations);
+        orderedData[idx] = helper.WarpImage(movingImage);
+      }else{
+        orderedData[idx] = movingImage;
       }
     }
-    catch (std::exception &e)
-    {
-      MITK_INFO << e.what();
-      QMessageBox::warning(m_Parent, "Corrupted indices", "Please ensure correct indices!");
-    }
-
+    
+    MITK_INFO << "***** Copy data to volume *****";
     AccessByItk(newVolume,
                 (
                   [&](auto itkImage)
                   {
-                    using ItkImagePixelType = typename std::remove_pointer<decltype(itkImage)>::type::PixelType;
+                                        
                     for (unsigned int i = 0; i < orderedData.size(); ++i)
                     {
-                      auto td = static_cast<ItkImagePixelType *>(itkImage->GetBufferPointer()); // targetdata
                       AccessByItk(orderedData[i],
                                   (
                                     [&](auto itkInput)
                                     {
+                                      auto td = itkImage->GetBufferPointer();
                                       auto sd = itkInput->GetBufferPointer(); // sourcedata
                                       std::copy(sd, sd + (dims[0] * dims[1]), td + (i * (dims[0] * dims[1])));
                                     }));
@@ -423,6 +451,8 @@ void RegistrationView::PostProcessReconstruction()
                   }));
 
     {
+      MITK_INFO << "***** Add volume to data storage *****";
+
       auto r = mitk::DataNode::New();
       r->SetData(newVolume);
       r->SetName("Reconstruction");
@@ -431,8 +461,24 @@ void RegistrationView::PostProcessReconstruction()
   }
 }
 
-void RegistrationView::Registration(RegistrationEntity & entity)
+
+
+void RegistrationView::Registration(RegistrationEntity *fixed, RegistrationEntity *moving)
 {
+  const auto invert = [](mitk::Image::Pointer image){
+    mitk::Image::Pointer rImage;
+    AccessByItk(image, ([&](auto imageItk) mutable{
+      using ItkImageType = typename std::remove_pointer<decltype(imageItk)>::type;
+      auto filter = itk::InvertIntensityImageFilter<ItkImageType>::New();
+      filter->SetMaximum(255);
+      filter->SetInput(imageItk);
+      filter->Update();
+      typename ItkImageType::Pointer fout = filter->GetOutput();
+      mitk::CastToMitkImage(fout, rImage);
+    }));
+    return rImage;
+  };
+
   // check if
   auto elastix = m2::ElxUtil::Executable("elastix");
   if (elastix.empty())
@@ -445,26 +491,48 @@ void RegistrationView::Registration(RegistrationEntity & entity)
     }
   }
 
-  mitk::PointSet::Pointer fixedPointSet;
-  mitk::PointSet::Pointer movingPointSet;
+  // Images
   mitk::Image::Pointer fixedImage;
   mitk::Image::Pointer movingImage;
-
-  auto fixedImageNode = m_FixedImageSingleNodeSelection->GetSelectedNode();
-  if (fixedImageNode)
+  auto fixedImageNode = fixed->m_ImageSelection->GetSelectedNode();
+  if (fixedImageNode){
     fixedImage = dynamic_cast<mitk::Image *>(fixedImageNode->GetData());
+    fixedImage = invert(fixedImage);
+    if(!fixed->m_Transformations.empty()){
+      MITK_INFO << "***** Warp Fixed Image *****";
+      m2::ElxRegistrationHelper warpingHelper;
+      warpingHelper.SetTransformations(fixed->m_Transformations);
+      fixedImage = warpingHelper.WarpImage(fixedImage);
+    }
+  }
 
-  if (auto node = m_FixedPointSetSingleNodeSelection->GetSelectedNode())
-    fixedPointSet = dynamic_cast<mitk::PointSet *>(node->GetData());
 
-  if (auto movingPointSetNode = entity.m_PointSetSelection->GetSelectedNode())
-    movingPointSet = dynamic_cast<mitk::PointSet *>(movingPointSetNode->GetData());
-  
-  auto movingImageNode = entity.m_ImageSelection->GetSelectedNode();
-  if (movingImageNode)
+  auto movingImageNode = moving->m_ImageSelection->GetSelectedNode();
+  if (movingImageNode){
     movingImage = dynamic_cast<mitk::Image *>(movingImageNode->GetData());
+    movingImage = invert(movingImage);
+  }
 
-  
+  // Fixed image mask
+  mitk::Image::Pointer fixedImageMask;
+  auto fixedImageMaskNode = fixed->m_ImageMaskSelection->GetSelectedNode();
+  if (fixedImageMaskNode){
+    fixedImageMask = dynamic_cast<mitk::Image *>(fixedImageMaskNode->GetData());
+    if(!fixed->m_Transformations.empty()){
+      m2::ElxRegistrationHelper warpingHelper;
+      warpingHelper.SetTransformations(fixed->m_Transformations);
+      fixedImageMask = warpingHelper.WarpImage(fixedImageMask, "short", 1);
+    }
+  }
+
+  // PointSets
+  mitk::PointSet::Pointer fixedPointSet;
+  mitk::PointSet::Pointer movingPointSet;
+
+  if (auto node = fixed->m_PointSetSelection->GetSelectedNode())
+    fixedPointSet = dynamic_cast<mitk::PointSet *>(node->GetData());
+  if (auto movingPointSetNode = moving->m_PointSetSelection->GetSelectedNode())
+    movingPointSet = dynamic_cast<mitk::PointSet *>(movingPointSetNode->GetData());
 
   try
   {
@@ -489,32 +557,37 @@ void RegistrationView::Registration(RegistrationEntity & entity)
 
       // copy valid and discard empty parameterfiles
       for (auto &p : m_ParameterFiles[currentIndex])
-          parameterFiles.push_back(p);
+        parameterFiles.push_back(p);
 
-      if(!m_Controls.chkBxUseDeformableRegistration->isChecked() || parameterFiles.back().empty()){
+      if (!m_Controls.chkBxUseDeformableRegistration->isChecked() || parameterFiles.back().empty())
+      {
         parameterFiles.pop_back();
       }
 
+      MITK_INFO << "***** Start Registration *****";
       // setup and run
       helper.SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
       helper.SetImageData(fixedImage, movingImage);
+      helper.SetFixedImageMaskData(fixedImageMask);
       helper.SetPointData(fixedPointSet, movingPointSet);
       helper.SetRegistrationParameters(parameterFiles);
       helper.SetRemoveWorkingDirectory(true);
       helper.UseMovingImageSpacing(m_Controls.keepSpacings->isChecked());
       helper.SetStatusCallback(statusCallback);
       helper.GetRegistration();
+      // warp original data
+      movingImage = dynamic_cast<mitk::Image *>(movingImageNode->GetData());
       auto warpedImage = helper.WarpImage(movingImage);
 
       auto timeString = itksys::SystemTools::GetCurrentDateTime("%H%M");
       auto node = mitk::DataNode::New();
       node->SetData(warpedImage);
-      node->SetName(movingImageNode->GetName() + "_warped"+timeString);
-      entity.m_ResultNode = node;
-      entity.m_Transformations = helper.GetTransformation();
+      node->SetName(movingImageNode->GetName() + "_warped" + timeString);
+      moving->m_ResultNode = node;
+      moving->m_Transformations = helper.GetTransformation();
 
-      MITK_INFO << "Attachments: " << entity.m_Attachments.size();
-      for (const QmitkSingleNodeSelectionWidget *attSel : entity.m_Attachments)
+      MITK_INFO << "Attachments: " << moving->m_Attachments.size();
+      for (const QmitkSingleNodeSelectionWidget *attSel : moving->m_Attachments)
       {
         if (auto node = attSel->GetSelectedNode())
         {
@@ -523,30 +596,33 @@ void RegistrationView::Registration(RegistrationEntity & entity)
             auto wapred = helper.WarpImage(labelSetImage, "short", 1);
             auto resNode = mitk::DataNode::New();
             resNode->SetData(wapred);
-            resNode->SetName(node->GetName() + "_warped_mask"+timeString);
-            entity.m_ResultAttachments.push_back(resNode);
-          }else if (auto image = dynamic_cast<mitk::Image *>(node->GetData())){
+            resNode->SetName(node->GetName() + "_warped_mask" + timeString);
+            moving->m_ResultAttachments.push_back(resNode);
+          }
+          else if (auto image = dynamic_cast<mitk::Image *>(node->GetData()))
+          {
             auto warped = helper.WarpImage(image, "float", 1);
             auto resNode = mitk::DataNode::New();
             resNode->SetData(warped);
-            resNode->SetName(node->GetName() + "_warped_att_"+timeString);
-            entity.m_ResultAttachments.push_back(resNode);
+            resNode->SetName(node->GetName() + "_warped_att_" + timeString);
+            moving->m_ResultAttachments.push_back(resNode);
           }
         }
       }
     }
 
-    mitk::DataNode * parentNode = movingImageNode;
-    if(m_Controls.chkBxAttachToFixedImage->isChecked()){
+    mitk::DataNode *parentNode = movingImageNode;
+    if (m_Controls.chkBxAttachToFixedImage->isChecked())
+    {
       parentNode = fixedImageNode;
     }
 
     MITK_INFO << "Add moving image node";
-    auto node = entity.m_ResultNode;
+    auto node = moving->m_ResultNode;
     this->GetDataStorage()->Add(node, parentNode);
 
     MITK_INFO << "Add attachments";
-    for (auto node : entity.m_ResultAttachments)
+    for (auto node : moving->m_ResultAttachments)
     {
       this->GetDataStorage()->Add(node, parentNode);
       MITK_INFO << node->GetName();
@@ -563,9 +639,56 @@ void RegistrationView::Registration(RegistrationEntity & entity)
 
 void RegistrationView::StartRegistration()
 {
-  for (auto &kv : m_MovingEntities)
-    Registration(kv.second);
-  
+  if (m_Controls.rbAllToOne->isChecked())
+  {
+    MITK_INFO << "m_Controls.rbAllToOne->isChecked()";
+    for (auto &kv : m_MovingEntities)
+      Registration(m_FixedEntity.get(), kv.second.get());
+  }
+
+  if (m_Controls.rbSubsequent->isChecked())
+  {
+
+    MITK_INFO << "m_Controls.rbSubsequent->isChecked()";
+    const auto fixIndex = m_Controls.fixedIndex->value();
+    std::list<std::shared_ptr<RegistrationEntity>> upperEntities, lowerEntities;
+
+    upperEntities.push_back(m_FixedEntity);
+    lowerEntities.push_back(m_FixedEntity);
+
+    for (auto &kv : m_MovingEntities)
+    {
+      if (kv.second->m_Index->value() < fixIndex)
+        upperEntities.push_back(kv.second);
+
+      if (kv.second->m_Index->value() > fixIndex)
+        lowerEntities.push_back(kv.second);
+    }
+
+    upperEntities.sort([](auto a, auto b) { return a->m_Index->value() < b->m_Index->value(); });   
+    lowerEntities.sort([](auto a, auto b) { return a->m_Index->value() < b->m_Index->value(); });
+
+    {
+      auto a = upperEntities.rbegin();
+      auto b = std::next(upperEntities.rbegin());
+      MITK_INFO << "start upper stack registration!"; 
+      for (; b != upperEntities.rend(); ++a, ++b)
+      {
+        MITK_INFO << (*a)->m_Index->value() << "<-" << (*b)->m_Index->value();
+        Registration(a->get(),b->get());
+      }
+    }
+    {
+      auto a = lowerEntities.begin();
+      auto b = std::next(lowerEntities.begin());
+      MITK_INFO << "start lower stack registration!";
+      for (; b != lowerEntities.end(); ++a, ++b)
+      {
+        MITK_INFO << (*a)->m_Index->value() << "<-" << (*b)->m_Index->value();
+        Registration(a->get(),b->get());
+      }
+    }
+  }
 
   // auto resultPath = SystemTools::ConvertToOutputPath(SystemTools::JoinPath({path, "/", "result.1.nrrd"}));
   // MITK_INFO << "Result image path: " << resultPath;

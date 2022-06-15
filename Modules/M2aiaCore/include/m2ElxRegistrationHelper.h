@@ -63,7 +63,7 @@ namespace m2
   public:
     // Registration
     void SetImageData(mitk::Image *fixed, mitk::Image *moving);
-    void SetMaskData(mitk::Image *fixed, mitk::Image *moving);
+    void SetFixedImageMaskData(mitk::Image *fixed);
     void SetPointData(mitk::PointSet *fixed, mitk::PointSet *moving);
     void SetDirectory(const std::string &dir);
     void SetRegistrationParameters(const std::vector<std::string> &);
