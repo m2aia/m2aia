@@ -856,7 +856,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
     auto accNorm =
       std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
 
-    MITK_INFO << spectra.size();
+    // MITK_INFO << spectra.size();
     // MAP
     m2::Process::Map(spectra.size(),
                      T,
@@ -960,11 +960,11 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
       }
     }
 
-    for(int i = 0 ; i < binsN; ++i){
-      if(hT[0][i] > 0){
-        MITK_INFO << xT[0][i]/(double)hT[0][i] << " " <<  yT[0][i] << " max(" << yMaxT[0][i] << ") [" << hT[0][i] << "]";
-      }
-    }
+    // for(int i = 0 ; i < binsN; ++i){
+    //   if(hT[0][i] > 0){
+    //     MITK_INFO << xT[0][i]/(double)hT[0][i] << " " <<  yT[0][i] << " max(" << yMaxT[0][i] << ") [" << hT[0][i] << "]";
+    //   }
+    // }
 
     auto &mzAxis = p->GetXAxis();
     auto &sum = p->SumSpectrum();
