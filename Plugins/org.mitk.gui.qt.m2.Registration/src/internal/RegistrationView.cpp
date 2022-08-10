@@ -470,7 +470,6 @@ void RegistrationView::Registration(RegistrationEntity *fixed, RegistrationEntit
     AccessByItk(image, ([&](auto imageItk) mutable{
       using ItkImageType = typename std::remove_pointer<decltype(imageItk)>::type;
       auto filter = itk::InvertIntensityImageFilter<ItkImageType>::New();
-      filter->SetMaximum(255);
       filter->SetInput(imageItk);
       filter->Update();
       typename ItkImageType::Pointer fout = filter->GetOutput();
@@ -497,7 +496,10 @@ void RegistrationView::Registration(RegistrationEntity *fixed, RegistrationEntit
   auto fixedImageNode = fixed->m_ImageSelection->GetSelectedNode();
   if (fixedImageNode){
     fixedImage = dynamic_cast<mitk::Image *>(fixedImageNode->GetData());
-    fixedImage = invert(fixedImage);
+    
+    if(m_Controls.chkBxInvertIntensities->isChecked())
+      fixedImage = invert(fixedImage);
+    
     if(!fixed->m_Transformations.empty()){
       MITK_INFO << "***** Warp Fixed Image *****";
       m2::ElxRegistrationHelper warpingHelper;

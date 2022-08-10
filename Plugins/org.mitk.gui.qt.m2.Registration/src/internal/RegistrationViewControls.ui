@@ -263,6 +263,19 @@
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="chkBxInvertIntensities">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>Invert image intensities for registration</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QComboBox" name="registrationStrategy">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
