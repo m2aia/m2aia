@@ -16,7 +16,8 @@ Downloads
 |Installers and packages for M²aia||
 |---|---|
 |**Latest/Nightly**|[[M²aia:latest](http://data.jtfc.de/latest/)]|
-|**Releases**|[[M²aia:v2021.07](https://github.com/jtfcordes/M2aia/releases/tag/v2021.07.00)]|
+|**Releases**|[[M²aia:v2022.08](https://github.com/jtfcordes/M2aia/releases/tag/v2022.08.00)]|
+||[[M²aia:v2021.07](https://github.com/jtfcordes/M2aia/releases/tag/v2021.07.00)]|
 ||[[M²aia:Archive](https://github.com/jtfcordes/M2aia/releases)]|
 
 Using registration utilities requires [elastix 5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0).
