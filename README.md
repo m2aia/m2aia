@@ -9,7 +9,7 @@ M²aia is open source software, based on the well-known [Medical Imaging Interac
 
 ## More information ##
 
-More [information][m2aia], [protocols][m2aia], [build instructions][m2aia-build] and [downloads][download] can be found on the [https://m2aia.de][m2aia]. <br/>
+More [information][m2aia], [protocols][m2aia], [build instructions][m2aia-build] and [downloads][download] can be found on [https://m2aia.de][m2aia]. <br/>
 [biotools:m2aia][biotools-m2aia]<br/>
 [RRID:SCR_019324][scicrunch-m2aia]<br/>
 
