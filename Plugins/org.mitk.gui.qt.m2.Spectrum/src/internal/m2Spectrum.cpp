@@ -17,6 +17,7 @@ See LICENSE.txt for details.
 #include "m2Spectrum.h"
 
 #include <QApplication>
+#include <QShortcut>
 #include <QValueAxis>
 #include <berryIPreferences.h>
 #include <berryPlatform.h>
@@ -526,15 +527,27 @@ void m2Spectrum::UpdateGlobalMinMaxValues()
   m_LocalMinimumY = m_GlobalMinimumY;
   m_LocalMaximumY = m_GlobalMaximumY;
 
-  MITK_INFO("UpdateGlobalMinMaxValues") << "New global minmax X: " << m_GlobalMinimumX << " " << m_GlobalMaximumX;
-  MITK_INFO("UpdateGlobalMinMaxValues") << "New global minmax Y: " << m_GlobalMinimumY << " " << m_GlobalMaximumY;
-  MITK_INFO("UpdateGlobalMinMaxValues") << "New local minmax Y: " << m_LocalMinimumY << " " << m_LocalMaximumY;
+  // MITK_INFO("UpdateGlobalMinMaxValues") << "New global minmax X: " << m_GlobalMinimumX << " " << m_GlobalMaximumX;
+  // MITK_INFO("UpdateGlobalMinMaxValues") << "New global minmax Y: " << m_GlobalMinimumY << " " << m_GlobalMaximumY;
+  // MITK_INFO("UpdateGlobalMinMaxValues") << "New local minmax Y: " << m_LocalMinimumY << " " << m_LocalMaximumY;
 }
 
 void m2Spectrum::CreateQtPartControl(QWidget *parent)
 {
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
+
+  QShortcut *shortcutLeft = new QShortcut(QKeySequence(Qt::Key_Left), parent);
+  QShortcut *shortcutRight = new QShortcut(QKeySequence(Qt::Key_Right), parent);
+  QShortcut *shortcutUp = new QShortcut(QKeySequence(Qt::Key_Up), parent);
+  QShortcut *shortcutDown = new QShortcut(QKeySequence(Qt::Key_Down), parent);
+
+  auto UIUtilsObject = m2::UIUtils::Instance();
+
+  connect(shortcutRight, SIGNAL(activated()), UIUtilsObject, SIGNAL(NextImage()));
+  connect(shortcutLeft, SIGNAL(activated()), UIUtilsObject, SIGNAL(PreviousImage()));
+  connect(shortcutUp, SIGNAL(activated()), UIUtilsObject, SIGNAL(IncreaseTolerance()));
+  connect(shortcutDown, SIGNAL(activated()), UIUtilsObject, SIGNAL(DecreaseTolerance()));
 
   // 20201023: use communciation service
   auto serviceRef = m2::UIUtils::Instance();

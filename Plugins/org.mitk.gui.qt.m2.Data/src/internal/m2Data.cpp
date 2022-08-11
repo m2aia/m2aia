@@ -35,6 +35,8 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateProperty.h>
 
+#include <m2UIUtils.h>
+
 const std::string m2Data::VIEW_ID = "org.mitk.views.m2.Data";
 
 void m2Data::CreateQtPartControl(QWidget *parent)
@@ -70,17 +72,12 @@ void m2Data::CreateQtPartControl(QWidget *parent)
           });
 
   // step through
-  QShortcut *shortcutLeft = new QShortcut(QKeySequence(Qt::Key_Left), parent);
-  connect(shortcutLeft, SIGNAL(activated()), this, SLOT(OnCreatePrevImage()));
-
-  QShortcut *shortcutRight = new QShortcut(QKeySequence(Qt::Key_Right), parent);
-  connect(shortcutRight, SIGNAL(activated()), this, SLOT(OnCreateNextImage()));
-
-  QShortcut *shortcutUp = new QShortcut(QKeySequence(Qt::Key_Up), parent);
-  connect(shortcutUp, &QShortcut::activated, this, &m2Data::OnIncreaseTolerance);
-
-  QShortcut *shortcutDown = new QShortcut(QKeySequence(Qt::Key_Down), parent);
-  connect(shortcutDown, &QShortcut::activated, this, &m2Data::OnDecreaseTolerance);
+  // signals are triggered by key strokes (arrows) from spectrum view (Spectrum.ccp)
+  auto UIUtilsObject = m2::UIUtils::Instance();
+  connect(UIUtilsObject, SIGNAL(PreviousImage()), this, SLOT(OnCreatePrevImage()));
+  connect(UIUtilsObject, SIGNAL(NextImage()), this, SLOT(OnCreateNextImage()));
+  connect(UIUtilsObject, SIGNAL(IncreaseTolerance()), this, SLOT(OnIncreaseTolerance()));
+  connect(UIUtilsObject, SIGNAL(DecreaseTolerance()), this, SLOT(OnDecreaseTolerance()));
 
   connect(m_Controls.maskSubstring,
           &QLineEdit::textChanged,
@@ -424,7 +421,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
       //*************** Worker Block******************//
       const auto futureWorker = [xRangeCenter, xRangeTol, data, maskImage, this]()
       {
-        m2::Timer t("Create image @[" + std::to_string(xRangeCenter) + " " + std::to_string(xRangeTol) + "]");
+        // m2::Timer t("Create image @[" + std::to_string(xRangeCenter) + " " + std::to_string(xRangeTol) + "]");
         if (m_InitializeNewNode)
         {
           auto geom = data->GetGeometry()->Clone();
