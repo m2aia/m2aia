@@ -185,7 +185,7 @@ void m2OpenSlideImageIOHelperDialog::UpdateImageInformation()
           });
 }
 
-mitk::Image::Pointer m2OpenSlideImageIOHelperDialog::GetPreviwData()
+mitk::Image::Pointer m2OpenSlideImageIOHelperDialog::GetPreviewData()
 {
   auto IO = m_Helper->GetOpenSlideIO();
   if (this->GetSelectedLevel() == IO->GetLevelCount() - 1)

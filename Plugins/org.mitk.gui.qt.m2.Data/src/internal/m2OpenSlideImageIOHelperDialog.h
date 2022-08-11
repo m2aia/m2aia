@@ -44,7 +44,7 @@ public:
   int GetSelectedLevel() { return m_SelectedLevel; }
   double GetSliceThickness() { return m_SliceThickness; }
   std::vector<mitk::Image::Pointer> GetData();
-  mitk::Image::Pointer GetPreviwData();
+  mitk::Image::Pointer GetPreviewData();
 
 private:
   m2::OpenSlideImageIOHelperObject::Pointer m_Helper;
