@@ -512,7 +512,8 @@ void RegistrationView::Registration(RegistrationEntity *fixed, RegistrationEntit
   auto movingImageNode = moving->m_ImageSelection->GetSelectedNode();
   if (movingImageNode){
     movingImage = dynamic_cast<mitk::Image *>(movingImageNode->GetData());
-    movingImage = invert(movingImage);
+    if(m_Controls.chkBxInvertIntensities->isChecked())
+      movingImage = invert(movingImage);
   }
 
   // Fixed image mask
