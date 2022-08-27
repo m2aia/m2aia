@@ -5,6 +5,7 @@ set(SRC_CPP_FILES
 set(INTERNAL_CPP_FILES
   org_mitk_gui_qt_m2_PeakPicking_Activator.cpp
   m2PeakPickingView.cpp
+  QmitkExportComponentAction.cpp
 )
 
 set(UI_FILES
@@ -14,6 +15,7 @@ set(UI_FILES
 set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_PeakPicking_Activator.h
   src/internal/m2PeakPickingView.h
+  src/internal/QmitkExportComponentAction.h
 )
 
 # list of resource files which can be used by the plug-in
