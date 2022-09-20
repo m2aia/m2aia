@@ -1,4 +1,5 @@
 set(MITK_PLUGINS
+org.mitk.biomarker.roc:ON
 org.mitk.gui.qt.m2.common:ON
 org.mitk.gui.qt.m2.application:ON
 org.mitk.gui.qt.m2.Position:ON

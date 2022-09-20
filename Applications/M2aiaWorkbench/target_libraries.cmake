@@ -3,6 +3,7 @@
 # (or be available in external projects) for this application
 
 set(target_libraries
+  org_mitk_biomarker_roc
   org_mitk_gui_qt_common
   org_mitk_gui_qt_stdmultiwidgeteditor
   org_mitk_gui_qt_datamanager

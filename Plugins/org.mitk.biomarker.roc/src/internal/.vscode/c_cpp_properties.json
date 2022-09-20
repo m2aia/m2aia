@@ -1,0 +1,28 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/maia/Documents/maia/build/ep/**",
+                "/home/maia/Documents/maia/build/MITK-build/**",
+                "/home/maia/Documents/maia/00_my_m2aia/**",
+                "/usr/include/c++/9/**",
+                "/usr/include/x86_64-linux-gnu/c++/9/**", 
+                "/usr/include/c++/9/backward/**", 
+                "/usr/lib/gcc/x86_64-linux-gnu/9/include/**", 
+                "/usr/local/include/**", 
+                "/usr/include/x86_64-linux-gnu/**", 
+                "/usr/include/**", 
+                "/usr/lib/x86_64-linux-gnu/cmake/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-clang-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}
