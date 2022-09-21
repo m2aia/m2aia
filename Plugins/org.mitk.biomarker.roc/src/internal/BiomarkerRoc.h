@@ -17,6 +17,7 @@ found in the LICENSE file.
 #include <berryISelectionListener.h>
 
 #include <QmitkAbstractView.h>
+#include <QmitkSingleNodeSelectionWidget.h>
 
 #include <QFile>
 
@@ -53,6 +54,7 @@ protected:
 
   Ui::BiomarkerRocControls m_Controls;
 private:
+  QmitkSingleNodeSelectionWidget* selectNodeButton;
   //Chart* chart;
 };
 

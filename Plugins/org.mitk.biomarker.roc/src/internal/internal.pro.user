@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.11.0, 2022-09-20T15:08:07. -->
+<!-- Written by QtCreator 4.11.0, 2022-09-21T14:28:27. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -285,8 +285,9 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/maia/Documents/m2aia/00_my_m2aia/Plugins/org.mitk.biomarker.roc/src/internal/internal.pro</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/maia/Documents/m2aia/00_my_m2aia/Plugins/org.mitk.biomarker.roc/src/internal/internal.pro</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">internal2</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:/home/maia/Documents/maia/00_my_m2aia/Plugins/org.mitk.biomarker.roc/src/internal/internal.pro</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">/home/maia/Documents/maia/00_my_m2aia/Plugins/org.mitk.biomarker.roc/src/internal/internal.pro</value>
     <value type="QString" key="RunConfiguration.Arguments"></value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>

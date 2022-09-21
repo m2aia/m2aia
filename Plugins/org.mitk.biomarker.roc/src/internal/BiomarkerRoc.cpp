@@ -17,6 +17,7 @@ found in the LICENSE file.
 
 // Qmitk
 #include "BiomarkerRoc.h"
+#include <QmitkAbstractNodeSelectionWidget.h>
 //#include "chart.h"
 
 // Qt
@@ -29,12 +30,13 @@ found in the LICENSE file.
 
 const std::string BiomarkerRoc::VIEW_ID = "org.mitk.views.biomarkerrocanalysis";
 BiomarkerRoc::BiomarkerRoc()
-{}
+{
+}
 
 void BiomarkerRoc::SetFocus()
 {
   if(true)
-    m_Controls.FileChooseButton->setFocus();
+    selectNodeButton->setFocus();
   else
     m_Controls.MdiArea->setFocus();
 }
@@ -43,8 +45,15 @@ void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
 {
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
-  connect(m_Controls.FileChooseButton, &QPushButton::clicked, this, &BiomarkerRoc::OpenFileChooseDialog);
+  selectNodeButton = new QmitkSingleNodeSelectionWidget(parent);
+  selectNodeButton->SetInvalidInfo("Nothing selected uwu :3");
+  selectNodeButton->SetPopUpTitel("This is the Popup title");
+  selectNodeButton->SetPopUpHint("This is the popup hint");
+  //connect(selectNodeButton, &QmitkAbstractNodeSelectionWidget::CurrentSelectionChanged, this, &BiomarkerRoc::OpenFileChooseDialog);
+  //connect(m_Controls.FileChooseButton, &QPushButton::clicked, this, &BiomarkerRoc::OpenFileChooseDialog);
   connect(m_Controls.CalculateButton, &QPushButton::clicked, this, &BiomarkerRoc::CalculateRocCurve);
+  selectNodeButton->setVisible(true);
+  selectNodeButton->show();
 }
 
 void BiomarkerRoc::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*/,
@@ -59,6 +68,7 @@ void BiomarkerRoc::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*/,
       m_Controls.FileChooseButton->setEnabled(true);
       m_Controls.CalculateButton->setEnabled(false);
       m_Controls.MdiArea->setVisible(false);
+      selectNodeButton->SetAutoSelectNewNodes(true);
       return;
     }
   }
@@ -77,4 +87,5 @@ void BiomarkerRoc::CalculateRocCurve()
 {
     //chart = new Chart(m_Controls.MdiArea);
     //chart->show();
+    m_Controls.Label->setText("Not implemented yet uwu :3");
 }
