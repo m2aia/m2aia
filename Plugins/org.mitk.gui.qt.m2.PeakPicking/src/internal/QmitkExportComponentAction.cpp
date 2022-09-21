@@ -15,6 +15,7 @@ found in the LICENSE file.
 #include <mitkImageReadAccessor.h>
 #include <mitkImageWriteAccessor.h>
 #include <mitkImage.h>
+#include <mitkImageAccessByItk.h>
 
 //needed for qApp
 #include <qcoreapplication.h>
@@ -71,7 +72,7 @@ void QmitkExportComponentAction::Run(const QList<mitk::DataNode::Pointer> &selec
           }
         }
 
-        else if (nComponents <= 4)
+        else if (nComponents <= 6)
         {
           for (unsigned int i = 0; i < nComponents; ++i)
           {
@@ -109,8 +110,9 @@ mitk::Image::Pointer QmitkExportComponentAction::ExportComponentImage(const mitk
         const auto inGeometry = img->GetSlicedGeometry();
 
         auto output = mitk::Image::New();
-        auto newPixelType = mitk::MakePixelType(inputPixelType, 1);
+        mitk::PixelType newPixelType = mitk::MakePixelType(inputPixelType,1);
         output->Initialize(newPixelType, 3, img->GetDimensions());
+        // auto newPixelType = mitk::MakePixelType(inputPixelType, 1);
         output->GetSlicedGeometry()->SetSpacing(inGeometry->GetSpacing());
         output->GetSlicedGeometry()->SetOrigin(inGeometry->GetOrigin());
         output->GetSlicedGeometry()->SetDirectionVector(inGeometry->GetDirectionVector());
