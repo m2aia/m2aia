@@ -21,27 +21,33 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QLabel" name="Label">
+    <widget class="QLabel" name="label">
      <property name="text">
       <string>Please select a file for ROC analysis. </string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="FileChooseButton">
+    <widget class="QmitkSingleNodeSelectionWidget" name="selectImage" native="true">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>25</height>
+      </size>
+     </property>
      <property name="maximumSize">
       <size>
        <width>247</width>
        <height>25</height>
       </size>
      </property>
-     <property name="text">
-      <string>Choose file</string>
-     </property>
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="CalculateButton">
+    <widget class="QPushButton" name="calcButton">
      <property name="maximumSize">
       <size>
        <width>247</width>
@@ -57,7 +63,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QMdiArea" name="MdiArea">
+    <widget class="QMdiArea" name="mdiArea">
      <property name="maximumSize">
       <size>
        <width>1920</width>
@@ -82,6 +88,14 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QmitkSingleNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">QmitkSingleNodeSelectionWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

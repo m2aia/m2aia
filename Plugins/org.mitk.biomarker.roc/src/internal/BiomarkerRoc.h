@@ -1,14 +1,17 @@
-/*============================================================================
+/*===================================================================
 
-The Medical Imaging Interaction Toolkit (MITK)
+MSI applications for interactive analysis in MITK (M2aia)
 
-Copyright (c) German Cancer Research Center (DKFZ)
+Copyright (c) Lorenz Schwab
 All rights reserved.
 
-Use of this source code is governed by a 3-clause BSD license that can be
-found in the LICENSE file.
+This software is distributed WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE.
 
-============================================================================*/
+See LICENSE.txt for details.
+
+===================================================================*/
 
 
 #ifndef BiomarkerRoc_h
@@ -50,11 +53,10 @@ protected:
   /// \brief Called when the user clicks the Choose File button
   void OpenFileChooseDialog();
   /// \brief Called when the user clicks the Calculate button
-  void CalculateRocCurve();
+  void OnCalcButtonPressed();
 
   Ui::BiomarkerRocControls m_Controls;
 private:
-  QmitkSingleNodeSelectionWidget* selectNodeButton;
   //Chart* chart;
 };
 

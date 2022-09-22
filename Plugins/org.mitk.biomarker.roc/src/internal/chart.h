@@ -1,3 +1,18 @@
+/*===================================================================
+
+MSI applications for interactive analysis in MITK (M2aia)
+
+Copyright (c) Lorenz Schwab
+All rights reserved.
+
+This software is distributed WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE.
+
+See LICENSE.txt for details.
+
+===================================================================*/
+
 #ifndef CHART_H
 #define CHART_H
 

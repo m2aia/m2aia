@@ -1,22 +1,25 @@
-/*============================================================================
+/*===================================================================
 
-The Medical Imaging Interaction Toolkit (MITK)
+MSI applications for interactive analysis in MITK (M2aia)
 
-Copyright (c) German Cancer Research Center (DKFZ)
+Copyright (c) Lorenz Schwab
 All rights reserved.
 
-Use of this source code is governed by a 3-clause BSD license that can be
-found in the LICENSE file.
+This software is distributed WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE.
 
-============================================================================*/
+See LICENSE.txt for details.
 
+===================================================================*/
+
+#include "BiomarkerRoc.h"
 
 // Blueberry
 #include <berryISelectionService.h>
 #include <berryIWorkbenchWindow.h>
 
 // Qmitk
-#include "BiomarkerRoc.h"
 #include <QmitkAbstractNodeSelectionWidget.h>
 //#include "chart.h"
 
@@ -25,8 +28,13 @@ found in the LICENSE file.
 #include <QDialog>
 #include <QFileDialog>
 
-// mitk image
+// mitk
 #include <mitkImage.h>
+#include <mitkNodePredicateAnd.h>
+#include <mitkNodePredicateNot.h>
+#include <mitkNodePredicateDataType.h>
+#include <mitkNodePredicateProperty.h>
+#include <m2SpectrumImageBase.h>
 
 const std::string BiomarkerRoc::VIEW_ID = "org.mitk.views.biomarkerrocanalysis";
 BiomarkerRoc::BiomarkerRoc()
@@ -35,25 +43,22 @@ BiomarkerRoc::BiomarkerRoc()
 
 void BiomarkerRoc::SetFocus()
 {
-  if(true)
-    selectNodeButton->setFocus();
-  else
-    m_Controls.MdiArea->setFocus();
+  m_Controls.label->setFocus();
 }
 
 void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
 {
-  // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
-  selectNodeButton = new QmitkSingleNodeSelectionWidget(parent);
-  selectNodeButton->SetInvalidInfo("Nothing selected uwu :3");
-  selectNodeButton->SetPopUpTitel("This is the Popup title");
-  selectNodeButton->SetPopUpHint("This is the popup hint");
-  //connect(selectNodeButton, &QmitkAbstractNodeSelectionWidget::CurrentSelectionChanged, this, &BiomarkerRoc::OpenFileChooseDialog);
-  //connect(m_Controls.FileChooseButton, &QPushButton::clicked, this, &BiomarkerRoc::OpenFileChooseDialog);
-  connect(m_Controls.CalculateButton, &QPushButton::clicked, this, &BiomarkerRoc::CalculateRocCurve);
-  selectNodeButton->setVisible(true);
-  selectNodeButton->show();
+  m_Controls.selectImage->SetDataStorage(GetDataStorage());
+  m_Controls.selectImage->SetNodePredicate(
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
+      mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")))
+  );
+  m_Controls.selectImage->SetSelectionIsOptional(true);
+  m_Controls.selectImage->SetEmptyInfo("Choose image");
+  m_Controls.selectImage->SetPopUpTitel("Select image");
+  m_Controls.selectImage->SetPopUpHint("Select the image you want to work with. This can be any opened image (*.imzML).");
+  connect(m_Controls.calcButton, &QPushButton::clicked, this, &BiomarkerRoc::OnCalcButtonPressed);
 }
 
 void BiomarkerRoc::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*/,
@@ -64,28 +69,27 @@ void BiomarkerRoc::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*/,
   {
     if (node.IsNotNull() && dynamic_cast<mitk::Image *>(node->GetData()))
     {
-      m_Controls.Label->setVisible(true);
-      m_Controls.FileChooseButton->setEnabled(true);
-      m_Controls.CalculateButton->setEnabled(false);
-      m_Controls.MdiArea->setVisible(false);
-      selectNodeButton->SetAutoSelectNewNodes(true);
+      m_Controls.label->setVisible(true);
+      m_Controls.selectImage->setEnabled(true);
+      m_Controls.calcButton->setEnabled(false);
+      m_Controls.mdiArea->setVisible(false);
       return;
     }
   }
-
-  //m_Controls.labelWarning->setVisible(true);
-  //m_Controls.buttonPerformImageProcessing->setEnabled(false);
 }
 
 void BiomarkerRoc::OpenFileChooseDialog()
 {
-    QString filename = QFileDialog::getOpenFileName(nullptr, tr("Open a file"), nullptr, tr("*.roc Files (*.roc)"));
-    m_Controls.Label->setText("Selected File: \n" + filename);
+  QString filename = QFileDialog::getOpenFileName(nullptr, tr("Open a file"), nullptr, tr("*.roc Files (*.roc)"));
+  m_Controls.label->setText("Selected File: \n" + filename);
 }
 
-void BiomarkerRoc::CalculateRocCurve()
+void BiomarkerRoc::OnCalcButtonPressed()
 {
-    //chart = new Chart(m_Controls.MdiArea);
-    //chart->show();
-    m_Controls.Label->setText("Not implemented yet uwu :3");
+  if (m_Controls.selectImage->GetSelectedNode())
+  {
+    std::string nodeName = m_Controls.selectImage->GetSelectedNode()->GetName();
+    m_Controls.label->setText("Opened Image " + QString(nodeName.c_str()));
+    m_Controls.label->update();
+  }
 }
