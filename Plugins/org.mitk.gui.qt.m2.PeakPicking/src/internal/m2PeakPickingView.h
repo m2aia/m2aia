@@ -60,7 +60,7 @@ protected:
   QmitkSingleNodeSelectionWidget *m_MassSpecDataNodeSelectionWidget;
   m2::UIUtils::NodesVectorType::Pointer m_ReceivedNodes = nullptr;
   using PeakVectorType = m2::SpectrumImageBase::PeaksVectorType;
-  std::vector<PeakVectorType> m_PeakLists;
+  PeakVectorType m_PeakList;
   QMetaObject::Connection m_Connection;
 
 protected slots:

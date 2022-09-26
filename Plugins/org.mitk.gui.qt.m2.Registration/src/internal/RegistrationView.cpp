@@ -575,7 +575,7 @@ void RegistrationView::Registration(RegistrationEntity *fixed, RegistrationEntit
       helper.SetPointData(fixedPointSet, movingPointSet);
       helper.SetRegistrationParameters(parameterFiles);
       helper.SetRemoveWorkingDirectory(true);
-      helper.UseMovingImageSpacing(m_Controls.keepSpacings->isChecked());
+      // helper.UseMovingImageSpacing(m_Controls.keepSpacings->isChecked());
       helper.SetStatusCallback(statusCallback);
       helper.GetRegistration();
       // warp original data

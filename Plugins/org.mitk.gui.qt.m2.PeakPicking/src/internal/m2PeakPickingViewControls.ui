@@ -21,6 +21,9 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
+    <widget class="QmitkSingleNodeSelectionWidget" name="nodeSelection" native="true"/>
+   </item>
+   <item>
     <widget class="QLabel" name="label_2">
      <property name="text">
       <string>Overview spectrum type</string>
@@ -315,9 +318,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QComboBox" name="imageSource"/>
-   </item>
-   <item>
     <widget class="QTableWidget" name="tableWidget">
      <property name="editTriggers">
       <set>QAbstractItemView::NoEditTriggers</set>
@@ -363,11 +363,22 @@
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="selectDeselectAll">
-     <property name="text">
-      <string>Select/Deselect all</string>
-     </property>
-    </widget>
+    <layout class="QHBoxLayout" name="horizontalLayout_6">
+     <item>
+      <widget class="QPushButton" name="btnSelectAll">
+       <property name="text">
+        <string>Select all</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnDeselectAll">
+       <property name="text">
+        <string>Deselect all</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
   </layout>
  </widget>
@@ -377,6 +388,12 @@
    <class>ctkSliderWidget</class>
    <extends>QSlider</extends>
    <header>ctkSliderWidget.h</header>
+  </customwidget>
+  <customwidget>
+   <class>QmitkSingleNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkSingleNodeSelectionWidget.h</header>
+   <container>1</container>
   </customwidget>
  </customwidgets>
  <resources/>
