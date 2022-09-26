@@ -35,7 +35,7 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateProperty.h>
 #include <m2SpectrumImageBase.h>
-#include <m2LabelSetImage.h>
+#include <mitkLabelSetImage.h>
 
 const std::string BiomarkerRoc::VIEW_ID = "org.mitk.views.biomarkerrocanalysis";
 BiomarkerRoc::BiomarkerRoc()
@@ -55,8 +55,9 @@ void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
     mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
       mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")))
   );
+  m_Controls.selection->SetDataStorage(GetDataStorage());
   m_Controls.selection->SetNodePredicate(
-    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::LabelSetImage>::New(),
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::LabelSetImage>::New(),
       mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")))
   );
   m_Controls.image->SetSelectionIsOptional(false);
@@ -72,10 +73,13 @@ void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
 
 void BiomarkerRoc::OnCalcButtonPressed()
 {
-  if (auto node = m_Controls.image->GetSelectedNode())
+  auto image = m_Controls.image->GetSelectedNode();
+  auto selection = m_Controls.selection->GetSelectedNode();
+  if (image && selection)
   {
-    std::string nodeName = node->GetName();
-    m_Controls.label->setText("Opened Image " + QString(nodeName.c_str()));
+    std::string imageName = image->GetName();
+    std::string selectionName = selection->GetName();
+    m_Controls.label->setText("Opened Image " + QString(imageName.c_str()) + "\nOpened Selection " + QString(selectionName.c_str()));
     m_Controls.label->update();
   }
 }
