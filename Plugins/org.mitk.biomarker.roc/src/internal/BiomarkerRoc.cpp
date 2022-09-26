@@ -35,6 +35,7 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateProperty.h>
 #include <m2SpectrumImageBase.h>
+#include <m2LabelSetImage.h>
 
 const std::string BiomarkerRoc::VIEW_ID = "org.mitk.views.biomarkerrocanalysis";
 BiomarkerRoc::BiomarkerRoc()
@@ -49,46 +50,31 @@ void BiomarkerRoc::SetFocus()
 void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
 {
   m_Controls.setupUi(parent);
-  m_Controls.selectImage->SetDataStorage(GetDataStorage());
-  m_Controls.selectImage->SetNodePredicate(
+  m_Controls.image->SetDataStorage(GetDataStorage());
+  m_Controls.image->SetNodePredicate(
     mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
       mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")))
   );
-  m_Controls.selectImage->SetSelectionIsOptional(true);
-  m_Controls.selectImage->SetEmptyInfo("Choose image");
-  m_Controls.selectImage->SetPopUpTitel("Select image");
-  m_Controls.selectImage->SetPopUpHint("Select the image you want to work with. This can be any opened image (*.imzML).");
+  m_Controls.selection->SetNodePredicate(
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::LabelSetImage>::New(),
+      mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")))
+  );
+  m_Controls.image->SetSelectionIsOptional(false);
+  m_Controls.image->SetEmptyInfo("Choose image");
+  m_Controls.image->SetPopUpTitel("Select image");
+  m_Controls.image->SetPopUpHint("Select the image you want to work with. This can be any opened image (*.imzML).");
+  m_Controls.selection->SetSelectionIsOptional(false);
+  m_Controls.selection->SetEmptyInfo("Choose selection");
+  m_Controls.selection->SetPopUpTitel("Select selection");
+  m_Controls.selection->SetPopUpHint("Select the selection you want to work with. This can be any currently opened selection.");
   connect(m_Controls.calcButton, &QPushButton::clicked, this, &BiomarkerRoc::OnCalcButtonPressed);
-}
-
-void BiomarkerRoc::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*/,
-                                                const QList<mitk::DataNode::Pointer> &nodes)
-{
-  // iterate all selected objects, adjust warning visibility
-  foreach (mitk::DataNode::Pointer node, nodes)
-  {
-    if (node.IsNotNull() && dynamic_cast<mitk::Image *>(node->GetData()))
-    {
-      m_Controls.label->setVisible(true);
-      m_Controls.selectImage->setEnabled(true);
-      m_Controls.calcButton->setEnabled(false);
-      m_Controls.mdiArea->setVisible(false);
-      return;
-    }
-  }
-}
-
-void BiomarkerRoc::OpenFileChooseDialog()
-{
-  QString filename = QFileDialog::getOpenFileName(nullptr, tr("Open a file"), nullptr, tr("*.roc Files (*.roc)"));
-  m_Controls.label->setText("Selected File: \n" + filename);
 }
 
 void BiomarkerRoc::OnCalcButtonPressed()
 {
-  if (m_Controls.selectImage->GetSelectedNode())
+  if (auto node = m_Controls.image->GetSelectedNode())
   {
-    std::string nodeName = m_Controls.selectImage->GetSelectedNode()->GetName();
+    std::string nodeName = node->GetName();
     m_Controls.label->setText("Opened Image " + QString(nodeName.c_str()));
     m_Controls.label->update();
   }
