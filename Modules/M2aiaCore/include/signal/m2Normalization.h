@@ -48,6 +48,16 @@ namespace m2
       return TIC;
     }
 
+    template <class IntItFirst, class IntItLast>
+    double RootMeanSquare(IntItFirst iIt0, IntItLast iItEnd) noexcept
+    {
+      double N = std::distance(iIt0,iItEnd);
+      double sum = 0;
+      for (; iIt0 != iItEnd; ++iIt0)
+        sum += *iIt0**iIt0;
+      return std::sqrt(sum/N);
+    }
+
     template <class ContainerType>
     double Median(ContainerType &ints) noexcept
     {

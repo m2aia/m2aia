@@ -49,10 +49,11 @@ namespace m2
     InFile = 3,
     Sum = 4,
     Mean = 5,
-    Max = 6
+    Max = 6,
+    RMS = 7
   };
 
-  const std::array<std::string, 7> NormalizationStrategyTypeNames = {"None", "TIC", "Median", "InFile", "Sum", "Mean", "Max"};
+  const std::array<std::string, 8> NormalizationStrategyTypeNames = {"None", "TIC", "Median", "InFile", "Sum", "Mean", "Max", "RMS"};
 
   enum class BaselineCorrectionType : unsigned int
   {
@@ -92,7 +93,7 @@ namespace m2
   const std::map<const std::string, unsigned int> BASECOR_MAPPINGS{{"None", 0}, {"TopHat", 1}, {"Median", 2}};
 
   const std::map<const std::string, unsigned int> NORMALIZATION_MAPPINGS{
-    {"None", 0}, {"TIC", 1}, {"Median", 2}, {"InFile", 3}, {"Sum", 4}};
+    {"None", 0}, {"TIC", 1}, {"Median", 2}, {"InFile", 3}, {"Sum", 4}, {"RMS",7}};
 
   const std::map<const std::string, unsigned int> POOLING_MAPPINGS{
     {"None", 0}, {"Mean", 1}, {"Median", 2}, {"Maximum", 3}, {"Sum", 4}};

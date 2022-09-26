@@ -205,6 +205,8 @@ namespace m2
                 return accumulate(yFirst, yLast, double(0.0)) / double(std::distance(yFirst, yLast));
               case m2::NormalizationStrategyType::Max:
                 return *max_element(yFirst, yLast);
+              case m2::NormalizationStrategyType::RMS:
+                return m2::Signal::RootMeanSquare(yFirst, yLast);
               case m2::NormalizationStrategyType::InFile:
               default:
                 return 1;
