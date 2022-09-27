@@ -47,11 +47,7 @@
       </sizepolicy>
      </property>
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
-&lt;p&gt;Signal processing is applied only to images with continuous profile spectra. Note that overview spectra are calculated only once on image import.&lt;/p&gt;
-&lt;p&gt;(*) marked signal processing steps require re-import.&lt;/p&gt;
-&lt;p&gt;Strategy changes are not automatically applied to overview spectra.&lt;/p&gt;
-&lt;/body&gt;&lt;/html&gt;</string>
+      <string/>
      </property>
      <property name="title">
       <string>Signal processing</string>
@@ -82,7 +78,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="CBNormalization"/>
+         <widget class="QComboBox" name="CBNormalization">
+          <property name="toolTip">
+           <string>Normalization to use for intensity normalization.</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -124,6 +124,9 @@
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+          <property name="toolTip">
+           <string>Smoothing method  to use for intensity smoothing along x-axis.</string>
           </property>
          </widget>
         </item>
@@ -183,7 +186,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string/>
+           <string>Half window size used by the smoothing method.</string>
           </property>
           <property name="minimum">
            <number>0</number>
@@ -245,6 +248,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Window size expressed as required by an gaussian kernel with the given sigma.</string>
+          </property>
           <property name="value">
            <double>1.000000000000000</double>
           </property>
@@ -284,7 +290,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="CBBaselineCorrection"/>
+         <widget class="QComboBox" name="CBBaselineCorrection">
+          <property name="toolTip">
+           <string>Baseline correction method to be used for appropriate transformation of intensities.</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -342,7 +352,7 @@
            </size>
           </property>
           <property name="toolTip">
-           <string/>
+           <string>Half window size used by the baseline correction method.</string>
           </property>
           <property name="value">
            <number>50</number>
@@ -383,7 +393,11 @@
          </widget>
         </item>
         <item>
-         <widget class="QComboBox" name="CBTransformation"/>
+         <widget class="QComboBox" name="CBTransformation">
+          <property name="toolTip">
+           <string>Intensity transformation method (applied last).</string>
+          </property>
+         </widget>
         </item>
        </layout>
       </item>
@@ -393,10 +407,7 @@
    <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="toolTip">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
-&lt;p&gt;Smoothing and baseline correction is applied to spectra before pooling operations.&lt;/p&gt;
-&lt;p&gt;Units of measurements e.g. Daltons (Da) or cm^-1.&lt;/p&gt;
-&lt;/body&gt;&lt;/html&gt;</string>
+      <string/>
      </property>
      <property name="title">
       <string>Imaging</string>
@@ -445,6 +456,9 @@
             <verstretch>0</verstretch>
            </sizepolicy>
           </property>
+          <property name="toolTip">
+           <string>Pool values in range, while using this method.</string>
+          </property>
          </widget>
         </item>
        </layout>
@@ -469,6 +483,9 @@
            <font>
             <italic>false</italic>
            </font>
+          </property>
+          <property name="toolTip">
+           <string>Center of the range query.</string>
           </property>
           <property name="text">
            <string>Position x</string>
@@ -554,6 +571,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>How wide the range around the center position x is in each directions.</string>
+          </property>
           <property name="buttonSymbols">
            <enum>QAbstractSpinBox::UpDownArrows</enum>
           </property>
@@ -598,6 +618,9 @@
             <height>16777215</height>
            </size>
           </property>
+          <property name="toolTip">
+           <string>Use parts per million (ppm) in relation to position x to define the range.</string>
+          </property>
           <property name="text">
            <string>Parts per million</string>
           </property>
@@ -628,6 +651,9 @@
             <width>16777215</width>
             <height>16777215</height>
            </size>
+          </property>
+          <property name="toolTip">
+           <string>Use the image rleated units of measurment (Daltoons (DA) for MIS) to define the range.</string>
           </property>
           <property name="text">
            <string>Unit of measurement</string>
@@ -737,12 +763,26 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Creates a copy of the current ion image. This forcibly replaces the pixel data type with the selected one. 
+This can be useful e.g. for volume visualizations - this uses signed short images for rendering.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QComboBox" name="cmbBxType">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="toolTip">
+         <string>Image pixel type used by the newly created image.</string>
         </property>
         <property name="currentIndex">
          <number>2</number>
