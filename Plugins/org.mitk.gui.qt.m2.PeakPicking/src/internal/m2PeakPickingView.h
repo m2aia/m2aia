@@ -68,6 +68,7 @@ protected slots:
   void OnStartTSNE();
   void OnStartPeakPicking();
   void OnImageSelectionChangedUpdatePeakList(int idx);
+  void OnUpdatePeakListLabel();
 };
 
 #endif // m2PeakPickingView_h

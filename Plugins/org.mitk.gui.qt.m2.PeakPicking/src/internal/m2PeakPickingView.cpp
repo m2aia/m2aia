@@ -75,6 +75,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.sliderCOR->setSingleStep(0.01);
 
   m_Controls.nodeSelection->SetDataStorage(GetDataStorage());
+  m_Controls.nodeSelection->SetAutoSelectNewNodes(true);
   m_Controls.nodeSelection->SetNodePredicate(
     mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
                                 mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
@@ -142,6 +143,7 @@ void m2PeakPickingView::OnStartPeakPicking()
   {
     if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
+      if(!imageBase->GetIsDataAccessInitialized()) return;
       if (imageBase->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousCentroid || 
           imageBase->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedCentroid)
       {
@@ -193,22 +195,33 @@ void m2PeakPickingView::OnStartPeakPicking()
   }
 }
 
+void m2PeakPickingView::OnUpdatePeakListLabel(){
+  u_int32_t selected = 0;
+  for (int i = 0; i < m_Controls.tableWidget->rowCount(); ++i)
+    if(m_Controls.tableWidget->item(i, 0)->checkState() == Qt::CheckState::Checked)
+      selected += 1;
+  m_Controls.labelPeakList->setText(QString("Peaks (%1/%2)").arg(selected).arg((int)m_PeakList.size()));
+
+    
+}
+
 void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int)
 {
   if (!m_PeakList.empty())
   {
     m_Controls.tableWidget->clearContents();
     m_Controls.tableWidget->setRowCount(m_PeakList.size());
-    m_Controls.labelPaklist->setText(QString("Peaks list (#%1)").arg((int)m_PeakList.size()));
+    
     unsigned int row = 0;
     m_Controls.tableWidget->blockSignals(true);
     for (auto &p : m_PeakList)
     {
       auto item = new QTableWidgetItem(std::to_string(p.GetX()).c_str());
-      item->setCheckState(Qt::CheckState::Unchecked);
+      item->setCheckState(Qt::CheckState::Checked);
       m_Controls.tableWidget->setItem(row++, 0, item);
     }
     m_Controls.tableWidget->blockSignals(false);
+    this->OnUpdatePeakListLabel();
   }
 }
 

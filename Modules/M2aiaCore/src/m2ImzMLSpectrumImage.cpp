@@ -602,6 +602,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
   // reset prevention flags
   p->UseExternalMaskOff();
   p->UseExternalNormalizationOff();
+  p->m_IsDataAccessInitialized = true;
 }
 
 template <class MassAxisType, class IntensityType>

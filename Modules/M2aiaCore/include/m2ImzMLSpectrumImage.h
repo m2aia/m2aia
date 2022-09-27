@@ -138,6 +138,8 @@ namespace m2
                                                    const char stackAxis = 'x');
 
   private:
+    friend class Processor;
+
     using m2::SpectrumImageBase::InternalClone;
     template <class MassAxisType, class IntensityType>
     class ImzMLImageProcessor;

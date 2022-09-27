@@ -133,6 +133,8 @@ namespace m2
     itkSetMacro(UseExternalNormalization, bool);
     itkBooleanMacro(UseExternalNormalization);
 
+    itkGetConstMacro(IsDataAccessInitialized, bool);
+    
     virtual void InitializeImageAccess() = 0;
     virtual void InitializeGeometry() = 0;
     virtual void InitializeProcessor() = 0;
@@ -181,6 +183,7 @@ namespace m2
     bool m_UseExternalIndices = false;
     bool m_UseExternalNormalization = false;
     bool m_UseToleranceInPPM = false;
+    bool m_IsDataAccessInitialized = false;
 
     std::shared_ptr<m2::ElxRegistrationHelper> m_ElxRegistrationHelper;
 
@@ -219,7 +222,6 @@ namespace m2
 
     SpectrumImageBase();
     ~SpectrumImageBase() override;
-    bool m_IsDataAccessInitialized = false;
 
     SpectrumArtifactVectorType m_XAxis;
   };
