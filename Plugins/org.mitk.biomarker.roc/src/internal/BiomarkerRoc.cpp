@@ -34,8 +34,15 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateProperty.h>
-#include <m2SpectrumImageBase.h>
 #include <mitkLabelSetImage.h>
+#include <mitkImagePixelReadAccessor.h>
+
+// m2aia
+#include <m2SpectrumImageBase.h>
+#include <m2ImzMLSpectrumImage.h>
+
+// for logging purposes
+#define ROC_SIG "[BiomarkerRoc] "
 
 const std::string BiomarkerRoc::VIEW_ID = "org.mitk.views.biomarkerrocanalysis";
 BiomarkerRoc::BiomarkerRoc()
@@ -67,19 +74,37 @@ void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
   m_Controls.selection->SetSelectionIsOptional(false);
   m_Controls.selection->SetEmptyInfo("Choose selection");
   m_Controls.selection->SetPopUpTitel("Select selection");
-  m_Controls.selection->SetPopUpHint("Select the selection you want to work with. This can be any currently opened selection.");
+  m_Controls.selection->SetPopUpHint("Choose the selection you want to work with. This can be any currently opened selection.");
   connect(m_Controls.calcButton, &QPushButton::clicked, this, &BiomarkerRoc::OnCalcButtonPressed);
 }
 
 void BiomarkerRoc::OnCalcButtonPressed()
 {
-  auto image = m_Controls.image->GetSelectedNode();
-  auto selection = m_Controls.selection->GetSelectedNode();
-  if (image && selection)
+  auto originalImage = dynamic_cast<m2::ImzMLSpectrumImage*>(m_Controls.image->GetSelectedNode()->GetData());
+  auto selection = dynamic_cast<mitk::Image*>(m_Controls.selection->GetSelectedNode()->GetData());
+  auto maskedImage = mitk::Image::New(); // image to which the selection has been applied to
+  ///mitk::equals() für image info abgleich
+  //in registration view -> open peak picking view abgucken
+  if (originalImage && selection)
   {
-    std::string imageName = image->GetName();
-    std::string selectionName = selection->GetName();
-    m_Controls.label->setText("Opened Image " + QString(imageName.c_str()) + "\nOpened Selection " + QString(selectionName.c_str()));
-    m_Controls.label->update();
+    //filters the selection for one mz value, displays the resulting image afterwards
+    {
+      double mz = m_Controls.mzValue->value();
+      maskedImage->Initialize(originalImage);
+      originalImage->GetImage(mz, 0.45, selection, maskedImage); //write in maskedImage
+      auto dataNode = mitk::DataNode::New();
+      dataNode->SetData(maskedImage);
+      dataNode->SetName("Biomarker Roc data");
+      GetDataStorage()->Add(dataNode, m_Controls.image->GetSelectedNode());
+    }
+    // accessing the image data using ImageReadAccessor
+    mitk::ImageReadAccessor readAccessor(maskedImage);
+    auto data = static_cast<const double*>(readAccessor.GetData());
+    auto dims = maskedImage->GetDimensions();
+    size_t N = dims[0] * dims[1] * dims[2];
+    //TODO: do the same for maskedImage and then after the screenshot
+    MITK_INFO << ROC_SIG << "original dt: " << originalImage->GetPixelType().GetTypeAsString();
+    MITK_INFO << ROC_SIG << "masked dt: " << maskedImage->GetPixelType().GetTypeAsString();
+    auto peaks = originalImage->GetPeaks();
   }
 }
