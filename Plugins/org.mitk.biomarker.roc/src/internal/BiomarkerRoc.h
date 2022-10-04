@@ -30,6 +30,7 @@ See LICENSE.txt for details.
 //#include "chart.h"
 #include "ui_BiomarkerRocControls.h"
 
+QT_CHARTS_USE_NAMESPACE
 /**
   \brief BiomarkerRoc
   This class is the main class of the view containing the ROC curve.
@@ -47,10 +48,10 @@ protected:
   virtual void SetFocus() override;
 
   /// \brief Called when the user clicks the Calculate button
-  void OnCalcButtonPressed();
-
+  void OnButtonCalcPressed();
   Ui::BiomarkerRocControls m_Controls;
 private:
+  void RenderChart(std::vector<double>, std::vector<double>);
   //Chart* chart;
 };
 

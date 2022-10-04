@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1300</width>
-    <height>906</height>
+    <width>265</width>
+    <height>419</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -28,22 +28,22 @@
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>10</y>
+     <x>9</x>
+     <y>9</y>
      <width>247</width>
      <height>17</height>
     </rect>
    </property>
    <property name="sizePolicy">
-    <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
    </property>
    <property name="maximumSize">
     <size>
-     <width>247</width>
-     <height>75</height>
+     <width>16777215</width>
+     <height>16777215</height>
     </size>
    </property>
    <property name="text">
@@ -56,135 +56,17 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>33</y>
-     <width>100</width>
-     <height>25</height>
+     <x>9</x>
+     <y>32</y>
+     <width>247</width>
+     <height>16</height>
     </rect>
    </property>
    <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
      <horstretch>0</horstretch>
      <verstretch>0</verstretch>
     </sizepolicy>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>100</width>
-     <height>25</height>
-    </size>
-   </property>
-   <property name="maximumSize">
-    <size>
-     <width>247</width>
-     <height>25</height>
-    </size>
-   </property>
-  </widget>
-  <widget class="QmitkSingleNodeSelectionWidget" name="selection" native="true">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>64</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>100</width>
-     <height>25</height>
-    </size>
-   </property>
-   <property name="maximumSize">
-    <size>
-     <width>247</width>
-     <height>25</height>
-    </size>
-   </property>
-  </widget>
-  <widget class="QDoubleSpinBox" name="mzValue">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>95</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-     <horstretch>0</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>100</width>
-     <height>25</height>
-    </size>
-   </property>
-   <property name="maximumSize">
-    <size>
-     <width>247</width>
-     <height>25</height>
-    </size>
-   </property>
-   <property name="decimals">
-    <number>3</number>
-   </property>
-   <property name="maximum">
-    <double>9999.000000000000000</double>
-   </property>
-  </widget>
-  <widget class="QPushButton" name="calcButton">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>126</y>
-     <width>100</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="sizePolicy">
-    <sizepolicy hsizetype="Expanding" vsizetype="MinimumExpanding">
-     <horstretch>70</horstretch>
-     <verstretch>0</verstretch>
-    </sizepolicy>
-   </property>
-   <property name="minimumSize">
-    <size>
-     <width>100</width>
-     <height>25</height>
-    </size>
-   </property>
-   <property name="maximumSize">
-    <size>
-     <width>247</width>
-     <height>25</height>
-    </size>
-   </property>
-   <property name="toolTip">
-    <string>Do image processing</string>
-   </property>
-   <property name="text">
-    <string>Calculate</string>
-   </property>
-  </widget>
-  <widget class="QMdiArea" name="mdiArea">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>157</y>
-     <width>1280</width>
-     <height>720</height>
-    </rect>
    </property>
    <property name="minimumSize">
     <size>
@@ -194,9 +76,137 @@
    </property>
    <property name="maximumSize">
     <size>
-     <width>1920</width>
-     <height>1080</height>
+     <width>16777215</width>
+     <height>16777215</height>
     </size>
+   </property>
+  </widget>
+  <widget class="QmitkSingleNodeSelectionWidget" name="selection" native="true">
+   <property name="geometry">
+    <rect>
+     <x>9</x>
+     <y>48</y>
+     <width>247</width>
+     <height>16</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>16777215</height>
+    </size>
+   </property>
+  </widget>
+  <widget class="QDoubleSpinBox" name="mzValue">
+   <property name="geometry">
+    <rect>
+     <x>9</x>
+     <y>64</y>
+     <width>94</width>
+     <height>26</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="decimals">
+    <number>3</number>
+   </property>
+   <property name="maximum">
+    <double>9999.000000000000000</double>
+   </property>
+  </widget>
+  <widget class="QCommandLinkButton" name="buttonOpenPeakPickingView">
+   <property name="geometry">
+    <rect>
+     <x>9</x>
+     <y>96</y>
+     <width>247</width>
+     <height>36</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Open Peak Picking View</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="buttonCalc">
+   <property name="geometry">
+    <rect>
+     <x>9</x>
+     <y>138</y>
+     <width>80</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>0</width>
+     <height>0</height>
+    </size>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="toolTip">
+    <string>Do image processing</string>
+   </property>
+   <property name="text">
+    <string>Calculate</string>
+   </property>
+  </widget>
+  <widget class="QtCharts::QChartView" name="chartView">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>9</x>
+     <y>169</y>
+     <width>247</width>
+     <height>241</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
    </property>
   </widget>
  </widget>
@@ -207,6 +217,11 @@
    <extends>QWidget</extends>
    <header location="global">QmitkSingleNodeSelectionWidget.h</header>
    <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QtCharts::QChartView</class>
+   <extends>QGraphicsView</extends>
+   <header location="global">QtCharts/QChartView</header>
   </customwidget>
  </customwidgets>
  <resources/>
