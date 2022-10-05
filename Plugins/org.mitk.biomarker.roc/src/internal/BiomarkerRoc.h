@@ -51,7 +51,9 @@ protected:
   void OnButtonCalcPressed();
   Ui::BiomarkerRocControls m_Controls;
 private:
-  void RenderChart(std::vector<double>, std::vector<double>);
+  void RenderChart(const std::vector<double>&, const std::vector<double>&);
+
+  void CalculateAndRenderAUC(const std::vector<double>&, const std::vector<double>&);
   //Chart* chart;
 };
 
