@@ -29,7 +29,7 @@ cd C:\M2aiaWorkDir
 mkdir -p build
 
 git clone https://github.com/mitk/mitk
-git clone https://github.com/jtfcordes/m2aia
+git clone https://github.com/m2aia/m2aia
 
 cd mitk
 git checkout v2022.04
