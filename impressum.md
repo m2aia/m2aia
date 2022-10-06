@@ -8,7 +8,7 @@ Haagackerweg 1<br/>
 
 <h2>Kontakt</h2>
 E-Mail: jonas.cordes[at]posteo.de<br/>
-Website: https://m2aia.github.io/M2aia/ (https://www.m2aia.de)
+Website: https://m2aia.github.io/m2aia/ (https://www.m2aia.de)
 
 <br/>
 <h2>Haftungsausschluss</h2>
