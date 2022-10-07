@@ -1,5 +1,8 @@
 <RCC>
-    <qresource prefix="/QmitkMatchPointCore">
+    <qresource prefix="/QmitkM2aiaCore">
         <file>MAPRegData.svg</file>
+        <file>SpectrumImage_48.png</file>
+        <file>MultiComponentImages_48.png</file>
+        
     </qresource>
 </RCC>

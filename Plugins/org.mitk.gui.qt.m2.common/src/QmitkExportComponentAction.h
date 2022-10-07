@@ -9,18 +9,17 @@ Use of this source code is governed by a 3-clause BSD license that can be
 found in the LICENSE file.
 
 ============================================================================*/
-#ifndef QMITK_ConvertToMultiLabelSegmentation_H
-#define QMITK_ConvertToMultiLabelSegmentation_H
+#pragma once
 
 #include "mitkIContextMenuAction.h"
 
-#include "org_mitk_gui_qt_m2_PeakPicking_Export.h"
+#include <org_mitk_gui_qt_m2_common_Export.h>
 
 #include "vector"
 #include "mitkDataNode.h"
 #include "mitkImage.h"
 
-class M2PEAKPICKING_EXPORT QmitkExportComponentAction : public QObject, public mitk::IContextMenuAction
+class MITK_M2_CORE_HELPER_EXPORT QmitkExportComponentAction : public QObject, public mitk::IContextMenuAction
 {
   Q_OBJECT
   Q_INTERFACES(mitk::IContextMenuAction)
@@ -44,5 +43,3 @@ private:
 
   mitk::DataStorage::Pointer m_DataStorage;
 };
-
-#endif // QMITK_ConvertToMultiLabelSegmentation_H

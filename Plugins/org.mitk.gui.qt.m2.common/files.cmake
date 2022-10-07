@@ -1,5 +1,6 @@
 set(SRC_CPP_FILES
   m2UIUtils.cpp
+  QmitkExportComponentAction.cpp
 )
 
 set(INTERNAL_CPP_FILES
@@ -18,6 +19,7 @@ set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_common_Activator.h
   src/internal/m2BrowserPreferencesPage.h
   src/m2UIUtils.h
+  src/QmitkExportComponentAction.h
 )
 
 # list of resource files which can be used by the plug-in

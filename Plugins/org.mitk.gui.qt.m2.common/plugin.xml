@@ -5,4 +5,8 @@
     <page id="org.mitk.gui.qt.m2.common.PreferencesPage" name="M²aia" class="m2BrowserPreferencesPage"></page>
   </extension>
 
+  <extension point="org.mitk.gui.qt.datamanager.contextMenuActions">
+    <contextMenuAction nodeDescriptorName="MultiComponentImage" label="Export Component(s)" icon="" class="QmitkExportComponentAction" />
+  </extension>
+
 </plugin>
