@@ -15,27 +15,31 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 
-#include "m2Data.h"
+#include <regex>
 
-#include "m2OpenSlideImageIOHelperDialog.h"
-#include <QInputDialog>
-#include <QShortcut>
-#include <QmitkRenderWindow.h>
 #include <QtConcurrent>
-#include <berryPlatform.h>
-#include <boost/format.hpp>
-#include <itkRescaleIntensityImageFilter.h>
-#include <itksys/SystemTools.hxx>
-#include <m2SubdivideImage2DFilter.h>
-#include <m2Timer.h>
-#include <mitkImageCast.h>
-#include <mitkLayoutAnnotationRenderer.h>
-#include <mitkLookupTableProperty.h>
-#include <mitkNodePredicateAnd.h>
-#include <mitkNodePredicateNot.h>
-#include <mitkNodePredicateProperty.h>
+#include <QInputDialog>
 
+#include <boost/format.hpp>
+
+#include <itksys/SystemTools.hxx>
+#include <itkRescaleIntensityImageFilter.h>
+
+#include <berryPlatform.h>
+
+#include <QmitkRenderWindow.h>
+#include <mitkImageCast.h>
+#include <mitkLookupTableProperty.h>
+#include <mitkLayoutAnnotationRenderer.h>
+
+#include <m2SubdivideImage2DFilter.h>
+#include <m2SpectrumImageBase.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <m2UIUtils.h>
+
+#include "m2Data.h"
+#include "m2OpenSlideImageIOHelperDialog.h"
+
 
 const std::string m2Data::VIEW_ID = "org.mitk.views.m2.Data";
 
@@ -288,7 +292,7 @@ void m2Data::OnCreatePrevImage()
   this->OnGenerateImageData(center - offset, FROM_GUI);
 }
 
-void m2Data::ApplySettingsToNodes(m2Data::NodesVectorType::Pointer v)
+void m2Data::ApplySettingsToNodes(m2::UIUtils::NodesVectorType::Pointer v)
 {
   for (auto dataNode : *v)
   {

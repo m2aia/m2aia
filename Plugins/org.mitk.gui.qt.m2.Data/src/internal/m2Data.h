@@ -16,36 +16,27 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #pragma once
 #include "ui_m2Data.h"
+#include <QmitkAbstractView.h>
 
-#include <regex>
+#include <mitkImage.h>
+#include <mitkTextAnnotation2D.h>
+#include <mitkColorBarAnnotation.h>
+
+#include <m2UIUtils.h>
 
 #include <QThreadPool>
-#include <QmitkAbstractView.h>
-#include <QmitkDataStorageComboBox.h>
-#include <QmitkDataStorageComboBoxWithSelectNone.h>
-#include <QmitkPointListWidget.h>
-#include <berryISelectionListener.h>
-#include <berryIPreferences.h>
-#include <itkVectorContainer.h>
-#include <m2UIUtils.h>
-#include <m2ImzMLSpectrumImage.h>
-#include <m2SpectrumImageBase.h>
-#include <mitkColorBarAnnotation.h>
-#include <mitkColorSequenceRainbow.h>
-#include <mitkDataNode.h>
-#include <mitkNodePredicateDataType.h>
-#include <mitkTextAnnotation2D.h>
 
 /**
-  \brief ImsPosition
+  \brief DataView
 
-  \warning  This class is not yet documented. Use "git blame" and ask the author to provide basic documentation.
+  \warning  The main view for MSI data processing. 
 
   \sa QmitkAbstractView
   \ingroup ${plugin_target}_internal
 */
-namespace mitk
+namespace m2
 {
+  class SpectrumImageBase;
   class ImzMLSpectrumImage;
 }
 
@@ -59,7 +50,7 @@ class m2Data : public QmitkAbstractView
 
 public:
   static const std::string VIEW_ID;
-  using NodesVectorType = m2::UIUtils::NodesVectorType;
+  
 
   /**
    * @brief Get the Overview Spectrum Type object
@@ -82,7 +73,7 @@ public:
    * @param v A set of data node of mass spec images.
    * Configures the I/O strategy state of the data objects.
    */
-  void ApplySettingsToNodes(NodesVectorType::Pointer v);
+  void ApplySettingsToNodes(m2::UIUtils::NodesVectorType::Pointer v);
 
   /**
    * @brief Apply settings to a single MS image.
@@ -113,7 +104,7 @@ public slots:
   mitk::Image::Pointer OnApplyCastImage(mitk::Image::Pointer image);
 
 signals:
-  void SendNodes(NodesVectorType::Pointer vec);
+  void SendNodes(m2::UIUtils::NodesVectorType::Pointer vec);
 
 protected:
 
@@ -155,7 +146,7 @@ protected:
    */
   QmitkMultiNodeSelectionWidget *m_PointSetDataNodeSelectionWidget;
 
-  QmitkPointListWidget *m_PointListWidget;
+  // QmitkPointListWidget *m_PointListWidget;
 
   std::vector<mitk::TextAnnotation2D::Pointer> m_TextAnnotations;
   std::vector<mitk::ColorBarAnnotation::Pointer> m_ColorBarAnnotations;
