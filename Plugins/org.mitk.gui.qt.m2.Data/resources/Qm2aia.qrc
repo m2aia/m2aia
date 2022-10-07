@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/Qm2aia">
+        <file>SpectrumImage_48.png</file>
+	</qresource>
+</RCC>

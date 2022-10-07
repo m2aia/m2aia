@@ -35,13 +35,8 @@ namespace mitk
     auto c = mitk::NodePredicateOr::New(a, b);
     auto f = mitk::TNodePredicateDataType<mitk::Image>::New();
     auto g = mitk::NodePredicateAnd::New(c, f);
-    descriptorManager->AddDescriptor( new QmitkNodeDescriptor(tr("SpectrumImage"), QString(":/Qmitk/LabelSetImage_48.png"), g, this));
+    descriptorManager->AddDescriptor( new QmitkNodeDescriptor(tr("SpectrumImage"), QString(":/Qm2aia/SpectrumImage_48.png"), g, this));
 
-
-
-    // Adding "PlanarLine"
-    mitk::NodePredicateDataType::Pointer isPlanarLine = mitk::NodePredicateDataType::New("PlanarLine");
-    descriptorManager->AddDescriptor(new QmitkNodeDescriptor(QObject::tr("PlanarLine"), QString(":/QtWidgetsExt/PlanarLine_48.png"), isPlanarLine, descriptorManager));
   }
 
   void org_mitk_gui_qt_m2_Data_Activator::stop(ctkPluginContext *context) { Q_UNUSED(context) }
