@@ -55,7 +55,7 @@ void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
       mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")))
   );
   m_Controls.selectImage->SetSelectionIsOptional(true);
-  m_Controls.selectImage->SetEmptyInfo("Choose image");
+  m_Controls.selectImage->SetEmptyInfo("Choose the image");
   m_Controls.selectImage->SetPopUpTitel("Select image");
   m_Controls.selectImage->SetPopUpHint("Select the image you want to work with. This can be any opened image (*.imzML).");
   connect(m_Controls.calcButton, &QPushButton::clicked, this, &BiomarkerRoc::OnCalcButtonPressed);
