@@ -30,6 +30,7 @@ See LICENSE.txt for details.
 //#include "chart.h"
 #include "ui_BiomarkerRocControls.h"
 
+QT_CHARTS_USE_NAMESPACE
 /**
   \brief BiomarkerRoc
   This class is the main class of the view containing the ROC curve.
@@ -46,17 +47,13 @@ protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
   virtual void SetFocus() override;
 
-  /// \brief called by QmitkFunctionality when DataManager's selection has changed
-  virtual void OnSelectionChanged(berry::IWorkbenchPart::Pointer source,
-                                  const QList<mitk::DataNode::Pointer> &nodes) override;
-
-  /// \brief Called when the user clicks the Choose File button
-  void OpenFileChooseDialog();
   /// \brief Called when the user clicks the Calculate button
-  void OnCalcButtonPressed();
-
+  void OnButtonCalcPressed();
   Ui::BiomarkerRocControls m_Controls;
 private:
+  void RenderChart(const std::vector<double>&, const std::vector<double>&);
+
+  void CalculateAndRenderAUC(const std::vector<double>&, const std::vector<double>&);
   //Chart* chart;
 };
 

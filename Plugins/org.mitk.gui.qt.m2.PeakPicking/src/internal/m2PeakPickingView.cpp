@@ -59,7 +59,7 @@ const std::string m2PeakPickingView::VIEW_ID = "org.mitk.views.m2.PeakPicking";
 
 void m2PeakPickingView::SetFocus()
 {
-  //  m_Controls.buttonPerformImageProcessing->setFocus();
+  // OnStartPeakPicking();
 }
 
 void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
@@ -69,52 +69,51 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.cbOverviewSpectra->addItems({"Skyline", "Mean", "Sum"});
   m_Controls.cbOverviewSpectra->setCurrentIndex(1);
 
-  connect(m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPeakPicking);
-
-  connect(m_Controls.btnPCA, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPCA);
-  connect(m_Controls.btnTSNE, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartTSNE);
-  connect(m_Controls.sliderSNR, &ctkSliderWidget::valueChanged, this, &m2PeakPickingView::OnStartPeakPicking);
-  connect(m_Controls.sliderHWS, &ctkSliderWidget::valueChanged, this, &m2PeakPickingView::OnStartPeakPicking);
-  connect(m_Controls.sliderCOR, &ctkSliderWidget::valueChanged, this, &m2PeakPickingView::OnStartPeakPicking);
   m_Controls.sliderCOR->setMinimum(0.0);
   m_Controls.sliderCOR->setMaximum(1.0);
   m_Controls.sliderCOR->setValue(0.95);
   m_Controls.sliderCOR->setSingleStep(0.01);
 
-  // if (auto button = m_Controls.tableWidget->findChild<QAbstractButton *>(QString(), Qt::FindDirectChildrenOnly))
-  // {
-  // this button is not a normal button, it doesn't paint text or icon
-  // so it is not easy to show text on it, the simplest way is tooltip
-  // button->setToolTip("Select/deselect all");
+  m_Controls.nodeSelection->SetDataStorage(GetDataStorage());
+  m_Controls.nodeSelection->SetNodePredicate(
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
+                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+  m_Controls.nodeSelection->SetSelectionIsOptional(true);
+  m_Controls.nodeSelection->SetEmptyInfo(QString("Image selection"));
+  m_Controls.nodeSelection->SetPopUpTitel(QString("Image"));
 
-  // disconnect the connected slots to the tableview (the "selectAll" slot)
-  // disconnect(button, Q_NULLPTR, m_Controls.tableWidget, Q_NULLPTR);
-  // connect "clear" slot to it, here I use QTableWidget's clear, you can connect your own
+  // // if (auto button = m_Controls.tableWidget->findChild<QAbstractButton *>(QString(), Qt::FindDirectChildrenOnly))
+  // // {
+  // // this button is not a normal button, it doesn't paint text or icon
+  // // so it is not easy to show text on it, the simplest way is tooltip
+  // // button->setToolTip("Select/deselect all");
+
+  // // disconnect the connected slots to the tableview (the "selectAll" slot)
+  // // disconnect(button, Q_NULLPTR, m_Controls.tableWidget, Q_NULLPTR);
+  // // connect "clear" slot to it, here I use QTableWidget's clear, you can connect your own
   auto tableWidget = m_Controls.tableWidget;
-  bool status = true;
-  connect(m_Controls.selectDeselectAll,
+  
+  connect(m_Controls.btnSelectAll,
           &QAbstractButton::clicked,
           m_Controls.tableWidget,
-          [tableWidget, status]() mutable
+          [tableWidget]() mutable
           {
             for (int i = 0; i < tableWidget->rowCount(); ++i)
-            {
-              tableWidget->item(i, 0)->setCheckState(status ? Qt::CheckState::Checked : Qt::CheckState::Unchecked);
-            }
-            status = !status;
+              tableWidget->item(i, 0)->setCheckState(Qt::CheckState::Checked);
           });
-  // }
+  
+  connect(m_Controls.btnDeselectAll,
+          &QAbstractButton::clicked,
+          m_Controls.tableWidget,
+          [tableWidget]() mutable
+          {
+            for (int i = 0; i < tableWidget->rowCount(); ++i)
+              tableWidget->item(i, 0)->setCheckState(Qt::CheckState::Unchecked);
+          });
 
   const auto itemHandler = [this](QTableWidgetItem *item)
   {
-    const size_t idx = m_Controls.imageSource->currentIndex();
-
-    if (m_ReceivedNodes->empty())
-      return;
-    if (idx >= m_ReceivedNodes->size())
-      return;
-
-    auto node = m_ReceivedNodes->at(idx);
+    auto node = m_Controls.nodeSelection->GetSelectedNode();
     if (auto spImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
       auto mz = std::stod(item->text().toStdString());
@@ -123,37 +122,40 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   };
 
   connect(m_Controls.tableWidget, &QTableWidget::itemActivated, this, itemHandler);
-
   connect(m_Controls.tableWidget, &QTableWidget::itemDoubleClicked, this, itemHandler);
+  connect(m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPeakPicking);
+  connect(m_Controls.btnPCA, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPCA);
+  connect(m_Controls.btnTSNE, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartTSNE);
+  connect(m_Controls.sliderSNR, &ctkSliderWidget::valueChanged, this, &m2PeakPickingView::OnStartPeakPicking);
+  connect(m_Controls.sliderHWS, &ctkSliderWidget::valueChanged, this, &m2PeakPickingView::OnStartPeakPicking);
+  connect(m_Controls.sliderCOR, &ctkSliderWidget::valueChanged, this, &m2PeakPickingView::OnStartPeakPicking);
+  connect(m_Controls.nodeSelection, &QmitkSingleNodeSelectionWidget::CurrentSelectionChanged, this, &m2PeakPickingView::OnStartPeakPicking);
 }
 
 void m2PeakPickingView::OnStartPeakPicking()
 {
-  m_ReceivedNodes = m2::UIUtils::AllNodes(GetDataStorage());
+  // if (m_Connection)
+  //   disconnect(m_Connection);
+  m_PeakList.clear();
 
-  if (m_Connection)
-    disconnect(m_Connection);
-  m_Controls.imageSource->clear();
-  m_PeakLists.clear();
-
-  for (auto node : *m_ReceivedNodes)
+  if (auto node = m_Controls.nodeSelection->GetSelectedNode())
+  {
     if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
-      m_Controls.imageSource->addItem(node->GetName().c_str());
-      if (imageBase->GetSpectrumType().Format != m2::SpectrumFormat::ContinuousProfile)
+      if (imageBase->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousCentroid || 
+          imageBase->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedCentroid)
       {
-        QMessageBox::warning(nullptr, "Warning", "Centroid data are not supported for peak picking operations!");
+        // MITK_INFO << "Processed/ContinuousCentroid";
         auto &peakList = imageBase->GetPeaks();
         peakList.clear();
-
         unsigned i = 0;
         for (auto &x : imageBase->GetXAxis())
           peakList.emplace_back(i++, x, 0);
-
-        m_PeakLists.push_back(peakList);
+        m_PeakList = peakList;
       }
       else
       {
+        // MITK_INFO << "ContinuousProfile";
         std::vector<double> ys, xs;
         if (m_Controls.cbOverviewSpectra->currentIndex() == 0) // skyline
           ys = imageBase->SkylineSpectrum();
@@ -183,26 +185,24 @@ void m2PeakPickingView::OnStartPeakPicking()
         }
         imageBase->PeakListModified();
 
-        m_PeakLists.push_back(peaks);
+        m_PeakList = peaks;
       }
     }
-  OnImageSelectionChangedUpdatePeakList(0);
-  m_Connection = connect(
-    m_Controls.imageSource, SIGNAL(currentIndexChanged(int)), this, SLOT(OnImageSelectionChangedUpdatePeakList(int)));
-  // emit m2::UIUtils::Instance()->BroadcastProcessingNodes("", m_ReceivedNodes);
+    OnImageSelectionChangedUpdatePeakList(0);
+    // emit m2::UIUtils::Instance()->BroadcastProcessingNodes("", node);
+  }
 }
 
-void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int idx)
+void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int)
 {
-  if (!m_PeakLists.empty() && idx < (int)m_PeakLists.size())
+  if (!m_PeakList.empty())
   {
-    auto &peaks = m_PeakLists.at(idx);
     m_Controls.tableWidget->clearContents();
-    m_Controls.tableWidget->setRowCount(peaks.size());
-    m_Controls.labelPaklist->setText(QString("Peaks list (#%1)").arg((int)peaks.size()));
+    m_Controls.tableWidget->setRowCount(m_PeakList.size());
+    m_Controls.labelPaklist->setText(QString("Peaks list (#%1)").arg((int)m_PeakList.size()));
     unsigned int row = 0;
     m_Controls.tableWidget->blockSignals(true);
-    for (auto &p : peaks)
+    for (auto &p : m_PeakList)
     {
       auto item = new QTableWidgetItem(std::to_string(p.GetX()).c_str());
       item->setCheckState(Qt::CheckState::Unchecked);
@@ -214,91 +214,85 @@ void m2PeakPickingView::OnImageSelectionChangedUpdatePeakList(int idx)
 
 void m2PeakPickingView::OnStartPCA()
 {
-  if (!m_Controls.imageSource->count())
-    return;
-  const auto idx = m_Controls.imageSource->currentIndex();
-  auto node = m_ReceivedNodes->at(idx);
-
-  if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  if (auto node = m_Controls.nodeSelection->GetSelectedNode())
   {
-    auto filter = m2::PcaImageFilter::New();
-    filter->SetMaskImage(imageBase->GetMaskImage());
-
-    const auto &peakList = m_PeakLists[idx];
-
-    std::vector<mitk::Image::Pointer> temporaryImages;
-
-    size_t inputIdx = 0;
-    for (size_t row = 0; row < peakList.size(); ++row)
+    if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
-      if (m_Controls.tableWidget->item(row, 0)->checkState() != Qt::CheckState::Checked)
-        continue;
+      auto filter = m2::PcaImageFilter::New();
+      filter->SetMaskImage(imageBase->GetMaskImage());
 
-      temporaryImages.push_back(mitk::Image::New());
-      temporaryImages.back()->Initialize(imageBase);
+      const auto &peakList = m_PeakList;
 
-      imageBase->GetImage(peakList[row].GetX(),
-                          imageBase->ApplyTolerance(peakList[row].GetX()),
-                          imageBase->GetMaskImage(),
-                          temporaryImages.back());
-      filter->SetInput(inputIdx, temporaryImages.back());
-      ++inputIdx;
+      std::vector<mitk::Image::Pointer> temporaryImages;
+
+      size_t inputIdx = 0;
+      for (size_t row = 0; row < peakList.size(); ++row)
+      {
+        if (m_Controls.tableWidget->item(row, 0)->checkState() != Qt::CheckState::Checked)
+          continue;
+
+        temporaryImages.push_back(mitk::Image::New());
+        temporaryImages.back()->Initialize(imageBase);
+
+        imageBase->GetImage(peakList[row].GetX(),
+                            imageBase->ApplyTolerance(peakList[row].GetX()),
+                            imageBase->GetMaskImage(),
+                            temporaryImages.back());
+        filter->SetInput(inputIdx, temporaryImages.back());
+        ++inputIdx;
+      }
+
+      if (temporaryImages.size() == 0)
+      {
+        QMessageBox::warning(nullptr,
+                             "Select images first!",
+                             "Select at least three peaks!",
+                             QMessageBox::StandardButton::NoButton,
+                             QMessageBox::StandardButton::Ok);
+        return;
+      }
+
+      filter->SetNumberOfComponents(m_Controls.pca_dims->value());
+      filter->Update();
+
+      auto outputNode = mitk::DataNode::New();
+      mitk::Image::Pointer data = filter->GetOutput(0);
+      outputNode->SetData(data);
+      outputNode->SetName("PCA");
+      this->GetDataStorage()->Add(outputNode, node.GetPointer());
+      imageBase->InsertImageArtifact("PCA", data);
+
+      // auto outputNode2 = mitk::DataNode::New();
+      // mitk::Image::Pointer data2 = filter->GetOutput(1);
+      // outputNode2->SetData(data2);
+      // outputNode2->SetName("pcs");
+      // this->GetDataStorage()->Add(outputNode2, node.GetPointer());
     }
-
-    if (temporaryImages.size() == 0)
-    {
-      QMessageBox::warning(nullptr,
-                           "Select images first!",
-                           "Select at least three peaks!",
-                           QMessageBox::StandardButton::NoButton,
-                           QMessageBox::StandardButton::Ok);
-      return;
-    }
-
-    filter->SetNumberOfComponents(m_Controls.pca_dims->value());
-    filter->Update();
-
-    auto outputNode = mitk::DataNode::New();
-    mitk::Image::Pointer data = filter->GetOutput(0);
-    outputNode->SetData(data);
-    outputNode->SetName("PCA");
-    this->GetDataStorage()->Add(outputNode, node.GetPointer());
-    imageBase->InsertImageArtifact("PCA", data);
-
-    // auto outputNode2 = mitk::DataNode::New();
-    // mitk::Image::Pointer data2 = filter->GetOutput(1);
-    // outputNode2->SetData(data2);
-    // outputNode2->SetName("pcs");
-    // this->GetDataStorage()->Add(outputNode2, node.GetPointer());
   }
 }
 
 void m2PeakPickingView::OnStartTSNE()
 {
-  if (!m_Controls.imageSource->count())
-    return;
-  const auto idx = m_Controls.imageSource->currentIndex();
-  auto node = m_ReceivedNodes->at(idx);
-
+  if (auto node = m_Controls.nodeSelection->GetSelectedNode())
   {
-    auto p = node->GetProperty("name")->Clone();
-    static_cast<mitk::StringProperty *>(p.GetPointer())->SetValue("PCA");
-    auto derivations = this->GetDataStorage()->GetDerivations(node, mitk::NodePredicateProperty::New("name", p));
-    if (derivations->size() == 0)
-    {
-      QMessageBox::warning(nullptr,
-                           "PCA required!",
-                           "The t-SNE uses the top five features of the PCA transformed images! Start a PCA first.",
-                           QMessageBox::StandardButton::NoButton,
-                           QMessageBox::StandardButton::Ok);
-      return;
-    }
-
-    auto pcaImage = dynamic_cast<mitk::Image *>(derivations->front()->GetData());
-    const auto pcaComponents = pcaImage->GetPixelType().GetNumberOfComponents();
-
     if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
+      auto p = node->GetProperty("name")->Clone();
+      static_cast<mitk::StringProperty *>(p.GetPointer())->SetValue("PCA");
+      auto derivations = this->GetDataStorage()->GetDerivations(node, mitk::NodePredicateProperty::New("name", p));
+      if (derivations->size() == 0)
+      {
+        QMessageBox::warning(nullptr,
+                             "PCA required!",
+                             "The t-SNE uses the top five features of the PCA transformed images! Start a PCA first.",
+                             QMessageBox::StandardButton::NoButton,
+                             QMessageBox::StandardButton::Ok);
+        return;
+      }
+
+      auto pcaImage = dynamic_cast<mitk::Image *>(derivations->front()->GetData());
+      const auto pcaComponents = pcaImage->GetPixelType().GetNumberOfComponents();
+
       auto filter = m2::TSNEImageFilter::New();
       filter->SetPerplexity(m_Controls.tsne_perplexity->value());
       filter->SetIterations(m_Controls.tnse_iters->value());
@@ -334,7 +328,7 @@ void m2PeakPickingView::OnStartTSNE()
           mitk::ImageWriteAccessor acc(I);
           auto outCData = static_cast<DisplayImageType::PixelType *>(acc.GetData());
           for (unsigned int k = 0; k < n; ++k)
-            *(outCData+k) = *(inputData + (k * pcaComponents) + index);
+            *(outCData + k) = *(inputData + (k * pcaComponents) + index);
         }
 
         DisplayImageType::Pointer cImage;

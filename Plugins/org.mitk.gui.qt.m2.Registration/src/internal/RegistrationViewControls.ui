@@ -221,16 +221,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="keepSpacings">
-        <property name="toolTip">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, the warped image geometry (pixel spacing and image size) is equal to the fixed image geometry. &lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="text">
-         <string>Keep pixel spacing of moving image</string>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="QCheckBox" name="chkBxAttachToFixedImage">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">

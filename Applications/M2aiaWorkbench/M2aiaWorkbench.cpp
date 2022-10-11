@@ -1,22 +1,16 @@
-/*===================================================================
+/*============================================================================
 
-MSI applications for interactive analysis in MITK (M2aia)
+The Medical Imaging Interaction Toolkit (MITK)
 
-Copyright (c) Jonas Cordes.
-
+Copyright (c) German Cancer Research Center (DKFZ)
 All rights reserved.
 
-This software is distributed WITHOUT ANY WARRANTY; without
-even the implied warranty of MERCHANTABILITY or FITNESS FOR
-A PARTICULAR PURPOSE.
+Use of this source code is governed by a 3-clause BSD license that can be
+found in the LICENSE file.
 
-See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
-
-===================================================================*/
+============================================================================*/
 
 #include <mitkBaseApplication.h>
-#include <QPixmap>
-#include <QTimer>
 #include <QVariant>
 
 #if defined __GNUC__ && !defined __clang__
@@ -34,16 +28,20 @@ int main(int argc, char **argv)
   app.setApplicationName("M2aia Workbench");
   app.setOrganizationName("Mannheim University of Applied Sciences");
 
-  #if defined __GNUC__ && !defined __clang__
-    auto library = QFileInfo(argv[0]).dir().path() + "/../lib/plugins/liborg_blueberry_core_expressions.so";
+  // Preload the org.blueberry.core.expressions plugin to work around a bug in
+  // GCC that leads to undefined symbols while loading certain libraries even though
+  // the symbols are actually defined.
+#if defined __GNUC__ && !defined __clang__
+  auto library = QFileInfo(argv[0]).dir().path() + "/../lib/plugins/liborg_blueberry_core_expressions.so";
 
-    if (!QFileInfo(library).exists())
-      library = "liborg_blueberry_core_expressions";
+  if (!QFileInfo(library).exists())
+    library = "liborg_blueberry_core_expressions";
 
-    app.setPreloadLibraries(QStringList() << library);
-  #endif
-	
+  app.setPreloadLibraries(QStringList() << library);
+#endif
+
   app.setProperty(mitk::BaseApplication::PROP_PRODUCT, "org.mitk.gui.qt.m2.application.workbench");
 
+  // Run the workbench.
   return app.run();
 }

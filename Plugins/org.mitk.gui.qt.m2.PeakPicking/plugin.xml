@@ -9,4 +9,9 @@
           icon="resources/noun_analysis_3405381.svg" />
   </extension>
 
+
+  <extension point="org.mitk.gui.qt.datamanager.contextMenuActions">
+    <contextMenuAction nodeDescriptorName="Image" label="Export Component(s)" icon="" class="QmitkExportComponentAction" />
+  </extension>
+
 </plugin>
