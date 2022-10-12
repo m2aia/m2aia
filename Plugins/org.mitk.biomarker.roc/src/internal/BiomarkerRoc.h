@@ -18,16 +18,11 @@ See LICENSE.txt for details.
 #define BiomarkerRoc_h
 
 #include <berryISelectionListener.h>
-
 #include <QmitkAbstractView.h>
 #include <QmitkSingleNodeSelectionWidget.h>
-
 #include <QFile>
-
 #include <vector>
 #include <utility>
-
-//#include "chart.h"
 #include "ui_BiomarkerRocControls.h"
 
 QT_CHARTS_USE_NAMESPACE
@@ -51,10 +46,19 @@ protected:
   void OnButtonCalcPressed();
   Ui::BiomarkerRocControls m_Controls;
 private:
-  void RenderChart(const std::vector<double>&, const std::vector<double>&);
+  void AddToTable(const double&, const double&);
 
-  void CalculateAndRenderAUC(const std::vector<double>&, const std::vector<double>&);
-  //Chart* chart;
+  void RenderChart();
+
+  double CalculateAUC(const std::vector<double>&, const std::vector<double>&);
+
+  void RocAnalysis(const double& mz, std::vector<double>&, std::vector<double>&);
+  
+  static const int renderGranularity;
+  
+  //TODO: efficiency update so one calculation of ROC wont take 100ms
+  //double* maskedData;
+  //mitk::Label::PixelType* selectionData;
 };
 
 #endif // BiomarkerRoc_h

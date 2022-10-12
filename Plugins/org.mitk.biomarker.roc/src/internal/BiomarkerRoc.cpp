@@ -47,12 +47,14 @@ See LICENSE.txt for details.
 #include <m2ImzMLSpectrumImage.h>
 
 //std
+#include <memory>
 #include <algorithm>
 
 // for logging purposes
 #define ROC_SIG "[BiomarkerRoc] "
 
 const std::string BiomarkerRoc::VIEW_ID = "org.mitk.views.biomarkerrocanalysis";
+const int BiomarkerRoc::renderGranularity = 20;
 BiomarkerRoc::BiomarkerRoc()
 {
 }
@@ -65,6 +67,11 @@ void BiomarkerRoc::SetFocus()
 void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
 {
   m_Controls.setupUi(parent);
+  m_Controls.tableWidget->setVisible(false);
+  m_Controls.tableWidget->setColumnCount(2);
+  m_Controls.tableWidget->setRowCount(0);
+  m_Controls.tableWidget->setHorizontalHeaderItem(0, new QTableWidgetItem("m/z"));
+  m_Controls.tableWidget->setHorizontalHeaderItem(1, new QTableWidgetItem("AUC"));
   m_Controls.chartView->setVisible(false);
   m_Controls.image->SetDataStorage(GetDataStorage());
   m_Controls.image->SetNodePredicate(
@@ -87,6 +94,7 @@ void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
   m_Controls.selection->SetPopUpTitel("Select selection");
   m_Controls.selection->SetPopUpHint("Choose the selection you want to work with. This can be any currently opened selection.");
   connect(m_Controls.buttonCalc, &QPushButton::clicked, this, &BiomarkerRoc::OnButtonCalcPressed);
+  connect(m_Controls.buttonChart, &QPushButton::clicked, this, &BiomarkerRoc::RenderChart);
   connect(m_Controls.buttonOpenPeakPickingView, &QCommandLinkButton::clicked, this, 
     []()
     {
@@ -105,22 +113,49 @@ void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
   );
 }
 
-void BiomarkerRoc::RenderChart(const std::vector<double>& TPR, const std::vector<double>& FPR)
+void BiomarkerRoc::AddToTable(const double& mz, const double& auc)
 {
-  auto serie = new QLineSeries();
+  int size = m_Controls.tableWidget->rowCount();
+  m_Controls.tableWidget->setRowCount(size + 1);
+  char mztext[16] = {0};
+  snprintf(mztext, 16, "%lf", mz);
+  auto mzlabel = new QLabel();
+  mzlabel->setText(mztext);
+  m_Controls.tableWidget->setCellWidget(size, 0, mzlabel);
+  char auctext[16] = {0};
+  snprintf(auctext, 16, "%lf", auc);
+  auto auclabel = new QLabel();
+  auclabel->setText(auctext);
+  m_Controls.tableWidget->setCellWidget(size, 1, auclabel);
+}
+
+void BiomarkerRoc::RenderChart()
+{
+  std::vector<double> TPR;
+  TPR.reserve(this->renderGranularity / 2);
+  std::vector<double> FPR;
+  FPR.reserve(this->renderGranularity / 2);
+  RocAnalysis(m_Controls.mzValue->value(), TPR, FPR);
+
+  auto A = CalculateAUC(TPR, FPR);
+  char auc[16] = {0};
+  snprintf(auc, 15, "%s%lf", "AUC: ", A);
+  m_Controls.labelAuc->setText(auc);
+
+  auto serie = new QtCharts::QLineSeries();
   int T = 0, F = 0;
   for (size_t idx = 0; idx < FPR.size(); ++idx)
   {
     serie->append(FPR[idx], TPR[idx]);
     if (TPR[idx] > FPR[idx]) ++T; else ++F;
-    MITK_INFO << ROC_SIG << "[" << idx << "] FPR: " << FPR[idx] << ", TPR: " << TPR[idx];
+    //MITK_INFO << ROC_SIG << "[" << idx << "] FPR: " << FPR[idx] << ", TPR: " << TPR[idx];
   }
   auto chart = new QtCharts::QChart();
   chart->addSeries(serie);
-  auto axisX = new QValueAxis();
+  auto axisX = new QValueAxis(); 
   axisX->setMin(0);
   axisX->setMax(1);
-  auto axisY = new QValueAxis();
+  auto axisY = new QValueAxis(); 
   axisY->setMin(0);
   axisY->setMax(1);
   chart->addAxis(axisX, Qt::AlignBottom);
@@ -131,8 +166,27 @@ void BiomarkerRoc::RenderChart(const std::vector<double>& TPR, const std::vector
   m_Controls.chartView->setVisible(true);
 }
 
-void BiomarkerRoc::CalculateAndRenderAUC(const std::vector<double>& TPR, const std::vector<double>& FPR)
+struct Timer 
 {
+  Timer()
+  {
+    time = std::chrono::high_resolution_clock::now();
+  }
+  ~Timer()
+  {
+    auto stop_time = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::time_point_cast<std::chrono::microseconds>(time).time_since_epoch().count();
+    auto end = std::chrono::time_point_cast<std::chrono::microseconds>(stop_time).time_since_epoch().count();
+    auto duration = end - start;
+    MITK_INFO << ROC_SIG << "execution took " << duration << " microseconds";
+  }
+private:
+  std::chrono::_V2::system_clock::time_point time;
+};
+
+double BiomarkerRoc::CalculateAUC(const std::vector<double>& TPR, const std::vector<double>& FPR)
+{
+  // duration: ca 1 microsecond
   // trapezoid approximation
   double A = 0;
   for (std::size_t i = 0; i < FPR.size() - 1; ++i)
@@ -145,13 +199,11 @@ void BiomarkerRoc::CalculateAndRenderAUC(const std::vector<double>& TPR, const s
     double a = TPR[i + 1], c = TPR[i], h = FPR[i] - FPR[i + 1];
     A += (a + c) / 2 * h;
   }
-  char auc[20] = {0};
-  snprintf(auc, 19, "%s%lf", "AUC: ", A);
-  auc[19] = 0;
-  m_Controls.labelAuc->setText(auc);
+  return A;
 }
+
   
-void BiomarkerRoc::OnButtonCalcPressed()
+void BiomarkerRoc::RocAnalysis(const double& mz, std::vector<double>& TPR, std::vector<double>& FPR)
 {
   auto imageNode = m_Controls.image->GetSelectedNode();
   auto selectionNode = m_Controls.selection->GetSelectedNode();
@@ -161,15 +213,16 @@ void BiomarkerRoc::OnButtonCalcPressed()
   auto selection = dynamic_cast<mitk::Image*>(selectionNode->GetData());
   auto maskedImage = mitk::Image::New(); // image to which the selection will be applied to
   auto channelDescriptor = selection->GetChannelDescriptor();
-  //filters the selection for one mz value, displays the resulting image afterwards
   {
-    double mz = m_Controls.mzValue->value();
     maskedImage->Initialize(originalImage);
     originalImage->GetImage(mz, 0.45, selection, maskedImage); //write in maskedImage
-    auto dataNode = mitk::DataNode::New();
-    dataNode->SetData(maskedImage);
-    dataNode->SetName("Biomarker Roc data");
-    GetDataStorage()->Add(dataNode, m_Controls.image->GetSelectedNode());
+    if(false)
+    {
+      auto dataNode = mitk::DataNode::New();
+      dataNode->SetData(maskedImage);
+      dataNode->SetName("Biomarker Roc data");
+      GetDataStorage()->Add(dataNode, m_Controls.image->GetSelectedNode());
+    }
   }
   // get read access to the images
   mitk::ImageReadAccessor maskedReadAccessor(maskedImage);
@@ -202,9 +255,8 @@ void BiomarkerRoc::OnButtonCalcPressed()
   valuesLabelOne.shrink_to_fit();
   valuesLabelTwo.shrink_to_fit();
   //calculate the thresholds
-  constexpr const int granularity = 20;
   std::vector<double> thresholds;
-  thresholds.reserve(granularity);
+  thresholds.reserve(this->renderGranularity);
   thresholds.push_back( std::min(
     *std::min_element(valuesLabelOne.begin(), valuesLabelOne.end()),
     *std::min_element(valuesLabelTwo.begin(), valuesLabelTwo.end()))
@@ -214,17 +266,12 @@ void BiomarkerRoc::OnButtonCalcPressed()
     *std::max_element(valuesLabelOne.begin(), valuesLabelOne.end()),
     *std::max_element(valuesLabelTwo.begin(), valuesLabelTwo.end())
   );
-  for (int i = 1; i < granularity - 1; ++i)
+  for (int i = 1; i < this->renderGranularity - 1; ++i)
   {
-    thresholds.push_back( thresholds[0] + (tn - thresholds[0]) * i / granularity );
+    thresholds.push_back( thresholds[0] + (tn - thresholds[0]) * i / this->renderGranularity );
   }
   thresholds.push_back(tn);
-
   //true positive and false negative rate are going to be the axis to plot the graph
-  std::vector<double> TPR;
-  TPR.reserve(granularity);
-  std::vector<double> FPR;
-  FPR.reserve(granularity);
   //calculate TPR and FPR for every threshold
   for (const auto& threshold : thresholds)
   {
@@ -254,7 +301,24 @@ void BiomarkerRoc::OnButtonCalcPressed()
     TPR.push_back( TP / (TP + FN) );
     FPR.push_back( FP / (FP + TN) );
   }
-  RenderChart(TPR, FPR);
-  CalculateAndRenderAUC(TPR, FPR);
-  //auto peaks = originalImage->GetPeaks();
+}
+
+void BiomarkerRoc::OnButtonCalcPressed()
+{
+  auto imageNode = m_Controls.image->GetSelectedNode();
+  auto originalImage = dynamic_cast<m2::ImzMLSpectrumImage*>(imageNode->GetData());
+  //filters the selection for one mz value, displays the resulting image afterwards
+  auto peaks = originalImage->GetPeaks();
+  for (auto& peak : peaks) 
+  {
+    double mz = peak.GetX();
+    std::vector<double> TPR;
+    TPR.reserve(this->renderGranularity);
+    std::vector<double> FPR;
+    FPR.reserve(this->renderGranularity);
+    RocAnalysis(mz, TPR, FPR);
+    double auc = CalculateAUC(TPR, FPR);
+    AddToTable(mz, auc);
+  }
+  m_Controls.tableWidget->setVisible(true);
 }

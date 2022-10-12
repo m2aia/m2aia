@@ -19,6 +19,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 # Input
-HEADERS += BiomarkerRoc.h org_mitk_biomarker_roc_Activator.h chart.h
-FORMS += BiomarkerRocControls.ui chart.ui
-SOURCES += BiomarkerRoc.cpp org_mitk_biomarker_roc_Activator.cpp chart.cpp
+HEADERS += BiomarkerRoc.h org_mitk_biomarker_roc_Activator.h
+FORMS += BiomarkerRocControls.ui
+SOURCES += BiomarkerRoc.cpp org_mitk_biomarker_roc_Activator.cpp

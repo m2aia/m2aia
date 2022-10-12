@@ -5,18 +5,15 @@ set(SRC_CPP_FILES
 set(INTERNAL_CPP_FILES
   org_mitk_biomarker_roc_Activator.cpp
   BiomarkerRoc.cpp
-  chart.cpp
 )
 
 set(UI_FILES
   src/internal/BiomarkerRocControls.ui
-  src/internal/chart.ui
 )
 
 set(MOC_H_FILES
   src/internal/org_mitk_biomarker_roc_Activator.h
   src/internal/BiomarkerRoc.h
-  src/internal/chart.h
 )
 
 # list of resource files which can be used by the plug-in
