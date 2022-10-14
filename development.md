@@ -28,12 +28,14 @@ On Windows: due to path length restrictions, this should be at the top of your f
 cd C:\M2aiaWorkDir
 mkdir -p build
 
-git clone https://github.com/mitk/mitk
+git clone https://github.com/m2aia/mitk
 git clone https://github.com/m2aia/m2aia
+```
 
+Make sure that the m2aia-main branch is selected in the m2aia/mitk repository.
+```
 cd mitk
-git checkout v2022.04
-git apply ../m2aia/Patch/mitk.diff
+git status
 ```
 
 `Open the CMake-GUI`
