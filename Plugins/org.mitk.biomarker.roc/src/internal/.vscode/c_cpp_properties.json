@@ -32,7 +32,8 @@
                 "/usr/include/**",
                 "/usr/lib/x86_64-linux-gnu/cmake/**",
                 "/usr/include/x86_64-linux-gnu/qt5/**",
-                "/usr/include/x86_64-linux-gnu/qt5/QtCharts"
+                "/usr/include/x86_64-linux-gnu/qt5/QtCharts",
+                "/home/maia/Documents/maia/00_my_m2aia/Modules/M2aiaReceiverOperatorCharacteristic/include"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

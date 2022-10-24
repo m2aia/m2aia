@@ -3,5 +3,5 @@ set(MITK_MODULES
   M2aiaCore
   M2aiaDimensionReduction
   M2aiaCLI
-  M2aiaReceiverOperatorCharacteristic
+  M2aiaReceiverOperatingCharacteristic
 )

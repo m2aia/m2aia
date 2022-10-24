@@ -13,17 +13,17 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 
-
 #ifndef BiomarkerRoc_h
 #define BiomarkerRoc_h
 
-#include <berryISelectionListener.h>
+#include "ui_BiomarkerRocControls.h"
 #include <QmitkAbstractView.h>
 #include <QmitkSingleNodeSelectionWidget.h>
-#include <QFile>
-#include <vector>
+#include <berryISelectionListener.h>
+#include <mitkImage.h>
+#include <mitkLabelSetImage.h>
 #include <utility>
-#include "ui_BiomarkerRocControls.h"
+#include <vector>
 
 QT_CHARTS_USE_NAMESPACE
 /**
@@ -38,27 +38,27 @@ class BiomarkerRoc : public QmitkAbstractView
 public:
   static const std::string VIEW_ID;
   BiomarkerRoc();
+
 protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
   virtual void SetFocus() override;
 
   /// \brief Called when the user clicks the Calculate button
   void OnButtonCalcPressed();
-  Ui::BiomarkerRocControls m_Controls;
+  /// \brief Called when the user clicks the Render Chart button
+  void OnButtonRenderChartPressed();
+
 private:
-  void AddToTable(const double&, const double&);
+  void RefreshImageWithNewMz(double mz);
+  void AddToTable(double, double);
+  std::tuple<std::vector<std::tuple<double, bool>>, size_t, size_t> GetLabeledMz();
 
-  void RenderChart();
-
-  double CalculateAUC(const std::vector<double>&, const std::vector<double>&);
-
-  void RocAnalysis(const double& mz, std::vector<double>&, std::vector<double>&);
-  
-  static const int renderGranularity;
-  
-  //TODO: efficiency update so one calculation of ROC wont take 100ms
-  //double* maskedData;
-  //mitk::Label::PixelType* selectionData;
+  static constexpr const double m_Tolerance = 0.45;
+  Ui::BiomarkerRocControls m_Controls;
+  mitk::Image::Pointer m_Image;
+  const mitk::Label::PixelType *m_MaskData;
+  const double *m_ImageData;
+  std::size_t m_ImageDataSize;
 };
 
 #endif // BiomarkerRoc_h
