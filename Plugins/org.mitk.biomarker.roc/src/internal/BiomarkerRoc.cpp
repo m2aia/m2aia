@@ -50,25 +50,6 @@ See LICENSE.txt for details.
 #include <array>
 #include <tuple>
 
-// for logging purposes
-#define ROC_SIG "[BiomarkerRoc] "
-
-struct Timer
-{
-  Timer() { time = std::chrono::high_resolution_clock::now(); }
-  ~Timer()
-  {
-    auto stop_time = std::chrono::high_resolution_clock::now();
-    auto start = std::chrono::time_point_cast<std::chrono::microseconds>(time).time_since_epoch().count();
-    auto end = std::chrono::time_point_cast<std::chrono::microseconds>(stop_time).time_since_epoch().count();
-    auto duration = end - start;
-    MITK_INFO << ROC_SIG << "execution took " << duration << " microseconds";
-  }
-
-private:
-  std::chrono::_V2::system_clock::time_point time;
-};
-
 const std::string BiomarkerRoc::VIEW_ID = "org.mitk.views.biomarkerrocanalysis";
 
 BiomarkerRoc::BiomarkerRoc() : m_Image(nullptr), m_MaskData(nullptr), m_ImageData(nullptr), m_ImageDataSize(0) {}
@@ -139,6 +120,7 @@ void BiomarkerRoc::OnButtonCalcPressed()
   auto peaks = originalImage->GetPeaks();
   for (auto& peak : peaks)
   {
+    m_timer.start();
     double mz = peak.GetX();
     originalImage->GetImage(mz, m_Tolerance, mask, m_Image);
     mitk::ImageReadAccessor imagereader(m_Image);
@@ -153,8 +135,10 @@ void BiomarkerRoc::OnButtonCalcPressed()
     
     double auc = m2::ReceiverOperatorCharacteristic::DoRocAnalysis(D.begin(), D.end(), P, N);
     AddToTable(mz, auc);
+    m_timer.storage += m_timer.getDuration();
   }
   m_Controls.tableWidget->setVisible(true);
+  MITK_INFO << ROC_SIG << "execution took " << m_timer.storage << " microseconds (" << m_timer.storage / 1000.0 << ") ms. Measured " << m_timer.num_measurements << " times.";
 }
 
 void BiomarkerRoc::OnButtonRenderChartPressed()

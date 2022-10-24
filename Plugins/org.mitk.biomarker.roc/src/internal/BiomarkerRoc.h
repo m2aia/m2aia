@@ -22,8 +22,38 @@ See LICENSE.txt for details.
 #include <berryISelectionListener.h>
 #include <mitkImage.h>
 #include <mitkLabelSetImage.h>
+
+#include <chrono>
 #include <utility>
 #include <vector>
+
+// for logging purposes
+#define ROC_SIG "[BiomarkerRoc] "
+
+struct Timer
+{
+  Timer() : num_measurements(0), storage(0) { time = std::chrono::high_resolution_clock::now(); }
+  ~Timer()
+  {
+    auto stop_time = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::time_point_cast<std::chrono::microseconds>(time).time_since_epoch().count();
+    auto end = std::chrono::time_point_cast<std::chrono::microseconds>(stop_time).time_since_epoch().count();
+    auto duration = end - start;
+    MITK_INFO << ROC_SIG << "execution took " << duration << " microseconds";
+  }
+  void start() { time = std::chrono::high_resolution_clock::now(); ++num_measurements; }
+  long getDuration() 
+  {
+    auto stop_time = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::time_point_cast<std::chrono::microseconds>(time).time_since_epoch().count();
+    auto end = std::chrono::time_point_cast<std::chrono::microseconds>(stop_time).time_since_epoch().count();
+    return end - start;
+  }
+  long num_measurements;
+  long storage;
+private:
+  std::chrono::_V2::system_clock::time_point time;
+};
 
 QT_CHARTS_USE_NAMESPACE
 /**
@@ -59,6 +89,7 @@ private:
   const mitk::Label::PixelType *m_MaskData;
   const double *m_ImageData;
   std::size_t m_ImageDataSize;
+  Timer m_timer;
 };
 
 #endif // BiomarkerRoc_h

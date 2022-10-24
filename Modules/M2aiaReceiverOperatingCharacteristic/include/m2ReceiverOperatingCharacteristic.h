@@ -97,7 +97,7 @@ namespace m2
         double a = TPR[i], c = TPR[i + 1], h = FPR[i] - FPR[i + 1];
         auc += (a + c) / 2 * h;
       }
-      std::tuple<std::vector<std::tuple<double, double>>, double> returnValue = {Rates, auc};
+      std::tuple<std::vector<std::tuple<double, double>>, double> returnValue = std::make_tuple(Rates, auc);
       return returnValue;
     }
   };
