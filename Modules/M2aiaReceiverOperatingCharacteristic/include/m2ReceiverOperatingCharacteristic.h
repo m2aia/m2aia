@@ -36,23 +36,20 @@ namespace m2
     /// @param data_iter iterator to a container with mz values and corresponding label, sorted by mz values
     /// @return the area under the roc curve
     template <typename IterType>
-    static double DoRocAnalysis(IterType data_iter_begin, IterType data_iter_end, size_t P, size_t N)
+    static double MannWhitneyU(IterType data_iter_begin, IterType data_iter_end, size_t P, size_t N)
     {
-      double R1 = 0, R2 = 0;
+      double R1 = 0;
       size_t i = 0;
       for (auto data = data_iter_begin; data != data_iter_end; ++data, ++i)
       {
-        double d;
-        bool b;
-        std::tie(d, b) = *data;
-        if (b) /* == TUMOR */
+        double mz;
+        bool tumor;
+        std::tie(mz, tumor) = *data;
+        if (tumor) 
           R1 += i + 1;
-        else
-          R2 += i + 1;
       }
       double U1 = R1 - (P * (P + 1)) / 2;
-      double U2 = R2 - (N * (N + 1)) / 2;
-      return U1 / (U1 + U2); // AUC
+      return U1 / (P * N); // Mann-Whitney-U-Statistic
     }
 
     /// @brief Performs a slower calculation of the AUC and returns additional data, which is not needed for calculating the AUC itself but useful for diagnostics
@@ -63,7 +60,7 @@ namespace m2
     /// @param N number of negatives (true negatives + false negatives)
     /// @return a vector containing the false positive rates and the true positive rates as well as the AUC
     template <typename IterType>
-    static std::tuple<std::vector<std::tuple<double, double>>, double> DoRocAnalysisSlow(IterType data_iter_begin,
+    static std::tuple<std::vector<std::tuple<double, double>>, double> TrapezoidExtraData(IterType data_iter_begin,
                                                                                          IterType data_iter_end,
                                                                                          size_t P,
                                                                                          size_t N)
@@ -99,6 +96,18 @@ namespace m2
       }
       std::tuple<std::vector<std::tuple<double, double>>, double> returnValue = std::make_tuple(Rates, auc);
       return returnValue;
+    }
+
+    template <typename IterType1, typename IterType2>
+    static double Trapezoid(IterType1 tpr_iter_begin, IterType1 tpr_iter_end, IterType2 fpr_iter_begin)
+    {
+      double auc = 0;
+      for (; tpr_iter_begin != tpr_iter_end - 1; ++tpr_iter_begin, ++fpr_iter_begin)
+      {
+        double a = *tpr_iter_begin, c = *(tpr_iter_begin + 1), h = (*fpr_iter_begin - *(fpr_iter_begin + 1));
+        auc += (a + c) / 2 * h;
+      }
+      return auc;
     }
   };
 

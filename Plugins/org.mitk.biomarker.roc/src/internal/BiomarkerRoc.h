@@ -24,6 +24,7 @@ See LICENSE.txt for details.
 #include <mitkLabelSetImage.h>
 
 #include <chrono>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -79,11 +80,14 @@ protected:
   void OnButtonRenderChartPressed();
 
 private:
-  void RefreshImageWithNewMz(double mz);
-  void AddToTable(double, double);
+  void DoRocAnalysisMannWhitneyU();
+  void DoRocAnalysisWithThresholds();
+  std::tuple<std::vector<double>, std::vector<double>, size_t, size_t> PrepareTumorVectors();
   std::tuple<std::vector<std::tuple<double, bool>>, size_t, size_t> GetLabeledMz();
+  void AddToTable(double, double);
 
   static constexpr const double m_Tolerance = 0.45;
+  static constexpr const size_t m_numThresholds = 20;
   Ui::BiomarkerRocControls m_Controls;
   mitk::Image::Pointer m_Image;
   const mitk::Label::PixelType *m_MaskData;

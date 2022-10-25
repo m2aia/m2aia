@@ -106,6 +106,86 @@ void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
 
 void BiomarkerRoc::OnButtonCalcPressed()
 {
+  //DoRocAnalysisFast();
+  DoRocAnalysisWithThresholds();
+}
+
+void BiomarkerRoc::DoRocAnalysisWithThresholds()
+{
+  // initialize
+  auto imageNode = m_Controls.image->GetSelectedNode();
+  auto maskNode = m_Controls.selection->GetSelectedNode();
+  if (!imageNode || !maskNode)
+    return;
+  auto originalImage = dynamic_cast<m2::ImzMLSpectrumImage *>(imageNode->GetData());
+  auto mask = dynamic_cast<mitk::Image *>(maskNode->GetData());
+  m_Image = mitk::Image::New(); // image to which the mask will be applied to
+  m_Image->Initialize(originalImage);
+  mitk::ImageReadAccessor readAccessorMask(mask);
+  m_MaskData = static_cast<const mitk::Label::PixelType *>(readAccessorMask.GetData());
+  auto peaks = originalImage->GetPeaks();
+
+  m_timer.storage = 0;
+  for (auto& peak : peaks)
+  {
+    m_timer.start();
+    //prepare state for PrepareTumorVectors
+    double mz = peak.GetX();
+    originalImage->GetImage(mz, m_Tolerance, mask, m_Image);
+    mitk::ImageReadAccessor imagereader(m_Image);
+    auto dims = m_Image->GetDimensions();
+    m_ImageDataSize = dims[0] * dims[1] * dims[2];
+    m_ImageData = static_cast<const double*>(imagereader.GetData());
+
+    auto _tuple = PrepareTumorVectors();
+    std::vector<double> A, B;
+    size_t P, N;
+    std::tie(A, B, P, N) = _tuple;
+    
+    std::array<double, m_numThresholds> thresholds;
+    thresholds[0] = std::min(
+      *std::min_element(A.begin(), A.end()),
+      *std::min_element(B.begin(), B.end())
+    );
+    thresholds[thresholds.size() - 1] = std::max(
+      *std::max_element(A.begin(), A.end()),
+      *std::max_element(B.begin(), B.end())
+    );
+    for (size_t i = 1; i < m_numThresholds - 1; ++i)
+    {
+      thresholds[i] = thresholds[0] + (thresholds[thresholds.size() - 1] - thresholds[0]) * i / m_numThresholds;
+    }
+    std::array<double, m_numThresholds> TPR, FPR;
+    for (size_t i = 0; i < m_numThresholds; ++i)
+    {
+      double TP = 0, TN = 0, FN = 0, FP = 0;
+      for (const auto& positive : A)
+      {
+        if (positive < thresholds[i])
+          FN += 1;
+        else
+          TP += 1;
+      }
+      for (const auto& negative : B)
+      {
+        if (negative < thresholds[i])
+          TN += 1;
+        else
+          FP += 1;
+      }
+      TPR[i] = (TP / (TP + FN));
+      FPR[i] = (FP / (FP + TN));
+    }
+    double auc = m2::ReceiverOperatorCharacteristic::Trapezoid(TPR.begin(), TPR.end(), FPR.begin());
+    AddToTable(mz, auc);
+    m_timer.storage += m_timer.getDuration();
+  }
+  MITK_INFO << ROC_SIG << "Dauer: " << m_timer.storage << " µs (" << m_timer.storage / 1000.0 << ") ms. " << m_timer.num_measurements << " Messungen durchgeführt.";
+  m_Controls.tableWidget->setVisible(true);
+}
+
+void BiomarkerRoc::DoRocAnalysisMannWhitneyU()
+{
   // initialize
   auto imageNode = m_Controls.image->GetSelectedNode();
   auto maskNode = m_Controls.selection->GetSelectedNode();
@@ -121,6 +201,7 @@ void BiomarkerRoc::OnButtonCalcPressed()
   for (auto& peak : peaks)
   {
     m_timer.start();
+    //prepare state for GetLabeledMz
     double mz = peak.GetX();
     originalImage->GetImage(mz, m_Tolerance, mask, m_Image);
     mitk::ImageReadAccessor imagereader(m_Image);
@@ -133,24 +214,42 @@ void BiomarkerRoc::OnButtonCalcPressed()
     size_t P, N;
     std::tie(D, P, N) = tuple;
     
-    double auc = m2::ReceiverOperatorCharacteristic::DoRocAnalysis(D.begin(), D.end(), P, N);
+    //ROC has finished already here, this is merely calculating the AUC
+    double auc = m2::ReceiverOperatorCharacteristic::MannWhitneyU(D.begin(), D.end(), P, N);
     AddToTable(mz, auc);
     m_timer.storage += m_timer.getDuration();
   }
   m_Controls.tableWidget->setVisible(true);
-  MITK_INFO << ROC_SIG << "execution took " << m_timer.storage << " microseconds (" << m_timer.storage / 1000.0 << ") ms. Measured " << m_timer.num_measurements << " times.";
+  MITK_INFO << ROC_SIG << "Dauer: " << m_timer.storage << " µs (" << m_timer.storage / 1000.0 << ") ms. " << m_timer.num_measurements << " Messungen durchgeführt.";
 }
 
 void BiomarkerRoc::OnButtonRenderChartPressed()
 {
   double mz = m_Controls.mzValue->value();
-  RefreshImageWithNewMz(mz);
+  //initialize image with new mz val
+  {
+    auto imageNode = m_Controls.image->GetSelectedNode();
+    auto maskNode = m_Controls.selection->GetSelectedNode();
+    auto originalImage = dynamic_cast<m2::ImzMLSpectrumImage *>(imageNode->GetData());
+    auto mask = dynamic_cast<mitk::Image *>(maskNode->GetData());
+    if (!m_Image)
+      m_Image = mitk::Image::New();
+    m_Image->Initialize(originalImage);
+    originalImage->GetImage(mz, m_Tolerance, mask, m_Image); // write in m_Image
+    // get read access to the images
+    mitk::ImageReadAccessor readAccessorImage(m_Image);
+    mitk::ImageReadAccessor readAccessorMask(mask);
+    m_ImageData = static_cast<const double *>(readAccessorImage.GetData());
+    m_MaskData = static_cast<const mitk::Label::PixelType*>(readAccessorMask.GetData());
+    auto dims = m_Image->GetDimensions();
+    m_ImageDataSize = dims[0] * dims[1] * dims[2];
+  }
   // get P and N
   auto tuple = GetLabeledMz();
   std::vector<std::tuple<double, bool>> D;
   size_t P, N;
   std::tie(D, P, N) = tuple;
-  auto auc_tuple = m2::ReceiverOperatorCharacteristic::DoRocAnalysisSlow(D.begin(), D.end(), P, N);
+  auto auc_tuple = m2::ReceiverOperatorCharacteristic::TrapezoidExtraData(D.begin(), D.end(), P, N);
   double AUC;
   std::vector<std::tuple<double, double>> TrueRates;
   std::tie(TrueRates, AUC) = auc_tuple;
@@ -199,26 +298,7 @@ void BiomarkerRoc::AddToTable(double mz, double auc)
   m_Controls.tableWidget->setCellWidget(size, 1, auclabel);
 }
 
-void BiomarkerRoc::RefreshImageWithNewMz(double mz)
-{
-  auto imageNode = m_Controls.image->GetSelectedNode();
-  auto maskNode = m_Controls.selection->GetSelectedNode();
-  auto originalImage = dynamic_cast<m2::ImzMLSpectrumImage *>(imageNode->GetData());
-  auto mask = dynamic_cast<mitk::Image *>(maskNode->GetData());
-  if (!m_Image)
-    m_Image = mitk::Image::New();
-  m_Image->Initialize(originalImage);
-  originalImage->GetImage(mz, m_Tolerance, mask, m_Image); // write in m_Image
-  // get read access to the images
-  mitk::ImageReadAccessor readAccessorImage(m_Image);
-  mitk::ImageReadAccessor readAccessorMask(mask);
-  m_MaskData = static_cast<const mitk::Label::PixelType*>(readAccessorMask.GetData());
-  m_ImageData = static_cast<const double *>(readAccessorImage.GetData());
-  auto dims = m_Image->GetDimensions();
-  m_ImageDataSize = dims[0] * dims[1] * dims[2];
-}
-
-std::tuple<std::vector<std::tuple<double, bool>>, size_t, size_t> BiomarkerRoc::GetLabeledMz()
+std::tuple<std::vector<double>, std::vector<double>, size_t, size_t> BiomarkerRoc::PrepareTumorVectors()
 {
   // prepare data for ROC
   size_t P = 0; //NUM TUMOR
@@ -242,6 +322,15 @@ std::tuple<std::vector<std::tuple<double, bool>>, size_t, size_t> BiomarkerRoc::
   }
   A.shrink_to_fit();
   B.shrink_to_fit();
+  return std::make_tuple(A, B, P, N);
+}
+
+std::tuple<std::vector<std::tuple<double, bool>>, size_t, size_t> BiomarkerRoc::GetLabeledMz()
+{
+  auto _tuple = PrepareTumorVectors();
+  std::vector<double> A, B;
+  size_t P = 0, N = 0; // warn uninitialized
+  std::tie(A, B, P, N) = _tuple;
   constexpr const bool TUMOR = true;
   constexpr const bool NONTUMOR = false;  
   std::vector<std::tuple<double, bool>> D;
