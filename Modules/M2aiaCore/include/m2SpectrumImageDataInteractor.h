@@ -21,7 +21,6 @@ See LICENSE.txt for details.
 #include "mitkCommon.h"
 #include "mitkDataInteractor.h"
 #include <M2aiaCoreExports.h>
-#include <mitkDisplayInteractor.h>
 #include <mitkInteractionEvent.h>
 #include <mitkPointSet.h>
 #include <mitkStateMachineAction.h>
