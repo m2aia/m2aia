@@ -332,7 +332,7 @@ std::tuple<std::vector<std::tuple<double, bool>>, size_t, size_t> BiomarkerRoc::
   size_t P = 0, N = 0; // warn uninitialized
   std::tie(A, B, P, N) = _tuple;
   constexpr const bool TUMOR = true;
-  constexpr const bool NONTUMOR = false;  
+  constexpr const bool NONTUMOR = false;
   std::vector<std::tuple<double, bool>> D;
   D.reserve(P + N);
   for (size_t i = 0; i < A.size(); ++i)
