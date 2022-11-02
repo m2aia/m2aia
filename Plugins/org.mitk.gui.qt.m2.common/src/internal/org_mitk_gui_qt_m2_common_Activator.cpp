@@ -16,18 +16,32 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include "org_mitk_gui_qt_m2_common_Activator.h"
 
-#include "QmitkExportComponentAction.h"
 #include "m2BrowserPreferencesPage.h"
 #include <QmitkNodeDescriptorManager.h>
+
 #include <m2UIUtils.h>
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateOr.h>
 #include <mitkNodePredicateProperty.h>
 
+#include "QmitkDataNodeExportComponentAction.h"
+#include <QmitkDataNodeColorAction.h>
+#include <QmitkDataNodeColorMapAction.h>
+#include <QmitkDataNodeTextureInterpolationAction.h>
+#include <mitkIContextMenuActionProvider.h>
+#include <QmitkDataNodeConvertPixelTypeAction.h>
+
+
+
 void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)
 {
   BERRY_REGISTER_EXTENSION_CLASS(m2BrowserPreferencesPage, context)
+  BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeExportComponentActionProvider, context)
+  BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeColorMapActionProvider, context)
+  BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeColorActionProvider, context)
+  BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeTextureInterpolationActionProvider, context)
+  BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeConvertPixelTypeActionProvider, context)
 
   auto descriptorManager = QmitkNodeDescriptorManager::GetInstance();
 
@@ -45,6 +59,8 @@ void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)
                                                            QString(":/QmitkM2aiaCore/MultiComponentImages_48.png"),
                                                            mcImageDescriptorPredicate,
                                                            this));
+
+
 }
 
 void org_mitk_gui_qt_m2_common_Activator::stop(ctkPluginContext *)

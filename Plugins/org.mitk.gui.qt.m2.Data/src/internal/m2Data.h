@@ -101,7 +101,7 @@ public slots:
   void OnDecreaseTolerance();
   void OnRenderSpectrumImages(double min, double max);
   void OnGenerateImageData(qreal mz, qreal tol);
-  mitk::Image::Pointer OnApplyCastImage(mitk::Image::Pointer image);
+  
 
 signals:
   void SendNodes(m2::UIUtils::NodesVectorType::Pointer vec);

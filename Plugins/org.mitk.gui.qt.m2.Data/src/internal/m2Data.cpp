@@ -66,14 +66,14 @@ void m2Data::CreateQtPartControl(QWidget *parent)
           this,
           [&] { OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI); });
 
-  connect(m_Controls.btnCreateImageToNewNode,
-          &QAbstractButton::clicked,
-          this,
-          [&]
-          {
-            m_InitializeNewNode = true;
-            OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
-          });
+  // connect(m_Controls.btnCreateImageToNewNode,
+  //         &QAbstractButton::clicked,
+  //         this,
+  //         [&]
+  //         {
+  //           m_InitializeNewNode = true;
+  //           OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
+  //         });
 
   // step through
   // signals are triggered by key strokes (arrows) from spectrum view (Spectrum.ccp)
@@ -395,30 +395,11 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
       const auto futureFinished = [future, dataNode, nodesToProcess, labelText, this]() mutable
       {
         auto image = future->result();
-
-        if (m_InitializeNewNode)
-        {
-          auto newImage = OnApplyCastImage(image);
-          auto dataNodeNew = mitk::DataNode::New();
-          auto lut = mitk::LookupTable::New();
-          lut->SetType(mitk::LookupTable::LookupTableType::GRAYSCALE_TRANSPARENT);
-          dataNodeNew->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
-          dataNodeNew->SetData(image);
-          dataNodeNew->SetVisibility(false);
-          this->GetDataStorage()->Add(dataNodeNew);
-          dataNodeNew->SetName(labelText.toStdString());
-          UpdateLevelWindow(dataNodeNew);
-        }
-        else
-        {
-          UpdateLevelWindow(dataNode);
-          UpdateSpectrumImageTable(dataNode);
-          dataNode->SetProperty("x_range_center", image->GetProperty("x_range_center"));
-          dataNode->SetProperty("x_range_tol", image->GetProperty("x_range_tol"));
-          this->RequestRenderWindowUpdate();
-        }
-
-        m_InitializeNewNode = false;
+        UpdateLevelWindow(dataNode);
+        UpdateSpectrumImageTable(dataNode);
+        dataNode->SetProperty("x_range_center", image->GetProperty("x_range_center"));
+        dataNode->SetProperty("x_range_tol", image->GetProperty("x_range_tol"));
+        this->RequestRenderWindowUpdate();
         future->disconnect();
       };
 
@@ -475,50 +456,7 @@ void m2Data::UpdateSpectrumImageTable(const mitk::DataNode *node)
   // item = m_Controls.tableWidget->item(0, 0)->setData()
 }
 
-mitk::Image::Pointer m2Data::OnApplyCastImage(mitk::Image::Pointer image)
-{
-  using SourceImageType = itk::Image<m2::DisplayImagePixelType, 3>;
-  auto Caster = [&image](auto *itkImage)
-  {
-    SourceImageType::Pointer srcImage;
 
-    mitk::CastToItkImage(image, srcImage);
-    using ImageType = typename std::remove_pointer<decltype(itkImage)>::type;
-    using FilterType = itk::RescaleIntensityImageFilter<SourceImageType, ImageType>;
-    auto filter = FilterType::New();
-    filter->SetInput(srcImage);
-    filter->SetOutputMinimum(0);
-    filter->SetOutputMaximum(std::numeric_limits<typename ImageType::PixelType>::max());
-    filter->Update();
-    mitk::CastToMitkImage(filter->GetOutput(), image);
-  };
-
-  auto id = m_Controls.cmbBxType->currentIndex();
-  if (id == 0)
-  {
-    // do nothing
-  }
-  else if (id == 1)
-  {
-    using TargetImageType = itk::Image<unsigned char, 3>;
-    TargetImageType::Pointer itkIonImage;
-    Caster(itkIonImage.GetPointer());
-  }
-  else if (id == 2)
-  {
-    using TargetImageType = itk::Image<unsigned short, 3>;
-    TargetImageType::Pointer itkIonImage;
-    Caster(itkIonImage.GetPointer());
-  }
-  else if (id == 3)
-  {
-    using TargetImageType = itk::Image<unsigned int, 3>;
-    TargetImageType::Pointer itkIonImage;
-    Caster(itkIonImage.GetPointer());
-  }
-
-  return image;
-}
 
 void m2Data::OnRenderSpectrumImages(double min, double max)
 {
