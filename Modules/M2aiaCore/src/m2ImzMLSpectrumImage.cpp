@@ -369,43 +369,43 @@ m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLS
 
   unsigned A_x, A_y, A_z;
   unsigned B_x, B_y, B_z;
-  A_x = A->GetPropertyValue<unsigned>("max count of pixel x");
-  B_x = B->GetPropertyValue<unsigned>("max count of pixel x");
-  A_y = A->GetPropertyValue<unsigned>("max count of pixel y");
-  B_y = B->GetPropertyValue<unsigned>("max count of pixel y");
-  A_z = A->GetPropertyValue<unsigned>("max count of pixel z");
-  B_z = B->GetPropertyValue<unsigned>("max count of pixel z");
+  A_x = A->GetPropertyValue<unsigned>("max count of pixels x");
+  B_x = B->GetPropertyValue<unsigned>("max count of pixels x");
+  A_y = A->GetPropertyValue<unsigned>("max count of pixels y");
+  B_y = B->GetPropertyValue<unsigned>("max count of pixels y");
+  A_z = A->GetPropertyValue<unsigned>("max count of pixels z");
+  B_z = B->GetPropertyValue<unsigned>("max count of pixels z");
 
   switch (stackAxis)
   {
     case 'x':
     {
       // Images are stacked along the x axis
-      C->SetPropertyValue<unsigned>("max count of pixel x", A_x + B_x);
-      C->SetPropertyValue<unsigned>("max count of pixel y", std::max(A_y, B_y));
-      C->SetPropertyValue<unsigned>("max count of pixel z", std::max(A_z, B_z));
+      C->SetPropertyValue<unsigned>("max count of pixels x", A_x + B_x);
+      C->SetPropertyValue<unsigned>("max count of pixels y", std::max(A_y, B_y));
+      C->SetPropertyValue<unsigned>("max count of pixels z", std::max(A_z, B_z));
     }
     break;
     case 'y':
     {
-      C->SetPropertyValue<unsigned>("max count of pixel x", std::max(A_x, B_x));
-      C->SetPropertyValue<unsigned>("max count of pixel y", A_y + B_y);
-      C->SetPropertyValue<unsigned>("max count of pixel z", std::max(A_z, B_z));
+      C->SetPropertyValue<unsigned>("max count of pixels x", std::max(A_x, B_x));
+      C->SetPropertyValue<unsigned>("max count of pixels y", A_y + B_y);
+      C->SetPropertyValue<unsigned>("max count of pixels z", std::max(A_z, B_z));
     }
     break;
     case 'z':
     {
-      C->SetPropertyValue<unsigned>("max count of pixel x", std::max(A_x, B_x));
-      C->SetPropertyValue<unsigned>("max count of pixel y", std::max(A_y, B_y));
-      C->SetPropertyValue<unsigned>("max count of pixel z", A_z + B_z);
+      C->SetPropertyValue<unsigned>("max count of pixels x", std::max(A_x, B_x));
+      C->SetPropertyValue<unsigned>("max count of pixels y", std::max(A_y, B_y));
+      C->SetPropertyValue<unsigned>("max count of pixels z", A_z + B_z);
     }
     break;
   }
 
   {
-    C->SetPropertyValue<double>("origin x", 0.0);
-    C->SetPropertyValue<double>("origin y", 0.0);
-    C->SetPropertyValue<double>("origin z", 0.0);
+    C->SetPropertyValue<double>("absolute position offset x", 0.0);
+    C->SetPropertyValue<double>("absolute position offset y", 0.0);
+    C->SetPropertyValue<double>("absolute position offset z", 0.0);
   }
 
   C->SetPropertyValue<bool>("continuous", true);
@@ -446,13 +446,13 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeG
 {
   auto &imageArtifacts = p->GetImageArtifacts();
 
-  std::array<itk::SizeValueType, 3> imageSize = {p->GetPropertyValue<unsigned>("max count of pixel x"),
-                                                 p->GetPropertyValue<unsigned>("max count of pixel y"),
-                                                 p->GetPropertyValue<unsigned>("max count of pixel z")};
+  std::array<itk::SizeValueType, 3> imageSize = {p->GetPropertyValue<unsigned int>("max count of pixels x"),
+                                                 p->GetPropertyValue<unsigned int>("max count of pixels y"),
+                                                 p->GetPropertyValue<unsigned int>("max count of pixels z")};
 
-  std::array<double, 3> imageOrigin = {p->GetPropertyValue<double>("origin x"),
-                                       p->GetPropertyValue<double>("origin y"),
-                                       p->GetPropertyValue<double>("origin z")};
+  std::array<double, 3> imageOrigin = {p->GetPropertyValue<double>("absolute position offset x"),
+                                       p->GetPropertyValue<double>("absolute position offset y"),
+                                       p->GetPropertyValue<double>("absolute position offset z")};
 
   using ImageType = itk::Image<m2::DisplayImagePixelType, 3>;
   auto itkIonImage = ImageType::New();

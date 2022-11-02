@@ -122,9 +122,9 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeGeometry()
                                                  p->GetPropertyValue<unsigned>("dim_y"), // n_y
                                                  p->GetPropertyValue<unsigned>("dim_z")};
 
-  std::array<double, 3> imageOrigin = {p->GetPropertyValue<double>("origin x") * 0.001, // x_init
-                                       p->GetPropertyValue<double>("origin y") * 0.001, // y_init
-                                       p->GetPropertyValue<double>("origin z") * 0.001};
+  std::array<double, 3> imageOrigin = {p->GetPropertyValue<double>("absolute position offset x") * 0.001, // x_init
+                                       p->GetPropertyValue<double>("absolute position offset y") * 0.001, // y_init
+                                       p->GetPropertyValue<double>("absolute position offset z") * 0.001};
 
   using ImageType = itk::Image<m2::DisplayImagePixelType, 3>;
   auto itkIonImage = ImageType::New();

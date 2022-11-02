@@ -74,8 +74,16 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
   context.reserve(60);
   accession.reserve(60);
 
-  std::unordered_map<std::string, std::function<void(const std::string &)>> accession_map;
-  std::unordered_map<std::string, std::function<void(const std::string &)>> context_map;
+  
+  struct m2ImzMLParserAccessionData
+  {
+    FunctionType f;
+    bool isRequired = false;
+    bool wasFound = false;
+  };
+   
+  std::unordered_map<std::string, FunctionType> accession_map;
+  std::unordered_map<std::string, FunctionType> context_map;
 
   for (auto &source : data->GetImzMLSpectrumImageSourceList())
   {
@@ -86,76 +94,41 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
                                                      {"32-bit integer", sizeof(int32_t)},
                                                      {"64-bit integer", sizeof(int64_t)}};
 
-    const auto attributValue =
-      [](const std::string &line, const std::string &tag, std::string &attribute) -> std::string &
-    {
-      auto p = line.find(tag);
-      attribute.clear();
-      if (p != std::string::npos)
-      {
-        auto s_value = line.find('"', p) + 1;
-        auto e_value = line.find('"', s_value);
-        while (s_value != e_value)
-          attribute.push_back(line[s_value++]);
-      }
-      return attribute;
-    };
-
-    const auto setTagName = [](const std::string &line, std::string &tag) -> void
-    {
-      auto p = line.find('<');
-      tag.clear();
-      if (p != std::string::npos)
-      {
-        ++p;
-        auto e = line.find_first_of(" >", p + 1);
-        while (p != e)
-          tag.push_back(line[p++]);
-      }
-    };
-
-    const auto evaluateAccession = [](const auto &line, const auto &accession, const auto &dict) -> bool
-    {
-      auto keyFuncPairIt = dict.find(accession);
-      if (keyFuncPairIt != dict.end())
-      {
-        keyFuncPairIt->second(line); // call the function
-        return true;
-      }
-      return false;
-    };
-
-    const auto evaluateContext = [](const auto &line, const auto &tag, const auto &dict, auto & /*context*/) -> void
-    {
-      auto keyFuncPairIt = dict.find(tag);
-      if (keyFuncPairIt != dict.end())
-      {
-        return keyFuncPairIt->second(line); // call the function
-      }
-      return;
-    };
 
     const auto ContextValueToStringProperty = [&](const std::string &line)
     {
-      attributValue(line, "name", name);
-      attributValue(line, "value", value);
+      attributeValue(line, "name", name);
+      attributeValue(line, "value", value);
       if (!context.empty())
-        data->SetPropertyValue("[" + context + "] " + name, value);
-      data->SetPropertyValue(name, value);
+        data->SetPropertyValue(context + "." + name, value);
+      else
+        data->SetPropertyValue(name, value);
     };
 
-    const auto ValueToUnsignedIntProperty = [&](const std::string &line)
-    {
-      attributValue(line, "name", name);
-      attributValue(line, "value", value);
-      data->SetPropertyValue<unsigned>(name, std::stoul(value));
-    };
+    // const auto ValueToUnsignedIntProperty = [&](const std::string &line, auto converter, const std::string & default_name = {})
+    // {
+    //   attributeValue(line, "value", value);
+    //   if(default_name.empty()){
+    //     attributeValue(line, "name", name);
+    //     data->SetPropertyValue<unsigned>(name, std::stoul(value));
+    //   }else{
+    //     data->SetPropertyValue<unsigned>(default_name, std::stoul(value));
+    //   }
+      
+    // };
 
-    const auto ValueToDoubleProperty = [&](const std::string &line)
+    const auto ValueToProperty = [&](const std::string &line, auto converter, const std::string & default_name = {})
     {
-      attributValue(line, "name", name);
-      attributValue(line, "value", value);
-      data->SetPropertyValue<double>(name, std::stod(value));
+      attributeValue(line, "value", value);
+      auto converted_value = converter(value);
+      using PropertyType = decltype(converted_value);
+      if(default_name.empty()){
+        attributeValue(line, "name", name);
+        data->SetPropertyValue<PropertyType>(name, converted_value);
+      }else{
+        data->SetPropertyValue<PropertyType>(default_name, converted_value);
+      }
+      
     };
 
     {
@@ -165,7 +138,7 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
         std::string refGroupID = "";
         std::string refGroupName = "";
         std::string targetKey = "";
-        attributValue(line, "id", refGroupID);
+        attributeValue(line, "id", refGroupID);
         std::string gLine;
         const auto npos = std::string::npos;
         while (!f.eof())
@@ -174,26 +147,28 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
           if (gLine.find("</") != std::string::npos)
             break;
+              
+          if (gLine.find("MS:1000521") != npos  // 32-bit float https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L3752
+           || gLine.find("MS:1000523") != npos) // 64-bit float https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L3764
+            attributeValue(gLine, "name", name);
 
-          if (gLine.find("MS:1000521") != npos || gLine.find("MS:1000523") != npos)
-            attributValue(gLine, "name", name);
-
-          if (gLine.find("MS:1000514") != npos)
+          if (gLine.find("MS:1000514") != npos) // m/z array https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L3695
           {
-            attributValue(gLine, "name", refGroupName);
+            attributeValue(gLine, "name", refGroupName);
             targetKey = "mzGroupName";
           }
 
-          if (gLine.find("MS:1000515") != npos)
+          if (gLine.find("MS:1000515") != npos) // intensity array https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L3704
           {
-            attributValue(gLine, "name", refGroupName);
+            attributeValue(gLine, "name", refGroupName);
             targetKey = "intensityGroupName";
           }
 
-          if (gLine.find("MS:1000127") != npos || gLine.find("MS:1000128") != npos)
+          if (gLine.find("MS:1000127") != npos  // centroid spectrum https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L1052
+           || gLine.find("MS:1000128") != npos) // profile spectrum https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L1059
           {
             std::string spectype;
-            attributValue(gLine, "name", spectype);
+            attributeValue(gLine, "name", spectype);
             data->SetPropertyValue<std::string>(spectype, "");
           }
         }
@@ -210,68 +185,78 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
       context_map["software"] = [&](const std::string &line)
       {
-        attributValue(line, "id", name);
-        attributValue(line, "version", value);
+        attributeValue(line, "id", name);
+        attributeValue(line, "version", value);
         context = name + " " + value;
       };
-      context_map["scanSettings"] = [&](const std::string &line) { attributValue(line, "id", context); };
+      context_map["scanSettings"] = [&](const std::string &line) { attributeValue(line, "id", context); };
 
-      accession_map["IMS:1000042"] = [&](const std::string &line)
-      {
-        attributValue(line, "value", value);
-        data->SetPropertyValue<unsigned>("max count of pixel x", std::stoul(value));
-      };
-      accession_map["IMS:1000043"] = [&](const std::string &line)
-      {
-        attributValue(line, "value", value);
-        data->SetPropertyValue<unsigned>("max count of pixel y", std::stoul(value));
-      };
-      accession_map["IMS:1000044"] = ValueToUnsignedIntProperty; // max dim x
-      accession_map["IMS:1000045"] = ValueToUnsignedIntProperty; // max dim y
-      accession_map["IMS:1000046"] = ValueToDoubleProperty;      // pixel size x
-      accession_map["IMS:1000047"] = ValueToDoubleProperty;      // pixel size y
+      using namespace std::string_literals;
+      using namespace std::placeholders;
 
-      accession_map["IMS:X1"] = accession_map["M2:0000001"] =
-        accession_map["IMS:1000053"] = [&](const std::string &line) { // origin x
-          attributValue(line, "value", value);
-          data->SetPropertyValue<double>("origin x", m2::MicroMeterToMilliMeter(std::stol(value)));
-        };
+      auto stoui = [](const std::string& s) -> unsigned int{return std::stoul(s);};
+      auto stod = [](const std::string& s) -> double{return std::stod(s);};
+      auto stol = [](const std::string& s) -> long{return std::stol(s);};
+      
 
-      accession_map["IMS:X2"] = accession_map["M2:0000002"] =
-        accession_map["IMS:1000054"] = [&](const std::string &line) { // origin y
-          attributValue(line, "value", value);
-          data->SetPropertyValue<double>("origin y", m2::MicroMeterToMilliMeter(std::stol(value)));
-        };
+      // Attention: we need to provide default values for the name to avoid frequently observed typos(pixel instead of pixels).
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L136
+      accession_map["IMS:1000042"] = [&](auto line){ValueToProperty(line,  stoui, "max count of pixels x"s);};
+      
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L144
+      accession_map["IMS:1000043"] = [&](auto line){ValueToProperty(line, stoui, "max count of pixels y"s);}; 
 
-      accession_map["IMS:X3"] = accession_map["M2:0000003"] = [&](const std::string &line) { // origin y
-        attributValue(line, "value", value);
-        data->SetPropertyValue<double>("origin z", m2::MicroMeterToMilliMeter(std::stol(value)));
-      };
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L153
+      accession_map["IMS:1000044"] = [&](auto line){ValueToProperty(line, stod);}; // "max dimension x"s
+
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L160
+      accession_map["IMS:1000045"] = [&](auto line){ValueToProperty(line, stod);}; // "max dimension y"s
+
+      // Attention: we should not specify a default value, for the name here.
+      // Describes the length of a pixel in the x dimension. If no pixel size y (IMS:1000047) is explicitly specified, 
+      // then this also describes the length of a pixel in the y dimension."
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L169
+      accession_map["IMS:1000046"] = [&](auto line){ValueToProperty(line, stod);}; // pixel size (x)
+
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L177
+      accession_map["IMS:1000047"] = [&](auto line){ValueToProperty(line, stod);}; // pixel size y
+
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L220
+      accession_map["IMS:1000053"] = [&](auto line){ValueToProperty(line, std::bind(m2::MicroMeterToMilliMeter, std::bind(stol, _1)));}; //, "absolute position offset x"s
+
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L228
+      accession_map["IMS:1000054"] = [&](auto line){ValueToProperty(line, std::bind(m2::MicroMeterToMilliMeter, std::bind(stol, _1)));}; //, "absolute position offset y"s
+      
+      // // Not supported by IMS obo
+      // accession_map["IMS:X3"] = accession_map["M2:0000003"] = [&](const std::string &line) { // absolute position offset y
+      //   attributeValue(line, "value", value);
+      //   data->SetPropertyValue<double>("absolute position offset z", m2::MicroMeterToMilliMeter(std::stol(value)));
+      // };
 
       // origin size z
       // scanSettings
-      context_map["instrumentConfiguration"] = [&](const std::string &line) { attributValue(line, "id", context); };
+      context_map["instrumentConfiguration"] = [&](const std::string &line) { attributeValue(line, "id", context); };
 
       context_map["source"] = [&](const std::string &) { context = "source"; };
       context_map["analyzer"] = [&](const std::string &) { context = "analyzer"; };
       context_map["detector"] = [&](const std::string &) { context = "detector"; };
 
-      context_map["dataProcessing"] = [&](const std::string &line) { attributValue(line, "id", context); };
+      context_map["dataProcessing"] = [&](const std::string &line) { attributeValue(line, "id", context); };
       context_map["processingMethod"] = [&](const std::string &line)
       {
-        attributValue(line, "order", value);
+        attributeValue(line, "order", value);
         context = context + "processingMethod (" + value + ")";
       };
 
       // default values
-      data->SetPropertyValue<unsigned>("max count of pixel z", 1);
+      data->SetPropertyValue<unsigned>("max count of pixels z", 1);
       data->SetPropertyValue<double>("pixel size x", -1);
       data->SetPropertyValue<double>("pixel size y", -1);
       data->SetPropertyValue<double>("pixel size z", -1);
 
-      data->SetPropertyValue<double>("origin x", 0.0);
-      data->SetPropertyValue<double>("origin y", 0.0);
-      data->SetPropertyValue<double>("origin z", 0.0);
+      data->SetPropertyValue<double>("absolute position offset x", 0.0);
+      data->SetPropertyValue<double>("absolute position offset y", 0.0);
+      data->SetPropertyValue<double>("absolute position offset z", 0.0);
 
       // -------- PROCESS FILE --------
       {
@@ -285,23 +270,25 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
           // Check for end-tag. If true, pop the last context
           // element from the stack and clear the context string.
-          if (line.find("</") != std::string::npos)
+          if (line.find("</") != std::string::npos) //close context
           {
             context_stack.pop_back();
             context.clear();
           }
           // Check for empty-element tag. Can be cvParam or userParam (e.g. used by ScilsLab).
-          else if (line.rfind("/>") != std::string::npos)
+          else if (line.rfind("/>") != std::string::npos) // element
           {
-            attributValue(line, "accession", accession);
+            attributeValue(line, "accession", accession);
             if (!accession.empty())
             {
-              if (!context.empty())
-              {
-                // Call context specific accession.
-                if (evaluateAccession(line, accession + "[" + context + "]", accession_map))
-                  continue; // if evaluation succeeded continue loop and go to next line
-              }
+              // if (!context.empty())
+              // {
+              //   // Call context specific accession.
+              //   if (evaluateAccession(line, accession + "[" + context + "]", accession_map)){
+              //     MITK_INFO << "Context";
+              //     continue; // if evaluation succeeded continue loop and go to next line
+              //   }
+              // }
               // Fallback if context specific accession is not found.
               auto status = evaluateAccession(line, accession, accession_map);
               if (!status) // Default: name + value is added to IMS data property list
@@ -309,18 +296,34 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
             }
           }
 
-          else
+          else //open context
           { // it is probably a start-tag. Could be a comment ...
             // .. but in a clean file no comments should be available.
 
-            setTagName(line, tag);
+            GetElementName(line, tag);
             context_stack.push_back(tag);
-            evaluateContext(line, tag, context_map, context);
+            EvaluateContext(line, tag, context_map);
           }
         }
       }
 
       // -------- POST PROCESS META DATA --------
+      // convert micrometer in millimeter for compatibility with MITK 
+
+      // if(data->GetProperty("max dimension x") && 
+      //    data->GetProperty("max dimension y"))
+      // {
+      //   auto dx = data->GetPropertyValue<double>("max dimension x");
+      //   auto dy = data->GetPropertyValue<double>("max dimension y");
+      //   dx = m2::MicroMeterToMilliMeter(dx);
+      //   dy = m2::MicroMeterToMilliMeter(dy);
+      //   data->SetPropertyValue<double>("max dimension y", dx);
+      //   data->SetPropertyValue<double>("max dimension y", dy);
+
+      // }
+
+
+
       if (data->GetProperty("pixel size"))
       {
         auto v = data->GetPropertyValue<double>("pixel size");
@@ -361,7 +364,7 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
       if (data->GetPropertyValue<double>("pixel size z") < 0)
       {
         data->SetPropertyValue("pixel size z", m2::MicroMeterToMilliMeter(10));
-        data->SetPropertyValue<unsigned>("max count of pixel z", 1);
+        data->SetPropertyValue<unsigned>("max count of pixels z", 1);
       }
       else
       {
@@ -369,117 +372,8 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
         data->SetPropertyValue("pixel size z", pixelSizeZInMilliMetre);
       }
       // -------- END META DATA --------
+      
     }
-
-    //{
-    //	accession_map.clear();
-    //	context_map.clear();
-
-    //	auto & spectra = data->Spectra();
-
-    //	context_map["spectrumList"] = [&](auto line) {
-    //		unsigned count = std::stoul(attributValue(line, "count", value));
-    //		data->SetPropertyValue<unsigned>("number of measurments", count);
-    //		spectra.resize(count);
-    //	};
-
-    //	unsigned long long spectrumIndexReference;
-
-    //	context_map["spectrum"] = [&](auto line) {
-    //		spectrumIndexReference = std::stoull(attributValue(line, "index", value));
-    //		spectra[spectrumIndexReference].index.z = 1;
-    //	};
-
-    //	accession_map["IMS:1000050"] = [&](auto line) {
-    //		spectra[spectrumIndexReference].index.x = std::stoul(attributValue(line, "value", value)); };
-    //	accession_map["IMS:1000051"] = [&](auto line) {
-    //		spectra[spectrumIndexReference].index.y = std::stoul(attributValue(line, "value", value)); };
-    //	accession_map["IMS:1000052"] = [&](auto line) {
-    //		spectra[spectrumIndexReference].index.z = std::stoul(attributValue(line, "value", value)); };
-    //	accession_map["3DPositionX"] = [&](auto line) {
-    //		spectra[spectrumIndexReference].world.x = std::stod(attributValue(line, "value", value)); };
-    //	accession_map["3DPositionY"] = [&](auto line) {
-    //		spectra[spectrumIndexReference].world.y = std::stod(attributValue(line, "value", value)); };
-    //	accession_map["3DPositionZ"] = [&](auto line) {
-    //		spectra[spectrumIndexReference].world.z = std::stod(attributValue(line, "value", value)); };
-    //
-    //
-    //	accession_map["MS:1000285"] = [&](auto line) {
-    //		spectra[spectrumIndexReference].normalize = std::stod(attributValue(line, "value", value)); };
-
-    //	context_map["referenceableParamGroupRef"] = [&](auto line) { attributValue(line, "ref", context); };
-
-    //	auto mzArrayRefName = data->GetPropertyValue<std::string>("m/z array");
-    //	accession_map["IMS:1000103[" + mzArrayRefName + "]"] = [&](auto line) {spectra[spectrumIndexReference].mzLength
-    //=
-    // std::stoull(attributValue(line, "value", value)); }; 	accession_map["IMS:1000102[" + mzArrayRefName + "]"] =
-    // [&](auto line) {spectra[spectrumIndexReference].mzOffset = std::stoull(attributValue(line, "value", value)); };
-
-    //	auto intensityArrayRefName = data->GetPropertyValue<std::string>("intensity array");
-    //	accession_map["IMS:1000103[" + intensityArrayRefName + "]"] = [&](auto line)
-    //{spectra[spectrumIndexReference].intLength = std::stoull(attributValue(line, "value", value)); };
-    //	accession_map["IMS:1000102[" + intensityArrayRefName + "]"] = [&](auto line)
-    //{spectra[spectrumIndexReference].intOffset = std::stoull(attributValue(line, "value", value)); };
-
-    //	std::vector<char> buff;
-    //	std::list<std::thread> threads;
-
-    //	{
-    //		while (!f.eof()) {
-    //			std::getline(f, line); // read the next line from the file
-    //			if (line.find("</") != std::string::npos) continue; // check for end-tag
-    //			if (line.rfind("/>") != std::string::npos) { // check for empty element-tag
-    //				attributValue(line, "accession", accession);
-    //				if (!accession.empty()) {
-    //					// if a context is given
-    //					if (!context.empty()) {
-    //						// call context specific accession
-    //						if (evaluateAccession(line, accession + "[" + context + "]", accession_map)) continue;
-
-    //					}
-    //					// fall back to context-less accession
-    //					if (evaluateAccession(line, accession, accession_map))	continue;
-
-    //				}
-    //				else {
-    //					// e.g. support old 3D imzML Data (SciLs specific tags)
-    //					attributValue(line, "name", name);
-    //					if (name.compare("3DPositionZ") == 0)
-    //						evaluateAccession(line, name, accession_map);
-    //				}
-    //			}
-
-    //			setTagName(line, tag);
-    //			evaluateContext(line, tag, context_map, context);
-
-    //		}
-
-    //	}
-
-    //	std::set<unsigned int> uniques;
-    //	for (auto & s : spectra)
-    //		uniques.insert(s.world.z);
-
-    //	if (uniques.size() > 1) {
-    //		unsigned zSpacing; // is one 1mm, if sliced date mitk can go better with this z spacing
-    //		unsigned zCount;
-    //		std::list<double> diffs;
-
-    //		auto a = uniques.begin();
-    //		auto b = std::next(uniques.begin(), 1);
-    //		zSpacing = (*b) - (*a);
-    //		zCount = uniques.size();
-    //		bool startsByZero = uniques.find(0) != uniques.end();
-
-    //		// Transform z physical coordinates to index coordinates
-    //		for (auto & s : spectra)
-    //			s.index.z = startsByZero ? (s.world.z + zSpacing) / zSpacing : s.world.z / zSpacing;
-
-    //		data->SetPropertyValue<unsigned>("max count of pixel z", zCount);
-    //		data->SetPropertyValue<double>("pixel size z", zSpacing *1e-3);
-
-    //	}
-    //}
   }
 }
 
@@ -505,55 +399,6 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
                                                      {"32-bit integer", sizeof(int32_t)},
                                                      {"64-bit integer", sizeof(int64_t)}};
 
-    const auto attributValue =
-      [](const std::string &line, const std::string &tag, std::string &attribute) -> std::string &
-    {
-      auto p = line.find(tag);
-      attribute.clear();
-      if (p != std::string::npos)
-      {
-        auto s_value = line.find('"', p) + 1;
-        auto e_value = line.find('"', s_value);
-        while (s_value != e_value)
-          attribute.push_back(line[s_value++]);
-      }
-      return attribute;
-    };
-
-    const auto setTagName = [](const std::string &line, std::string &tag) -> void
-    {
-      auto p = line.find('<');
-      tag.clear();
-      if (p != std::string::npos)
-      {
-        ++p;
-        auto e = line.find_first_of(" >", p + 1);
-        while (p != e)
-          tag.push_back(line[p++]);
-      }
-    };
-
-    const auto evaluateAccession = [](const auto &line, const auto &accession, const auto &dict) -> bool
-    {
-      auto keyFuncPairIt = dict.find(accession);
-      if (keyFuncPairIt != dict.end())
-      {
-        keyFuncPairIt->second(line); // call the function
-        return true;
-      }
-      return false;
-    };
-
-    const auto evaluateContext = [](const auto &line, const auto &tag, const auto &dict, auto & /*context*/) -> void
-    {
-      auto keyFuncPairIt = dict.find(tag);
-      if (keyFuncPairIt != dict.end())
-      {
-        return keyFuncPairIt->second(line); // call the function
-      }
-      return;
-    };
-
     {
       accession_map.clear();
       context_map.clear();
@@ -562,7 +407,7 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
 
       context_map["spectrumList"] = [&](auto line)
       {
-        unsigned count = std::stoul(attributValue(line, "count", value));
+        unsigned count = std::stoul(attributeValue(line, "count", value));
         data->SetPropertyValue<unsigned>("number of measurements", count);
         spectra.resize(count);
       };
@@ -571,43 +416,59 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
 
       context_map["spectrum"] = [&](auto line)
       {
-        attributValue(line, "index", value);
+        attributeValue(line, "index", value);
         spectra[spectrumIndexReference].index.SetElement(2, 0);
         // TODO: Backtracability to spectrum in file may be lost.
         //  Maybe we can add the id string to the BinarySpectrumMetaData definition.
         //  e.g. spectrum.tag = attributValue(line, "id", value);
       };
 
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L196
       accession_map["IMS:1000050"] = [&](auto line)
-      { spectra[spectrumIndexReference].index.SetElement(0, std::stoul(attributValue(line, "value", value)) - 1); };
+      { spectra[spectrumIndexReference].index.SetElement(0, std::stoul(attributeValue(line, "value", value)) - 1); };
+
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L204
       accession_map["IMS:1000051"] = [&](auto line)
-      { spectra[spectrumIndexReference].index.SetElement(1, std::stoul(attributValue(line, "value", value)) - 1); };
+      { spectra[spectrumIndexReference].index.SetElement(1, std::stoul(attributeValue(line, "value", value)) - 1); };
+      
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L213
       accession_map["IMS:1000052"] = [&](auto line)
-      { spectra[spectrumIndexReference].index.SetElement(2, std::stoul(attributValue(line, "value", value)) - 1); };
+      { spectra[spectrumIndexReference].index.SetElement(2, std::stoul(attributeValue(line, "value", value)) - 1); };
+
+      // Foreign user tags
       accession_map["3DPositionX"] = [&](auto line)
-      { spectra[spectrumIndexReference].world.x = std::stod(attributValue(line, "value", value)); };
+      { spectra[spectrumIndexReference].world.x = std::stod(attributeValue(line, "value", value)); };
       accession_map["3DPositionY"] = [&](auto line)
-      { spectra[spectrumIndexReference].world.y = std::stod(attributValue(line, "value", value)); };
+      { spectra[spectrumIndexReference].world.y = std::stod(attributeValue(line, "value", value)); };
       accession_map["3DPositionZ"] = [&](auto line)
-      { spectra[spectrumIndexReference].world.z = std::stod(attributValue(line, "value", value)); };
+      { spectra[spectrumIndexReference].world.z = std::stod(attributeValue(line, "value", value)); };
+
 
       accession_map["MS:1000285"] = [&](auto line)
-      { spectra[spectrumIndexReference].inFileNormalizationFactor = std::stod(attributValue(line, "value", value)); };
+      { spectra[spectrumIndexReference].inFileNormalizationFactor = std::stod(attributeValue(line, "value", value)); };
 
-      context_map["referenceableParamGroupRef"] = [&](auto line) { attributValue(line, "ref", context); };
+      context_map["referenceableParamGroupRef"] = [&](auto line) { attributeValue(line, "ref", context); };
 
       auto mzArrayRefName = data->GetPropertyValue<std::string>("m/z array");
-      accession_map["IMS:1000103[" + mzArrayRefName + "]"] = [&](auto line)
-      { spectra[spectrumIndexReference].mzLength = std::stoull(attributValue(line, "value", value)); };
-      accession_map["IMS:1000102[" + mzArrayRefName + "]"] = [&](auto line)
-      { spectra[spectrumIndexReference].mzOffset = std::stoull(attributValue(line, "value", value)); };
+      //https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L303
+      accession_map[mzArrayRefName + ".IMS:1000102"] = [&](auto line)
+      { spectra[spectrumIndexReference].mzOffset = std::stoull(attributeValue(line, "value", value)); };
 
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L311
+      accession_map[mzArrayRefName+".IMS:1000103"] = [&](auto line)
+      { spectra[spectrumIndexReference].mzLength = std::stoull(attributeValue(line, "value", value)); };
+
+      
       auto intensityArrayRefName = data->GetPropertyValue<std::string>("intensity array");
-      accession_map["IMS:1000103[" + intensityArrayRefName + "]"] = [&](auto line)
-      { spectra[spectrumIndexReference].intLength = std::stoull(attributValue(line, "value", value)); };
-      accession_map["IMS:1000102[" + intensityArrayRefName + "]"] = [&](auto line)
-      { spectra[spectrumIndexReference].intOffset = std::stoull(attributValue(line, "value", value)); };
+      //https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L303
+      accession_map[intensityArrayRefName + ".IMS:1000102"] = [&](auto line)
+      { spectra[spectrumIndexReference].intOffset = std::stoull(attributeValue(line, "value", value)); };
+      
+      // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L311
+      accession_map[intensityArrayRefName + ".IMS:1000103"] = [&](auto line)
+      { spectra[spectrumIndexReference].intLength = std::stoull(attributeValue(line, "value", value)); };
 
+      
       std::vector<char> buff;
       std::list<std::thread> threads;
       bool _ScilsTag3DCoordinateUsed = false;
@@ -619,18 +480,18 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
           {
             if (line.find("spectrum") != std::string::npos)
               ++spectrumIndexReference;
-            continue; // check for end-tag
+            continue; 
           }
-          if (line.rfind("/>") != std::string::npos)
+          if (line.rfind("/>") != std::string::npos)// check for end-tag
           { // check for empty element-tag
-            attributValue(line, "accession", accession);
+            attributeValue(line, "accession", accession);
             if (!accession.empty())
             {
               // if a context is given
               if (!context.empty())
               {
                 // call context specific accession
-                if (evaluateAccession(line, accession + "[" + context + "]", accession_map))
+                if (evaluateAccession(line, context + "." + accession, accession_map))
                   continue;
               }
               // fall back to context-less accession
@@ -640,7 +501,7 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
             else
             {
               // e.g. support old 3D imzML Data (SciLs specific tags)
-              attributValue(line, "name", name);
+              attributeValue(line, "name", name);
               if (name.compare("3DPositionZ") == 0)
               {
                 evaluateAccession(line, name, accession_map);
@@ -649,8 +510,8 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
             }
           }
 
-          setTagName(line, tag);
-          evaluateContext(line, tag, context_map, context);
+          GetElementName(line, tag);
+          EvaluateContext(line, tag, context_map);
         }
       }
 
@@ -703,7 +564,7 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
           for (auto &s : spectra)
             s.index.SetElement(2, worldToIndexMap[static_cast<unsigned>(s.world.z)]);
 
-          data->SetPropertyValue<unsigned>("max count of pixel z", zCount);
+          data->SetPropertyValue<unsigned>("max count of pixels z", zCount);
           data->SetPropertyValue<double>("pixel size z", m2::MicroMeterToMilliMeter(zSpacing));
         }
       }
@@ -715,7 +576,7 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
 
         if (uniques.size() > 1)
         {
-          data->SetPropertyValue<unsigned>("max count of pixel z", uniques.size());
+          data->SetPropertyValue<unsigned>("max count of pixels z", uniques.size());
           // is set to 10 micrometers fix (can be changed in app)
           data->SetPropertyValue<double>("pixel size z", m2::MicroMeterToMilliMeter(10));
         }
@@ -723,58 +584,3 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
     }
   }
 }
-
-// std::string m2::ImzMLXMLParser::WriteMetaData(m2::ImzMLSpectrumImage::Pointer /*val*/, std::string &path)
-//{
-//  const auto &meta = mitk::ImzMLXMLTemplate::IMZML_TEMPLATE_START;
-//  const auto &spectrum = mitk::ImzMLXMLTemplate::IMZML_SPECTRUM_TEMPLATE;
-//
-//  std::string mode = "continuous", polarity = "positive scan", mz_data_type = "16-bit float",
-//              mz_compression = "no compression", int_data_type = "32-bit float", int_compression = "no compression",
-//              size_x = "20", size_y = "20", run_id = "Hello ImzML", num_spectra = "400";
-//
-//  std::ofstream f(path, std::ofstream::binary);
-//
-//  std::map<std::string, std::string> meta_context{
-//    {"mode", mode},
-//    {"polarity", polarity},
-//    {"mz_data_type", mz_data_type},
-//    {"mz_compression", mz_compression},
-//    {"int_data_type", int_data_type},
-//    {"int_compression", int_compression},
-//    {"size_x", size_x},
-//    {"size_y", size_y},
-//    {"run_id", run_id},
-//    //{"uuid", suuid},
-//    {"num_spectra", num_spectra},
-//    {"mode_code", mitk::ImzMLXMLTemplate::obo_codes.at(mode)},
-//    {"polarity_code", mitk::ImzMLXMLTemplate::obo_codes.at(polarity)},
-//    {"mz_data_type_code", mitk::ImzMLXMLTemplate::obo_codes.at(mz_data_type)},
-//    {"int_data_type_code", mitk::ImzMLXMLTemplate::obo_codes.at(int_data_type)}};
-//
-//  // std::cout << mstch::render(meta, meta_context) << std::endl;
-//  f << mitk::ImzMLXMLTemplate::render(meta, meta_context);
-//
-//  // index
-//  // x,y,z
-//  // use_z
-//  unsigned long long mz_len = 0, mz_offset = 0;
-//  unsigned long long int_len = 0, int_offset = 0;
-//  // use_encoded_length
-//  for (int i = 0; i < 400; ++i)
-//  {
-//    std::map<std::string, std::string> spectrum_context{{"index", std::to_string(i)},
-//                                                        {"x", std::to_string(0)},
-//                                                        {"y", std::to_string(0)},
-//                                                        {"z", std::to_string(0)},
-//                                                        {"mz_len", std::to_string(mz_len)},
-//                                                        {"mz_offset", std::to_string(mz_offset)},
-//                                                        {"int_len", std::to_string(int_len)},
-//                                                        {"int_offset", std::to_string(int_offset)}};
-//
-//    f << mitk::ImzMLXMLTemplate::render(spectrum, spectrum_context);
-//  }
-//
-//  return "";
-//  // f << mitk::ImzMLXMLTemplate::IMZML_TEMPLATE_END;
-//}

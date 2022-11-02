@@ -29,6 +29,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkImagePixelWriteAccessor.h>
 #include <signal/m2PeakDetection.h>
 #include <signal/m2Pooling.h>
+#include <itkMath.h>
 
 template <class ConversionType, class ItFirst, class ItLast, class OStreamType>
 void writeData(ItFirst itFirst, ItLast itLast, OStreamType &os)
@@ -576,20 +577,28 @@ namespace m2
       context["size_y"] = std::to_string(input->GetDimensions()[1]);
       context["size_z"] = std::to_string(input->GetDimensions()[2]);
 
+      auto xs = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetSpacing()[0]);
+      auto ys = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetSpacing()[1]);
+      auto zs = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetSpacing()[2]);
+
       context["max dimension x"] =
-        std::to_string(unsigned(input->GetDimensions()[0] * input->GetGeometry()->GetSpacing()[0] * 1e3));
+        std::to_string(unsigned(input->GetDimensions()[0] * xs));
       context["max dimension y"] =
-        std::to_string(unsigned(input->GetDimensions()[1] * input->GetGeometry()->GetSpacing()[1] * 1e3));
+        std::to_string(unsigned(input->GetDimensions()[1] * ys));
       context["max dimension z"] =
-        std::to_string(unsigned(input->GetDimensions()[2] * input->GetGeometry()->GetSpacing()[2] * 1e3));
+        std::to_string(unsigned(input->GetDimensions()[2] * zs));
 
-      context["pixel size x"] = std::to_string(unsigned(input->GetGeometry()->GetSpacing()[0] * 1e3));
-      context["pixel size y"] = std::to_string(unsigned(input->GetGeometry()->GetSpacing()[1] * 1e3));
-      context["pixel size z"] = std::to_string(unsigned(input->GetGeometry()->GetSpacing()[2] * 1e3));
+      context["pixel size x"] = std::to_string(xs);
+      context["pixel size y"] = std::to_string(ys);
+      context["pixel size z"] = std::to_string(zs);
 
-      context["origin x"] = std::to_string(input->GetGeometry()->GetOrigin()[0] * 1e3);
-      context["origin y"] = std::to_string(input->GetGeometry()->GetOrigin()[1] * 1e3);
-      context["origin z"] = std::to_string(input->GetGeometry()->GetOrigin()[2] * 1e3);
+      auto xo = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetOrigin()[0]);
+      auto yo = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetOrigin()[1]);
+      auto zo = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetOrigin()[2]);
+
+      context["absolute position offset x"] = std::to_string(xo);
+      context["absolute position offset y"] = std::to_string(yo);
+      context["absolute position offset z"] = std::to_string(zo);
 
       context["run_id"] = std::to_string(0);
       const auto &sources = input->GetImzMLSpectrumImageSourceList();
@@ -665,7 +674,7 @@ namespace m2
     
 
     std::string mzGroupId, intGroupId;
-    auto object = m2::ImzMLSpectrumImage::New();
+    m2::ImzMLSpectrumImage::Pointer object = m2::ImzMLSpectrumImage::New();
 
     auto pathWithoutExtension = this->GetInputLocation();
     itksys::SystemTools::ReplaceString(pathWithoutExtension, ".imzML", "");
@@ -678,12 +687,40 @@ namespace m2
     source.m_BinaryDataPath = pathWithoutExtension + ".ibd";
     object->GetImzMLSpectrumImageSourceList().emplace_back(source);
     object->GetSpectrumType().Format = SpectrumFormat::None;
+    
 
     {
       // m2::Timer t("Parsing imzML");
       m2::ImzMLParser::ReadImageMetaData(object);
       m2::ImzMLParser::ReadImageSpectrumMetaData(object);
     }
+
+    auto dx = object->GetPropertyValue<double>("max dimension x");
+    auto dy = object->GetPropertyValue<double>("max dimension y");
+
+    auto sx = object->GetPropertyValue<unsigned>("max count of pixels x");
+    auto sy = object->GetPropertyValue<unsigned>("max count of pixels y");
+
+    auto px = object->GetPropertyValue<double>("pixel size x");
+    auto py = object->GetPropertyValue<double>("pixel size y");
+
+    px = m2::MilliMeterToMicroMeter(px);
+    py = m2::MilliMeterToMicroMeter(py);
+
+    MITK_INFO << "[imzML]: " + source.m_ImzMLDataPath +
+               "\n\t[pixel size]: " + std::to_string(px)  + "x" + std::to_string(py) +
+               "\n\t[image area]: " + std::to_string(sx) + "x" +std::to_string(sy) +
+               "\n\t[image dims]: " + std::to_string(dx) + "x" +std::to_string(dy);
+
+    // if(!itk::Math::AlmostEquals(sx*px, dx) ||
+    //    !itk::Math::AlmostEquals(sy*py, dy)){
+    //   mitkThrow() << "[ImzML Meta data error]\n" <<
+    //                  "\n\t!! ImzML data should have consistent inputs. This error massage can be turned off in the properties." <<
+    //                  "\n\t[pixel size]: " << std::to_string(px)  << "x" + std::to_string(py) <<
+    //                  "\n\t[image area]: " << std::to_string(sx) << "x" + std::to_string(sy) <<
+    //                  "\n\t[image dims]: " << std::to_string(dx) << "x" +std::to_string(dy);
+    // }
+
 
     {
       // m2::Timer t("Initialize placeholder images and spectra");

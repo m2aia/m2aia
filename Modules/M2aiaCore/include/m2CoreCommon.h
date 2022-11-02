@@ -104,7 +104,7 @@ namespace m2
   }
 
   inline double MicroMeterToMilliMeter(double x) { return x * 10e-4; }
-  inline double ToMicroMeter(double x) { return x * 10e3; }
+  inline double MilliMeterToMicroMeter(double x) { return x * 10e2; }
   inline double PartPerMillionToFactor(double x) { return x * 10e-6; }
 
   //////////////////////////////////////////////////////////////////////

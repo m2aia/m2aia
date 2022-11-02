@@ -171,8 +171,8 @@ void m2DataTools::OnResetTiling()
       prevOrigin = image->GetGeometry()->GetOrigin();
       origin = image->GetGeometry()->GetOrigin();
 
-      origin[0] = image->GetPropertyValue<double>("origin x");
-      origin[1] = image->GetPropertyValue<double>("origin y");
+      origin[0] = image->GetPropertyValue<double>("absolute position offset x");
+      origin[1] = image->GetPropertyValue<double>("absolute position offset y");
       origin[2] = 0;
       image->GetGeometry()->SetOrigin(origin);
       for (auto &&kv : image->GetImageArtifacts())
