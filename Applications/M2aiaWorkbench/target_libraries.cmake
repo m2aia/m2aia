@@ -8,8 +8,7 @@ set(target_libraries
   org_mitk_gui_qt_datamanager
   org_mitk_gui_qt_imagecropper
   org_mitk_gui_qt_measurementtoolbox
-  org_mitk_gui_qt_segmentation
-  org_mitk_gui_qt_multilabelsegmentation
+  org_mitk_gui_qt_segmentation 
   org_mitk_gui_qt_volumevisualization
   org_mitk_gui_qt_pointsetinteraction
   org_mitk_gui_qt_mitkworkbench_intro
