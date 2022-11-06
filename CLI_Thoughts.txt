@@ -18,3 +18,4 @@ infos:
  - es kann auch ein button erstellt werden, mit welchem das script mit den parametern ausgeführt werden kann. 
  - das script kann dann seine berechnung bzw seine operationen durchführen und das ergebnis zurück an m2aia liefern. das ergebnis muss dann in geeigneter form dargestellt werden.
 
+poco lib
