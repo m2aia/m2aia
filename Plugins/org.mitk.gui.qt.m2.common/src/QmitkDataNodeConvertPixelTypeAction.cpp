@@ -82,65 +82,68 @@ void QmitkDataNodeConvertPixelTypeAction::OnMenuAboutShow()
     });
   }
 }
-
-mitk::Image::Pointer QmitkDataNodeConvertPixelTypeAction::OnApplyCastImage(mitk::Image::Pointer image, itk::IOComponentEnum type)
+namespace m2
 {
-  mitk::Image::Pointer outImage;
-
-  AccessByItk(image, ([&](auto * itkSourceImage){
-    // using ImagePixelType = typename std::remove_pointer<decltype(itkImage)>::type::PixelType;
-    constexpr auto ImageDimension = std::remove_pointer<decltype(itkSourceImage)>::type::ImageDimension;
-    using SourceImageType = typename std::remove_pointer<decltype(itkSourceImage)>::type;
-    
-    auto Caster = [&](auto * itkTargetImageTypeProvider)
+    template<class T, class ST, class OT>
+    void Caster(ST sourceImage, OT outImage)
     {
-      using ImageType = typename std::remove_pointer<decltype(itkTargetImageTypeProvider)>::type;
+      using SourceImageType = typename std::remove_pointer<decltype(sourceImage)>::type;
+      using ImageType = typename std::remove_pointer<T>::type;
       using FilterType = itk::RescaleIntensityImageFilter<SourceImageType, ImageType>;
-      
+
       auto filter = FilterType::New();
-      filter->SetInput(itkSourceImage);
+      filter->SetInput(sourceImage);
       filter->SetOutputMinimum(std::numeric_limits<typename ImageType::PixelType>::min());
       filter->SetOutputMaximum(std::numeric_limits<typename ImageType::PixelType>::max());
       filter->Update();
       mitk::CastToMitkImage(filter->GetOutput(), outImage);
     };
+}
+
+mitk::Image::Pointer QmitkDataNodeConvertPixelTypeAction::OnApplyCastImage(mitk::Image::Pointer image, itk::IOComponentEnum type)
+{
+  mitk::Image::Pointer outImage;
+
+  AccessByItk(image, ([&](auto itkSourceImage){
+    // using ImagePixelType = typename std::remove_pointer<decltype(itkImage)>::type::PixelType;
+    constexpr auto ImageDimension = std::remove_pointer<decltype(itkSourceImage)>::type::ImageDimension;
 
     switch (type)
     {
       case itk::IOComponentEnum::CHAR:
       {
         using TargetImageType = itk::Image<char, ImageDimension>;
-        Caster(TargetImageType::New().GetPointer());
+        m2::Caster<TargetImageType>(itkSourceImage, outImage);
       }
       break;
       case itk::IOComponentEnum::UCHAR:
       {
         using TargetImageType = itk::Image<unsigned char, ImageDimension>;
-        Caster(TargetImageType::New().GetPointer());
+        m2::Caster<TargetImageType>(itkSourceImage, outImage);
       }
       break;
       case itk::IOComponentEnum::INT:
       {
         using TargetImageType = itk::Image<int, ImageDimension>;
-        Caster(TargetImageType::New().GetPointer());
+        m2::Caster<TargetImageType>(itkSourceImage, outImage);
       }
       break;
       case itk::IOComponentEnum::UINT:
       {
         using TargetImageType = itk::Image<unsigned int, ImageDimension>;
-        Caster(TargetImageType::New().GetPointer());
+        m2::Caster<TargetImageType>(itkSourceImage, outImage);
       }
       break;
       case itk::IOComponentEnum::SHORT:
       {
         using TargetImageType = itk::Image<short, ImageDimension>;
-        Caster(TargetImageType::New().GetPointer());
+        m2::Caster<TargetImageType>(itkSourceImage, outImage);
       }
       break;
       case itk::IOComponentEnum::USHORT:
       {
         using TargetImageType = itk::Image<unsigned short, ImageDimension>;
-        Caster(TargetImageType::New().GetPointer());
+        m2::Caster<TargetImageType>(itkSourceImage, outImage);
       }
       break;
       default:

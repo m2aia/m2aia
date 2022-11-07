@@ -196,7 +196,7 @@ void m2PeakPickingView::OnStartPeakPicking()
 }
 
 void m2PeakPickingView::OnUpdatePeakListLabel(){
-  u_int32_t selected = 0;
+  unsigned int selected = 0;
   for (int i = 0; i < m_Controls.tableWidget->rowCount(); ++i)
     if(m_Controls.tableWidget->item(i, 0)->checkState() == Qt::CheckState::Checked)
       selected += 1;
