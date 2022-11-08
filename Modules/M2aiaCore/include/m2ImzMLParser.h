@@ -38,10 +38,10 @@ namespace m2
 
     static void GetElementName(const std::string &line, std::string &name)
     {
+      name.clear();
       auto p = line.find('<'); //no spaces allowed after '<'
       if (p != std::string::npos)
       {
-        name.clear();
         ++p; // let p point after '<'
         auto e = line.find_first_of(" >", p); // fine first of either ' ' or '>'
         while (p != e)
