@@ -73,8 +73,8 @@ void QmitkDataNodeConvertPixelTypeAction::OnMenuAboutShow()
             dataNodeNew->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
             dataNodeNew->SetData(newImage);
             dataNodeNew->SetVisibility(false);
-            this->m_DataStorage.Lock()->Add(dataNodeNew, referenceNode);
             dataNodeNew->SetName(referenceNode->GetName() + "_" + itk::ImageIOBase::GetComponentTypeAsString(type));
+            this->m_DataStorage.Lock()->Add(dataNodeNew);
             // UpdateLevelWindow(dataNodeNew);
           }
         }
@@ -84,19 +84,20 @@ void QmitkDataNodeConvertPixelTypeAction::OnMenuAboutShow()
 }
 namespace m2
 {
-    template<class T, class ST, class OT>
-    void Caster(ST sourceImage, OT outImage)
+    template<class T, class ST>
+    mitk::Image::Pointer CastTo(ST sourceImage)
     {
       using SourceImageType = typename std::remove_pointer<decltype(sourceImage)>::type;
       using ImageType = typename std::remove_pointer<T>::type;
       using FilterType = itk::RescaleIntensityImageFilter<SourceImageType, ImageType>;
-
+      mitk::Image::Pointer outImage;
       auto filter = FilterType::New();
       filter->SetInput(sourceImage);
       filter->SetOutputMinimum(std::numeric_limits<typename ImageType::PixelType>::min());
       filter->SetOutputMaximum(std::numeric_limits<typename ImageType::PixelType>::max());
       filter->Update();
       mitk::CastToMitkImage(filter->GetOutput(), outImage);
+      return outImage;
     };
 }
 
@@ -107,46 +108,47 @@ mitk::Image::Pointer QmitkDataNodeConvertPixelTypeAction::OnApplyCastImage(mitk:
   AccessByItk(image, ([&](auto itkSourceImage){
     // using ImagePixelType = typename std::remove_pointer<decltype(itkImage)>::type::PixelType;
     constexpr auto ImageDimension = std::remove_pointer<decltype(itkSourceImage)>::type::ImageDimension;
-
+    MITK_INFO << "CONVERT " << static_cast<unsigned int>(type);
     switch (type)
     {
       case itk::IOComponentEnum::CHAR:
       {
         using TargetImageType = itk::Image<char, ImageDimension>;
-        m2::Caster<TargetImageType>(itkSourceImage, outImage);
+        outImage = m2::CastTo<TargetImageType>(itkSourceImage);
       }
       break;
       case itk::IOComponentEnum::UCHAR:
       {
         using TargetImageType = itk::Image<unsigned char, ImageDimension>;
-        m2::Caster<TargetImageType>(itkSourceImage, outImage);
+        outImage = m2::CastTo<TargetImageType>(itkSourceImage);
       }
       break;
       case itk::IOComponentEnum::INT:
       {
         using TargetImageType = itk::Image<int, ImageDimension>;
-        m2::Caster<TargetImageType>(itkSourceImage, outImage);
+        outImage = m2::CastTo<TargetImageType>(itkSourceImage);
       }
       break;
       case itk::IOComponentEnum::UINT:
       {
         using TargetImageType = itk::Image<unsigned int, ImageDimension>;
-        m2::Caster<TargetImageType>(itkSourceImage, outImage);
+        outImage = m2::CastTo<TargetImageType>(itkSourceImage);
       }
       break;
       case itk::IOComponentEnum::SHORT:
       {
         using TargetImageType = itk::Image<short, ImageDimension>;
-        m2::Caster<TargetImageType>(itkSourceImage, outImage);
+        outImage = m2::CastTo<TargetImageType>(itkSourceImage);
       }
       break;
       case itk::IOComponentEnum::USHORT:
       {
         using TargetImageType = itk::Image<unsigned short, ImageDimension>;
-        m2::Caster<TargetImageType>(itkSourceImage, outImage);
+        outImage = m2::CastTo<TargetImageType>(itkSourceImage);
       }
       break;
       default:
+        MITK_WARN << "Conversion type not in switch-case!";
       break;
     }
    
