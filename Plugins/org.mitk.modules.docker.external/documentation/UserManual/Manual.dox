@@ -1,0 +1,17 @@
+/**
+\page org_mitk_modules_docker_external The ExternalDockerModules
+
+\imageMacro{icon.png,"Icon of ExternalDockerModules",2.00}
+
+\tableofcontents
+
+\section org_mitk_modules_docker_externalOverview Overview
+Describe the features of your awesome plugin here
+<ul>
+<li>Increases productivity
+<li>Creates beautiful images
+<li>Generates PhD thesis
+<li>Brings world peace
+</ul>
+
+*/
