@@ -49,6 +49,8 @@ protected:
   Ui::ExternalDockerModulesControls m_Controls;
 private:
   std::string m_pathToModuleDirectory = "/home/maia/Documents/maia/Docker/M2aiaContainer/bin/"; // trailing / is important
+  // TODO: patch path at runtime such that the python directories bin directory can be chosen instead of the standard base one
+  std::string GetInterpreter(const std::string& fileExtension) const;
 };
 
 #endif // ExternalDockerModules_h

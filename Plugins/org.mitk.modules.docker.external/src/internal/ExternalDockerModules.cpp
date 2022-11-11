@@ -60,6 +60,15 @@ std::vector<std::string> split(const std::string& str, const char delimiter)
   return vec;
 }
 
+std::string ExternalDockerModules::GetInterpreter(const std::string& fileExtension) const
+{
+  if (fileExtension == "py")
+    return "python3";
+  else if (fileExtension == "r" || fileExtension == "R")
+    return "r"; //TODO: what was the name of the r interpreter?
+  else return "";
+}
+
 void ExternalDockerModules::ExecuteModule()
 {
   std::string moduleName = m_Controls.moduleName->text().toStdString();
@@ -76,12 +85,19 @@ void ExternalDockerModules::ExecuteModule()
     }
   }
   m_Controls.labelWarning->setVisible(false);
-  // execute module with the specified parameters  
-  Poco::Process::Args a;
+  // get the args  
+  Poco::Process::Args processArgs;
   auto strvec = split(m_Controls.moduleParams->text().toStdString(), ' ');
-  a.insert(a.end(), strvec.begin(), strvec.end());
+  processArgs.insert(processArgs.end(), strvec.begin(), strvec.end());
+
+  // find out which kind of module to load
+  auto moduleNameVec = split(moduleName, '.');
+  std::string fileExtension = moduleNameVec[moduleNameVec.size() - 1];
+  // if python module, run with python interpreter
+  std::string interpreter = GetInterpreter(fileExtension);
+  // launch the process
   Poco::Process p;
-  auto handle = p.launch("docker run -it --name=m2aia-container-r --mount 'type=bind,source=/home/maia/Documents/maia/Docker/m2aia-share,destination=/m2aia-share' m2aia-docker-python", a);
+  auto handle = p.launch("docker run -it --name=m2aia-container-r --mount 'type=bind,source=/home/maia/Documents/maia/Docker/m2aia-share,destination=/m2aia-share' m2aia-docker-python", processArgs);
   int code = handle.wait();
   MITK_INFO << "finished processing with code " << code;
 }
