@@ -24,6 +24,14 @@ See LICENSE.txt for details.
 // Qt
 #include <QMessageBox>
 
+// Poco
+#include <Poco/Process.h>
+
+// std
+#include <sstream>
+#include <vector>
+#include <iostream>
+
 // mitk image
 #include <mitkImage.h>
 
@@ -42,6 +50,16 @@ void ExternalDockerModules::CreateQtPartControl(QWidget *parent)
   connect(m_Controls.btnExecute, &QPushButton::clicked, this, &ExternalDockerModules::ExecuteModule);
 }
 
+std::vector<std::string> split(const std::string& str, const char delimiter)
+{
+  std::stringstream sstream(str);
+  std::string temp;
+  std::vector<std::string> vec;
+  while(getline(sstream, temp, delimiter))
+    vec.push_back(temp);
+  return vec;
+}
+
 void ExternalDockerModules::ExecuteModule()
 {
   std::string moduleName = m_Controls.moduleName->text().toStdString();
@@ -58,6 +76,12 @@ void ExternalDockerModules::ExecuteModule()
     }
   }
   m_Controls.labelWarning->setVisible(false);
-  // execute module with the specified parameters
-
+  // execute module with the specified parameters  
+  Poco::Process::Args a;
+  auto strvec = split(m_Controls.moduleParams->text().toStdString(), ' ');
+  a.insert(a.end(), strvec.begin(), strvec.end());
+  Poco::Process p;
+  auto handle = p.launch("docker run -it --name=m2aia-container-r --mount 'type=bind,source=/home/maia/Documents/maia/Docker/m2aia-share,destination=/m2aia-share' m2aia-docker-python", a);
+  int code = handle.wait();
+  MITK_INFO << "finished processing with code " << code;
 }
