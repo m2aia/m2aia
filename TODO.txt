@@ -1,7 +1,3 @@
-auslagern in module, dabei optimieren -> auslagern in funktion mit if initialisiert
-interface der funktion RocAnalysis so lassen; 
-im module funktion mit input: 2 Bilder, mz; return void; called by plugin
 draw.io in vscode anschauen, klassendiagramm erstellen
-anderer AUC algo
 ==> content für BA -> Profit
-iwann mini-app durch cli
+demnächst mini-app durch cli
