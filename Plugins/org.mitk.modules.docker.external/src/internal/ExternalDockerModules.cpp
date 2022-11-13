@@ -56,29 +56,52 @@ std::vector<std::string> split(const std::string& str, const char delimiter)
   std::string temp;
   std::vector<std::string> vec;
   while(getline(sstream, temp, delimiter))
+  {
+    MITK_INFO << "[split method] " << temp;
     vec.push_back(temp);
+  }
   return vec;
 }
 
-std::string ExternalDockerModules::GetInterpreter(const std::string& fileExtension) const
+void ExternalDockerModules::InitializePaths(const std::string& fileExtension)
 {
   if (fileExtension == "py")
-    return "python3";
-  else if (fileExtension == "r" || fileExtension == "R")
-    return "r"; //TODO: what was the name of the r interpreter?
-  else return "";
+  {
+    this->m_pathBin = m_pathDocker + "M2aiaContainerPython/bin/";
+    this->m_imageName += "-python";
+    this->m_containerName += "-python";
+    this->m_interpreter = "python";
+    return;
+  }
+  if (fileExtension == "r" || fileExtension == "R")
+  {
+    this->m_pathBin = m_pathDocker + "M2aiaContainerR/bin/";
+    this->m_imageName += "-r";
+    this->m_containerName += "-r";
+    this->m_interpreter = "Rscript";
+    return;
+  }
+  this->m_pathBin =  m_pathDocker + "M2aiaContainer/bin/";
+  this->m_imageName += "-base";
+  this->m_containerName += "-base";
+  // no interpreter
 }
 
 void ExternalDockerModules::ExecuteModule()
 {
   std::string moduleName = m_Controls.moduleName->text().toStdString();
   std::string moduleParams = m_Controls.moduleParams->text().toStdString();
+  //get file extension
+  auto vec = split(moduleName, '.');
+  std::string fileExtension = vec[vec.size()-1];
   //ensure that the module is indeed present
   {
-    std::ifstream file{this->m_pathToModuleDirectory + moduleName};
+    // set bin path
+    InitializePaths(fileExtension);
+    std::ifstream file{this->m_pathBin + moduleName};
     if (!file) 
     { 
-      m_Controls.labelWarning->setText(QString(("Module " + this->m_pathToModuleDirectory + moduleName + " not found.").c_str()));
+      m_Controls.labelWarning->setText(QString(("Module " + this->m_pathBin + moduleName + " not found.").c_str()));
       m_Controls.labelWarning->setStyleSheet("color: orange; font-weight: bold;");
       m_Controls.labelWarning->setVisible(true);
       return; 
@@ -87,17 +110,16 @@ void ExternalDockerModules::ExecuteModule()
   m_Controls.labelWarning->setVisible(false);
   // get the args  
   Poco::Process::Args processArgs;
-  auto strvec = split(m_Controls.moduleParams->text().toStdString(), ' ');
+  auto strvec = split(moduleParams, ' ');
   processArgs.insert(processArgs.end(), strvec.begin(), strvec.end());
-
-  // find out which kind of module to load
-  auto moduleNameVec = split(moduleName, '.');
-  std::string fileExtension = moduleNameVec[moduleNameVec.size() - 1];
-  // if python module, run with python interpreter
-  std::string interpreter = GetInterpreter(fileExtension);
+  // forge command
+  std::string command = "docker run -it --name=" + m_containerName + 
+    " --mount 'type=bind,source=" + m_pathSharedFolder + ",destination=/m2aia-share/' " + 
+    m_imageName + " " + m_interpreter + " " + moduleName;
   // launch the process
   Poco::Process p;
-  auto handle = p.launch("docker run -it --name=m2aia-container-r --mount 'type=bind,source=/home/maia/Documents/maia/Docker/m2aia-share,destination=/m2aia-share' m2aia-docker-python", processArgs);
+  MITK_INFO << "launching process with command '" << command << "'.";
+  auto handle = p.launch(command, processArgs);
   int code = handle.wait();
   MITK_INFO << "finished processing with code " << code;
 }
