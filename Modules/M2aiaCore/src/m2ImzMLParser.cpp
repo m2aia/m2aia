@@ -119,14 +119,18 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
     const auto ValueToProperty = [&](const std::string &line, auto converter, const std::string & default_name = {})
     {
-      attributeValue(line, "value", value);
-      auto converted_value = converter(value);
-      using PropertyType = decltype(converted_value);
-      if(default_name.empty()){
-        attributeValue(line, "name", name);
-        data->SetPropertyValue<PropertyType>(name, converted_value);
-      }else{
-        data->SetPropertyValue<PropertyType>(default_name, converted_value);
+      try{
+        attributeValue(line, "value", value);
+        auto converted_value = converter(value);
+        using PropertyType = decltype(converted_value);
+        if(default_name.empty()){
+          attributeValue(line, "name", name);
+          data->SetPropertyValue<PropertyType>(name, converted_value);
+        }else{
+          data->SetPropertyValue<PropertyType>(default_name, converted_value);
+        }
+      }catch(std::exception &e){
+        MITK_INFO << "Check this line of your imzML file:\n" << line << "\nPossible incorrect imzML detected!";
       }
       
     };
