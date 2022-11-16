@@ -35,6 +35,7 @@ See LICENSE.txt for details.
 #include <string>
 #include <vector>
 #include <iostream>
+#include <regex>
 
 // mitk image
 #include <mitkImage.h>
@@ -109,8 +110,22 @@ std::vector<std::string> split(const std::string& str, const char delimiter)
   return vec;
 }
 
+std::string escape(std::string input)
+{
+  size_t pos = 0;
+  while (pos < input.size())
+  {
+    pos = input.find_first_of(' ', pos);
+    if (pos >= input.size()) return input;
+    input.replace(input.begin() + pos, input.begin() + pos + 1, "\\ ");
+    pos += 3; // skip the two backslashes and the space
+  }
+  return input;
+}
+
 void ExternalDockerModules::ExecuteModule()
 {
+  //TODO: über alle nodes im data manager iterieren und pro node einen mountpoint adden
   auto node = m_Controls.inputImage->GetSelectedNode();
   auto image = static_cast<m2::ImzMLSpectrumImage*>(node->GetData());
   std::string inputPath_1;
@@ -129,14 +144,24 @@ void ExternalDockerModules::ExecuteModule()
 
   std::string imzmlName = splitPath[splitPath.size() - 1];
   std::string containerName = m_Controls.comboContainers->currentText().toStdString();
-  
+  //TODO: container name auf "py" string abgleichen, so dass der entsprechende befehl generiert werden kann
+  std::string interpreter = "";
+  std::string fileEnding = "";
+  auto foundpy = containerName.find("py");
+  auto foundPy = containerName.find("Py");
+
+  if (foundpy != std::string::npos || foundPy != std::string::npos)
+  {
+    interpreter = "python3";
+    fileEnding = ".py";
+  }
   std::string moduleParams = m_Controls.moduleParams->text().toStdString();
   // forge command
   std::string command = "docker";
   std::string arguments = "run -t --rm --name=m2aia-container";
-  arguments += " -v " + inputPath_1 + ":/data1/ ";
+  arguments += " -v " + inputPath_1 + ":/data1/ "; 
   arguments += " -v " + outputPath_1 + ":/output1/ " + containerName;
-  arguments += " python3 m2aia-module.py '" + imzmlName + "' " + moduleParams;
+  arguments += " " + interpreter + " m2aia-module" + fileEnding + " " + escape(imzmlName) + " " + moduleParams;
 
   auto stv = split(arguments, ' ');
   // get the args  
