@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>325</width>
-    <height>247</height>
+    <width>216</width>
+    <height>220</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,11 +19,21 @@
   <property name="windowTitle">
    <string>QmitkTemplate</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0,0,1">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0,0,0,1">
    <item>
-    <widget class="QLabel" name="labelWarning">
+    <widget class="QLabel" name="label">
      <property name="text">
-      <string/>
+      <string>Input Image:</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QmitkSingleNodeSelectionWidget" name="inputImage" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>25</height>
+      </size>
      </property>
     </widget>
    </item>
@@ -36,12 +46,12 @@
       </size>
      </property>
      <property name="text">
-      <string>Name of the module: </string>
+      <string>Docker Container to execute:</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QLineEdit" name="moduleName"/>
+    <widget class="QComboBox" name="comboContainers"/>
    </item>
    <item>
     <widget class="Line" name="separator">
@@ -83,6 +93,14 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QmitkSingleNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">QmitkSingleNodeSelectionWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

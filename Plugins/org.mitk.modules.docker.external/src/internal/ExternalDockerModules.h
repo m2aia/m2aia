@@ -49,14 +49,9 @@ protected:
   Ui::ExternalDockerModulesControls m_Controls;
 private:
   // path to M2aia-Docker repository
-  const std::string m_pathDocker = "/home/maia/Documents/maia/Docker/"; // trailing / is important
-  const std::string m_pathSharedFolder = m_pathDocker + "m2aia-share/";
+  const std::string m_pathDocker = "/home/maia/Documents/maia/Docker/Images"; // trailing / is important
   // will get correct path / name appended at runtime
-  std::string m_pathBin; 
-  std::string m_imageName = "m2aia-docker";
   std::string m_containerName = "m2aia-container";
-  std::string m_interpreter = "";
-  void InitializePaths(const std::string& fileExtension);
 };
 
 #endif // ExternalDockerModules_h
