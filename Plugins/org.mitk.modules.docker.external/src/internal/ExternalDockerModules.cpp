@@ -91,11 +91,11 @@ void ExternalDockerModules::CreateQtPartControl(QWidget *parent)
       MITK_INFO << "[ExternalDockerModules]: " << "Error: could not find docker_imgs.txt";
   } 
 
-  m_Controls.comboContainers->addItem("m2aia/docker:r");
-  m_Controls.comboContainers->addItem("m2aia/docker:pym2aia");
-  m_Controls.comboContainers->addItem("m2aia/docker:pym2aia-example-2");
-  m_Controls.comboContainers->addItem("m2aia/docker:python");
   m_Controls.comboContainers->addItem("m2aia/docker:base");
+  m_Controls.comboContainers->addItem("m2aia/docker:pym2aia");
+  m_Controls.comboContainers->addItem("m2aia/docker:pym2aia-example");
+  m_Controls.comboContainers->addItem("m2aia/docker:python");
+  m_Controls.comboContainers->addItem("m2aia/docker:r");
 }
 
 std::vector<std::string> split(const std::string& str, const char delimiter)
@@ -105,7 +105,8 @@ std::vector<std::string> split(const std::string& str, const char delimiter)
   std::vector<std::string> vec;
   while(getline(sstream, temp, delimiter))
   {
-    vec.push_back(temp);
+    if (temp != "")
+      vec.push_back(temp);
   }
   return vec;
 }
@@ -118,7 +119,8 @@ std::string escape(std::string input)
     pos = input.find_first_of(' ', pos);
     if (pos >= input.size()) return input;
     input.replace(input.begin() + pos, input.begin() + pos + 1, "\\ ");
-    pos += 3; // skip the two backslashes and the space
+    pos += 2; // skip the two backslashes and the space
+    // should only one backslash be skipped?
   }
   return input;
 }
@@ -131,7 +133,7 @@ void ExternalDockerModules::ExecuteModule()
   std::string inputPath_1;
   image->GetPropertyList()->GetStringProperty("MITK.IO.reader.inputlocation", inputPath_1);
   auto splitPath = split(inputPath_1, '/');
-  inputPath_1 = "";
+  inputPath_1 = "/";
   for (size_t i = 0; i < splitPath.size() - 1; ++i)
     inputPath_1 += splitPath[i] + "/";
 
@@ -144,7 +146,6 @@ void ExternalDockerModules::ExecuteModule()
 
   std::string imzmlName = splitPath[splitPath.size() - 1];
   std::string containerName = m_Controls.comboContainers->currentText().toStdString();
-  //TODO: container name auf "py" string abgleichen, so dass der entsprechende befehl generiert werden kann
   std::string interpreter = "";
   std::string fileEnding = "";
   auto foundpy = containerName.find("py");
@@ -155,13 +156,27 @@ void ExternalDockerModules::ExecuteModule()
     interpreter = "python3";
     fileEnding = ".py";
   }
-  std::string moduleParams = m_Controls.moduleParams->text().toStdString();
+  auto moduleParamsVec = split(m_Controls.moduleParams->text().toStdString(), ' ');
+  std::string moduleParams = "";
+  std::string outputFileName;
+  for (size_t i = 0; i < moduleParamsVec.size(); ++i)
+  {
+    if (moduleParamsVec[i] == "--m2aia-out") 
+      continue;
+    if (i > 0 && moduleParamsVec[i - 1] == "--m2aia-out")
+    {
+      outputFileName = moduleParamsVec[i];
+      continue;
+    }
+    moduleParams += moduleParamsVec[i] + " ";
+  }
+
   // forge command
   std::string command = "docker";
   std::string arguments = "run -t --rm --name=m2aia-container";
   arguments += " -v " + inputPath_1 + ":/data1/ "; 
   arguments += " -v " + outputPath_1 + ":/output1/ " + containerName;
-  arguments += " " + interpreter + " m2aia-module" + fileEnding + " " + escape(imzmlName) + " " + moduleParams;
+  arguments += " " + interpreter + " m2aia-module" + fileEnding + " " + escape(imzmlName) + " " + outputFileName  + " " + moduleParams;
 
   auto stv = split(arguments, ' ');
   // get the args  
@@ -175,4 +190,13 @@ void ExternalDockerModules::ExecuteModule()
   MITK_INFO << "finished processing with code " << code;
   if (code)
     MITK_INFO << strerror(code);
+  else 
+  {
+    // load output file into m2aia
+    auto dataPointerVec = mitk::IOUtil::Load(outputPath_1 + outputFileName);
+    auto node = mitk::DataNode::New();
+    node->SetData(dataPointerVec[0]);
+    node->SetName(outputFileName);
+    GetDataStorage()->Add(node);
+  }
 }
