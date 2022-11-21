@@ -5,6 +5,17 @@ project(M2aiaWorkbench)
 # which rely on this file happy.
 set(M2AIAAPP_PROVISIONING_FILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/M2aiaWorkbench.provisioning" CACHE INTERNAL "M2aiaWorkbench provisioning file" FORCE)
 
+
+# CPackConfig
+set(M2AIA_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+if(EXISTS "${M2AIA_SOURCE_DIR}/CPackConfig.cmake.in")
+    set(CPACK_PROJECT_CONFIG_FILE "${M2AIA_SOURCE_DIR}/CPackConfig.cmake")
+    configure_file(${M2AIA_SOURCE_DIR}/CPackConfig.cmake.in
+                    ${CPACK_PROJECT_CONFIG_FILE} @ONLY)
+    set(use_default_config OFF)
+endif()
+
+
 # Plug-ins listed below will not be
 #  - added as a build-time dependency to the executable
 #  - listed in the provisioning file for the executable
