@@ -28,7 +28,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 // m2aia
 #include "m2Reconstruction3D.h"
-#include "m2StackNameDialog.h"
+#include <m2NameDialog.h>
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
 #include <m2ImzMLSpectrumImage.h>
@@ -94,7 +94,7 @@ void m2Reconstruction3D::OnStartStacking()
   // name of the result stack
   std::string stackName;
   {
-    m2StackNameDialog dialog(m_Parent);
+    m2NameDialog dialog(m_Parent);
     auto d = getImageDataById(0,m_List1);
     if(auto bp = d.image->GetProperty("x_range_center")){
       auto center = dynamic_cast<mitk::DoubleProperty *>(bp.GetPointer())->GetValueAsString();

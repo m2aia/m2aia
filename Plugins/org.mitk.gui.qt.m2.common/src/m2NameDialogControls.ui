@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>StackNameDialog</class>
- <widget class="QDialog" name="StackNameDialog">
+ <class>NameDialog</class>
+ <widget class="QDialog" name="NameDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -17,7 +17,7 @@
    <item>
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Enter a name for the stack:</string>
+      <string>Enter a name:</string>
      </property>
     </widget>
    </item>
@@ -41,7 +41,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>StackNameDialog</receiver>
+   <receiver>NameDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -57,7 +57,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>StackNameDialog</receiver>
+   <receiver>NameDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

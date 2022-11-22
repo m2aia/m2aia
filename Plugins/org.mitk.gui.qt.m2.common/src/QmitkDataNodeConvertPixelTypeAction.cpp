@@ -20,6 +20,8 @@ found in the LICENSE file.
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkImageIOBase.h>
 
+#include <m2NameDialog.h>
+
 #include <QString>
 #include <QMenu>
 
@@ -66,6 +68,9 @@ void QmitkDataNodeConvertPixelTypeAction::OnMenuAboutShow()
         {
           if (mitk::Image::Pointer image = dynamic_cast<mitk::Image *>(referenceNode->GetData()))
           {
+            m2NameDialog dialog(this->parentWidget());
+            
+
             auto newImage = OnApplyCastImage(image, type);
             auto dataNodeNew = mitk::DataNode::New();
             auto lut = mitk::LookupTable::New();
@@ -73,7 +78,13 @@ void QmitkDataNodeConvertPixelTypeAction::OnMenuAboutShow()
             dataNodeNew->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
             dataNodeNew->SetData(newImage);
             dataNodeNew->SetVisibility(false);
-            dataNodeNew->SetName(referenceNode->GetName() + "_" + itk::ImageIOBase::GetComponentTypeAsString(type));
+            auto dummyName = referenceNode->GetName() + "_" + itk::ImageIOBase::GetComponentTypeAsString(type);
+            dialog.SetName(dummyName);
+            if(dialog.exec()){
+              dataNodeNew->SetName(dialog.GetName());
+            }else{
+              dataNodeNew->SetName(dummyName);
+            }
             this->m_DataStorage.Lock()->Add(dataNodeNew);
             // UpdateLevelWindow(dataNodeNew);
           }

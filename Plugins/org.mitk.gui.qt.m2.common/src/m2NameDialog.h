@@ -15,19 +15,22 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #pragma once
-#include "ui_m2StackNameDialogControls.h"
+#include <org_mitk_gui_qt_m2_common_Export.h>
+#include "ui_m2NameDialogControls.h"
 #include <QDialog>
 
-class m2StackNameDialog : public QDialog
+class MITK_M2_CORE_HELPER_EXPORT m2NameDialog : public QDialog
 {
   Q_OBJECT
 
 public:
-  explicit m2StackNameDialog(QWidget *parent = nullptr) : QDialog(parent)
+  explicit m2NameDialog(QWidget *parent = nullptr) : QDialog(parent)
   {
     m_Controls.setupUi(this);
     this->setSizeGripEnabled(true);
   }
+
+  virtual  ~m2NameDialog(){}
 
   int exec() override
   {
@@ -39,7 +42,7 @@ public:
   
 private:
   
-  Ui::StackNameDialog m_Controls;
+  Ui::NameDialog m_Controls;
  
   
 };
