@@ -54,6 +54,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateProperty.h>
 #include <mitkProperties.h>
+#include <mitkProgressBar.h>
 
 const std::string m2PeakPickingView::VIEW_ID = "org.mitk.views.m2.PeakPicking";
 
@@ -237,10 +238,12 @@ void m2PeakPickingView::OnStartPCA()
       const auto &peakList = m_PeakList;
 
       std::vector<mitk::Image::Pointer> temporaryImages;
-
+      auto progressBar = mitk::ProgressBar::GetInstance();
+      progressBar->AddStepsToDo(peakList.size() + 1);
       size_t inputIdx = 0;
       for (size_t row = 0; row < peakList.size(); ++row)
       {
+        progressBar->Progress();
         if (m_Controls.tableWidget->item(row, 0)->checkState() != Qt::CheckState::Checked)
           continue;
 
@@ -255,8 +258,9 @@ void m2PeakPickingView::OnStartPCA()
         ++inputIdx;
       }
 
-      if (temporaryImages.size() == 0)
+      if (temporaryImages.size() <= 2)
       {
+        progressBar->Progress();
         QMessageBox::warning(nullptr,
                              "Select images first!",
                              "Select at least three peaks!",
@@ -267,6 +271,7 @@ void m2PeakPickingView::OnStartPCA()
 
       filter->SetNumberOfComponents(m_Controls.pca_dims->value());
       filter->Update();
+      progressBar->Progress();
 
       auto outputNode = mitk::DataNode::New();
       mitk::Image::Pointer data = filter->GetOutput(0);

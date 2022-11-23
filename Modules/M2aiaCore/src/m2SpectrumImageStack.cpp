@@ -26,6 +26,7 @@ See LICENSE.txt for details.
 #include <mitkImageAccessByItk.h>
 #include <mitkImageReadAccessor.h>
 #include <mitkImageWriteAccessor.h>
+#include <mitkProgressBar.h>
 #include <signal/m2PeakDetection.h>
 
 namespace m2
@@ -234,8 +235,10 @@ namespace m2
 
   void SpectrumImageStack::GetImage(double center, double tol, const mitk::Image * /*mask*/, mitk::Image *img) const
   {
+    mitk::ProgressBar::GetInstance()->AddStepsToDo(m_SliceTransformers.size());
     for (auto &kv : m_SliceTransformers)
     {
+      mitk::ProgressBar::GetInstance()->Progress();
       auto sliceId = kv.first;
       const auto &transformer = kv.second;
       if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer()))
