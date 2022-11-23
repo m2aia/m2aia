@@ -2,20 +2,31 @@
   <img src="https://github.com/jtfcordes/M2aia/raw/master/Applications/M2aiaWorkbench/icons/icon.png" alt="M2aia logo" title="M2aia" align="right" height="80" />
 </a>
 
-# Welcome to M²aia: a desktop application for mass spectrometry imaging.
+## Welcome to *[M²aia][m2aia]*: a desktop application for mass spectrometry imaging.
 
 M²aia is open source software, based on the well-known [Medical Imaging Interaction Toolkit (MITK)](https://mitk.org/). The software enables interactive signal-processing and visualization of mass spectrometry imaging (MSI) datasets.
 
 
 ## More information ##
 
-More [information][m2aia], [protocols][m2aia], [build instructions][m2aia-build] and [downloads][download] can be found on [https://m2aia.de][m2aia]. <br/>
-[biotools:m2aia][biotools-m2aia]<br/>
-[RRID:SCR_019324][scicrunch-m2aia]<br/>
+**[github.io/m2aia][m2aia]**<br>
+[Build instructions (windows/Linux)][m2aia-build] <br>
+[Downloads][download]<br>
+
+[Protocols][m2aia]<br>
+
+[biotools:m2aia][biotools-m2aia]<br>
+[RRID:SCR_019324][scicrunch-m2aia]<br>
 
 ## Docker ##
 
 [https://hub.docker.com/r/m2aia/m2aia](https://hub.docker.com/r/m2aia/m2aia)
+
+## Python ##
+
+[https://github.com/m2aia/pym2aia](https://github.com/m2aia/pym2aia)<br>
+[https://github.com/m2aia/pym2aia-examples](https://github.com/m2aia/pym2aia-examples)
+
 
 ## Contact ##
 If you have questions about the application or if you would like to give us feedback, don't hesitate to open a [new issue][contribute] or contact me [directly](mailto:j.cordes@hs-mannheim.de).
