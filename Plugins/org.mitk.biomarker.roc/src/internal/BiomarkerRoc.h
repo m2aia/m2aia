@@ -30,7 +30,7 @@ See LICENSE.txt for details.
 
 // for logging purposes
 #define ROC_SIG "[BiomarkerRoc] "
-
+/*
 struct Timer
 {
   Timer() : num_measurements(0), storage(0) { time = std::chrono::high_resolution_clock::now(); }
@@ -55,6 +55,7 @@ struct Timer
 private:
   std::chrono::_V2::system_clock::time_point time;
 };
+*/
 
 QT_CHARTS_USE_NAMESPACE
 /**
@@ -93,7 +94,7 @@ private:
   const mitk::Label::PixelType *m_MaskData;
   const double *m_ImageData;
   std::size_t m_ImageDataSize;
-  Timer m_timer;
+  //Timer m_timer;
 };
 
 #endif // BiomarkerRoc_h

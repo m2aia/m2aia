@@ -125,10 +125,10 @@ void BiomarkerRoc::DoRocAnalysisWithThresholds()
   m_MaskData = static_cast<const mitk::Label::PixelType *>(readAccessorMask.GetData());
   auto peaks = originalImage->GetPeaks();
 
-  m_timer.storage = 0;
+  //m_timer.storage = 0;
   for (auto& peak : peaks)
   {
-    m_timer.start();
+    //m_timer.start();
     //prepare state for PrepareTumorVectors
     double mz = peak.GetX();
     originalImage->GetImage(mz, m_Tolerance, mask, m_Image);
@@ -178,9 +178,9 @@ void BiomarkerRoc::DoRocAnalysisWithThresholds()
     }
     double auc = m2::ReceiverOperatorCharacteristic::Trapezoid(TPR.begin(), TPR.end(), FPR.begin());
     AddToTable(mz, auc);
-    m_timer.storage += m_timer.getDuration();
+    //m_timer.storage += m_timer.getDuration();
   }
-  MITK_INFO << ROC_SIG << "Dauer: " << m_timer.storage << " µs (" << m_timer.storage / 1000.0 << ") ms. " << m_timer.num_measurements << " Messungen durchgeführt.";
+  //MITK_INFO << ROC_SIG << "Dauer: " << m_timer.storage << " µs (" << m_timer.storage / 1000.0 << ") ms. " << m_timer.num_measurements << " Messungen durchgeführt.";
   m_Controls.tableWidget->setVisible(true);
 }
 
@@ -200,7 +200,7 @@ void BiomarkerRoc::DoRocAnalysisMannWhitneyU()
   auto peaks = originalImage->GetPeaks();
   for (auto& peak : peaks)
   {
-    m_timer.start();
+    //m_timer.start();
     //prepare state for GetLabeledMz
     double mz = peak.GetX();
     originalImage->GetImage(mz, m_Tolerance, mask, m_Image);
@@ -217,10 +217,10 @@ void BiomarkerRoc::DoRocAnalysisMannWhitneyU()
     //ROC has finished already here, this is merely calculating the AUC
     double auc = m2::ReceiverOperatorCharacteristic::MannWhitneyU(D.begin(), D.end(), P, N);
     AddToTable(mz, auc);
-    m_timer.storage += m_timer.getDuration();
+    //m_timer.storage += m_timer.getDuration();
   }
   m_Controls.tableWidget->setVisible(true);
-  MITK_INFO << ROC_SIG << "Dauer: " << m_timer.storage << " µs (" << m_timer.storage / 1000.0 << ") ms. " << m_timer.num_measurements << " Messungen durchgeführt.";
+  //MITK_INFO << ROC_SIG << "Dauer: " << m_timer.storage << " µs (" << m_timer.storage / 1000.0 << ") ms. " << m_timer.num_measurements << " Messungen durchgeführt.";
 }
 
 void BiomarkerRoc::OnButtonRenderChartPressed()
