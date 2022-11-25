@@ -1,3 +1,7 @@
-draw.io in vscode anschauen, klassendiagramm erstellen
+klassendiagramme erstellen
+diagramm docker container überarbeiten -> mehr information hinzufügen oder verbal beschreiben
 ==> content für BA -> Profit
-demnächst mini-app durch cli
+CLI:
+ - mehrere outputs 		   -> alles im output path als datanode anlegen
+ - xml schema unterstützen -> jonas fragen ob er ein konkretes beispiel zeigen kann (als skizze)
+

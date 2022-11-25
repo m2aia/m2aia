@@ -22,6 +22,7 @@ See LICENSE.txt for details.
 // Qmitk
 #include <QmitkAbstractNodeSelectionWidget.h>
 #include <QmitkSingleNodeSelectionWidget.h>
+#include <QmitkMultiNodeSelectionWidget.h>
 
 // Qt
 #include <QMessageBox>
@@ -49,6 +50,8 @@ See LICENSE.txt for details.
 #include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageBase.h>
 
+#define EDM_SIG "[ExternalDockerModules] "
+
 const std::string ExternalDockerModules::VIEW_ID = "org.mitk.views.externaldockermodules";
 
 void ExternalDockerModules::SetFocus()
@@ -66,7 +69,7 @@ void ExternalDockerModules::CreateQtPartControl(QWidget *parent)
                           mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
   m_Controls.inputImage->SetSelectionIsOptional(false);
   m_Controls.inputImage->SetInvalidInfo("Choose image");
-  m_Controls.inputImage->SetAutoSelectNewNodes(true);
+  //m_Controls.inputImage->SetAutoSelectNewNodes(true); // singleNodeSelection only
   m_Controls.inputImage->SetPopUpTitel("Select image");
   m_Controls.inputImage->SetPopUpHint("Select the image you want to work with. This can be any opened image (*.imzML).");
   connect(m_Controls.btnExecute, &QPushButton::clicked, this, &ExternalDockerModules::ExecuteModule);
@@ -85,10 +88,10 @@ void ExternalDockerModules::CreateQtPartControl(QWidget *parent)
     auto getDockerImgsHandle = getDockerImgs.launch(comboboxCommand, getDockerImgsArgs);
     int getDockerImgsCode = getDockerImgsHandle.wait();
     if (getDockerImgsCode)
-      MITK_INFO << "[ExternalDockerModules]: " << "Error: " << getDockerImgsCode << " " << strerror(getDockerImgsCode);
+      MITK_INFO << EDM_SIG << "Error: " << getDockerImgsCode << " " << strerror(getDockerImgsCode);
     std::ifstream ifs("docker_imgs.txt");
     if (!ifs)
-      MITK_INFO << "[ExternalDockerModules]: " << "Error: could not find docker_imgs.txt";
+      MITK_INFO << EDM_SIG << "Error: could not find docker_imgs.txt";
   } 
 
   m_Controls.comboContainers->addItem("m2aia/docker:base");
@@ -127,25 +130,36 @@ std::string escape(std::string input)
 
 void ExternalDockerModules::ExecuteModule()
 {
+  std::string command = "docker";
+  std::string arguments = "run -t --rm --name=m2aia-container";
   //TODO: über alle nodes im data manager iterieren und pro node einen mountpoint adden
-  auto node = m_Controls.inputImage->GetSelectedNode();
-  auto image = static_cast<m2::ImzMLSpectrumImage*>(node->GetData());
-  std::string inputPath_1;
-  image->GetPropertyList()->GetStringProperty("MITK.IO.reader.inputlocation", inputPath_1);
-  auto splitPath = split(inputPath_1, '/');
-  inputPath_1 = "/";
-  for (size_t i = 0; i < splitPath.size() - 1; ++i)
-    inputPath_1 += splitPath[i] + "/";
+  auto nodes = m_Controls.inputImage->GetSelectedNodesStdVector();
+  std::vector<std::string> splitPath;
+  for (size_t i = 0; i < nodes.size(); ++i)
+  {
+    auto image = static_cast<m2::ImzMLSpectrumImage*>(nodes[i]->GetData());
+    std::string inputPath_i;
+    image->GetPropertyList()->GetStringProperty("MITK.IO.reader.inputlocation", inputPath_i);
+    splitPath = split(inputPath_i, '/');
+    inputPath_i = "/";
+    for (size_t j = 0; j < splitPath.size() - 1; ++j)
+      inputPath_i += splitPath[j] + "/";
+    
+    // forge command
+    arguments += " -v " + inputPath_i + ":/data" + std::to_string(i + 1) + "/ "; 
+  }
 
-  std::string outputPath_1 = mitk::IOUtil::CreateTemporaryDirectory();
-  auto outputPathVec = split(outputPath_1, '/');
-  outputPath_1 = "/";
+  std::string outputPath = mitk::IOUtil::CreateTemporaryDirectory();
+  auto outputPathVec = split(outputPath, '/');
+  outputPath = "/";
   for (size_t i = 0; i < outputPathVec.size(); ++i)
     if (outputPathVec[i] != "")
-      outputPath_1 += outputPathVec[i] + "/";
+      outputPath += outputPathVec[i] + "/";
 
-  std::string imzmlName = splitPath[splitPath.size() - 1];
   std::string containerName = m_Controls.comboContainers->currentText().toStdString();
+  // mount output directory
+  arguments += " -v " + outputPath + ":/output1/ " + containerName;
+  std::string imzmlName = splitPath[splitPath.size() - 1];
   std::string interpreter = "";
   std::string fileEnding = "";
   auto foundpy = containerName.find("py");
@@ -156,27 +170,23 @@ void ExternalDockerModules::ExecuteModule()
     interpreter = "python3";
     fileEnding = ".py";
   }
+  
+  // TODO: since xml schema will be implemented, this has to change
   auto moduleParamsVec = split(m_Controls.moduleParams->text().toStdString(), ' ');
   std::string moduleParams = "";
   std::string outputFileName;
   for (size_t i = 0; i < moduleParamsVec.size(); ++i)
   {
-    if (moduleParamsVec[i] == "--m2aia-out") 
-      continue;
-    if (i > 0 && moduleParamsVec[i - 1] == "--m2aia-out")
+    if (moduleParamsVec[i] == "--m2aia-out" && i < moduleParamsVec.size() - 1)
     {
-      outputFileName = moduleParamsVec[i];
+      outputFileName = moduleParamsVec[++i];
       continue;
     }
     moduleParams += moduleParamsVec[i] + " ";
   }
 
-  // forge command
-  std::string command = "docker";
-  std::string arguments = "run -t --rm --name=m2aia-container";
-  arguments += " -v " + inputPath_1 + ":/data1/ "; 
-  arguments += " -v " + outputPath_1 + ":/output1/ " + containerName;
-  arguments += " " + interpreter + " m2aia-module" + fileEnding + " " + escape(imzmlName) + " " + outputFileName  + " " + moduleParams;
+  // args to the cli_module inside container
+  arguments += " " + interpreter + " cli-module" + fileEnding + " " + escape(imzmlName) + " " + outputFileName  + " " + moduleParams;
 
   auto stv = split(arguments, ' ');
   // get the args  
@@ -186,14 +196,16 @@ void ExternalDockerModules::ExecuteModule()
   Poco::Process p;
   MITK_INFO << "launching process with command '" << command << " " << arguments << "'.";
   auto handle = p.launch(command, processArgs);
+  // blocking until launched process is done
   int code = handle.wait();
   MITK_INFO << "finished processing with code " << code;
   if (code)
     MITK_INFO << strerror(code);
   else 
   {
-    // load output file into m2aia
-    auto dataPointerVec = mitk::IOUtil::Load(outputPath_1 + outputFileName);
+    // load output files into m2aia
+    //TODO: for (auto fname : outputPath)
+    auto dataPointerVec = mitk::IOUtil::Load(outputPath + fname);
     auto node = mitk::DataNode::New();
     node->SetData(dataPointerVec[0]);
     node->SetName(outputFileName);

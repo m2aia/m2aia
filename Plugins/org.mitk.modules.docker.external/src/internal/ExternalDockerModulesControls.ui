@@ -28,7 +28,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QmitkSingleNodeSelectionWidget" name="inputImage" native="true">
+    <widget class="QmitkMultiNodeSelectionWidget" name="inputImage" native="true">
      <property name="minimumSize">
       <size>
        <width>0</width>
@@ -95,9 +95,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QmitkSingleNodeSelectionWidget</class>
+   <class>QmitkMultiNodeSelectionWidget</class>
    <extends>QWidget</extends>
-   <header location="global">QmitkSingleNodeSelectionWidget.h</header>
+   <header location="global">QmitkMultiNodeSelectionWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
