@@ -42,9 +42,7 @@ namespace m2
       size_t i = 0;
       for (auto data = data_iter_begin; data != data_iter_end; ++data, ++i)
       {
-        double mz;
-        bool tumor;
-        std::tie(mz, tumor) = *data;
+        auto [mz, tumor] = *data;
         if (tumor) 
           R1 += i + 1;
       }
@@ -74,9 +72,7 @@ namespace m2
       double TN = 0;
       for (auto data = data_iter_begin; data != data_iter_end; ++data)
       {
-        double value;
-        bool label;
-        std::tie(value, label) = *data;
+        auto [value, label] = *data;
         if (label) // positive found
           --TP;
         else

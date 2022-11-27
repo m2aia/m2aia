@@ -137,10 +137,7 @@ void BiomarkerRoc::DoRocAnalysisWithThresholds()
     m_ImageDataSize = dims[0] * dims[1] * dims[2];
     m_ImageData = static_cast<const double*>(imagereader.GetData());
 
-    auto _tuple = PrepareTumorVectors();
-    std::vector<double> A, B;
-    size_t P, N;
-    std::tie(A, B, P, N) = _tuple;
+    auto [A, B, P, N] = PrepareTumorVectors();
     
     std::array<double, m_numThresholds> thresholds;
     thresholds[0] = std::min(
@@ -209,10 +206,7 @@ void BiomarkerRoc::DoRocAnalysisMannWhitneyU()
     m_ImageDataSize = dims[0] * dims[1] * dims[2];
     m_ImageData = static_cast<const double*>(imagereader.GetData());
 
-    auto tuple = GetLabeledMz();
-    std::vector<std::tuple<double, bool>> D;
-    size_t P, N;
-    std::tie(D, P, N) = tuple;
+    auto [D, P, N] = GetLabeledMz();
     
     //ROC has finished already here, this is merely calculating the AUC
     double auc = m2::ReceiverOperatorCharacteristic::MannWhitneyU(D.begin(), D.end(), P, N);
@@ -245,14 +239,8 @@ void BiomarkerRoc::OnButtonRenderChartPressed()
     m_ImageDataSize = dims[0] * dims[1] * dims[2];
   }
   // get P and N
-  auto tuple = GetLabeledMz();
-  std::vector<std::tuple<double, bool>> D;
-  size_t P, N;
-  std::tie(D, P, N) = tuple;
-  auto auc_tuple = m2::ReceiverOperatorCharacteristic::TrapezoidExtraData(D.begin(), D.end(), P, N);
-  double AUC;
-  std::vector<std::tuple<double, double>> TrueRates;
-  std::tie(TrueRates, AUC) = auc_tuple;
+  auto [D, P, N] = GetLabeledMz();
+  auto [TrueRates, AUC] = m2::ReceiverOperatorCharacteristic::TrapezoidExtraData(D.begin(), D.end(), P, N);
 
   char auc[16] = {0};
   snprintf(auc, 15, "%s%lf", "AUC: ", AUC);
@@ -261,8 +249,7 @@ void BiomarkerRoc::OnButtonRenderChartPressed()
   auto serie = new QtCharts::QLineSeries();
   for (size_t idx = 0; idx < TrueRates.size(); ++idx)
   {
-    double tpr, fpr;
-    std::tie(fpr, tpr) = TrueRates[idx];
+    auto [fpr, tpr] = TrueRates[idx];
     serie->append(fpr, tpr);
     // MITK_INFO << ROC_SIG << "[" << idx << "] FPR: " << fpr << ", TPR: " << tpr;
   }
@@ -327,10 +314,7 @@ std::tuple<std::vector<double>, std::vector<double>, size_t, size_t> BiomarkerRo
 
 std::tuple<std::vector<std::tuple<double, bool>>, size_t, size_t> BiomarkerRoc::GetLabeledMz()
 {
-  auto _tuple = PrepareTumorVectors();
-  std::vector<double> A, B;
-  size_t P = 0, N = 0; // warn uninitialized
-  std::tie(A, B, P, N) = _tuple;
+  auto [A, B, P, N] = PrepareTumorVectors();
   constexpr const bool TUMOR = true;
   constexpr const bool NONTUMOR = false;
   std::vector<std::tuple<double, bool>> D;
@@ -341,10 +325,8 @@ std::tuple<std::vector<std::tuple<double, bool>>, size_t, size_t> BiomarkerRoc::
     D.push_back(std::make_tuple(B[i], NONTUMOR));
   std::sort(D.begin(), D.end(), [](const std::tuple<double, bool>& a, const std::tuple<double, bool>& b)
   {
-    double da, db;
-    bool ba, bb;
-    std::tie(da, ba) = a;
-    std::tie(db, bb) = b;
+    auto [da, ba] = a;
+    auto [db, bb] = b;
     return da < db;
   });
   return std::make_tuple(D, P, N);

@@ -36,7 +36,7 @@ See LICENSE.txt for details.
 #include <string>
 #include <vector>
 #include <iostream>
-#include <regex>
+#include <filesystem>
 
 // mitk image
 #include <mitkImage.h>
@@ -204,11 +204,14 @@ void ExternalDockerModules::ExecuteModule()
   else 
   {
     // load output files into m2aia
-    //TODO: for (auto fname : outputPath)
-    auto dataPointerVec = mitk::IOUtil::Load(outputPath + fname);
-    auto node = mitk::DataNode::New();
-    node->SetData(dataPointerVec[0]);
-    node->SetName(outputFileName);
-    GetDataStorage()->Add(node);
+    namespace fs = std::filesystem; // standard since c++17
+    for (auto& file : fs::directory_iterator(outputPath))
+    {
+      auto dataPointerVec = mitk::IOUtil::Load(file.path());
+      auto node = mitk::DataNode::New();
+      node->SetData(dataPointerVec[0]);
+      node->SetName(outputFileName);
+      GetDataStorage()->Add(node);
+    }
   }
 }
