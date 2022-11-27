@@ -37,6 +37,7 @@ See LICENSE.txt for details.
 #include <vector>
 #include <iostream>
 #include <filesystem>
+#include <charconv>
 
 // mitk image
 #include <mitkImage.h>
@@ -145,8 +146,10 @@ void ExternalDockerModules::ExecuteModule()
     for (size_t j = 0; j < splitPath.size() - 1; ++j)
       inputPath_i += splitPath[j] + "/";
     
-    // forge command
-    arguments += " -v " + inputPath_i + ":/data" + std::to_string(i + 1) + "/ "; 
+    arguments += " -v " + inputPath_i + ":/data";
+    std::array<char, 4> buffer = { 0 };
+    std::to_chars(buffer.data(), buffer.data() + buffer.size(), i + 1); // convert i+1 to char[]
+    arguments += buffer.data() + std::string{"/ "};
   }
 
   std::string outputPath = mitk::IOUtil::CreateTemporaryDirectory();
@@ -204,7 +207,7 @@ void ExternalDockerModules::ExecuteModule()
   else 
   {
     // load output files into m2aia
-    namespace fs = std::filesystem; // standard since c++17
+    namespace fs = std::filesystem; 
     for (auto& file : fs::directory_iterator(outputPath))
     {
       auto dataPointerVec = mitk::IOUtil::Load(file.path());
