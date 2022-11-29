@@ -4,4 +4,5 @@ set(MITK_MODULES
   M2aiaDimensionReduction
   M2aiaCLI
   M2aiaReceiverOperatingCharacteristic
+  M2aiaDockerHelper
 )
