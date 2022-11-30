@@ -45,7 +45,6 @@ void ExternalDockerModules::SetFocus()
 
 void ExternalDockerModules::CreateQtPartControl(QWidget *parent)
 {
-  // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
   m_Controls.inputImage->SetDataStorage(GetDataStorage());
   m_Controls.inputImage->SetNodePredicate(
@@ -53,10 +52,9 @@ void ExternalDockerModules::CreateQtPartControl(QWidget *parent)
                           mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
   m_Controls.inputImage->SetSelectionIsOptional(false);
   m_Controls.inputImage->SetInvalidInfo("Choose image");
-  //m_Controls.inputImage->SetAutoSelectNewNodes(true); // singleNodeSelection only
   m_Controls.inputImage->SetPopUpTitel("Select image");
   m_Controls.inputImage->SetPopUpHint("Select the image you want to work with. This can be any opened image (*.imzML).");
-  connect(m_Controls.btnExecute, &QPushButton::clicked, this, &ExternalDockerModules::ExecuteModule);
+  connect(m_Controls.btnExecute, &QPushButton::clicked, this, &ExternalDockerModules::Execute);
 
   m_Controls.comboContainers->addItem("m2aia/docker:base");
   m_Controls.comboContainers->addItem("m2aia/docker:pym2aia");
@@ -65,7 +63,7 @@ void ExternalDockerModules::CreateQtPartControl(QWidget *parent)
   m_Controls.comboContainers->addItem("m2aia/docker:r");
 }
 
-void ExternalDockerModules::ExecuteModule()
+void ExternalDockerModules::Execute()
 {
   std::string containerName = m_Controls.comboContainers->currentText().toStdString();
   auto nodes = m_Controls.inputImage->GetSelectedNodesStdVector();

@@ -38,7 +38,7 @@ public:
 protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
   virtual void SetFocus() override;
-  void ExecuteModule();
+  void Execute();
   Ui::ExternalDockerModulesControls m_Controls;
 };
 
