@@ -42,7 +42,7 @@ See LICENSE.txt for details.
 
 // m2aia
 #include <m2ImzMLSpectrumImage.h>
-#include <m2ReceiverOperatingCharacteristic.h>
+#include <m2BiomarkerIdentificationAlgorithms.h>
 #include <m2SpectrumImageBase.h>
 #include <m2Peak.h>
 
@@ -173,7 +173,7 @@ void BiomarkerRoc::DoRocAnalysisWithThresholds()
       TPR[i] = (TP / (TP + FN));
       FPR[i] = (FP / (FP + TN));
     }
-    double auc = m2::ReceiverOperatorCharacteristic::Trapezoid(TPR.begin(), TPR.end(), FPR.begin());
+    double auc = m2::BiomarkerIdentificationAlgorithms::AucTrapezoid(TPR.begin(), TPR.end(), FPR.begin());
     AddToTable(mz, auc);
     //m_timer.storage += m_timer.getDuration();
   }
@@ -209,7 +209,7 @@ void BiomarkerRoc::DoRocAnalysisMannWhitneyU()
     auto [D, P, N] = GetLabeledMz();
     
     //ROC has finished already here, this is merely calculating the AUC
-    double auc = m2::ReceiverOperatorCharacteristic::MannWhitneyU(D.begin(), D.end(), P, N);
+    double auc = m2::BiomarkerIdentificationAlgorithms::MannWhitneyU(D.begin(), D.end(), P, N);
     AddToTable(mz, auc);
     //m_timer.storage += m_timer.getDuration();
   }
@@ -240,7 +240,7 @@ void BiomarkerRoc::OnButtonRenderChartPressed()
   }
   // get P and N
   auto [D, P, N] = GetLabeledMz();
-  auto [TrueRates, AUC] = m2::ReceiverOperatorCharacteristic::TrapezoidExtraData(D.begin(), D.end(), P, N);
+  auto [TrueRates, AUC] = m2::BiomarkerIdentificationAlgorithms::AucTrapezoidExtraData(D.begin(), D.end(), P, N);
 
   char auc[16] = {0};
   snprintf(auc, 15, "%s%lf", "AUC: ", AUC);

@@ -6,14 +6,14 @@ Copyright (c) Lorenz Schwab
 All rights reserved.
 
 This software is distributed WITHOUT ANY WARRANTY; without
-even the implied warranty of MERCHANTABILITY or FITNESS FOR
-A PARTICULAR PURPOSE.
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 See LICENSE.txt for details.
 
 ===================================================================*/
 
 #pragma once
+#include <M2aiaDockerHelperExports.h>
 #include <mitkDataNode.h>
 #include <vector>
 #include <string>
@@ -23,7 +23,7 @@ See LICENSE.txt for details.
 */
 namespace m2
 {
-class DockerHelper
+class M2AIADOCKERHELPER_EXPORT DockerHelper
 {
 public:
   static std::vector<std::string> split(const std::string& str, const char delimiter);

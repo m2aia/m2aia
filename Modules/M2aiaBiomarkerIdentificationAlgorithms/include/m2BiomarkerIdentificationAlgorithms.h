@@ -13,9 +13,10 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 
-#ifndef m2ReceiverOperatorCharacteristic_h
-#define m2ReceiverOperatorCharacteristic_h
+#ifndef m2BiomarkerIdentificationAlgorithms_h
+#define m2BiomarkerIdentificationAlgorithms_h
 
+#include <M2aiaBiomarkerIdentificationAlgorithmsExports.h>
 #include <algorithm>
 #include <array>
 #include <iterator>
@@ -27,7 +28,7 @@ namespace m2
 #define RENDER_GRANULARITY 20
 
   /// @brief performs the Roc analysis on m_mzAppliedImage after writing the data from DoRocAnalysis into it
-  class ReceiverOperatorCharacteristic
+  class M2AIABIOMARKERIDENTIFICATIONALGORITHMS_EXPORT BiomarkerIdentificationAlgorithms
   {
   public:
     static const std::string VIEW_ID;
@@ -58,7 +59,7 @@ namespace m2
     /// @param N number of negatives (true negatives + false negatives)
     /// @return a vector containing the false positive rates and the true positive rates as well as the AUC
     template <typename IterType>
-    static std::tuple<std::vector<std::tuple<double, double>>, double> TrapezoidExtraData(IterType data_iter_begin,
+    static std::tuple<std::vector<std::tuple<double, double>>, double> AucTrapezoidExtraData(IterType data_iter_begin,
                                                                                          IterType data_iter_end,
                                                                                          size_t P,
                                                                                          size_t N)
@@ -95,7 +96,7 @@ namespace m2
     }
 
     template <typename IterType1, typename IterType2>
-    static double Trapezoid(IterType1 tpr_iter_begin, IterType1 tpr_iter_end, IterType2 fpr_iter_begin)
+    static double AucTrapezoid(IterType1 tpr_iter_begin, IterType1 tpr_iter_end, IterType2 fpr_iter_begin)
     {
       double auc = 0;
       for (; tpr_iter_begin != tpr_iter_end - 1; ++tpr_iter_begin, ++fpr_iter_begin)
@@ -109,4 +110,4 @@ namespace m2
 
 } // namespace m2
 
-#endif // m2ReceiverOperatorCharacteristic
+#endif 

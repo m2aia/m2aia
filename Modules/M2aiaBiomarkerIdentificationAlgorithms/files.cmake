@@ -1,11 +1,11 @@
 set(H_FILES
 #include/<filename>
-	include/m2ReceiverOperatingCharacteristic.h
+	include/m2BiomarkerIdentificationAlgorithms.h
 )
 
 set(CPP_FILES
 #only the filename
-m2ReceiverOperatingCharacteristic.cpp
+m2BiomarkerIdentificationAlgorithms.cpp
 )
 
 set(RESOURCE_FILES

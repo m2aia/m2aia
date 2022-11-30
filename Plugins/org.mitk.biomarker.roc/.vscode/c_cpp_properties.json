@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/home/maia/Documents/maia/build/ep/src/ITK/Modules/Core/Common/include",
+                "/home/maia/Documents/maia/build/ep/include/ITK-5.2",
+                "/home/maia/Documents/maia/build/MITK-build/Modules/Core",
+                "/home/maia/Documents/maia/MITK/Modules/Core/include",
+                "/home/maia/Documents/maia/00_my_m2aia/Plugins/org.mitk.gui.qt.m2.Spectrum/src",
+                "/home/maia/Documents/maia/00_my_m2aia/Modules/M2aiaBiomarkerIdentificationAlgorithms/include",
+                "/usr/include/x86_64-linux-gnu/qt5/QtCharts"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c17",
+            "cppStandard": "c++14",
+            "intelliSenseMode": "linux-clang-x64"
+        }
+    ],
+    "version": 4
+}
