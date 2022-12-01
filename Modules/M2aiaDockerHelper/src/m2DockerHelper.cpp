@@ -104,6 +104,11 @@ std::string DockerHelper::ExecuteModule(const std::string& containerName, const 
   {
     interpreter = "python3";
     fileEnding = ".py";
+  } 
+  else if (containerName.find("r-") || containerName.find("R-"))
+  {
+    interpreter = "Rscript";
+    fileEnding = ".R";
   }
 
   // args to the cli_module inside container

@@ -61,6 +61,7 @@ void ExternalDockerModules::CreateQtPartControl(QWidget *parent)
   m_Controls.comboContainers->addItem("m2aia/docker:pym2aia-example");
   m_Controls.comboContainers->addItem("m2aia/docker:python");
   m_Controls.comboContainers->addItem("m2aia/docker:r");
+  m_Controls.comboContainers->addItem("m2aia/docker:r-example");
 }
 
 void ExternalDockerModules::Execute()
@@ -71,7 +72,9 @@ void ExternalDockerModules::Execute()
   // TODO: once xml schema will be implemented, this is subject to change
   std::string moduleParams = m_Controls.moduleParams->text().toStdString();
   std::string outputPath = m2::DockerHelper::ExecuteModule(containerName, nodes, m2::DockerHelper::split(moduleParams, ' '));
+  // container exited with error
   if (outputPath == "") return;
+
   // load output files into m2aia
   namespace fs = std::filesystem; 
   for (auto& file : fs::directory_iterator(outputPath))
