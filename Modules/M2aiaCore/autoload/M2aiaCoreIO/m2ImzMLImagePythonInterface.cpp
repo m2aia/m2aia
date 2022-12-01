@@ -59,6 +59,30 @@ extern "C"
               data);
   }
 
+
+  M2AIACOREIO_EXPORT void GetMaskArray(m2::sys::ImageHandle *handle, mitk::Label::PixelType *data)
+  {
+    auto mask = handle->m_Image->GetMaskImage();
+    auto w = handle->m_Image->GetDimension(0);
+    auto h = handle->m_Image->GetDimension(1);
+    mitk::ImageReadAccessor acc(mask);
+    std::copy((mitk::Label::PixelType *)(acc.GetData()),
+              (mitk::Label::PixelType *)(acc.GetData()) + w * h,
+              data);
+  }
+
+  M2AIACOREIO_EXPORT void GetIndexArray(m2::sys::ImageHandle *handle, unsigned int *data)
+  {
+    auto indexImage = handle->m_Image->GetIndexImage();
+    auto w = handle->m_Image->GetDimension(0);
+    auto h = handle->m_Image->GetDimension(1);
+    mitk::ImageReadAccessor acc(indexImage);
+    std::copy((unsigned int *)(acc.GetData()),
+              (unsigned int *)(acc.GetData()) + w * h,
+              data);
+  }
+
+
   M2AIACOREIO_EXPORT unsigned int GetSpectrumType(m2::sys::ImageHandle *handle)
   {
     return (unsigned int)(handle->m_Image->GetSpectrumType().Format);

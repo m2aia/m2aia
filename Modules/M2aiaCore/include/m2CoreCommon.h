@@ -136,7 +136,7 @@ namespace m2
 
   using DisplayImagePixelType = double;
   using NormImagePixelType = double;
-  using IndexType = unsigned;
+  using IndexType = unsigned int;
   using WorldCoordinateType = float;
   using IndexImagePixelType = IndexType;
 
