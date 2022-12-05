@@ -33,6 +33,11 @@ data [https://doi.org/10.1093/gigascience/giab049](https://doi.org/10.1093/gigas
 
 [RRID:SCR_019324](https://scicrunch.org/resolver/RRID:SCR_019324)
 
+ImzML access using M²aia in Python 
+----------------------------------
+
+[pyM²aia](https://github.com/m2aia/pym2aia) is a memory-efficient Python interface for mass spectrometry imaging with focus on Deep Learning utilizing M²aia's I/O libraries.
+With this project we provide an open-source and extensible set of functions for ImzML metadata parsing, spectral and ion image processing/access.
 
 Multi-modal 3D mouse brain data
 ------------------------------
