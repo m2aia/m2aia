@@ -1,7 +1,8 @@
-klassendiagramme erstellen
-diagramm docker container überarbeiten -> mehr information hinzufügen oder verbal beschreiben
-==> content für BA -> Profit
+klassendiagramme
 CLI:
- - mehrere outputs 		   -> alles im output path als datanode anlegen
- - xml schema unterstützen -> jonas fragen ob er ein konkretes beispiel zeigen kann (als skizze)
-
+docker container volcano plot
+ - daten (png, mz liste als txt) in m2aia laden -> volcano plugin
+ - volcano plots als eigenes plugin umsetzen, welches docker module benutzt
+ROC:
+ - bei doppelklick in die liste soll im spektrum dieser mz angewählt werden, so dass in der view ein ein-image von diesem mz dargestellt wird
+ - so ähnlich bereits in peak-picking vorhanden -> dort abgucken
