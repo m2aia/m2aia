@@ -33,7 +33,8 @@
                 "/usr/lib/x86_64-linux-gnu/cmake/**",
                 "/usr/include/x86_64-linux-gnu/qt5/**",
                 "/usr/include/x86_64-linux-gnu/qt5/QtCharts",
-                "/home/maia/Documents/maia/00_my_m2aia/Modules/M2aiaReceiverOperatingCharacteristic/include"
+                "/home/maia/Documents/maia/00_my_m2aia/Modules/M2aiaReceiverOperatingCharacteristic/include",
+                "/home/maia/Documents/maia/00_my_m2aia/Plugins/org.mitk.gui.qt.m2.common/src"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/clang",

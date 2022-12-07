@@ -45,6 +45,7 @@ See LICENSE.txt for details.
 #include <m2BiomarkerIdentificationAlgorithms.h>
 #include <m2SpectrumImageBase.h>
 #include <m2Peak.h>
+#include <m2UIUtils.h>
 
 // std
 #include <array>
@@ -89,7 +90,16 @@ void BiomarkerRoc::CreateQtPartControl(QWidget *parent)
     "Choose the selection you want to work with. This can be any currently opened selection.");
   connect(m_Controls.buttonCalc, &QPushButton::clicked, this, &BiomarkerRoc::OnButtonCalcPressed);
   connect(m_Controls.buttonChart, &QPushButton::clicked, this, &BiomarkerRoc::OnButtonRenderChartPressed);
-  connect(m_Controls.buttonOpenPeakPickingView, &QCommandLinkButton::clicked, this, []() {
+  const auto tableHandler = [this] (const QTableWidgetItem* item) {
+    auto node = m_Controls.image->GetSelectedNode();
+    if (auto spImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    {
+      auto mz = std::stod(item->text().toStdString());
+      emit m2::UIUtils::Instance()->UpdateImage(mz, spImage->ApplyTolerance(mz));
+    }
+  };
+  connect(m_Controls.tableWidget, &QTableWidget::itemDoubleClicked, this, tableHandler);
+  connect(m_Controls.buttonOpenPeakPickingView, &QCommandLinkButton::clicked, this, [] {
     try
     {
       if (auto platform = berry::PlatformUI::GetWorkbench())
@@ -108,6 +118,7 @@ void BiomarkerRoc::OnButtonCalcPressed()
 {
   //DoRocAnalysisFast();
   DoRocAnalysisWithThresholds();
+  m_Controls.tableWidget->sortItems(1, Qt::DescendingOrder);
 }
 
 void BiomarkerRoc::DoRocAnalysisWithThresholds()
@@ -275,14 +286,14 @@ void BiomarkerRoc::AddToTable(double mz, double auc)
   m_Controls.tableWidget->setRowCount(size + 1);
   char mztext[16] = {0};
   snprintf(mztext, 16, "%lf", mz);
-  auto mzlabel = new QLabel();
-  mzlabel->setText(mztext);
-  m_Controls.tableWidget->setCellWidget(size, 0, mzlabel);
+  auto widget = new QTableWidgetItem(mztext);
+  widget->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+  m_Controls.tableWidget->setItem(size, 0, widget);
   char auctext[16] = {0};
   snprintf(auctext, 16, "%lf", auc);
-  auto auclabel = new QLabel();
-  auclabel->setText(auctext);
-  m_Controls.tableWidget->setCellWidget(size, 1, auclabel);
+  auto aucwidget = new QTableWidgetItem(auctext);
+  aucwidget->setFlags(Qt::ItemIsSelectable | Qt::ItemIsEnabled);
+  m_Controls.tableWidget->setItem(size, 1, aucwidget);
 }
 
 std::tuple<std::vector<double>, std::vector<double>, size_t, size_t> BiomarkerRoc::PrepareTumorVectors()
