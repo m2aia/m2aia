@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>ExternalDockerModulesControls</class>
- <widget class="QWidget" name="ExternalDockerModulesControls">
+ <class>BiomarkerVolcanoPlotControls</class>
+ <widget class="QWidget" name="BiomarkerVolcanoPlotControls">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>216</width>
-    <height>240</height>
+    <width>242</width>
+    <height>349</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -19,61 +19,42 @@
   <property name="windowTitle">
    <string>QmitkTemplate</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0,0,0,1">
+  <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QLabel" name="label">
-     <property name="text">
-      <string>Input Image:</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QmitkMultiNodeSelectionWidget" name="inputImages" native="true">
+    <widget class="QmitkMultiNodeSelectionWidget" name="Images" native="true">
      <property name="minimumSize">
       <size>
-       <width>0</width>
+       <width>200</width>
        <height>25</height>
       </size>
      </property>
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>150</height>
+      </size>
+     </property>
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="labelName">
+    <widget class="QLineEdit" name="Args"/>
+   </item>
+   <item>
+    <widget class="QPushButton" name="GenerateBtn">
+     <property name="minimumSize">
+      <size>
+       <width>200</width>
+       <height>25</height>
+      </size>
+     </property>
      <property name="maximumSize">
       <size>
-       <width>300</width>
-       <height>16777215</height>
+       <width>16777215</width>
+       <height>25</height>
       </size>
      </property>
      <property name="text">
-      <string>Docker Container to execute:</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QComboBox" name="comboContainers"/>
-   </item>
-   <item>
-    <widget class="Line" name="separator">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="labelParams">
-     <property name="text">
-      <string>Parameters for the module:</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLineEdit" name="moduleParams"/>
-   </item>
-   <item>
-    <widget class="QPushButton" name="btnExecute">
-     <property name="text">
-      <string>Execute Module</string>
+      <string>Generate Volcano Plot</string>
      </property>
     </widget>
    </item>
@@ -85,7 +66,7 @@
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>100</height>
+       <height>40</height>
       </size>
      </property>
     </spacer>

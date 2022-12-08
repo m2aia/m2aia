@@ -1,0 +1,16 @@
+/**
+  \defgroup org_mitk_biomarker_plot_volcano org.mitk.biomarker.plot.volcano
+  \ingroup MITKPlugins
+
+  \brief Describe your plugin here.
+
+*/
+
+/**
+  \defgroup org_mitk_biomarker_plot_volcano_internal Internal
+  \ingroup org_mitk_biomarker_plot_volcano
+
+  \brief This subcategory includes the internal classes of the org.mitk.biomarker.plot.volcano plugin. Other
+  plugins must not rely on these classes. They contain implementation details and their interface
+  may change at any time. We mean it.
+*/

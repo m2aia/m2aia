@@ -4,6 +4,7 @@
 
 set(target_libraries
   org_mitk_biomarker_roc
+  org_mitk_biomarker_plot_volcano
   org_mitk_modules_docker_external
   org_mitk_gui_qt_common
   org_mitk_gui_qt_stdmultiwidgeteditor

@@ -27,6 +27,7 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateProperty.h>
+
 #include <mitkIOUtil.h>
 
 // m2aia
@@ -40,20 +41,20 @@ const std::string ExternalDockerModules::VIEW_ID = "org.mitk.views.externaldocke
 
 void ExternalDockerModules::SetFocus()
 {
-  m_Controls.inputImage->setFocus();
+  m_Controls.inputImages->setFocus();
 }
 
 void ExternalDockerModules::CreateQtPartControl(QWidget *parent)
 {
   m_Controls.setupUi(parent);
-  m_Controls.inputImage->SetDataStorage(GetDataStorage());
-  m_Controls.inputImage->SetNodePredicate(
+  m_Controls.inputImages->SetDataStorage(GetDataStorage());
+  m_Controls.inputImages->SetNodePredicate(
   mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
                           mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
-  m_Controls.inputImage->SetSelectionIsOptional(false);
-  m_Controls.inputImage->SetInvalidInfo("Choose image");
-  m_Controls.inputImage->SetPopUpTitel("Select image");
-  m_Controls.inputImage->SetPopUpHint("Select the image you want to work with. This can be any opened image (*.imzML).");
+  m_Controls.inputImages->SetSelectionIsOptional(false);
+  m_Controls.inputImages->SetInvalidInfo("Choose image");
+  m_Controls.inputImages->SetPopUpTitel("Select image");
+  m_Controls.inputImages->SetPopUpHint("Select the image you want to work with. This can be any opened image (*.imzML).");
   connect(m_Controls.btnExecute, &QPushButton::clicked, this, &ExternalDockerModules::Execute);
 
   m_Controls.comboContainers->addItem("m2aia/docker:base");
@@ -67,7 +68,7 @@ void ExternalDockerModules::CreateQtPartControl(QWidget *parent)
 void ExternalDockerModules::Execute()
 {
   std::string containerName = m_Controls.comboContainers->currentText().toStdString();
-  auto nodes = m_Controls.inputImage->GetSelectedNodesStdVector();
+  auto nodes = m_Controls.inputImages->GetSelectedNodesStdVector();
 
   // TODO: once xml schema will be implemented, this is subject to change
   std::string moduleParams = m_Controls.moduleParams->text().toStdString();
