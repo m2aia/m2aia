@@ -24,6 +24,8 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateProperty.h>
 
+#include <mitkIOUtil.h>
+
 // m2aia
 #include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageBase.h>
@@ -31,6 +33,9 @@ See LICENSE.txt for details.
 
 // Qt
 #include <QMessageBox>
+
+// std
+#include <filesystem>
 
 #include "BiomarkerVolcanoPlot.h"
 
@@ -60,5 +65,17 @@ void BiomarkerVolcanoPlot::GenerateVolcanoPlot()
 {
   auto nodes = m_Controls.Images->GetSelectedNodesStdVector();
   std::vector<std::string> args = m2::DockerHelper::split(m_Controls.Args->text().toStdString(), ' ');
-  m2::DockerHelper::ExecuteModule("m2aia/docker:pym2aia-volcano-plot", nodes, args);
+  std::string outputPath = m2::DockerHelper::ExecuteModule("m2aia/docker:pym2aia-volcano-plot", nodes, args);
+  
+  // load output files into m2aia
+  namespace fs = std::filesystem; 
+  for (auto& file : fs::directory_iterator(outputPath))
+  {
+    auto dataPointerVec = mitk::IOUtil::Load(file.path());
+    auto node = mitk::DataNode::New();
+    node->SetData(dataPointerVec[0]);
+    auto filenameVec = m2::DockerHelper::split(file.path(), '/');
+    node->SetName(filenameVec[filenameVec.size()-1]);
+    GetDataStorage()->Add(node);
+  }
 }
