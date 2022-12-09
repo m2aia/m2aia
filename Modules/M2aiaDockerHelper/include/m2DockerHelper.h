@@ -32,7 +32,7 @@ public:
   /// @param input string which should be escaped
   /// @param c character which shall be escaped
   /// @return string with escaped character
-  static std::string escape(std::string input, const char c);
+  static std::string& escape(std::string& input, const char c);
 
   /// @brief Lauches a process with Docker executing the specified container, BLOCKING FOR DURATION OF EXECUTION
   /// @param containerName Name of the container to execute

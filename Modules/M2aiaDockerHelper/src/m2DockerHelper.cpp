@@ -47,15 +47,20 @@ std::vector<std::string> DockerHelper::split(const std::string& str, const char 
   return vec;
 }
 
-std::string DockerHelper::escape(std::string input, const char c)
+std::string& DockerHelper::escape(std::string& input, const char c)
 {
   size_t pos = 0;
   while (pos < input.size())
   {
     pos = input.find_first_of(c, pos);
     if (pos >= input.size()) return input;
-    input.replace(input.begin() + pos, input.begin() + pos + 1, "\\" + c);
+    input.replace(input.begin() + pos, input.begin() + pos + 1, (std::string("\\") + c).c_str());
     pos += 2; // skip the backslash and c
+    
+    std::string space = "";
+    for (size_t i = 0; i < pos; ++i) space += " ";
+    MITK_INFO << DH_SIG << "[escape] " << input;
+    MITK_INFO << DH_SIG << "[escape] " << space << "^" << " pos";
   }
   return input;
 }
@@ -112,7 +117,7 @@ std::string DockerHelper::ExecuteModule(const std::string& containerName, const 
   }
 
   // args to the cli_module inside container
-  arguments += interpreter + " cli-module" + fileEnding + " " + escape(imzmlName, ' ');
+  arguments += interpreter + " cli-module" + fileEnding + " " + escape(escape(imzmlName, ' '), ',');
 
   auto stv = split(arguments, ' ');
   // get the args  
