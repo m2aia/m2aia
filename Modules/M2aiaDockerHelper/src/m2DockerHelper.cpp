@@ -72,6 +72,8 @@ std::string DockerHelper::ExecuteModule(const std::string& containerName, const 
   // args of the command to be launched
   std::string arguments = "run -t --rm --name=m2aia-container";
   std::vector<std::string> splitPath;
+  std::vector<std::string> imzmlNames;
+
   for (size_t i = 0; i < nodes.size(); ++i)
   {
     auto image = static_cast<m2::ImzMLSpectrumImage*>(nodes[i]->GetData());
@@ -81,7 +83,7 @@ std::string DockerHelper::ExecuteModule(const std::string& containerName, const 
     inputPath_i = "/";
     for (size_t j = 0; j < splitPath.size() - 1; ++j)
       inputPath_i += splitPath[j] + "/";
-    
+    imzmlNames.push_back(splitPath[splitPath.size() - 1]);
     arguments += " -v " + inputPath_i + ":/data";
     std::array<char, 4> buffer = { 0 };
     std::to_chars(buffer.data(), buffer.data() + buffer.size(), i + 1); // convert i+1 to char[]
@@ -99,27 +101,28 @@ std::string DockerHelper::ExecuteModule(const std::string& containerName, const 
   // mount output directory
   arguments += " -v " + outputPath + ":/output1/ " + containerName + " ";
 
-  std::string imzmlName = splitPath[splitPath.size() - 1];
   std::string interpreter = "";
   std::string fileEnding = "";
-  auto foundpy = containerName.find("py");
-  auto foundPy = containerName.find("Py");
 
-  if (foundpy != std::string::npos || foundPy != std::string::npos)
+  // TODO: replace this with a better way to check what kind of file will be executed
+  if (containerName.find("Py") != std::string::npos || containerName.find("py") != std::string::npos)
   {
     interpreter = "python3";
     fileEnding = ".py";
   } 
-  else if (containerName.find("r-") || containerName.find("R-"))
+  else if (containerName.find("r-") != std::string::npos || containerName.find("R-") != std::string::npos)
   {
     interpreter = "Rscript";
     fileEnding = ".R";
   }
 
   // args to the cli_module inside container
-  arguments += interpreter + " cli-module" + fileEnding + " " + escape(escape(imzmlName, ' '), ',');
-
+  arguments += interpreter + " cli-module" + fileEnding;
   auto stv = split(arguments, ' ');
+
+  // store escaped filenames as one argument each
+  for (auto imzmlName : imzmlNames)
+    stv.push_back(imzmlName);
   // get the args  
   Poco::Process::Args processArgs;
   processArgs.insert(processArgs.end(), stv.begin(), stv.end());
