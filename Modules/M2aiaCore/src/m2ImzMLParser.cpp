@@ -269,7 +269,7 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
           std::getline(f, line); // read the next line
 
           // assuming spectra meta data after ImzML meta data.
-          if (line.find("run") != std::string::npos)
+          if (line.find("<run") != std::string::npos)
             break; // indicates begin of spectra meta data
 
           // Check for end-tag. If true, pop the last context
