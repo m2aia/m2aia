@@ -585,13 +585,24 @@ void RegistrationView::Registration(RegistrationEntity *fixed, RegistrationEntit
       m2::ElxRegistrationHelper helper;
       std::vector<std::string> parameterFiles;
 
-      // copy valid and discard empty parameterfiles
+      // copy valid and discard empty parameter files
       for (auto &p : m_ParameterFiles[currentIndex])
         parameterFiles.push_back(p);
 
       if (!m_Controls.chkBxUseDeformableRegistration->isChecked() || parameterFiles.back().empty())
       {
         parameterFiles.pop_back();
+      }else{
+        // Use deformable transformations
+        std::setlocale(LC_NUMERIC, "en_US.UTF-8");
+        
+        const auto gridSpacing = m_Controls.spinBoxFinalGridSpacing->value();
+        m2::ElxUtil::ReplaceParameter(parameterFiles.back(), "FinalGridSpacingInPhysicalUnits", std::to_string(gridSpacing) );
+
+        const auto iterations = m_Controls.spinBxIterations->value();
+        m2::ElxUtil::ReplaceParameter(parameterFiles.back(), "MaximumNumberOfIterations", std::to_string(iterations) );
+      
+      
       }
 
       MITK_INFO << "***** Start Registration *****";
