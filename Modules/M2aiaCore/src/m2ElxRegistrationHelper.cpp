@@ -440,6 +440,7 @@ mitk::Image::Pointer m2::ElxRegistrationHelper::WarpImage(const mitk::Image::Poi
       ElxUtil::JoinPath({m_WorkingDirectory, "/", "TransformParameters." + std::to_string(i) + ".txt"});
 
     auto T = m_Transformations[i];
+    MITK_INFO << T;
     // adapt target image geometry
 
     // auto size = m2::ElxUtil::GetParameterLine(T, "Size");

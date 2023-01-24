@@ -236,24 +236,25 @@ void RegistrationView::AddNewModalityTab()
   page->setObjectName(QString(m_ModalityId));
   m_Controls.tabWidget->setCurrentIndex(tabId);
   m_MovingEntities[modalityId] = std::make_shared<RegistrationEntity>();
+  const auto filter = tr("Elastix Parameterfile (*.txt)");
 
-  connect(controls.btnApplyTransforms,
-          &QAbstractButton::clicked,
-          [=]() { Registration(m_FixedEntity.get(), m_MovingEntities[modalityId].get()); });
-
-  auto filter = tr("Elastix Parameterfile (*.txt)");
   connect(controls.btnLoadPreset,
           &QAbstractButton::clicked,
           [=]()
           {
-            auto paths = QFileDialog::getOpenFileNames(m_Parent, "Load elastix transform parameter files.", "", filter);
+            const auto paths = QFileDialog::getOpenFileNames(m_Parent, "Load elastix transform parameter files.", "", filter);
+            m_MovingEntities[modalityId]->m_Transformations.clear();
             for (auto p : paths)
             {
-              std::string s;
-              std::ifstream(paths[0].toStdString()) >> s;
+              
+              std::ifstream reader(paths[0].toStdString());
+              std::string s((std::istreambuf_iterator<char>(reader)),
+                               std::istreambuf_iterator<char>());
+              MITK_INFO << s;
               m_MovingEntities[modalityId]->m_Transformations.push_back(s);
             }
           });
+
   connect(controls.btnSaveTransforms,
           &QAbstractButton::clicked,
           [=]()
@@ -262,7 +263,7 @@ void RegistrationView::AddNewModalityTab()
             unsigned int i = 0;
             for (auto t : m_MovingEntities[modalityId]->m_Transformations)
             {
-              auto name = m_MovingEntities[modalityId]->m_ImageSelection->GetSelectedNode()->GetName() + "_transform" +
+              const auto name = m_MovingEntities[modalityId]->m_ImageSelection->GetSelectedNode()->GetName() + "_transform" +
                           std::to_string(i) + ".txt";
               auto spath = path.split('/');
               spath.pop_back();
@@ -314,7 +315,7 @@ void RegistrationView::AddNewModalityTab()
   pointSetSelection->SetPopUpTitel(QString("Select point set node"));
   controls.referencePointSetData->addWidget(pointSetSelection);
   m_MovingEntities[modalityId]->m_PointSetSelection = pointSetSelection;
-
+  
   auto attSelection = new QmitkSingleNodeSelectionWidget();
   attSelection->SetDataStorage(GetDataStorage());
   attSelection->SetNodePredicate(mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")));
@@ -325,6 +326,7 @@ void RegistrationView::AddNewModalityTab()
   m_MovingEntities[modalityId]->m_Attachments.push_back(attSelection);
   m_MovingEntities[modalityId]->m_Index = controls.index;
   m_MovingEntities[modalityId]->m_Index->setValue(m_MovingEntities.size());
+  
 
   connect(controls.addMovingPointSet,
           &QPushButton::clicked,
@@ -344,7 +346,6 @@ void RegistrationView::AddNewModalityTab()
               pointSetSelection->SetCurrentSelection({node});
             }
           });
-
   connect(controls.btnRemove,
           &QPushButton::clicked,
           this,
@@ -353,7 +354,33 @@ void RegistrationView::AddNewModalityTab()
             auto widget = this->m_Controls.tabWidget->findChild<QWidget *>(QString(modalityId));
             auto id = m_Controls.tabWidget->indexOf(widget);
             this->m_Controls.tabWidget->removeTab(id);
+            this->m_MovingEntities.erase(modalityId);            
           });
+    
+  connect(controls.btnApplyTransforms,
+          &QAbstractButton::clicked,
+          [=]() { 
+            
+            
+            m2::ElxRegistrationHelper warpingHelper;
+            auto node = m_MovingEntities[modalityId].get()->m_ImageSelection->GetSelectedNode();
+            auto image = dynamic_cast<mitk::Image*>(node->GetData());
+            warpingHelper.SetTransformations(m_MovingEntities[modalityId].get()->m_Transformations);
+            auto result = warpingHelper.WarpImage(image);
+
+            mitk::DataNode *parentNode = node;
+            if (m_Controls.chkBxAttachToFixedImage->isChecked())
+            {
+              parentNode = this->m_FixedEntity->m_ImageSelection->GetSelectedNode();
+            }
+            MITK_INFO << "Add moving image node";
+            auto newNode = mitk::DataNode::New();
+            newNode->SetData(result);
+
+            this->GetDataStorage()->Add(newNode, parentNode);
+            
+            
+            });
 
   ++m_ModalityId;
 }
@@ -644,7 +671,6 @@ void RegistrationView::StartRegistration()
 {
   if (m_Controls.rbAllToOne->isChecked())
   {
-    MITK_INFO << "m_Controls.rbAllToOne->isChecked()";
     for (auto &kv : m_MovingEntities)
       Registration(m_FixedEntity.get(), kv.second.get());
   }
@@ -652,7 +678,6 @@ void RegistrationView::StartRegistration()
   if (m_Controls.rbSubsequent->isChecked())
   {
 
-    MITK_INFO << "m_Controls.rbSubsequent->isChecked()";
     const auto fixIndex = m_Controls.fixedIndex->value();
     std::list<std::shared_ptr<RegistrationEntity>> upperEntities, lowerEntities;
 
