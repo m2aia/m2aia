@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>301</width>
-    <height>145</height>
+    <height>176</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -17,12 +17,15 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLineEdit" name="lineEditName"/>
+      <widget class="QmitkSingleNodeSelectionWidget" name="imageSelection" native="true"/>
      </item>
      <item>
       <widget class="QSpinBox" name="index"/>
      </item>
     </layout>
+   </item>
+   <item>
+    <widget class="QmitkSingleNodeSelectionWidget" name="imageMaskSelection" native="true"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="referencePointSetData">
@@ -39,22 +42,8 @@
        </property>
       </widget>
      </item>
-    </layout>
-   </item>
-   <item>
-    <layout class="QHBoxLayout" name="attachmentLayout">
      <item>
-      <widget class="QPushButton" name="addAttachment">
-       <property name="minimumSize">
-        <size>
-         <width>25</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>+</string>
-       </property>
-      </widget>
+      <widget class="QmitkSingleNodeSelectionWidget" name="pointSetSelection" native="true"/>
      </item>
     </layout>
    </item>
@@ -169,6 +158,14 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QmitkSingleNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">QmitkSingleNodeSelectionWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="../../../../../mitk/Plugins/org.mitk.gui.qt.ext/resources/org_mitk_icons.qrc"/>
  </resources>

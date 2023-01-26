@@ -5,17 +5,19 @@ set(SRC_CPP_FILES
 set(INTERNAL_CPP_FILES
   org_mitk_gui_qt_m2_Registration_Activator.cpp
   RegistrationView.cpp
+  RegistrationDataWidget.cpp
 )
 
 set(UI_FILES
   src/internal/RegistrationViewControls.ui
   src/internal/ParameterFileEditorDialog.ui
-  src/internal/RegistrationEntityWidgetControls.ui
+  src/internal/RegistrationDataWidgetControls.ui
 )
 
 set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_Registration_Activator.h
   src/internal/RegistrationView.h
+  src/internal/RegistrationDataWidget.h
 )
 
 # list of resource files which can be used by the plug-in
