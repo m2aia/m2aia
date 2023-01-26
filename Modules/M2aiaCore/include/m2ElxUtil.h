@@ -125,15 +125,23 @@ namespace m2
       return shape;
     }
 
-    static void SavePointSet(const mitk::PointSet::Pointer &pnts, const std::string &path)
+    static void SavePointSet(const mitk::PointSet::Pointer &pnts,  const std::string &path)
     {
+      std::setlocale(LC_NUMERIC, "en_US.UTF-8");
       std::ofstream f(path);
       f << "point\n";
       f << std::to_string(pnts->GetSize()) << "\n";
+      mitk::Point3D index;
       for (auto it = pnts->Begin(); it != pnts->End(); ++it)
       {
         const auto &p = it->Value();
-        f << p[0] << " " << p[1] << "\n";
+        // if(reference_image){
+        //   reference_image->GetGeometry()->WorldToIndex(p,index);
+        //   f << index[0] << " " << index[1] << " " << index[2]<< "\n";
+        // }else{
+
+        f << p[0] << " " << p[1] << " " <<  p[2] << "\n";
+        // }
       }
 
       f.close();

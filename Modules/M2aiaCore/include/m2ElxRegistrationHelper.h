@@ -51,8 +51,32 @@ namespace m2
     bool m_UseMovingImageSpacing = false;
 
     bool CheckDimensions(const mitk::Image *image) const;
-    mitk::Image::Pointer GetSlice2DData(const mitk::Image *) const;
-    mitk::Image::Pointer GetSlice3DData(const mitk::Image *) const;
+
+
+    /**
+    *  @brief ConvertForElastixProcessing function takes a pointer to a mitk::Image as input and returns a pointer to a new mitk::Image object. 
+    *  The function first checks if the input image pointer is not null, and if it is not, it proceeds to check the dimension of the image.
+    *  - If the dimension of the image is 3 and the size in the Z dimension is 1, the function creates a new 2D image using ITK and copies the data, spacing, origin and direction from the input image to the new 2D image. The function then returns the new 2D image.
+    *  - If the dimension of the image is 2, the function returns the input image as it is.
+    *  - If the dimension of the image is 3 and the size in the Z dimension is greater than 1, the function returns the input image as it is.
+    *  - If the dimension of the image is 4, the function creates a new 3D image and copies the data, spacing, origin and direction from the input image to the new 3D image. The function then returns the new 3D image.
+    *  - If the input image pointer is null, the function throws an exception with the message "Image data is null!".
+    *  @note that this function is not well-suited for handling 4D+t images, and only the first time step is selected.
+    *  @param image pointer to a mitk::Image.
+    *  @return pointer to a new mitk::Image object.
+    */
+    mitk::Image::Pointer ConvertForElastixProcessing(const mitk::Image *) const;
+
+    /**
+    *  @brief Get a 3D image slice from a 2D image.
+    *  - If the input image is 2D, a new 3D image is created with the same properties as the input image, and the 2D image data is copied to the first slice of the new image.
+    *  - If the input image is already 3D, the input image is returned.
+    *  @param image The input image.
+    *  @return mitk::Image::Pointer A 3D image slice.
+    *  @throws mitk::Exception if the input image is null.
+    */
+    mitk::Image::Pointer ConvertForM2aiaProcessing(const mitk::Image *) const;
+
     void CreateWorkingDirectory() const;
     void RemoveWorkingDirectory() const;
     void SymlinkOrWriteNrrd(mitk::Image::Pointer image, std::string targetPath) const;
@@ -85,7 +109,7 @@ namespace m2
       return m_MovingImage;
     }
     
-    mitk::Image::Pointer WarpImage(const mitk::Image::Pointer image,
+    mitk::Image::Pointer WarpImage(const mitk::Image * image,
                                    const std::string &type = "float",
                                    const unsigned char &interpolationOrder = 3) const;
     mitk::Image::Pointer WarpPoints(mitk::PointSet *);
