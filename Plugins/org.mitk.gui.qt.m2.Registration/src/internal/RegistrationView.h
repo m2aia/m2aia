@@ -17,17 +17,14 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #ifndef Registration_h
 #define Registration_h
 
-
+#include "RegistrationData.h"
 #include "ui_RegistrationViewControls.h"
-#include <map>
-#include <QmitkAbstractView.h>
 #include <QDialog>
 #include <QFutureWatcher>
+#include <QmitkAbstractView.h>
 #include <berryISelectionListener.h>
-
-
+#include <map>
 #include <mitkPointSet.h>
-#include "RegistrationData.h"
 #include <ui_ParameterFileEditorDialog.h>
 
 class QmitkSingleNodeSelectionWidget;
@@ -60,7 +57,10 @@ protected:
 
   char m_ModalityId = 'A';
   QWidget *m_Parent;
-  
+
+  const unsigned int REGISTRATION_VOLUME = 1;
+  const unsigned int REGISTRATION_SLICE = 0;
+  unsigned int currentStrategy = REGISTRATION_VOLUME;
   // struct RegistrationEntity{
   //   QmitkSingleNodeSelectionWidget * m_ImageSelection;
   //   QmitkSingleNodeSelectionWidget * m_ImageMaskSelection;
@@ -72,21 +72,20 @@ protected:
   //   std::vector<std::string> m_Transformations;
   // };
 
-  QFutureWatcher<void> m_RegistrationJob;
+  std::shared_ptr<QFutureWatcher<void>> m_RegistrationJob;
   Ui::RegistrationViewControls m_Controls;
-  RegistrationDataWidget* m_FixedEntity;
+  RegistrationDataWidget *m_FixedEntity;
 
   Ui::elxParameterFileEditor m_ParameterFileEditorControls;
-  QDialog * m_ParameterFileEditor;
-  std::map<int,std::vector<std::string>> m_ParameterFiles, m_DefaultParameterFiles;
+  QDialog *m_ParameterFileEditor;
+  std::vector<std::string> m_ParameterFiles;
 
-  void StartRegistration();
-  void Registration(RegistrationDataWidget * fixed, RegistrationDataWidget * moving);
-  void AddNewModalityTab();
+  void Registration(RegistrationDataWidget *fixed, RegistrationDataWidget *moving);
 
-  public slots:
-  void PostProcessReconstruction();
-
+public slots:
+  void OnStartRegistration();
+  void OnPostProcessReconstruction();
+  void OnAddNewModalityTab();
 };
 
 #endif // Registration_h

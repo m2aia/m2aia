@@ -17,6 +17,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "RegistrationDataWidget.h"
 
 #include <QFileDialog>
+#include <QMessageBox>
+
 #include <m2ElxRegistrationHelper.h>
 #include <mitkDataStorage.h>
 #include <mitkImage.h>
@@ -26,11 +28,13 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkNodePredicateProperty.h>
 #include <mitkPointSet.h>
 
-RegistrationDataWidget::RegistrationDataWidget(QWidget *parent, mitk::DataStorage *storage)
-  : QWidget(parent), m_Parent(parent)
+RegistrationDataWidget::RegistrationDataWidget(QWidget *parent, mitk::DataStorage::Pointer storage)
+  : QWidget(parent), m_Parent(parent), m_DataStorage(storage)
 {
   m_Controls.setupUi(this);
-  m_Controls.imageSelection->SetDataStorage(storage);
+  m_Controls.imageSelection->SetDataStorage(m_DataStorage);
+  
+  m_RegistrationData = std::make_shared<RegistrationData>();
 
   // configure image selection
   m_Controls.imageSelection->SetNodePredicate(
@@ -41,7 +45,7 @@ RegistrationDataWidget::RegistrationDataWidget(QWidget *parent, mitk::DataStorag
   m_Controls.imageSelection->SetPopUpTitel(QString("Select image node"));
 
   // configure image mask selection
-  m_Controls.imageMaskSelection->SetDataStorage(storage);
+  m_Controls.imageMaskSelection->SetDataStorage(m_DataStorage);
   m_Controls.imageMaskSelection->SetNodePredicate(
     mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::Image>::New(),
                                 mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
@@ -50,7 +54,7 @@ RegistrationDataWidget::RegistrationDataWidget(QWidget *parent, mitk::DataStorag
   m_Controls.imageMaskSelection->SetPopUpTitel(QString("Select image mask node"));
 
   // configure image mask selection
-  m_Controls.pointSetSelection->SetDataStorage(storage);
+  m_Controls.pointSetSelection->SetDataStorage(m_DataStorage);
   m_Controls.pointSetSelection->SetNodePredicate(
     mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::PointSet>::New(),
                                 mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
@@ -58,16 +62,18 @@ RegistrationDataWidget::RegistrationDataWidget(QWidget *parent, mitk::DataStorag
   m_Controls.pointSetSelection->SetEmptyInfo(QString("Select point set"));
   m_Controls.pointSetSelection->SetPopUpTitel(QString("Select point set node"));
 
-  connect(m_Controls.btnLoadPreset, &QAbstractButton::clicked, this, &RegistrationDataWidget::OnLoadTransformations);
-  connect(
-    m_Controls.btnSaveTransforms, &QAbstractButton::clicked, this, &RegistrationDataWidget::OnSaveTransformations);
-  connect(
-    m_Controls.btnApplyTransforms, &QAbstractButton::clicked, this, &RegistrationDataWidget::OnApplyTransformations);
-  connect(m_Controls.addMovingPointSet, SIGNAL(clicked()), this, SIGNAL(OnAddPointSet()));
-  connect(m_Controls.btnRemove, &QPushButton::clicked, this, &RegistrationDataWidget::RemoveSelf);
+  connect(m_Controls.btnLoadPreset, SIGNAL(clicked()), this, SLOT(OnLoadTransformations()));
+  connect(m_Controls.btnSaveTransforms, SIGNAL(clicked()), this, SLOT(OnSaveTransformations()));
+  connect(m_Controls.btnApplyTransforms, SIGNAL(clicked()), this, SLOT(OnApplyTransformations()));
+  connect(m_Controls.btnRemove, SIGNAL(clicked()), this, SIGNAL(RemoveSelf()));
+  connect(m_Controls.addMovingPointSet, SIGNAL(clicked()), this, SLOT(OnAddPointSet()));
 }
 
 RegistrationDataWidget::~RegistrationDataWidget() {}
+
+void RegistrationDataWidget::SetDataStorage(mitk::DataStorage::Pointer storage){
+  m_DataStorage = storage;
+}
 
 void RegistrationDataWidget::OnLoadTransformations()
 {
@@ -116,16 +122,21 @@ void RegistrationDataWidget::OnApplyTransformations()
 
 void RegistrationDataWidget::OnAddPointSet()
 {
-  if (auto imageNode = m_Controls.imageSelection->GetSelectedNode())
+  if (HasImage())
   {
+    auto imageNode = GetImageNode();
     auto node = mitk::DataNode::New();
     node->SetData(mitk::PointSet::New());
-    node->SetName(imageNode->GetName() + "(points)");
-    node->SetFloatProperty("point 2D size", 0.5);
+    node->SetName(imageNode->GetName() + " (points)");
+    auto s = GetImage()->GetGeometry()->GetSpacing()[0];
+    node->SetFloatProperty("point 2D size", s);
     node->SetProperty("color", mitk::ColorProperty::New(0.0f, 1.0f, 1.0f));
     m_DataStorage->Add(node, imageNode);
     m_Controls.pointSetSelection->SetCurrentSelection({node});
+  }else{
+    QMessageBox::information(m_Parent, "Missing image selection!","Please select an image before proceeding. No image has been selected currently.");
   }
+
 }
 
 void RegistrationDataWidget::UpdateRegistrationDataFromUI()

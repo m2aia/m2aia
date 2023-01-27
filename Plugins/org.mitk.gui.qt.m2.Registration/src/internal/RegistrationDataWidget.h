@@ -20,20 +20,16 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QString>
 #include <QWidget>
 
-namespace mitk
-{
-  class DataStorage;
-}
+#include <mitkDataStorage.h>
 
 class RegistrationDataWidget : public QWidget
 {
   Q_OBJECT
 private:
-  Ui_RegistrationEntityWidgetControls m_Controls;
+  Ui_RegistrationDataWidgetControls m_Controls;
   QWidget *m_Parent;
-  mitk::DataStorage *m_DataStorage;
+  mitk::DataStorage::Pointer m_DataStorage;
   std::shared_ptr<RegistrationData> m_RegistrationData;
-
   void UpdateRegistrationDataFromUI();
 
   // std::vector<std::string> m_Transformations;
@@ -48,7 +44,7 @@ private slots:
   void OnAddPointSet();
 
 public:
-  RegistrationDataWidget(QWidget *parent, mitk::DataStorage *storage);
+  RegistrationDataWidget(QWidget *parent, mitk::DataStorage::Pointer storage);
   ~RegistrationDataWidget();
   std::shared_ptr<RegistrationData> GetRegistrationData();
   const RegistrationData * GetRegistrationData() const;
@@ -59,6 +55,7 @@ public:
   bool HasTransformations() const;
   void EnableButtons(bool);
 
+  void SetDataStorage(mitk::DataStorage::Pointer storage);
   mitk::DataNode::Pointer GetImageNode() const;
   mitk::DataNode::Pointer GetMaskNode() const;
   mitk::DataNode::Pointer GetPointSetNode() const;

@@ -27,7 +27,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "QmitkSingleNodeSelectionWidget.h"
 #include "RegistrationView.h"
 // Qt
-#include <QDial>
+
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
 #include <QMessageBox>
@@ -48,6 +48,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateProperty.h>
 #include <mitkPointSet.h>
+#include <mitkProgressBar.h>
 #include <mitkSceneIO.h>
 
 // itk
@@ -70,74 +71,58 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
   m_Parent = parent;
-
-  m_FixedEntity = new RegistrationDataWidget(parent, GetDataStorage());
+  m_Controls.tabWidget->setCornerWidget(m_Controls.btnAddModality);
+  m_FixedEntity = new RegistrationDataWidget(parent, this->GetDataStorage());
   m_FixedEntity->EnableButtons(false);
   m_Controls.tabWidget->addTab(m_FixedEntity, "Fixed");
-  // m_Controls.fixedImageData->layout()->addWidget(m_FixedEntity);
+  
+  m_ParameterFiles = {m2::Elx::Rigid(), m2::Elx::Deformable()};
 
   m_ParameterFileEditor = new QDialog(parent);
   m_ParameterFileEditorControls.setupUi(m_ParameterFileEditor);
 
-  connect(m_Controls.btnStartRecon, &QAbstractButton::clicked, this, &RegistrationView::PostProcessReconstruction);
+  connect(m_Controls.btnStartRecon, SIGNAL(clicked()), this, SLOT(OnPostProcessReconstruction()));
 
-  // Initialize defaults
-  {
-    m_DefaultParameterFiles[0] = {m2::Elx::Rigid(), m2::Elx::Deformable()};
+  
+  
+  // connect(
+  //   m_Controls.registrationStrategy, qOverload<int>(&QComboBox::currentIndexChanged), this, [this](auto currentIndex) {
+  //     m_ParameterFileEditorControls.rigidText->setText(m_ParameterFiles[currentIndex][0].c_str());
+  //     m_ParameterFileEditorControls.deformableText->setText(m_ParameterFiles[currentIndex][1].c_str());
 
-    auto rigid = m2::Elx::Rigid();
-    m2::ElxUtil::ReplaceParameter(rigid, "FixedImageDimension", "3");
-    m2::ElxUtil::ReplaceParameter(rigid, "MovingImageDimension", "3");
-    auto deformable = m2::Elx::Deformable();
-    m2::ElxUtil::ReplaceParameter(deformable, "FixedImageDimension", "3");
-    m2::ElxUtil::ReplaceParameter(deformable, "MovingImageDimension", "3");
-    m2::ElxUtil::RemoveParameter(deformable, "FinalGridSpacingInPhysicalUnits");
-    m2::ElxUtil::RemoveParameter(deformable, "GridSpacingSchedule");
-    m_DefaultParameterFiles[1] = {rigid, deformable};
-  }
+  //     switch (currentIndex)
+  //     {
+  //       case 0:
+  //         m_Controls.label->setText("SliceImageData [NxM] or [NxMx1], MultiModal, MultiMetric, Rigid + Deformable");
+  //         break;
+  //       case 1:
+  //         m_Controls.label->setText("VolumeImageData [NxMxD], MultiModal, MultiMetric, Rigid+Deformable");
+  //         break;
+  //     }
+  //   });
 
-  m_ParameterFiles = m_DefaultParameterFiles;
-
-  connect(
-    m_Controls.registrationStrategy, qOverload<int>(&QComboBox::currentIndexChanged), this, [this](auto currentIndex) {
-      m_ParameterFileEditorControls.rigidText->setText(m_ParameterFiles[currentIndex][0].c_str());
-      m_ParameterFileEditorControls.deformableText->setText(m_ParameterFiles[currentIndex][1].c_str());
-
-      switch (currentIndex)
-      {
-        case 0:
-          m_Controls.label->setText("SliceImageData [NxM] or [NxMx1], MuliModal, MultiMetric, Rigid + Deformable");
-          break;
-        case 1:
-          m_Controls.label->setText("VolumeImageData [NxMxD], MultiModal, MultiMetric, Rigid+Deformable");
-          break;
-      }
-    });
-
-  m_Controls.registrationStrategy->setCurrentIndex(1);
+  // m_Controls.registrationStrategy->setCurrentIndex(1);
 
   connect(m_ParameterFileEditorControls.buttonBox->button(QDialogButtonBox::StandardButton::RestoreDefaults),
           &QAbstractButton::clicked,
           this,
           [this]() {
-            auto currentIndex = this->m_Controls.registrationStrategy->currentIndex();
-            m_ParameterFileEditorControls.rigidText->setText(m_DefaultParameterFiles[currentIndex][0].c_str());
-            m_ParameterFileEditorControls.deformableText->setText(m_DefaultParameterFiles[currentIndex][1].c_str());
+            m_ParameterFileEditorControls.rigidText->setText(m2::Elx::Rigid().c_str());
+            m_ParameterFileEditorControls.deformableText->setText(m2::Elx::Deformable().c_str());
           });
 
   connect(m_ParameterFileEditorControls.buttonBox->button(QDialogButtonBox::StandardButton::Close),
           &QAbstractButton::clicked,
           this,
           [this]() {
-            auto currentIndex = this->m_Controls.registrationStrategy->currentIndex();
-            m_ParameterFiles[currentIndex] = {
+            m_ParameterFiles = {
               m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
               m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
           });
 
-  connect(m_Controls.btnStartRegistration, &QPushButton::clicked, this, &RegistrationView::StartRegistration);
+  connect(m_Controls.btnStartRegistration, SIGNAL(clicked()), this, SLOT(OnStartRegistration()));
 
-  connect(m_Controls.btnAddModality, &QPushButton::clicked, this, [this]() { AddNewModalityTab(); });
+  connect(m_Controls.btnAddModality, SIGNAL(clicked()), this, SLOT(OnAddNewModalityTab()));
 
   connect(m_Controls.btnOpenPontSetInteractionView, &QPushButton::clicked, this, []() {
     try
@@ -170,61 +155,17 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
 
   connect(m_Controls.btnEditParameterFiles, &QPushButton::clicked, this, [this]() {
     m_ParameterFileEditor->exec();
-    auto currentIndex = this->m_Controls.registrationStrategy->currentIndex();
-    m_ParameterFiles[currentIndex] = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
-                                      m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
+    m_ParameterFiles = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
+                        m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
   });
 }
 
-void RegistrationView::AddNewModalityTab()
+void RegistrationView::OnAddNewModalityTab()
 {
   auto widget = new RegistrationDataWidget(m_Parent, GetDataStorage());
-
-  // auto widget = new QWidget();
-  // Ui::RegistrationEntityWidgetControls controls;
-  // controls.setupUi(widget);
-  // const auto modalityId = m_ModalityId;
-  // const auto tabId =
-  m_Controls.tabWidget->addTab(widget, (std::to_string(m_Controls.tabWidget->count()).c_str()));
-  // auto page = m_Controls.tabWidget->widget(tabId);
-  // page->setObjectName(QString(m_ModalityId));
-  // m_Controls.tabWidget->setCurrentIndex(tabId);
-  // m_MovingEntities[modalityId] = std::make_shared<RegistrationEntity>();
-
-  // QWidget::setTabOrder(m_Controls.btnAddModality, controls.lineEditName);
-
-  // controls.lineEditName->setPlaceholderText(QString(modalityId) + ": new name for this modality.");
-  // connect(controls.lineEditName, &QLineEdit::textChanged, this, [tabId, this](const QString text) {
-  //   m_Controls.tabWidget->setTabText(tabId, text);
-  // });
-
-  // auto imageSelection = new QmitkSingleNodeSelectionWidget();
-
-  // controls.widgetList->insertWidget(1, imageSelection);
-  // m_MovingEntities[modalityId]->m_ImageSelection = imageSelection;
-
-  // auto imageMaskSelection = new QmitkSingleNodeSelectionWidget();
-
-  // controls.widgetList->insertWidget(2, imageMaskSelection);
-  // m_MovingEntities[modalityId]->m_ImageMaskSelection = imageMaskSelection;
-
-  // auto pointSetSelection = new QmitkSingleNodeSelectionWidget();
-
-  // controls.referencePointSetData->addWidget(pointSetSelection);
-  // m_MovingEntities[modalityId]->m_PointSetSelection = pointSetSelection;
-
-  // auto attSelection = new QmitkSingleNodeSelectionWidget();
-  // attSelection->SetDataStorage(GetDataStorage());
-  // attSelection->SetNodePredicate(mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")));
-  // attSelection->SetSelectionIsOptional(true);
-  // attSelection->SetEmptyInfo(QString("Select attached mask"));
-  // attSelection->SetPopUpTitel(QString("Select attached mask"));
-  // controls.attachmentLayout->addWidget(attSelection);
-  // m_MovingEntities[modalityId]->m_Attachments.push_back(attSelection);
-  // m_MovingEntities[modalityId]->m_Index = controls.index;
-  // m_MovingEntities[modalityId]->m_Index->setValue(m_MovingEntities.size());
-
-  // ++m_ModalityId;
+  auto newIndex =
+    m_Controls.tabWidget->addTab(widget, (std::string("M") + std::to_string(m_Controls.tabWidget->count())).c_str());
+  m_Controls.tabWidget->setCurrentIndex(newIndex);
 }
 
 void RegistrationView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
@@ -257,13 +198,13 @@ QString RegistrationView::GetElastixPathFromPreferences() const
   return preferences.IsNotNull() ? preferences->Get("elastix", "") : "";
 }
 
-void RegistrationView::PostProcessReconstruction()
+void RegistrationView::OnPostProcessReconstruction()
 {
   // create volume node
 
   {
     MITK_INFO << "***** Initialize new volume *****";
-    auto image = m_FixedEntity->GetRegistrationData()->m_Image;
+    auto image = m_FixedEntity->GetImage();
     unsigned int dims[3] = {0, 0, 0};
     auto newVolume = mitk::Image::New();
 
@@ -321,7 +262,13 @@ void RegistrationView::PostProcessReconstruction()
 void RegistrationView::Registration(RegistrationDataWidget *fixed, RegistrationDataWidget *moving)
 {
   // wait until a running job is complete
-  m_RegistrationJob.waitForFinished();
+  if (m_RegistrationJob)
+    m_RegistrationJob->waitForFinished();
+  // job finished, assign a new watcher
+  m_RegistrationJob = std::make_shared<QFutureWatcher<void>>();
+
+  mitk::ProgressBar::GetInstance()->AddStepsToDo(6);
+  mitk::ProgressBar::GetInstance()->SetPercentageVisible(false);
 
   const auto invert = [](mitk::Image::Pointer image) {
     mitk::Image::Pointer rImage;
@@ -352,75 +299,76 @@ void RegistrationView::Registration(RegistrationDataWidget *fixed, RegistrationD
   mitk::DataNode::Pointer fixedImageNode, movingImageNode, fixedImageMaskNode, movingImageMaskNode;
   mitk::PointSet::Pointer fixedPointSet, movingPointSet;
 
+  std::list<std::string> queue;
+
+  auto statusCallback = [=](std::string &&v) mutable {
+    if (queue.size() > 15)
+      queue.pop_front();
+    queue.push_back(v);
+    QString s;
+    for (auto line : queue)
+      s = s + line.c_str() + "\n";
+
+    m_Controls.labelStatus->setText(s);
+  };
+
+  if (fixed->HasImage())
+  {
+    fixedImageNode = fixed->GetImageNode();
+    fixedImage = fixed->GetImage();
+    if (m_Controls.chkBxInvertIntensities->isChecked())
+      fixedImage = invert(fixedImage);
+
+    if (fixed->HasTransformations())
+    {
+      MITK_INFO << "***** Warp Fixed Image *****";
+      m2::ElxRegistrationHelper warpingHelper;
+      warpingHelper.SetTransformations(fixed->GetTransformations());
+      fixedImage = warpingHelper.WarpImage(fixedImage);
+    }
+    mitk::ProgressBar::GetInstance()->Progress(1);
+  }
+  else
+  {
+    mitkThrow() << "No Fixed image data";
+  }
+
+  if (moving->HasImage())
+  {
+    movingImageNode = moving->GetImageNode();
+    movingImage = moving->GetImage();
+    if (m_Controls.chkBxInvertIntensities->isChecked())
+      movingImage = invert(movingImage);
+    mitk::ProgressBar::GetInstance()->Progress(1);
+  }
+  else
+  {
+    mitkThrow() << "No Moving image data";
+  }
+
+  // Fixed image mask
+
+  if (fixed->HasMask())
+  {
+    fixedImageMaskNode = fixed->GetMaskNode();
+    fixedImageMask = fixed->GetMask();
+    if (fixed->HasTransformations())
+    {
+      m2::ElxRegistrationHelper warpingHelper;
+      warpingHelper.SetTransformations(fixed->GetTransformations());
+      fixedImageMask = warpingHelper.WarpImage(fixedImageMask, "short", 1);
+    }
+  }
+
+  // PointSets
+
+  fixedPointSet = fixed->GetPointSet();
+  movingPointSet = moving->GetPointSet();
   try
   {
-    std::list<std::string> queue;
-
-    auto statusCallback = [=](std::string &&v) mutable {
-      if (queue.size() > 15)
-        queue.pop_front();
-      queue.push_back(v);
-      QString s;
-      for (auto line : queue)
-        s = s + line.c_str() + "\n";
-
-      m_Controls.labelStatus->setText(s);
-    };
-
-    if (fixed->HasImage())
-    {
-      fixedImageNode = fixed->GetImageNode();
-      fixedImage = fixed->GetImage();
-      if (m_Controls.chkBxInvertIntensities->isChecked())
-        fixedImage = invert(fixedImage);
-
-      if (!fixed->HasTransformations())
-      {
-        MITK_INFO << "***** Warp Fixed Image *****";
-        m2::ElxRegistrationHelper warpingHelper;
-        warpingHelper.SetTransformations(fixed->GetTransformations());
-        fixedImage = warpingHelper.WarpImage(fixedImage);
-      }
-    }
-    else
-    {
-      mitkThrow() << "No image data";
-    }
-
-    if (moving->HasImage())
-    {
-      movingImageNode = moving->GetImageNode();
-      movingImage = moving->GetImage();
-      if (m_Controls.chkBxInvertIntensities->isChecked())
-        movingImage = invert(movingImage);
-    }
-
-    // Fixed image mask
-
-    if (fixed->HasMask())
-    {
-      fixedImageMaskNode = fixed->GetMaskNode();
-      fixedImageMask = fixed->GetMask();
-      if (fixed->HasTransformations())
-      {
-        m2::ElxRegistrationHelper warpingHelper;
-        warpingHelper.SetTransformations(fixed->GetTransformations());
-        fixedImageMask = warpingHelper.WarpImage(fixedImageMask, "short", 1);
-      }
-    }
-
-    // PointSets
-
-    fixedPointSet = fixed->GetPointSet();
-    movingPointSet = moving->GetPointSet();
-
-    auto currentIndex = m_Controls.registrationStrategy->currentIndex();
-    std::vector<std::string> parameterFiles;
-
-    // copy valid and discard empty parameter files
-    for (auto &p : m_ParameterFiles[currentIndex])
-      parameterFiles.push_back(p);
-
+    
+    std::vector<std::string> parameterFiles = m_ParameterFiles;
+    
     if (!m_Controls.chkBxUseDeformableRegistration->isChecked() || parameterFiles.back().empty())
     {
       parameterFiles.pop_back();
@@ -440,8 +388,10 @@ void RegistrationView::Registration(RegistrationDataWidget *fixed, RegistrationD
 
     auto helper = std::make_shared<m2::ElxRegistrationHelper>();
     auto worker = [=]() mutable {
+      mitk::ProgressBar::GetInstance()->Progress(1);
       // Images
       // setup and run
+      MITK_INFO << "Use Count: " << helper.use_count();
       m_Controls.btnStartRegistration->setEnabled(false);
       MITK_INFO << "***** Start Registration *****";
       helper->SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
@@ -454,10 +404,13 @@ void RegistrationView::Registration(RegistrationDataWidget *fixed, RegistrationD
       helper->SetStatusCallback(statusCallback);
       helper->GetRegistration();
       m_Controls.btnStartRegistration->setEnabled(true);
+      mitk::ProgressBar::GetInstance()->Progress(1);
     };
 
-    connect(&m_RegistrationJob, &QFutureWatcher<void>::finished, [=]() {
+    connect(m_RegistrationJob.get(), &QFutureWatcher<void>::finished, [=]() {
       // warp original data
+      mitk::ProgressBar::GetInstance()->Progress(1);
+      MITK_INFO << "Use Count: " << helper.use_count();
       auto movingImage = dynamic_cast<const mitk::Image *>(movingImageNode->GetData());
       auto warpedImage = helper->WarpImage(movingImage);
       moving->SetTransformations(helper->GetTransformation());
@@ -498,18 +451,10 @@ void RegistrationView::Registration(RegistrationDataWidget *fixed, RegistrationD
       newNode->SetData(warpedImage);
       newNode->SetName(moving->GetImageNode()->GetName() + "(warped)");
       this->GetDataStorage()->Add(newNode, parentNode);
-
-      // MITK_INFO << "Add attachments";
-      // for (auto node : moving->m_ResultAttachments)
-      // {
-      //   this->GetDataStorage()->Add(node, parentNode);
-      //   MITK_INFO << node->GetName();
-      // }
-
-      m_Controls.btnStartRegistration->setEnabled(true);
+      mitk::ProgressBar::GetInstance()->Progress(1);
     });
 
-    m_RegistrationJob.setFuture(QtConcurrent::run(worker));
+    m_RegistrationJob->setFuture(QtConcurrent::run(worker));
   }
   catch (std::exception &e)
   {
@@ -517,8 +462,33 @@ void RegistrationView::Registration(RegistrationDataWidget *fixed, RegistrationD
   }
 }
 
-void RegistrationView::StartRegistration()
+void RegistrationView::OnStartRegistration()
 {
+  // check dimensionalities
+  unsigned int maxDimZ = 0;
+  for (int i = 0; i < m_Controls.tabWidget->count(); i++)
+  {
+    auto data = dynamic_cast<RegistrationDataWidget *>(m_Controls.tabWidget->widget(i));
+    if (data->HasImage())
+    {
+      auto image = data->GetImage();
+      if (image->GetDimension() == 3)
+        maxDimZ = std::max(image->GetDimensions()[2], maxDimZ);
+    }
+  }
+  if(maxDimZ>1){
+    m2::ElxUtil::ReplaceParameter(m_ParameterFiles[0], "FixedImageDimension", "3");
+    m2::ElxUtil::ReplaceParameter(m_ParameterFiles[0], "MovingImageDimension", "3");
+    m2::ElxUtil::ReplaceParameter(m_ParameterFiles[1], "FixedImageDimension", "3");
+    m2::ElxUtil::ReplaceParameter(m_ParameterFiles[1], "MovingImageDimension", "3");
+  }else{
+    m2::ElxUtil::ReplaceParameter(m_ParameterFiles[0], "FixedImageDimension", "2");
+    m2::ElxUtil::ReplaceParameter(m_ParameterFiles[0], "MovingImageDimension", "2");
+    m2::ElxUtil::ReplaceParameter(m_ParameterFiles[1], "FixedImageDimension", "2");
+    m2::ElxUtil::ReplaceParameter(m_ParameterFiles[1], "MovingImageDimension", "2");
+  }
+
+
   if (m_Controls.rbAllToOne->isChecked())
   {
     for (int i = 0; i < m_Controls.tabWidget->count(); i++)

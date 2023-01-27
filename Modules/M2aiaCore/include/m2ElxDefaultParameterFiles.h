@@ -22,22 +22,19 @@ namespace m2
     {
       return R"((FixedInternalImagePixelType "float")
 (MovingInternalImagePixelType "float")
-
 (FixedImageDimension 2)
 (MovingImageDimension 2)
-
 (UseDirectionCosines "true")
 
 // **************** Main Components **************************
+
 // The following components should usually be left as they are:
 (Registration "MultiResolutionRegistration")
 (Interpolator "LinearInterpolator")
 (ResampleInterpolator "FinalLinearInterpolator")
 (Resampler "DefaultResampler")
-
 (FixedImagePyramid "FixedRecursiveImagePyramid")
 (MovingImagePyramid "MovingRecursiveImagePyramid")
-
 (Optimizer "AdaptiveStochasticGradientDescent")
 (Metric "AdvancedMattesMutualInformation")
 (Transform "EulerTransform")
@@ -81,23 +78,21 @@ namespace m2
 
 // ************* Interpolation and Resampling ****************
 
+(BSplineInterpolationOrder 3)
+
 // Order of B-Spline interpolation used for applying the final
 // deformation.
 // 3 gives good accuracy; recommended in most cases.
 // 1 gives worse accuracy (linear interpolation)
 // 0 gives worst accuracy, but is appropriate for binary images
 // (masks, segmentations); equivalent to nearest neighbor interpolation.
-(BSplineInterpolationOrder 3)
 (FinalBSplineInterpolationOrder 3)
 
 //Default pixel value for pixels that come from outside the picture:
 (DefaultPixelValue 0)
 
 (WriteTransformParametersEachResolution "false")
-
-// ************* Required by M2aia *************
-// The following components should usually be left as they are:
-(WriteResultImage "false")
+(WriteResultImage "true")
 (ResultImagePixelType "float")
 (ResultImageFormat "nrrd")
 )";
@@ -107,10 +102,8 @@ namespace m2
     {
       return R"((FixedInternalImagePixelType "float")
 (MovingInternalImagePixelType "float")
-
 (FixedImageDimension 2)
 (MovingImageDimension 2)
-
 (UseDirectionCosines "true")
 
 // **************** Main Components **************************
@@ -119,12 +112,6 @@ namespace m2
 (Registration "MultiResolutionRegistration")
 (ResampleInterpolator "FinalBSplineInterpolator")
 (Resampler "DefaultResampler")
-
-// These may be changed to Fixed/MovingSmoothingImagePyramid.
-// See the manual.
-// (FixedImagePyramid "FixedRecursiveImagePyramid")
-// (MovingImagePyramid "MovingRecursiveImagePyramid")
-
 (Optimizer "AdaptiveStochasticGradientDescent")
 (Transform "RecursiveBSplineTransform")
 (Metric "AdvancedMattesMutualInformation")
@@ -138,24 +125,10 @@ namespace m2
 
 // ***************** Transformation **************************
 
-// The control point spacing of the bspline transformation in
-// the finest resolution level. Can be specified for each
-// dimension differently. Unit: mm.
-(FinalGridSpacingInPhysicalUnits 0.35)
-
-// Alternatively, the grid spacing can be specified in voxel units.
-// To do that, uncomment the following line and comment/remove
-// the FinalGridSpacingInPhysicalUnits definition.
+// (FinalGridSpacingInPhysicalUnits 0.35)
 // (FinalGridSpacingInVoxels 15.0 15.0)
-(GridSpacingSchedule 8.0 8.0 3.0 3.0 2.5 2.5 1.0 1.0)
-
-// By default the grid spacing is halved after every resolution,
-// such that the final grid spacing is obtained in the last
-// resolution level. You can also specify your own schedule,
-// if you uncomment the following line:
+// (GridSpacingSchedule 8.0 8.0 3.0 3.0 2.5 2.5 1.0 1.0)
 // (GridSpacingSchedule 4.0 4.0 2.0 1.0)
-// This setting can also be supplied per dimension.
-
 (HowToCombineTransforms "Compose")
 
 // ******************* Similarity measure *********************
@@ -168,13 +141,9 @@ namespace m2
 // If you do not use a mask, the option doesn't matter.
 (ErodeMask "true")
 
-
-
-
 // ******************* Optimizer ****************************
 
 (MaximumNumberOfIterations 750)
-
 
 // The step size of the optimizer, in mm. By default the voxel size is used.
 // which usually works well. In case of unusual high-resolution images
@@ -185,13 +154,10 @@ namespace m2
 // **************** Image sampling **********************
 
 (NumberOfSpatialSamples 25000)
-
 (NewSamplesEveryIteration "true")
 (ImageSampler "Random")
 
-
 // ************* Interpolation and Resampling ****************
-
 
 (BSplineInterpolationOrder 3)
 //(WriteTransformParametersEachResolution "true")
@@ -212,10 +178,10 @@ namespace m2
 // You can save some time by setting this to false, if you are
 // not interested in the final deformed moving image, but only
 // want to analyze the deformation field for example.
+(WriteResultImage "true")
 (WriteTransformParametersEachResolution "false")
 
 // The pixel type and format of the resulting deformed moving image
-(WriteResultImage "false")
 (ResultImagePixelType "float")
 (ResultImageFormat "nrrd")
 )";
