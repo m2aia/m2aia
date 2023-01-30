@@ -26,7 +26,6 @@ class RegistrationDataWidget : public QWidget
 {
   Q_OBJECT
 private:
-  Ui_RegistrationDataWidgetControls m_Controls;
   QWidget *m_Parent;
   mitk::DataStorage::Pointer m_DataStorage;
   std::shared_ptr<RegistrationData> m_RegistrationData;
@@ -55,6 +54,8 @@ public:
   bool HasTransformations() const;
   void EnableButtons(bool);
 
+
+  Ui_RegistrationDataWidgetControls m_Controls;
   void SetDataStorage(mitk::DataStorage::Pointer storage);
   mitk::DataNode::Pointer GetImageNode() const;
   mitk::DataNode::Pointer GetMaskNode() const;

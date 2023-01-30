@@ -45,6 +45,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkImageWriteAccessor.h>
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateDataType.h>
+#include <mitkNodePredicateFunction.h>
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateProperty.h>
 #include <mitkPointSet.h>
@@ -72,10 +73,12 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
   m_Controls.setupUi(parent);
   m_Parent = parent;
   m_Controls.tabWidget->setCornerWidget(m_Controls.btnAddModality);
+
   m_FixedEntity = new RegistrationDataWidget(parent, this->GetDataStorage());
   m_FixedEntity->EnableButtons(false);
+  m_FixedEntity->m_Controls.imageSelection->SetAutoSelectNewNodes(true);
   m_Controls.tabWidget->addTab(m_FixedEntity, "Fixed");
-  
+
   m_ParameterFiles = {m2::Elx::Rigid(), m2::Elx::Deformable()};
 
   m_ParameterFileEditor = new QDialog(parent);
@@ -83,10 +86,9 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
 
   connect(m_Controls.btnStartRecon, SIGNAL(clicked()), this, SLOT(OnPostProcessReconstruction()));
 
-  
-  
   // connect(
-  //   m_Controls.registrationStrategy, qOverload<int>(&QComboBox::currentIndexChanged), this, [this](auto currentIndex) {
+  //   m_Controls.registrationStrategy, qOverload<int>(&QComboBox::currentIndexChanged), this, [this](auto currentIndex)
+  //   {
   //     m_ParameterFileEditorControls.rigidText->setText(m_ParameterFiles[currentIndex][0].c_str());
   //     m_ParameterFileEditorControls.deformableText->setText(m_ParameterFiles[currentIndex][1].c_str());
 
@@ -115,14 +117,13 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
           &QAbstractButton::clicked,
           this,
           [this]() {
-            m_ParameterFiles = {
-              m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
-              m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
+            m_ParameterFiles = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
+                                m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
           });
 
   connect(m_Controls.btnStartRegistration, SIGNAL(clicked()), this, SLOT(OnStartRegistration()));
 
-  connect(m_Controls.btnAddModality, SIGNAL(clicked()), this, SLOT(OnAddNewModalityTab()));
+  connect(m_Controls.btnAddModality, SIGNAL(clicked()), this, SLOT(OnAddRegistrationData()));
 
   connect(m_Controls.btnOpenPontSetInteractionView, &QPushButton::clicked, this, []() {
     try
@@ -160,12 +161,53 @@ void RegistrationView::CreateQtPartControl(QWidget *parent)
   });
 }
 
-void RegistrationView::OnAddNewModalityTab()
+void RegistrationView::OnAddRegistrationData()
 {
   auto widget = new RegistrationDataWidget(m_Parent, GetDataStorage());
-  auto newIndex =
-    m_Controls.tabWidget->addTab(widget, (std::string("M") + std::to_string(m_Controls.tabWidget->count())).c_str());
+  auto tabWidget = m_Controls.tabWidget;
+  auto ignoreCheck = [tabWidget](const mitk::DataNode *node) {
+    std::vector<mitk::DataNode::Pointer> ignoreNodes;
+    for (int i = 0; i < tabWidget->count(); i++)
+    {
+      auto data = dynamic_cast<RegistrationDataWidget *>(tabWidget->widget(i));
+      ignoreNodes.push_back(data->GetImageNode());
+    }
+
+    bool result = true;
+    for (const auto &ignoreNode : ignoreNodes)
+    {
+      if (node == ignoreNode)
+      {
+        result = false;
+        break;
+      }
+    }
+    return result;
+  };
+
+  auto predicate = widget->m_Controls.imageSelection->GetNodePredicate();
+  auto ignoreNode = mitk::NodePredicateFunction::New(ignoreCheck);
+  auto newPredicate = mitk::NodePredicateAnd::New(predicate, ignoreNode);
+  widget->m_Controls.imageSelection->SetNodePredicate(newPredicate);
+  widget->m_Controls.imageSelection->SetAutoSelectNewNodes(true);
+  widget->m_Controls.imageSelection->SetAutoSelectNewNodes(false);
+  widget->m_Controls.imageSelection->SetNodePredicate(predicate);
+
+  auto name = (std::string("M") + std::to_string(m_Controls.tabWidget->count())).c_str();
+  auto newIndex = m_Controls.tabWidget->addTab(widget, name);
+
+  connect(widget->m_Controls.btnRemove, &QAbstractButton::clicked, this, [widget, this]() {
+    OnRemoveRegistrationData(widget);
+  });
+
+  // bing new tab to front
   m_Controls.tabWidget->setCurrentIndex(newIndex);
+}
+
+void RegistrationView::OnRemoveRegistrationData(QWidget *registrationDataWidget)
+{
+  auto index = m_Controls.tabWidget->indexOf(registrationDataWidget);
+  m_Controls.tabWidget->removeTab(index);
 }
 
 void RegistrationView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
@@ -261,12 +303,6 @@ void RegistrationView::OnPostProcessReconstruction()
 
 void RegistrationView::Registration(RegistrationDataWidget *fixed, RegistrationDataWidget *moving)
 {
-  // wait until a running job is complete
-  if (m_RegistrationJob)
-    m_RegistrationJob->waitForFinished();
-  // job finished, assign a new watcher
-  m_RegistrationJob = std::make_shared<QFutureWatcher<void>>();
-
   mitk::ProgressBar::GetInstance()->AddStepsToDo(6);
   mitk::ProgressBar::GetInstance()->SetPercentageVisible(false);
 
@@ -366,95 +402,78 @@ void RegistrationView::Registration(RegistrationDataWidget *fixed, RegistrationD
   movingPointSet = moving->GetPointSet();
   try
   {
-    
     std::vector<std::string> parameterFiles = m_ParameterFiles;
-    
+
     if (!m_Controls.chkBxUseDeformableRegistration->isChecked() || parameterFiles.back().empty())
     {
       parameterFiles.pop_back();
     }
-    else
-    {
-      // Use deformable transformations
-      std::setlocale(LC_NUMERIC, "en_US.UTF-8");
-
-      const auto gridSpacing = m_Controls.spinBoxFinalGridSpacing->value();
-      m2::ElxUtil::ReplaceParameter(
-        parameterFiles.back(), "FinalGridSpacingInPhysicalUnits", std::to_string(gridSpacing));
-
-      const auto iterations = m_Controls.spinBxIterations->value();
-      m2::ElxUtil::ReplaceParameter(parameterFiles.back(), "MaximumNumberOfIterations", std::to_string(iterations));
-    }
 
     auto helper = std::make_shared<m2::ElxRegistrationHelper>();
-    auto worker = [=]() mutable {
-      mitk::ProgressBar::GetInstance()->Progress(1);
-      // Images
-      // setup and run
-      MITK_INFO << "Use Count: " << helper.use_count();
-      m_Controls.btnStartRegistration->setEnabled(false);
-      MITK_INFO << "***** Start Registration *****";
-      helper->SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
-      helper->SetImageData(fixedImage, movingImage);
-      helper->SetFixedImageMaskData(fixedImageMask);
-      helper->SetPointData(fixedPointSet, movingPointSet);
-      helper->SetRegistrationParameters(parameterFiles);
-      helper->SetRemoveWorkingDirectory(true);
-      // helper.UseMovingImageSpacing(m_Controls.keepSpacings->isChecked());
-      helper->SetStatusCallback(statusCallback);
-      helper->GetRegistration();
-      m_Controls.btnStartRegistration->setEnabled(true);
-      mitk::ProgressBar::GetInstance()->Progress(1);
-    };
 
-    connect(m_RegistrationJob.get(), &QFutureWatcher<void>::finished, [=]() {
-      // warp original data
-      mitk::ProgressBar::GetInstance()->Progress(1);
-      MITK_INFO << "Use Count: " << helper.use_count();
-      auto movingImage = dynamic_cast<const mitk::Image *>(movingImageNode->GetData());
-      auto warpedImage = helper->WarpImage(movingImage);
-      moving->SetTransformations(helper->GetTransformation());
+    mitk::ProgressBar::GetInstance()->Progress(1);
+    // Images
+    // setup and run
+    MITK_INFO << "Use Count: " << helper.use_count();
+    // m_Controls.btnStartRegistration->setEnabled(false);
+    MITK_INFO << "***** Start Registration *****";
+    helper->SetAdditionalBinarySearchPath(itksys::SystemTools::GetParentDirectory(elastix));
+    helper->SetImageData(fixedImage, movingImage);
+    helper->SetFixedImageMaskData(fixedImageMask);
+    helper->SetPointData(fixedPointSet, movingPointSet);
+    helper->SetRegistrationParameters(parameterFiles);
+    helper->SetRemoveWorkingDirectory(true);
+    // helper.UseMovingImageSpacing(m_Controls.keepSpacings->isChecked());
+    helper->SetStatusCallback(statusCallback);
+    helper->GetRegistration();
+    
+    mitk::ProgressBar::GetInstance()->Progress(1);
 
-      // auto timeString = itksys::SystemTools::GetCurrentDateTime("%H%M");
-      // auto node = mitk::DataNode::New();
-      // node->SetData(warpedImage);
-      // node->SetName(movingImageNode->GetName() + "_warped" + timeString);
+    // warp original data
+    mitk::ProgressBar::GetInstance()->Progress(1);
+    MITK_INFO << "Use Count: " << helper.use_count();
+    auto movingImage = dynamic_cast<const mitk::Image *>(movingImageNode->GetData());
+    auto warpedImage = helper->WarpImage(movingImage);
+    moving->SetTransformations(helper->GetTransformation());
 
-      // MITK_INFO << "Attachments: " << moving->m_Attachments.size();
-      // for (const QmitkSingleNodeSelectionWidget *attSel : moving->m_Attachments)
-      // {
-      //   if (auto node = attSel->GetSelectedNode())
-      //   {
-      //     if (auto labelSetImage = dynamic_cast<mitk::LabelSetImage *>(node->GetData()))
-      //     {
-      //       auto wapred = helper->WarpImage(labelSetImage, "short", 1);
-      //       auto resNode = mitk::DataNode::New();
-      //       resNode->SetData(wapred);
-      //       resNode->SetName(node->GetName() + "_warped_mask" + timeString);
-      //       moving->m_ResultAttachments.push_back(resNode);
-      //     }
-      //     else if (auto image = dynamic_cast<mitk::Image *>(node->GetData()))
-      //     {
-      //       auto warped = helper->WarpImage(image, "float", 1);
-      //       auto resNode = mitk::DataNode::New();
-      //       resNode->SetData(warped);
-      //       resNode->SetName(node->GetName() + "_warped_att_" + timeString);
-      //       moving->m_ResultAttachments.push_back(resNode);
-      //     }
-      //   }
-      // }
+    // auto timeString = itksys::SystemTools::GetCurrentDateTime("%H%M");
+    // auto node = mitk::DataNode::New();
+    // node->SetData(warpedImage);
+    // node->SetName(movingImageNode->GetName() + "_warped" + timeString);
 
-      mitk::DataNode *parentNode = fixedImageNode;
-      MITK_INFO << "Add moving image node";
-      // auto newNode = moving->m_ResultNode;
-      auto newNode = mitk::DataNode::New();
-      newNode->SetData(warpedImage);
-      newNode->SetName(moving->GetImageNode()->GetName() + "(warped)");
-      this->GetDataStorage()->Add(newNode, parentNode);
-      mitk::ProgressBar::GetInstance()->Progress(1);
-    });
+    // MITK_INFO << "Attachments: " << moving->m_Attachments.size();
+    // for (const QmitkSingleNodeSelectionWidget *attSel : moving->m_Attachments)
+    // {
+    //   if (auto node = attSel->GetSelectedNode())
+    //   {
+    //     if (auto labelSetImage = dynamic_cast<mitk::LabelSetImage *>(node->GetData()))
+    //     {
+    //       auto wapred = helper->WarpImage(labelSetImage, "short", 1);
+    //       auto resNode = mitk::DataNode::New();
+    //       resNode->SetData(wapred);
+    //       resNode->SetName(node->GetName() + "_warped_mask" + timeString);
+    //       moving->m_ResultAttachments.push_back(resNode);
+    //     }
+    //     else if (auto image = dynamic_cast<mitk::Image *>(node->GetData()))
+    //     {
+    //       auto warped = helper->WarpImage(image, "float", 1);
+    //       auto resNode = mitk::DataNode::New();
+    //       resNode->SetData(warped);
+    //       resNode->SetName(node->GetName() + "_warped_att_" + timeString);
+    //       moving->m_ResultAttachments.push_back(resNode);
+    //     }
+    //   }
+    // }
 
-    m_RegistrationJob->setFuture(QtConcurrent::run(worker));
+    mitk::DataNode *parentNode = fixedImageNode;
+    MITK_INFO << "Add moving image node";
+    // auto newNode = moving->m_ResultNode;
+    auto newNode = mitk::DataNode::New();
+    newNode->SetData(warpedImage);
+    newNode->SetName(moving->GetImageNode()->GetName() + "(warped)");
+    this->GetDataStorage()->Add(newNode, parentNode);
+    mitk::ProgressBar::GetInstance()->Progress(1);
+
   }
   catch (std::exception &e)
   {
@@ -476,26 +495,40 @@ void RegistrationView::OnStartRegistration()
         maxDimZ = std::max(image->GetDimensions()[2], maxDimZ);
     }
   }
-  if(maxDimZ>1){
+
+  // Use deformable transformations
+  std::setlocale(LC_NUMERIC, "en_US.UTF-8");
+
+  const auto gridSpacing = m_Controls.spinBoxFinalGridSpacing->value();
+  const auto iterations = m_Controls.spinBxIterations->value();
+
+  m2::ElxUtil::ReplaceParameter(m_ParameterFiles[1], "FinalGridSpacingInPhysicalUnits", std::to_string(gridSpacing));
+  m2::ElxUtil::ReplaceParameter(m_ParameterFiles[1], "MaximumNumberOfIterations", std::to_string(iterations));
+
+  if (maxDimZ > 1)
+  {
     m2::ElxUtil::ReplaceParameter(m_ParameterFiles[0], "FixedImageDimension", "3");
     m2::ElxUtil::ReplaceParameter(m_ParameterFiles[0], "MovingImageDimension", "3");
     m2::ElxUtil::ReplaceParameter(m_ParameterFiles[1], "FixedImageDimension", "3");
     m2::ElxUtil::ReplaceParameter(m_ParameterFiles[1], "MovingImageDimension", "3");
-  }else{
+  }
+  else
+  {
     m2::ElxUtil::ReplaceParameter(m_ParameterFiles[0], "FixedImageDimension", "2");
     m2::ElxUtil::ReplaceParameter(m_ParameterFiles[0], "MovingImageDimension", "2");
     m2::ElxUtil::ReplaceParameter(m_ParameterFiles[1], "FixedImageDimension", "2");
     m2::ElxUtil::ReplaceParameter(m_ParameterFiles[1], "MovingImageDimension", "2");
   }
-
-
-  if (m_Controls.rbAllToOne->isChecked())
-  {
-    for (int i = 0; i < m_Controls.tabWidget->count(); i++)
+  // m_RegistrationJob = std::make_shared<QFutureWatcher<void>>();
+  // m_RegistrationJob->setFuture(QtConcurrent::run([&]() {
+    if (m_Controls.rbAllToOne->isChecked())
     {
-      auto data = dynamic_cast<RegistrationDataWidget *>(m_Controls.tabWidget->widget(i));
-      if (m_FixedEntity != data)
-        Registration(m_FixedEntity, data);
+      for (int i = 0; i < m_Controls.tabWidget->count(); i++)
+      {
+        auto data = dynamic_cast<RegistrationDataWidget *>(m_Controls.tabWidget->widget(i));
+        if (m_FixedEntity != data)
+          Registration(m_FixedEntity, data);
+      }
     }
 
     if (m_Controls.rbSubsequent->isChecked())
@@ -557,5 +590,5 @@ void RegistrationView::OnStartRegistration()
     // }
 
     // filesystem::remove(path);
-  }
+  // }));
 }

@@ -82,7 +82,7 @@ void RegistrationDataWidget::OnLoadTransformations()
   m_RegistrationData->m_Transformations.clear();
   for (auto p : paths)
   {
-    std::ifstream reader(paths[0].toStdString());
+    std::ifstream reader(p.toStdString());
     std::string s((std::istreambuf_iterator<char>(reader)), std::istreambuf_iterator<char>());
     m_RegistrationData->m_Transformations.push_back(s);
   }

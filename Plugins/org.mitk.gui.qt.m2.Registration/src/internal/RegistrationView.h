@@ -85,7 +85,8 @@ protected:
 public slots:
   void OnStartRegistration();
   void OnPostProcessReconstruction();
-  void OnAddNewModalityTab();
+  void OnAddRegistrationData();
+  void OnRemoveRegistrationData(QWidget * registrationDataWidget);
 };
 
 #endif // Registration_h
