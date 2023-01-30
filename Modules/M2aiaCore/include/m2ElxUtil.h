@@ -36,29 +36,28 @@ namespace m2
   {
   public:
     /**
-     * @brief Search an elastix parameter file string for the specific entry and replaces it (or if not found appends
-     * the string) by "(" + what + " " + by + ")
-     *
-     * @param paramFileString
-     * @param what
-     * @param by
+     * @brief Replaces the value of the `what` parameter with `by` in the `paramFileString` string.
+     * If the `what` parameter doesn't exist in `paramFileString`, it will be added to the end of it.
+     * 
+     * @param[in,out] paramFileString The string to be modified.
+     * @param[in] what The parameter name to be replaced.
+     * @param[in] by The new value to replace the `what` parameter with.
      */
     static void ReplaceParameter(std::string &paramFileString, std::string what, std::string by)
     {
-      auto pos1 = paramFileString.find("(" + what);
+      auto pos1 = std::min(paramFileString.find("(" + what), paramFileString.find("// (" + what));
       auto pos2 = paramFileString.find(')', pos1);
       if (pos1 == std::string::npos || pos2 == std::string::npos)
-        paramFileString += "(" + what + " " + by + ")\n";
+        paramFileString += "\n(" + what + " " + by + ")\n";
       else
         paramFileString.replace(pos1, pos2 - pos1 + 1, "(" + what + " " + by + ")");
     }
 
     /**
-     * @brief Search an elastix parameter file string for the specific entry and remove it
-     *
-     * @param paramFileString
-     * @param what
-     * @param by
+     * @brief Removes the `what` parameter from the `paramFileString` string.
+     * 
+     * @param[in,out] paramFileString The string to be modified.
+     * @param[in] what The parameter name to be removed.
      */
     static void RemoveParameter(std::string &paramFileString, std::string what)
     {
@@ -70,6 +69,13 @@ namespace m2
         paramFileString.replace(pos1, pos2 - pos1 + 1, "");
     }
 
+    /**
+     * @brief Returns the string representation of the `what` parameter in the `paramFileString` string.
+     * 
+     * @param[in] paramFileString The string to search the `what` parameter in.
+     * @param[in] what The parameter name to search for.
+     * @return The string representation of the `what` parameter. Empty string if not found.
+     */
     static std::string GetParameterLine(std::string &paramFileString, std::string what)
     {
       auto pos1 = paramFileString.find("(" + what);
