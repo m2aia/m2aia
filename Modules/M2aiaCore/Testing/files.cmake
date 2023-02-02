@@ -1,5 +1,5 @@
 set(MODULE_TESTS
-  
+  m2DockerTest.cpp
   m2FSMImageIOTest.cpp
   m2ImzMLImageIOTest.cpp
   m2CoreMappingsTest.cpp
