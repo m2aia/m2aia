@@ -471,6 +471,10 @@ void m2Spectrum::UpdateLocalMinMaxValues(double minX, double maxX)
     {
       if (groupKV.second.type == m2::SpectrumType::None)
         continue;
+
+      if(!groupKV.second.series->isVisible())
+        continue;
+        
       const auto cmpY = [](const auto &a, const auto &b) { return a.y() < b.y(); };
       const auto cmpX = [](const auto &a, const auto &b) { return a.x() < b.x(); };
       const auto &data = groupKV.second.GetRawData();
@@ -787,7 +791,7 @@ void m2Spectrum::OnSeriesFocused(const mitk::DataNode *node)
   m_xAxis->setMin(xMin);
   m_xAxis->setMax(xMax);
 
-  // UpdateLocalMinMaxValues(xMin, xMax);
+  UpdateLocalMinMaxValues(xMin, xMax);
   AutoZoomUseLocalExtremaY();
 }
 
