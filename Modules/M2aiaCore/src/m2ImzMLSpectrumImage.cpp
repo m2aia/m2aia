@@ -433,7 +433,7 @@ m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLS
                  });
 
   C->InitializeGeometry();
-  std::set<m2::Peak> set;
+  std::set<m2::Interval> set;
   set.insert(std::begin(A->GetPeaks()), std::end(A->GetPeaks()));
   set.insert(std::begin(B->GetPeaks()), std::end(B->GetPeaks()));
 
@@ -597,8 +597,8 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
                          //   accNorm->SetPixelByIndex(spectrum.index + source.m_Offset, 1);
                        }
                      });
+    p->m_NumberOfValidPixels += spectra.size();
   }
-
   // reset prevention flags
   p->UseExternalMaskOff();
   p->UseExternalNormalizationOff();
@@ -757,7 +757,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
   }
 
   // each thread pixelwise accumulate peaks
-  std::vector<std::vector<m2::Peak>> peaksT(p->GetNumberOfThreads());
+  std::vector<std::vector<m2::Interval>> peaksT(p->GetNumberOfThreads());
   for (auto &peaks : peaksT)
     peaks.resize(mzs.size());
 
@@ -800,8 +800,11 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
                                           [&spectrum](auto &v) { return v / spectrum.normalizationFactor; });
                          }
 
-                         for (size_t i = 0; i < mzs.size(); ++i)
-                           peaksT[t][i].Insert(i, mzs[i], ints[i]);
+                         for (size_t i = 0; i < mzs.size(); ++i){
+                           peaksT[t][i].index(i);
+                           peaksT[t][i].x(mzs[i]);
+                           peaksT[t][i].y(ints[i]);
+                         }
                        }
 
                        f.close();
@@ -815,16 +818,17 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
     mean.clear();
 
     // merge all peaks
-    std::vector<m2::Peak> finalPeaks(mzs.size());
+    std::vector<m2::Interval> finalPeaks(mzs.size());
     for (auto &peaks : peaksT)
-      for (size_t i = 0; i < peaks.size(); ++i)
-        finalPeaks[i].Insert(peaks[i]);
+      for (size_t i = 0; i < peaks.size(); ++i){
+        finalPeaks[i] += peaks[i];
+      }
 
     for (const auto &peak : finalPeaks)
     {
-      skyline.push_back(peak.GetYMax());
-      sum.push_back(peak.GetYSum());
-      mean.push_back(peak.GetY());
+      skyline.push_back(peak.y.max());
+      sum.push_back(peak.y.sum());
+      mean.push_back(peak.y.mean());
     }
   }
 }
@@ -839,7 +843,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
 template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeImageAccessProcessedData()
 {
-  std::vector<std::list<m2::Peak>> peaksT(p->GetNumberOfThreads());
+  std::vector<std::list<m2::Interval>> peaksT(p->GetNumberOfThreads());
   for (auto &source : p->GetImzMLSpectrumImageSourceList())
   {
     auto &spectra = source.m_Spectra;
@@ -865,7 +869,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
                      {
                       std::ifstream f(source.m_BinaryDataPath, std::ios::binary);
                        std::vector<MassAxisType> mzs;
-                       std::list<m2::Peak> peaks, tempList;
+                       std::list<m2::Interval> peaks, tempList;
                        // find x min/max
                        for (unsigned i = a; i < b; i++)
                        {

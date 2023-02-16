@@ -82,10 +82,10 @@ namespace m2
           localMaximum = upper;
 
         if (localMaximum == mid && *localMaximum > threshold) // maximum is located at mid of the sliding window
-          (*peaksOutFirst) = Peak{index, (double)(*mzsInFirst), (double)(*localMaximum)};
+          (*peaksOutFirst) = m2::Interval{index, (double)(*mzsInFirst), (double)(*localMaximum)};
         else if (fillWithZeros)
         {
-          (*peaksOutFirst) = Peak{index, (double)(*mzsInFirst), 0};
+          (*peaksOutFirst) = m2::Interval{index, (double)(*mzsInFirst), 0};
         }
 
         if (std::distance(lower, upper) == (2 * windowSize) /*Number of hops from lower to upper*/
@@ -267,7 +267,7 @@ namespace m2
     }
 
     //  Model isotopic distribution by poisson distribution.
-    inline std::vector<std::vector<unsigned int>> monoisotopicPattern(const std::vector<Peak> &x,
+    inline std::vector<std::vector<unsigned int>> monoisotopicPattern(const std::vector<Interval> &x,
                                                                       double minCor = 0.95,
                                                                       double tolerance = 1e-4,
                                                                       double distance = 1.00235,
@@ -277,7 +277,7 @@ namespace m2
       {
         std::vector<double> mzs;
         for (const auto &p : x)
-          mzs.push_back(p.GetX());
+          mzs.push_back(p.x.mean());
 
         auto pc = pseudoCluster(mzs, size, distance, tolerance);
         if (pc.empty())
@@ -290,12 +290,12 @@ namespace m2
           double sum = 0;
           for (const auto &i : p)
           {
-            u.push_back(x[i].GetY());
-            sum += x[i].GetY();
+            u.push_back(x[i].y.mean());
+            sum += x[i].y.mean();
           }
           std::transform(std::begin(u), std::end(u), std::begin(u), [&sum](const auto &v) { return v / sum; });
           ypc.emplace_back(u);
-          xpc.push_back(x[p[0]].GetX());
+          xpc.push_back(x[p[0]].x.mean());
         }
         std::vector<unsigned int> isotopes;
         unsigned int n = 0;
@@ -317,7 +317,7 @@ namespace m2
 
     // Loop through multiple .monoisotopicPattern outputs and remove duplicated
     // peaks.
-    inline std::vector<Peak> monoisotopic(const std::vector<Peak> &peaks,
+    inline std::vector<Interval> monoisotopic(const std::vector<Interval> &peaks,
                                                std::vector<unsigned int> size = {3, 4, 5, 6, 7, 8, 9, 10},
                                                double minCor = 0.95,
                                                double tolerance = 1e-4,
@@ -333,7 +333,7 @@ namespace m2
 
       std::sort(std::begin(patterns), std::end(patterns), [](const auto &a, const auto &b) { return a < b; });
       auto result = moveVectorsWithUniqueElementsOnly(patterns);
-      std::vector<Peak> resultPeaks;
+      std::vector<Interval> resultPeaks;
       for (const auto &r : result)
       {
         resultPeaks.emplace_back(peaks[r[0]]);
@@ -342,14 +342,14 @@ namespace m2
     }
 
     template <class MzsContainer, class IntsContainer>
-    inline std::vector<Peak> PickPeaks(const MzsContainer &mzs,
+    inline std::vector<Interval> PickPeaks(const MzsContainer &mzs,
                                             const IntsContainer &ints,
                                             double SNR = 10,
                                             unsigned int halfWindowSize = 20,
                                             double binningTolInPpm = 50.0,
                                             bool pickMonoisotopic = false)
     {
-      std::vector<m2::Peak> peaks, binPeaks;
+      std::vector<m2::Interval> peaks, binPeaks;
 
       auto noise = m2::Signal::mad(ints);
 

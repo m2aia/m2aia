@@ -21,7 +21,7 @@ See LICENSE.txt for details.
 #include <m2ElxRegistrationHelper.h>
 #include <m2ISpectrumDataAccess.h>
 #include <m2IonImageReference.h>
-#include <m2Peak.h>
+#include <m2IntervalVector.h>
 #include <m2SpectrumInfo.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
@@ -38,7 +38,7 @@ namespace m2
     using SpectrumArtifactVectorType = std::vector<SpectrumArtifactDataType>;
     using SpectrumArtifactMapType = std::map<m2::SpectrumType, SpectrumArtifactVectorType>;
     using IonImageReferenceVectorType = std::vector<IonImageReference::Pointer>;
-    using PeaksVectorType = std::vector<m2::Peak>;
+    using IntervalVectorType = std::vector<m2::Interval>;
     using TransformParameterVectorType = std::vector<std::string>;
 
     mitkClassMacro(SpectrumImageBase, mitk::Image);
@@ -98,11 +98,13 @@ namespace m2
     itkSetMacro(UseToleranceInPPM, bool);
     itkGetConstReferenceMacro(UseToleranceInPPM, bool);
 
-    itkGetMacro(Peaks, PeaksVectorType &);
-    itkGetConstReferenceMacro(Peaks, PeaksVectorType);
+    itkGetMacro(Peaks, IntervalVectorType &);
+    itkGetConstReferenceMacro(Peaks, IntervalVectorType);
 
     itkGetConstReferenceMacro(NumberOfThreads, unsigned int);
     itkSetMacro(NumberOfThreads, unsigned int);
+    
+    itkGetConstReferenceMacro(NumberOfValidPixels, unsigned int);
 
     itkGetMacro(ImageArtifacts, ImageArtifactMapType &);
     itkGetConstReferenceMacro(ImageArtifacts, ImageArtifactMapType);
@@ -187,11 +189,12 @@ namespace m2
 
     std::shared_ptr<m2::ElxRegistrationHelper> m_ElxRegistrationHelper;
 
+    unsigned int m_NumberOfValidPixels = 0;
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
     unsigned int m_NumberOfThreads = itk::MultiThreaderBase::GetGlobalMaximumNumberOfThreads();
     // unsigned int m_NumberOfThreads = 2;
-    PeaksVectorType m_Peaks;
+    IntervalVectorType m_Peaks;
 
     ImageArtifactMapType m_ImageArtifacts;
     SpectrumArtifactMapType m_SpectraArtifacts;    

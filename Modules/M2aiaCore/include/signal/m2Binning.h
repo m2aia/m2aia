@@ -16,7 +16,7 @@ See LICENSE.txt for details.
 #pragma once
 
 #include <M2aiaCoreExports.h>
-#include <m2Peak.h>
+#include <m2IntervalVector.h>
 #include <numeric>
 
 namespace m2
@@ -32,7 +32,7 @@ namespace m2
         return;
 
       unsigned int size = 0;
-      const auto accPeak = std::accumulate(s, e, Peak());
+      const auto accPeak = std::accumulate(s, e, m2::Interval());
       const auto meanX = accPeak.GetX();
 
       bool dirty = false;
@@ -73,10 +73,10 @@ namespace m2
       else
       {
         // output a new peak
-        m2::Peak newPeak = *s;
+        m2::Interval newPeak = *s;
         ++s;
 
-        std::for_each(s, e, [&newPeak](const Peak &p) { newPeak.Insert(p); });
+        std::for_each(s, e, [&newPeak](const m2::Interval &p) { newPeak += p; });
 
         (*output) = newPeak;
         ++output;
@@ -101,17 +101,19 @@ namespace m2
       auto xIt = xFirst;
       auto oIt = output;
       while(xIt!=xEnd){
-        m2::Peak p;
+        m2::Interval p;
         
         // accumulate
         while(xIt!=xEnd && *xIt < (currentBin+1)*binSize){
-          p.Insert(currentIndex, *xIt, *yIt);
+          p.index(currentIndex);
+          p.x(*xIt);
+          p.y(*yIt);
           ++xIt;
           ++yIt;
           ++currentIndex;
         }
 
-        if(p.GetCount()){ // avoid empty peaks
+        if(p.x.count()){ // avoid empty peaks
           *oIt = p; // assign peak
           ++output;
         }

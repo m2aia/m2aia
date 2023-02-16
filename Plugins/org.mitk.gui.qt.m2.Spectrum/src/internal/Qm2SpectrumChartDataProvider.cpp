@@ -37,11 +37,15 @@ void Qm2SpectrumChartDataProvider::Register(const std::string &groupName, m2::Sp
   if (!Exists(groupName))
     mitkThrow() << "No group found with the given name!";
 
-  if (type == m2::SpectrumType::None)
-    return;
 
   if (auto image = dynamic_cast<m2::SpectrumImageBase *>(m_DataNode->GetData()))
   {
+    
+    if (type == m2::SpectrumType::None){
+      m_Groups.at(groupName).series->setVisible(!image->GetPeaks().empty());
+      return;
+    }
+
     auto &artifacts = image->GetSpectraArtifacts();
 
     // check if image artifacts contain the corresponding spectrum type
@@ -65,7 +69,7 @@ void Qm2SpectrumChartDataProvider::Register(const std::string &groupName, m2::Sp
       auto lodDataIt = std::begin(lodData);
       for (unsigned int binSize : m_BinSizes)
       {
-        std::vector<m2::Peak> binnedData;
+        std::vector<m2::Interval> binnedData;
         const auto numBins = xs.size() / binSize;
         m2::Signal::binning(std::begin(xs), std::end(xs), std::begin(ys), std::back_inserter(binnedData), numBins);
 
@@ -73,8 +77,8 @@ void Qm2SpectrumChartDataProvider::Register(const std::string &groupName, m2::Sp
         std::transform(std::begin(binnedData),
                        std::end(binnedData),
                        std::back_inserter(*lodDataIt),
-                       [](const m2::Peak &p) {
-                         return QPointF{p.GetX(), p.GetYMax()};
+                       [](const m2::Interval &p) {
+                         return QPointF{p.x.mean(), p.y.max()};
                        });
         ++lodDataIt;
       }
@@ -98,16 +102,19 @@ void Qm2SpectrumChartDataProvider::UpdateGroup(const std::string &groupName, dou
       }
       if (!image->GetPeaks().empty())
       {
+        m_Groups.at(groupName).series->setVisible(true);
         const auto &peaks = image->GetPeaks();
-        auto lower = std::lower_bound(std::begin(peaks), std::end(peaks), m2::Peak{0, xMin, 0});
-        const auto upper = std::upper_bound(lower, std::end(peaks), m2::Peak{0, xMax, 0});
+        auto lower = std::lower_bound(std::begin(peaks), std::end(peaks), m2::Interval{0, xMin, 0});
+        const auto upper = std::upper_bound(lower, std::end(peaks), m2::Interval{0, xMax, 0});
         
         QVector<QPointF> seriesData;
         auto insert = std::back_inserter(seriesData);
         for (;lower != upper; ++lower)
-          insert = QPointF{lower->GetX(), lower->GetY()};
+          insert = QPointF{lower->x.mean(), lower->y.mean()};
         
         m_Groups.at(groupName).series->replace(seriesData);
+      }else{
+        m_Groups.at(groupName).series->setVisible(false);
       }
     }
     else

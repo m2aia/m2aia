@@ -19,6 +19,7 @@ set(H_FILES
 
 
 
+  include/m2IntervalVector.h
 
   include/signal/m2Baseline.h
   include/signal/m2EstimateFwhm.h
@@ -46,6 +47,7 @@ set(CPP_FILES
   m2FsmSpectrumImage.cpp
   m2SubdivideImage2DFilter.cpp
   m2SpectrumImageDataInteractor.cpp
+  m2IntervalVector.cpp
 )
 
 set(RESOURCE_FILES

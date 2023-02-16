@@ -131,7 +131,7 @@ namespace m2
 
   void SpectrumImageStack::InitializeImageAccess()
   {
-    std::list<m2::Peak> peaks;
+    std::list<m2::Interval> peaks;
     const auto &bins = GetNumberOfBins();
     //    const auto normalizationStrategy = GetNormalizationStrategy();
 
