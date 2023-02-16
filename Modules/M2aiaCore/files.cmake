@@ -17,8 +17,8 @@ set(H_FILES
   include/m2ElxRegistrationHelper.h
   include/m2SubdivideImage2DFilter.h
 
-  include/m2DockerHelper.h
-  include/m2HelperUtils.h
+
+
 
   include/signal/m2Baseline.h
   include/signal/m2EstimateFwhm.h
@@ -39,7 +39,6 @@ set(CPP_FILES
   m2SpectrumImageBase.cpp
   m2SpectrumImageStack.cpp
   m2CoreObjectFactory.cpp 
-  m2DockerHelper.cpp
   m2ElxUtil.cpp
   m2ElxRegistrationHelper.cpp
   m2ImzMLParser.cpp
