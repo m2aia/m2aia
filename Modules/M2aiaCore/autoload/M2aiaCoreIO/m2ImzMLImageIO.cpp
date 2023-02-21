@@ -55,12 +55,12 @@ namespace m2
 
   mitk::IFileIO::ConfidenceLevel ImzMLImageIO::GetWriterConfidenceLevel() const
   {
-    if (AbstractFileIO::GetWriterConfidenceLevel() == Unsupported)
-      return Unsupported;
-    const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
-    if (input)
-      return Supported;
-    else
+    // if (AbstractFileIO::GetWriterConfidenceLevel() == Unsupported)
+    //   return Unsupported;
+    // const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
+    // if (input)
+    //   return Supported;
+    // else
       return Unsupported;
   }
 
