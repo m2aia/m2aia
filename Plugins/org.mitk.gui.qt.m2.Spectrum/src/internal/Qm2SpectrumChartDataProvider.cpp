@@ -71,7 +71,7 @@ void Qm2SpectrumChartDataProvider::Register(const std::string &groupName, m2::Sp
       {
         std::vector<m2::Interval> binnedData;
         const auto numBins = xs.size() / binSize;
-        m2::Signal::binning(std::begin(xs), std::end(xs), std::begin(ys), std::back_inserter(binnedData), numBins);
+        m2::Signal::equidistantBinning(std::begin(xs), std::end(xs), std::begin(ys), std::back_inserter(binnedData), numBins);
 
         lodDataIt->clear();
         std::transform(std::begin(binnedData),

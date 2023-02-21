@@ -357,7 +357,7 @@ namespace m2
         std::begin(ints), std::end(ints), std::begin(mzs), std::back_inserter(peaks), halfWindowSize, SNR * noise);
 
       binPeaks.clear();
-      m2::Signal::binPeaks(std::begin(peaks), std::end(peaks), std::back_inserter(binPeaks), m2::PartPerMillionToFactor(binningTolInPpm));
+      m2::Signal::toleranceBasedBinning(std::begin(peaks), std::end(peaks), std::back_inserter(binPeaks), m2::PartPerMillionToFactor(binningTolInPpm));
       peaks = std::move(binPeaks);
       
       if (pickMonoisotopic)

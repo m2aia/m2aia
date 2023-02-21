@@ -15,8 +15,8 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 #include <M2aiaCoreExports.h>
-#include <map>
 #include <array>
+#include <map>
 #include <string>
 
 namespace m2
@@ -28,7 +28,7 @@ namespace m2
     Gaussian = 2
   };
 
-  const std::array<std::string, 3>  SmoothingTypeNames = {"None", "SavitzkyGolay", "Gaussian"};
+  const std::array<std::string, 3> SmoothingTypeNames = {"None", "SavitzkyGolay", "Gaussian"};
 
   enum class RangePoolingStrategyType : unsigned int
   {
@@ -39,7 +39,7 @@ namespace m2
     Sum = 4
   };
 
-  const std::array<std::string, 5>  RangePoolingStrategyTypeNames = {"None", "Mean", "Median", "Maximum", "Sum"};
+  const std::array<std::string, 5> RangePoolingStrategyTypeNames = {"None", "Mean", "Median", "Maximum", "Sum"};
 
   enum class NormalizationStrategyType : unsigned int
   {
@@ -53,7 +53,8 @@ namespace m2
     RMS = 7
   };
 
-  const std::array<std::string, 8> NormalizationStrategyTypeNames = {"None", "TIC", "Median", "InFile", "Sum", "Mean", "Max", "RMS"};
+  const std::array<std::string, 8> NormalizationStrategyTypeNames = {
+    "None", "TIC", "Median", "InFile", "Sum", "Mean", "Max", "RMS"};
 
   enum class BaselineCorrectionType : unsigned int
   {
@@ -93,12 +94,38 @@ namespace m2
   const std::map<const std::string, unsigned int> BASECOR_MAPPINGS{{"None", 0}, {"TopHat", 1}, {"Median", 2}};
 
   const std::map<const std::string, unsigned int> NORMALIZATION_MAPPINGS{
-    {"None", 0}, {"TIC", 1}, {"Median", 2}, {"InFile", 3}, {"Sum", 4}, {"RMS",7}};
+    {"None", 0}, {"TIC", 1}, {"Median", 2}, {"InFile", 3}, {"Sum", 4}, {"RMS", 7}};
 
   const std::map<const std::string, unsigned int> POOLING_MAPPINGS{
     {"None", 0}, {"Mean", 1}, {"Median", 2}, {"Maximum", 3}, {"Sum", 4}};
 
   const std::map<const std::string, unsigned int> INTENSITYTRANSFORMATION_MAPPINGS{
     {"None", 0}, {"Log2", 1}, {"Log10", 2}, {"SquareRoot", 3}};
+
+  template<typename ContainerType>
+  std::vector<int> argsort(const ContainerType &v)
+  {
+    // Initialize vector of indices
+    std::vector<int> indices(v.size());
+    for (unsigned int i = 0; i < v.size(); ++i)
+    {
+      indices[i] = i;
+    }
+    // Sort indices based on values in v
+    std::stable_sort(indices.begin(), indices.end(), [&](int i, int j) { return v[i] < v[j]; });
+    return indices;
+  }
+
+
+  template<typename ContainerType, typename IndexContainer>
+  ContainerType argsortApply(const ContainerType &v, const IndexContainer &indices)
+  {
+    ContainerType c;
+    c.reserve(indices.size());
+    auto it = std::back_inserter(c);
+    for(auto i : indices)
+      it = v[i];
+    return c;
+  }
 
 } // namespace m2
