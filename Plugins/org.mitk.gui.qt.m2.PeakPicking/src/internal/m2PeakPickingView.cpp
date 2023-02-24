@@ -121,7 +121,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   });
 
   const auto itemHandler = [this](QTableWidgetItem *item) {
-      auto mz = std::stod(item->text().toStdString());
+    auto mz = std::stod(item->text().toStdString());
     emit m2::UIUtils::Instance()->UpdateImage(mz, -1);    
   };
 
@@ -133,7 +133,6 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   connect(m_Controls.cbOverviewSpectra, SIGNAL(currentIndexChanged(int)), this, SLOT(OnUpdateUI()));
   connect(m_Controls.sliderSNR, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPicking()));
   connect(m_Controls.sliderHWS, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPicking()));
-  connect(m_Controls.sliderMinIntensity, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPicking()));
   connect(m_Controls.sliderCOR, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPicking()));
   connect(m_Controls.ckbMonoisotopic, SIGNAL(stateChanged(int)), this, SLOT(OnStartPeakPicking()));
   connect(m_Controls.btnPickAndBin, SIGNAL(clicked()), this, SLOT(OnStartPickPeaksAndBin()));
@@ -169,46 +168,52 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
 
 void m2PeakPickingView::OnPeakListSelectionChanged()
 {
-  bool status = false;
+  bool status = false, isProcessedCentroid = false, isContinuousProfile = false;
   if (auto imageNode = m_Controls.imageSelection->GetSelectedNode())
     if (auto image = dynamic_cast<m2::SpectrumImageBase *>(imageNode->GetData()))
       if (image->GetIsDataAccessInitialized())
       {
-        if (image->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousProfile)
+        auto format = image->GetSpectrumType().Format;
+        isProcessedCentroid = format == m2::SpectrumFormat::ProcessedCentroid;
+        isContinuousProfile = format == m2::SpectrumFormat::ContinuousProfile;
+
+        if (isContinuousProfile)
           m_Controls.btnPickAndBin->setText("Start peak picking and binning (individual spectra)");
 
-        if (image->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedCentroid)
+        if (isProcessedCentroid)
           m_Controls.btnPickAndBin->setText("Start peak binning (individual spectra)");
-        
+
         if (auto peakListNode = m_Controls.peakListSelection->GetSelectedNode())
           if (dynamic_cast<m2::IntervalVector *>(peakListNode->GetData()))
             status = true;
+  
       }
 
-  m_Controls.labelCOR->setVisible(status);
-  m_Controls.labelOverviewSpectra->setVisible(status);
-  m_Controls.labelHWS->setVisible(status);
-  m_Controls.labelSNR->setVisible(status);
-  m_Controls.labelTolerance->setVisible(status);
-  m_Controls.labelDistance->setVisible(status);
-  m_Controls.sliderSNR->setVisible(status);
-  m_Controls.sliderCOR->setVisible(status);
-  m_Controls.sliderHWS->setVisible(status);
-  m_Controls.sbTolerance->setVisible(status);
-  m_Controls.sbDistance->setVisible(status);
-  m_Controls.ckbMonoisotopic->setVisible(status);
-  m_Controls.cbOverviewSpectra->setVisible(status);
-  m_Controls.labelOverviewSpectra_2->setVisible(status);
-  m_Controls.btnPickAndBin->setVisible(status);
-  m_Controls.sbBinningTolerance->setVisible(status);
-  m_Controls.sbFilterPeaks->setVisible(status);
-  m_Controls.sliderMinIntensity->setVisible(status);
+  m_Controls.btnPickAndBin->setVisible(status & ( isContinuousProfile | isProcessedCentroid));
+  m_Controls.sbBinningTolerance->setVisible(status & ( isContinuousProfile | isProcessedCentroid));
+  m_Controls.sbFilterPeaks->setVisible(status & ( isContinuousProfile | isProcessedCentroid));
+  
+  
+  m_Controls.labelCOR->setVisible(status & isContinuousProfile);
+  m_Controls.labelOverviewSpectra->setVisible(status & isContinuousProfile);
+  m_Controls.labelHWS->setVisible(status & isContinuousProfile);
+  m_Controls.labelSNR->setVisible(status & isContinuousProfile);
+  m_Controls.labelTolerance->setVisible(status & isContinuousProfile);
+  m_Controls.labelDistance->setVisible(status & isContinuousProfile);
+  m_Controls.sliderSNR->setVisible(status & isContinuousProfile);
+  m_Controls.sliderCOR->setVisible(status & isContinuousProfile);
+  m_Controls.sliderHWS->setVisible(status & isContinuousProfile);
+  m_Controls.sbTolerance->setVisible(status & isContinuousProfile);
+  m_Controls.sbDistance->setVisible(status & isContinuousProfile);
+  m_Controls.ckbMonoisotopic->setVisible(status & isContinuousProfile);
+  m_Controls.cbOverviewSpectra->setVisible(status & isContinuousProfile);
+  m_Controls.labelOverviewSpectra_2->setVisible(status & isContinuousProfile);
+  
   m_Controls.labelPeakList->setVisible(status);
   m_Controls.btnSelectAll->setVisible(status);
   m_Controls.btnDeselectAll->setVisible(status);
   m_Controls.tableWidget->setVisible(status);
-  m_Controls.labelMinIntensity->setVisible(status);
-  m_Controls.btnPickAndBin->setVisible(status);
+  
 }
 
 void m2PeakPickingView::OnUpdateUI()
@@ -245,20 +250,8 @@ void m2PeakPickingView::OnUpdateUI()
 
       m_Controls.ckbMonoisotopic->setVisible(false);
       m_Controls.cbOverviewSpectra->setVisible(false);
-
-      std::vector<double> ys;
-      ys = image->MeanSpectrum();
-      m_Controls.sliderMinIntensity->setMaximum(*std::max_element(std::begin(ys), std::end(ys)));
     }
-    else
-    {
-      std::vector<double> ys;
-      if (m_Controls.cbOverviewSpectra->currentIndex() == 0) // skyline
-        ys = image->SkylineSpectrum();
-      if (m_Controls.cbOverviewSpectra->currentIndex() == 1) // mean
-        ys = image->MeanSpectrum();
-      m_Controls.sliderMinIntensity->setMaximum(*std::max_element(std::begin(ys), std::end(ys)));
-    }
+    
   }
 }
 
@@ -346,7 +339,8 @@ void m2PeakPickingView::OnAddPeakList()
   if (!image)
     return;
 
-  if (!image->GetIsDataAccessInitialized()){
+  if (!image->GetIsDataAccessInitialized())
+  {
     MITK_WARN << "Selected image is not initialized!";
     return;
   }
@@ -357,8 +351,7 @@ void m2PeakPickingView::OnAddPeakList()
   vectorNode->SetName(imageNode->GetName() + "_picked");
   vectorNode->SetData(intervals);
   GetDataStorage()->Add(vectorNode, imageNode);
-  m_Controls.peakListSelection->SetCurrentSelectedNode(vectorNode);
-  m_Controls.sliderMinIntensity->setValue(0);
+  m_Controls.peakListSelection->SetCurrentSelectedNode(vectorNode);  
   OnStartPeakPicking();
 }
 
