@@ -208,6 +208,9 @@ namespace m2
 
     SetPropertyValue<double>("x_min", xVecFinal.front());
     SetPropertyValue<double>("x_max", xVecFinal.back());
+
+    m_IsDataAccessInitialized = true;
+    
   }
 
   void SpectrumImageStack::SpectrumImageStack::CopyWarpedImageToStackImage(mitk::Image *warped,
