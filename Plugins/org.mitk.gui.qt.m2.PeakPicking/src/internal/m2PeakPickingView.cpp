@@ -295,39 +295,7 @@ void m2PeakPickingView::OnUpdateUI()
 //   }
 // }
 
-// void m2PeakPickingView::OnStartMPM()
-// {
-//   if (auto node = m_Controls.imageSelection->GetSelectedNode())
-//   {
-//     if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
-//     {
-//       if (!image->GetIsDataAccessInitialized())
-//         return;
-//       if (image->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousCentroid)
-//       {
-//         if (mitk::DockerHelper::CheckDocker())
-//         {
-//           auto newImage = image->Clone();
-//           newImage->GetPropertyList()->RemoveProperty("MITK.IO.reader.inputlocation");
 
-//           mitk::DockerHelper helper("m2aia/extensions:mpm");
-//           helper.AddData(newImage, "--ionimage", "ionimage.nrrd");
-//           helper.AddData(image->GetMaskImage(), "--mask", "mask.nrrd");
-//           helper.AddApplicationArgument("--pval", std::to_string(m_Controls.spnBxMPMPValue->value()));
-//           helper.AddAutoLoadOutput("--out", "mpm.nrrd");
-
-//           const auto results = helper.GetResults();
-//           {
-//             auto newNode = mitk::DataNode::New();
-//             newNode->SetData(results[0]);
-//             newNode->SetName(node->GetName() + "_mpm");
-//             GetDataStorage()->Add(newNode, node);
-//           }
-//         }
-//       }
-//     }
-//   }
-// }
 
 void m2PeakPickingView::OnAddPeakList()
 {
