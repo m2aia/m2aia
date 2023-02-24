@@ -17,7 +17,7 @@ set(H_FILES
   include/m2ElxRegistrationHelper.h
   include/m2SubdivideImage2DFilter.h
 
-
+  include/npy/npy.hpp
 
   include/m2IntervalVector.h
 
