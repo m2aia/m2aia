@@ -1,5 +1,5 @@
 set(SRC_CPP_FILES
-
+  m2CtkSliderWidget.cpp
 )
 
 set(INTERNAL_CPP_FILES
@@ -14,6 +14,7 @@ set(UI_FILES
 set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_PeakPicking_Activator.h
   src/internal/m2PeakPickingView.h
+  src/m2CtkSliderWidget.h
 )
 
 # list of resource files which can be used by the plug-in
