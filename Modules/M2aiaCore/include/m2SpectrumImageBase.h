@@ -230,6 +230,7 @@ namespace m2
   };
 
   itkEventMacroDeclaration(PeakListModifiedEvent, itk::AnyEvent);
+  itkEventMacroDeclaration(InitializationFinishedEvent, itk::AnyEvent);
   
 
 } // namespace m2
