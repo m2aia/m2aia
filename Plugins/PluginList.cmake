@@ -9,5 +9,5 @@ org.mitk.gui.qt.m2.Data:ON
 org.mitk.gui.qt.m2.Spectrum:ON
 org.mitk.gui.qt.m2.Reconstruction3D:ON
 org.mitk.gui.qt.m2.CombineImages:ON
-org.mitk.gui.qt.m2.docker.DataCompression:ON
+org.mitk.gui.qt.m2.docker.datacompression:ON
 )
