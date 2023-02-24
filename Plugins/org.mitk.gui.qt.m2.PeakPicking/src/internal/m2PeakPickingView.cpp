@@ -121,12 +121,8 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   });
 
   const auto itemHandler = [this](QTableWidgetItem *item) {
-    auto node = m_Controls.imageSelection->GetSelectedNode();
-    if (auto spImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
-    {
       auto mz = std::stod(item->text().toStdString());
-      emit m2::UIUtils::Instance()->UpdateImage(mz, spImage->ApplyTolerance(mz));
-    }
+    emit m2::UIUtils::Instance()->UpdateImage(mz, -1);    
   };
 
   connect(m_Controls.tableWidget, &QTableWidget::itemActivated, this, itemHandler);
