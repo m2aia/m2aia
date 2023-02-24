@@ -61,23 +61,36 @@ public:
         fill_n(ssAllIt, xs.size(), i);
       }
 
-      {
-        m2::Timer t("Run binning");
+      auto runBinning = [&](){
         vector<float> xsSorted, ysSorted;
         vector<int> ssSorted;
-        {
-          m2::Timer t("Run Sorting");
-          auto indices = m2::argsort(xsAll);
-          xsSorted = m2::argsortApply(xsAll, indices);
-          ysSorted = m2::argsortApply(ysAll, indices);
-          ssSorted = m2::argsortApply(ssAll, indices);
-        }
+        
+        auto indices = m2::argsort(xsAll);
+        xsSorted = m2::argsortApply(xsAll, indices);
+        ysSorted = m2::argsortApply(ysAll, indices);
+        ssSorted = m2::argsortApply(ssAll, indices);
 
         using dIt = decltype(cbegin(xsAll));
         using iIt = decltype(cbegin(ssAll));
         auto F = m2::Signal::grouperStrict<dIt, dIt, dIt, iIt>;
-        auto v = m2::Signal::groupBinning(xsSorted, ysSorted, ssSorted, F, 0.0002);
+        return m2::Signal::groupBinning(xsSorted, ysSorted, ssSorted, F, 0.002);
+      };
+
+      // m2::Timer t("Run binning", 1, runBinning);
+      
+      decltype(runBinning()) res;
+      {
+        m2::Timer t("Run binning");
+        res = runBinning();
       }
+
+      auto bins = get<0>(res);
+      auto source = get<1>(res);
+      auto M = image->GetNumberOfValidPixels()*0.01;
+      auto V = std::accumulate(begin(source), end(source), 0, [&M](auto a, auto b){ return a+ ((b.size() > M)  ? 1: 0);});
+      MITK_INFO << "Intervals found: " << bins.size();
+      MITK_INFO << "Filtered 1%: " << V;
+      
     }
   }
 
@@ -99,16 +112,16 @@ public:
     auto F = m2::Signal::grouperStrict<dIt, dIt, dIt, iIt>;
 
     auto v = m2::Signal::groupBinning(xsSorted, ysSorted, ssSorted, F, 0.002);
-    auto xsNew = std::get<1>(v);
+    auto xsNew = std::get<0>(v);
     CPPUNIT_ASSERT_EQUAL(6, (int)xsNew.size());
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(100.1, xsNew[0], itk::Math::eps);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(200.1, xsNew[1], itk::Math::eps);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(300.1, xsNew[2], itk::Math::eps);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(395.0, xsNew[3], itk::Math::eps);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(400.0, xsNew[4], itk::Math::eps);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(500.0, xsNew[5], itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(100.1, xsNew[0].x.mean(), itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(200.1, xsNew[1].x.mean(), itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(300.1, xsNew[2].x.mean(), itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(395.0, xsNew[3].x.mean(), itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(400.0, xsNew[4].x.mean(), itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(500.0, xsNew[5].x.mean(), itk::Math::eps);
 
-    auto ssNew = std::get<2>(v);
+    auto ssNew = std::get<1>(v);
     CPPUNIT_ASSERT_EQUAL(6, (int)ssNew.size());
     CPPUNIT_ASSERT_EQUAL(0, ssNew[0][0]);
     CPPUNIT_ASSERT_EQUAL(1, ssNew[0][1]);
@@ -158,15 +171,15 @@ public:
     auto F = m2::Signal::grouperStrict<dIt, dIt, dIt, iIt>;
 
     auto v = m2::Signal::groupBinning(xsSorted, ysSorted, ssSorted, F, 0.1);
-    auto xsNew = std::get<1>(v);
+    auto xsNew = std::get<0>(v);
     CPPUNIT_ASSERT_EQUAL(5, (int)xsNew.size());
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(100.1, xsNew[0], itk::Math::eps);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(200.1, xsNew[1], itk::Math::eps);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(300.1, xsNew[2], itk::Math::eps);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(397.5, xsNew[3], itk::Math::eps);
-    CPPUNIT_ASSERT_DOUBLES_EQUAL(500.0, xsNew[4], itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(100.1, xsNew[0].x.mean(), itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(200.1, xsNew[1].x.mean(), itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(300.1, xsNew[2].x.mean(), itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(397.5, xsNew[3].x.mean(), itk::Math::eps);
+    CPPUNIT_ASSERT_DOUBLES_EQUAL(500.0, xsNew[4].x.mean(), itk::Math::eps);
 
-    auto ssNew = std::get<2>(v);
+    auto ssNew = std::get<1>(v);
         for(auto ss : ssNew){
       for(auto s : ss){
         std::cout << s << " ";
