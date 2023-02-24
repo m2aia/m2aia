@@ -601,6 +601,8 @@ void m2Spectrum::CreateQtPartControl(QWidget *parent)
 
   m_M2aiaPreferences =
     berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+
+  m_Controls.chartView->chart()->legend()->setVisible(false);
 }
 
 void m2Spectrum::CreateQChartViewMenu()
