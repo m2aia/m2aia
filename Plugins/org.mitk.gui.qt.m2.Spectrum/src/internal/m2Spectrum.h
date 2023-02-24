@@ -30,7 +30,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <qlegendmarker.h>
 #include <qscatterseries.h>
 #include <qslider.h>
-
+#include <QFutureWatcher>
 
 
 class QMenu;
@@ -45,6 +45,7 @@ namespace itk{
     public:
 
     const mitk::DataNode * m_Node;
+    
 
     /** Standard class typedefs. */
     typedef NodeMemberCommand        Self;
@@ -83,6 +84,7 @@ protected:
   void CreateQChartView();
   void CreateQChartViewMenu();
   m2Crosshair *m_Crosshair;
+  QFutureWatcher<void> m_Watcher;
 
   std::map<const mitk::DataNode *, std::shared_ptr<Qm2SpectrumChartDataProvider>> m_DataProvider;
   
@@ -116,6 +118,7 @@ protected slots:
 protected:
   void OnPropertyChanged(const itk::Object *caller, const itk::EventObject &event);
   void OnPeakListChanged(const itk::Object *caller, const itk::EventObject &event);
+  void OnInitializationFinished(const itk::Object *caller, const itk::EventObject &event);
 
   unsigned int m_yAxisTicks = 4;
   unsigned int m_xAxisTicks = 9;

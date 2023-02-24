@@ -20,8 +20,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QtCharts/QLineSeries>
 #include <QtCharts/QScatterSeries>
 #include <QtCharts/QXYSeries>
-#include <m2SpectrumImageBase.h>
-#include <signal/m2Binning.h>
 
 Qm2SpectrumChartDataProvider::Qm2SpectrumChartDataProvider(const mitk::DataNode *node) : m_DataNode(node)
 {
@@ -29,96 +27,49 @@ Qm2SpectrumChartDataProvider::Qm2SpectrumChartDataProvider(const mitk::DataNode 
   m_Color = QColor::fromHsv(rnd * 255, 255, 255);
 }
 
-void Qm2SpectrumChartDataProvider::Register(const std::string &groupName, m2::SpectrumType type)
-{
-  if (!m_DataNode)
-    mitkThrow() << "Data node is null!";
-
-  if (!Exists(groupName))
-    mitkThrow() << "No group found with the given name!";
-
-
-  if (auto image = dynamic_cast<m2::SpectrumImageBase *>(m_DataNode->GetData()))
-  {
-    
-    if (type == m2::SpectrumType::None){
-      m_Groups.at(groupName).series->setVisible(!image->GetPeaks().empty());
-      return;
-    }
-
-    auto &artifacts = image->GetSpectraArtifacts();
-
-    // check if image artifacts contain the corresponding spectrum type
-    if (artifacts.find(type) != artifacts.end())
-    {
-      // get spectrum type data
-      auto ys = artifacts.at(type);
-      if (ys.empty())
-        mitkThrow() << "Entry " << static_cast<int>(type) << " found but it is empty!";
-
-      // check size
-      auto xs = image->GetXAxis();
-      if (ys.size() != xs.size())
-        mitkThrow() << "Spectrum size isn't equal to x axis size!";
-
-      // everything seems to be valid so start providing some level data for the given spectrum type
-      auto &lodData = m_Groups[groupName].data[type];
-      lodData.resize(m_BinSizes.size());
-      m_Groups[groupName].type = type;
-
-      auto lodDataIt = std::begin(lodData);
-      for (unsigned int binSize : m_BinSizes)
-      {
-        std::vector<m2::Interval> binnedData;
-        const auto numBins = xs.size() / binSize;
-        m2::Signal::equidistantBinning(std::begin(xs), std::end(xs), std::begin(ys), std::back_inserter(binnedData), numBins);
-
-        lodDataIt->clear();
-        std::transform(std::begin(binnedData),
-                       std::end(binnedData),
-                       std::back_inserter(*lodDataIt),
-                       [](const m2::Interval &p) {
-                         return QPointF{p.x.mean(), p.y.max()};
-                       });
-        ++lodDataIt;
-      }
-
-      const auto lod = FindGroupLoD(groupName);
-      m_Groups[groupName].series->replace(lodData[lod]);
-    }
-  }
-}
-
 void Qm2SpectrumChartDataProvider::UpdateGroup(const std::string &groupName, double xMin, double xMax)
 {
   if (auto image = dynamic_cast<m2::SpectrumImageBase *>(m_DataNode->GetData()))
   {
     // no update for non spectra
-    if (m_Groups[groupName].type == m2::SpectrumType::None)
+
+    if (xMin < 0 && xMax < 0)
     {
-      if (xMin < 0 && xMax < 0)
-      {
+      return;
+    }
+
+    if (groupName == "Peaks")
+    {
+      if(image->GetPeaks().empty()){
         return;
       }
-      if (!image->GetPeaks().empty())
-      {
-        m_Groups.at(groupName).series->setVisible(true);
-        const auto &peaks = image->GetPeaks();
-        auto lower = std::lower_bound(std::begin(peaks), std::end(peaks), m2::Interval{0, xMin, 0});
-        const auto upper = std::upper_bound(lower, std::end(peaks), m2::Interval{0, xMax, 0});
-        
-        QVector<QPointF> seriesData;
-        auto insert = std::back_inserter(seriesData);
-        for (;lower != upper; ++lower)
-          insert = QPointF{lower->x.mean(), lower->y.mean()};
-        
-        m_Groups.at(groupName).series->replace(seriesData);
-      }else{
-        m_Groups.at(groupName).series->setVisible(false);
+
+      using namespace std;
+      m_Groups.at(groupName).series->setVisible(true);
+      const auto &peaks = image->GetPeaks(); //use for location
+      auto lower = lower_bound(begin(peaks), end(peaks), m2::Interval{xMin, 0});
+      const auto upper = upper_bound(lower, end(peaks), m2::Interval{xMax, 0});
+
+      QVector<QPointF> seriesData;
+      seriesData.reserve(distance(lower,upper));
+      auto insert = back_inserter(seriesData);
+      auto type = m_Groups.at(groupName).type;
+      
+      // position peak indicators at the bottom of the view (at y=0)
+      if(m_Groups.find("Overview") == m_Groups.end()){
+        for (; lower != upper; ++lower)
+          insert = QPointF{lower->x.mean(),0};
+      }else{ // use overview spectrum for y position
+        const auto & overviewGroup = m_Groups.at("Overview");
+        const auto & v = overviewGroup.data.at(type).at(0);
+        for (; lower != upper; ++lower){
+          auto lb = lower_bound(begin(v),end(v),QPointF{lower->x.mean(),0},[](const QPointF &a,const QPointF &b){return a.x() < b.x();});
+          insert = QPointF{lower->x.mean(),lb->y()};
+        }
       }
-    }
-    else
-    {
+      m_Groups.at(groupName).series->replace(seriesData);
+
+    }else{
       if (xMin < 0 && xMax < 0)
       {
         const auto &data = this->m_Groups[groupName].GetRawData();
@@ -131,20 +82,21 @@ void Qm2SpectrumChartDataProvider::UpdateGroup(const std::string &groupName, dou
       isCentroid |= image->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedCentroid;
 
       const auto currentData = m_Groups[groupName].GetCurrentData();
-      auto lower =
-        std::lower_bound(std::begin(currentData), std::end(currentData), QPointF{xMin, 0}, lessXQPointF);
+      auto lower = std::lower_bound(std::begin(currentData), std::end(currentData), QPointF{xMin, 0}, lessXQPointF);
       const auto upper = std::upper_bound(lower, std::end(currentData), QPointF{xMax, 0}, lessXQPointF);
 
       auto currentSeries = m_Groups.at(groupName).series;
-      
+
       QVector<QPointF> seriesData;
       seriesData.reserve(std::distance(lower, upper));
       auto insert = std::back_inserter(seriesData);
-      for (;lower != upper; ++lower)
+      for (; lower != upper; ++lower)
       {
-        if(isCentroid) insert = QPointF{lower->x(), -0.001};
+        if (isCentroid)
+          insert = QPointF{lower->x(), -0.001};
         insert = QPointF{lower->x(), lower->y()};
-        if(isCentroid) insert = QPointF{lower->x(), 0};
+        if (isCentroid)
+          insert = QPointF{lower->x(), 0};
       }
       currentSeries->replace(seriesData);
     }
@@ -155,8 +107,7 @@ int Qm2SpectrumChartDataProvider::FindGroupLoD(const std::string &groupName, dou
 {
   const auto &type = m_Groups.at(groupName).type;
 
-  std::function<double(int)> WantedPointsInViewQuotient = [&](int lod) -> double
-  {
+  std::function<double(int)> WantedPointsInViewQuotient = [&](int lod) -> double {
     if (lod < 0 || lod >= (int)m_BinSizes.size())
       return std::numeric_limits<double>::max();
 
