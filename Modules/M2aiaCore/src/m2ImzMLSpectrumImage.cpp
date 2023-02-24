@@ -801,7 +801,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
                          }
 
                          for (size_t i = 0; i < mzs.size(); ++i){
-                           peaksT[t][i].index(i);
+                          //  peaksT[t][i].index(i);
                            peaksT[t][i].x(mzs[i]);
                            peaksT[t][i].y(ints[i]);
                          }

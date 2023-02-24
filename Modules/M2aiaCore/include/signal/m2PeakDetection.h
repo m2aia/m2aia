@@ -72,7 +72,7 @@ namespace m2
       const auto last = intsInLast;
 
       auto localMaximum = std::max_element(first, upper + 1);
-      unsigned int index = 0;
+      // unsigned int index = 0;
 
       for (; mid != last;)
       {
@@ -82,10 +82,10 @@ namespace m2
           localMaximum = upper;
 
         if (localMaximum == mid && *localMaximum > threshold) // maximum is located at mid of the sliding window
-          (*peaksOutFirst) = m2::Interval{index, (double)(*mzsInFirst), (double)(*localMaximum)};
+          (*peaksOutFirst) = m2::Interval{/*index,*/ (double)(*mzsInFirst), (double)(*localMaximum)};
         else if (fillWithZeros)
         {
-          (*peaksOutFirst) = m2::Interval{index, (double)(*mzsInFirst), 0};
+          (*peaksOutFirst) = m2::Interval{/*index,*/ (double)(*mzsInFirst), 0};
         }
 
         if (std::distance(lower, upper) == (2 * windowSize) /*Number of hops from lower to upper*/
@@ -96,7 +96,7 @@ namespace m2
           ++upper;
 
         ++mid;
-        ++index;
+        // ++index;
         ++mzsInFirst;
         ++peaksOutFirst;
       }

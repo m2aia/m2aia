@@ -70,30 +70,30 @@ namespace m2
     return data;
   }
 
-  std::vector<double> IntervalVector::GetIndexMean() const {
-    vector<double> data;
-    transform(m_Data.begin(),m_Data.end(),back_inserter(data), [](const Interval & I){return I.index.mean();});
-    return data;
-  }
-  std::vector<double> IntervalVector::GetIndexSum() const {
-    vector<double> data;
-    transform(m_Data.begin(),m_Data.end(),back_inserter(data), [](const Interval & I){return I.index.sum();});
-    return data;
-  }
-  std::vector<double> IntervalVector::GetIndexMax() const {
-    vector<double> data;
-    transform(m_Data.begin(),m_Data.end(),back_inserter(data), [](const Interval & I){return I.index.max();});
-    return data;
-  }
-  std::vector<double> IntervalVector::GetIndexMin() const {
-    vector<double> data;
-    transform(m_Data.begin(),m_Data.end(),back_inserter(data), [](const Interval & I){return I.index.min();});
-    return data;
-  }
-  std::vector<unsigned int> IntervalVector::GetIndexCount() const {
-    vector<unsigned int> data;
-    transform(m_Data.begin(),m_Data.end(),back_inserter(data), [](const Interval & I){return I.index.count();});
-    return data;
-  }
+  // std::vector<double> IntervalVector::GetIndexMean() const {
+  //   vector<double> data;
+  //   transform(m_Data.begin(),m_Data.end(),back_inserter(data), [](const Interval & I){return I.index.mean();});
+  //   return data;
+  // }
+  // std::vector<double> IntervalVector::GetIndexSum() const {
+  //   vector<double> data;
+  //   transform(m_Data.begin(),m_Data.end(),back_inserter(data), [](const Interval & I){return I.index.sum();});
+  //   return data;
+  // }
+  // std::vector<double> IntervalVector::GetIndexMax() const {
+  //   vector<double> data;
+  //   transform(m_Data.begin(),m_Data.end(),back_inserter(data), [](const Interval & I){return I.index.max();});
+  //   return data;
+  // }
+  // std::vector<double> IntervalVector::GetIndexMin() const {
+  //   vector<double> data;
+  //   transform(m_Data.begin(),m_Data.end(),back_inserter(data), [](const Interval & I){return I.index.min();});
+  //   return data;
+  // }
+  // std::vector<unsigned int> IntervalVector::GetIndexCount() const {
+  //   vector<unsigned int> data;
+  //   transform(m_Data.begin(),m_Data.end(),back_inserter(data), [](const Interval & I){return I.index.count();});
+  //   return data;
+  // }
 
 } // namespace m2

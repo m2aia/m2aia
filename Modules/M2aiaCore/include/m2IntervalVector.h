@@ -62,14 +62,14 @@ namespace m2
 
   struct Interval
   {
-    Accumulator index;
+    // Accumulator index;
     Accumulator x;
     Accumulator y;
     std::string description;
 
     Interval() = default;
-    Interval(unsigned int index, double x, double y){
-      this->index(index);
+    Interval(double x, double y){
+      // this->index(index);
       this->x(x);
       this->y(y);
     }
@@ -77,7 +77,7 @@ namespace m2
     Interval& operator+=(const Interval& rhs){
       x += rhs.x;
       y += rhs.y;
-      index += rhs.index;
+      // index += rhs.index;
       return *this;
     }
     friend bool operator<(const Interval &lhs, const Interval &rhs) { return lhs.x.mean() < rhs.x.mean(); }
@@ -119,11 +119,11 @@ namespace m2
     std::vector<double> GetYMin() const;
     std::vector<unsigned int > GetYCount() const;
 
-    std::vector<double> GetIndexMean() const;
-    std::vector<double> GetIndexSum() const;
-    std::vector<double> GetIndexMax() const;
-    std::vector<double> GetIndexMin() const;
-    std::vector<unsigned int> GetIndexCount() const;
+    // std::vector<double> GetIndexMean() const;
+    // std::vector<double> GetIndexSum() const;
+    // std::vector<double> GetIndexMax() const;
+    // std::vector<double> GetIndexMin() const;
+    // std::vector<unsigned int> GetIndexCount() const;
 
     std::vector<Interval> & GetIntervals(){return m_Data;}
     const std::vector<Interval> & GetIntervals() const {return m_Data;}

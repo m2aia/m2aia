@@ -24,6 +24,8 @@ See LICENSE.txt for details.
 #include <unordered_map>
 #include <vector>
 
+#include <m2IntervalVector.h>
+
 namespace m2
 {
   namespace Signal
@@ -110,7 +112,7 @@ namespace m2
         // accumulate
         while (xIt != xEnd && *xIt < (currentBin + 1) * binSize)
         {
-          p.index(currentIndex);
+          // p.index(currentIndex);
           p.x(*xIt);
           p.y(*yIt);
           ++xIt;
@@ -142,42 +144,35 @@ namespace m2
     {
       using namespace std;
       auto n = distance(sx, ex);
-      // MITK_INFO << "Distance " << n;     
-      // for(auto s : scopy) std::cout << s << " " ;
-      // std::cout << " [" << distance(begin(scopy), r) << "]"<< std::endl;
-
-      // check if multiple peaks of the same spectrum are present in the interval
-      // if so strict grouping fails
-      if (!isUniqueRange(ss, ss+n)){
-        // MITK_INFO << "strict error!";
+      if (!isUniqueRange(ss, ss+n))
         return 0;
-      }
-
       double mean_xs = std::accumulate(sx, ex, 0.0) / double(n);
-      // for(auto it = sx; it != ex; ++it)
-      //   std::cout << *it << " ";
-      // std::cout << std::endl;
-    
-      // check if all x values within tolerance
-      // if not strict grouping fails
-      if (std::any_of(sx, ex, [=](double x) { return (std::abs(x - mean_xs) / mean_xs) > tolerance; })){
-        // MITK_INFO << "tolerance error!";
+      if (std::any_of(sx, ex, [=](double x) { return (std::abs(x - mean_xs) / mean_xs) > tolerance; }))
         return 0;
-      }
+      return mean_xs;
+    }
+    
 
-      // strict group found with mean x value and the sources
-      // sources: (unique-index-values pointing to spectra of the imzML image)
-      // for(auto it = ss; it != ss+n; ++it)
-      //   ssOut = *it;
-
+    template <typename TypeBeginX, typename TypeEndX, typename TypeBeginY, typename TypeBeginS>
+    inline double grouperRelaxed(
+      TypeBeginX sx, TypeEndX ex, TypeBeginY /*sy*/, TypeBeginS /*ss*/, double tolerance)
+    {
+      using namespace std;
+      // if (!isUniqueRange(ss, ss+n))
+      //   return 0;
+      auto n = distance(sx, ex);
+      double mean_xs = std::accumulate(sx, ex, 0.0) / double(n);
+      if (std::any_of(sx, ex, [=](double x) { return (std::abs(x - mean_xs) / mean_xs) > tolerance; }))
+        return 0;
       return mean_xs;
     }
 
     template <typename XType, typename YType, typename SourceType, typename Functor>
-    inline std::tuple<std::vector<SourceType>, std::vector<XType>, std::vector<std::vector<SourceType>>> groupBinning(
+    inline std::tuple<std::vector<m2::Interval>, std::vector<std::vector<SourceType>>> groupBinning(
       const std::vector<XType> &xs,
       const std::vector<YType> &ys,
       const std::vector<SourceType> &sources,
+      // const std::vector<SourceType> &indices,
       Functor f,
       double tolerance)
     {
@@ -190,21 +185,23 @@ namespace m2
       d.resize(xs.size());
       adjacent_difference(xs.begin(), xs.end(), begin(d));
       d[0] = -1;
+
+
+      std::vector<m2::Interval> I;
       
-      svec bin_assignments;
-      bin_assignments.resize(xs.size(), -1);
+      // svec bin_assignments;
+      // bin_assignments.resize(xs.size(), -1);
 
       auto n = static_cast<int>(xs.size());
       vector<pair<int, int>> boundary{{0, n}};
-      vector<svec> bin_counts;
-      xvec bin_xs;
-      
-      bin_xs.reserve(xs.size());
       boundary.reserve(xs.size());
+      
+      vector<svec> bin_counts;
       bin_counts.reserve(xs.size());
-
-      auto inserterBinSources = back_inserter(bin_counts);
-
+            
+      std::vector<m2::Interval> intervals;
+      intervals.reserve(xs.size());
+      
       int current_id = 0;
       while (!boundary.empty())
       {
@@ -224,11 +221,20 @@ namespace m2
         }
         else
         {
-          fill(begin(bin_assignments) + left, begin(bin_assignments) + gapIdx, current_id);
-          bin_xs.push_back(l);
-          inserterBinSources = svec{begin(sources) + left, begin(sources) + gapIdx};
+          m2::Interval i;
+          auto yIt = begin(ys) + left;
+          auto xIt = begin(xs) + left;
+          for(; xIt != begin(xs) + gapIdx; ++xIt, ++yIt){
+            i.x(*xIt);
+            i.y(*yIt);
+          }
+
+          
+          // fill(begin(bin_assignments) + left, begin(bin_assignments) + gapIdx, current_id);
+          intervals.emplace_back(i);
+          bin_counts.emplace_back(begin(sources) + left, begin(sources) + gapIdx);
           current_id += 1;
-          // MITK_INFO << "left [pure]: " << left << " " << gapIdx << " <" << l << ">";
+          
         }
 
         auto r = f(begin(xs) + gapIdx, begin(xs) + right, begin(ys) + gapIdx, begin(sources) + gapIdx, tolerance);
@@ -238,38 +244,46 @@ namespace m2
         }
         else
         {
-          fill(begin(bin_assignments) + gapIdx, begin(bin_assignments) + right, current_id);
-          bin_xs.push_back(r);
-          inserterBinSources = svec{begin(sources) + gapIdx, begin(sources) + right};
+          m2::Interval i;
+          auto yIt = begin(ys) + gapIdx;
+          auto xIt = begin(xs) + gapIdx;
+          for(; xIt != begin(xs) + right; ++xIt, ++yIt){
+            i.x(*xIt);
+            i.y(*yIt);
+          }
+
+          // fill(begin(bin_assignments) + gapIdx, begin(bin_assignments) + right, current_id);
+          // bin_xs.push_back(r);
+          intervals.emplace_back(i);
+          bin_counts.emplace_back(begin(sources) + gapIdx, begin(sources) + right);
           current_id += 1;
           // MITK_INFO << "right [pure]: " << gapIdx << " " << right << " <" << r << ">";
         }
       }
 
-      int binId = 0;
-      int curr = bin_assignments[0];
-      transform(begin(bin_assignments), end(bin_assignments), begin(bin_assignments), [&binId, &curr](auto & val){
-        if(val != curr){
-          ++binId;
-          curr = val;
-        }
-        return binId;
-      });
+      // int binId = 0;
+      // int curr = bin_assignments[0];
+      // transform(begin(bin_assignments), end(bin_assignments), begin(bin_assignments), [&binId, &curr](auto & val){
+      //   if(val != curr){
+      //     ++binId;
+      //     curr = val;
+      //   }
+      //   return binId;
+      // });
 
+      intervals.shrink_to_fit();
      
 
-      vector<svec> sorted_bin_counts;
-      xvec sorted_bin_xs;
-      sorted_bin_xs.resize(bin_xs.size());
-      sorted_bin_counts.resize(bin_counts.size());
+      // vector<svec> sorted_bin_counts;
+      // sorted_bin_xs.resize(bin_xs.size());
+      // sorted_bin_counts.resize(bin_counts.size());
 
-      auto indices = m2::argsort(bin_xs);
-      for(unsigned int i = 0; i < indices.size(); ++i){
-        sorted_bin_xs[i] = bin_xs[indices[i]];
-        sorted_bin_counts[i] = bin_counts[indices[i]];
-      }
+      auto indices = m2::argsort(intervals);
+      auto sorted_bin_xs = m2::argsortApply(intervals, indices);
+      auto sorted_bin_counts = m2::argsortApply(bin_counts, indices);
 
-    return std::make_tuple(bin_assignments, sorted_bin_xs, sorted_bin_counts);
+
+    return std::make_tuple(sorted_bin_xs, sorted_bin_counts);
 
     }
 
