@@ -18,6 +18,8 @@ found in the LICENSE file.
 #include <m2SpectrumImageBase.h>
 #include <mitkDockerHelper.h>
 #include <mitkImage.h>
+#include <mitkImagePixelReadAccessor.h>
+#include <mitkImagePixelWriteAccessor.h>
 #include <mitkLabelSetImage.h>
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateDataType.h>
@@ -93,7 +95,17 @@ void QmitkMoleculaRView::OnStartMoleculaR()
 
         auto lsImage = mitk::LabelSetImage::New();
         lsImage->InitializeByLabeledImage(dynamic_cast<mitk::Image *>(results[0].GetPointer()));
-        
+
+        {
+          using namespace std;
+          mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType> mAcc(image->GetMaskImage());
+          mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType> lsAcc(lsImage);
+          auto N = accumulate(lsImage->GetDimensions(), lsImage->GetDimensions() + 3, 1, multiplies<unsigned long>());
+          transform(mAcc.GetData(), mAcc.GetData() + N, lsAcc.GetData(), lsAcc.GetData(), [](auto a, auto b) {
+            return a > 0 ? b : 0;
+          });
+        }
+
         auto newNode = mitk::DataNode::New();
         newNode->SetData(lsImage);
         newNode->SetName(node->GetName() + "_mpm");
@@ -102,20 +114,19 @@ void QmitkMoleculaRView::OnStartMoleculaR()
         RequestRenderWindowUpdate();
 
         mitk::Color c;
-        c.Set(66/255.0,151/255.0,160/255.0);
+        c.Set(66 / 255.0, 151 / 255.0, 160 / 255.0);
         lsImage->GetLabel(1)->SetName("Coldspots");
         lsImage->GetLabel(1)->SetColor(c);
         lsImage->GetLabel(1)->SetOpacity(0.1);
 
         mitk::Color h;
-        h.Set(245/255.0,93/255.0,80/255.0);
+        h.Set(245 / 255.0, 93 / 255.0, 80 / 255.0);
         lsImage->GetLabel(2)->SetName("Hotspots");
         lsImage->GetLabel(2)->SetColor(h);
         lsImage->GetLabel(2)->SetOpacity(0.1);
 
         lsImage->GetActiveLabelSet()->UpdateLookupTable(1);
         lsImage->GetActiveLabelSet()->UpdateLookupTable(2);
-
       }
     }
   }
