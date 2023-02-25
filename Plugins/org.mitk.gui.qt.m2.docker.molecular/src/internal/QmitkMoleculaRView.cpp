@@ -26,6 +26,7 @@ found in the LICENSE file.
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateOr.h>
 #include <mitkNodePredicateProperty.h>
+#include <mitkProgressBar.h>
 #include <usModuleRegistry.h>
 
 // Don't forget to initialize the VIEW_ID.
@@ -82,19 +83,20 @@ void QmitkMoleculaRView::OnStartMoleculaR()
 
       if (mitk::DockerHelper::CheckDocker())
       {
+        mitk::ProgressBar::GetInstance()->AddStepsToDo(4);
         auto newImage = image->Clone();
         newImage->GetPropertyList()->RemoveProperty("MITK.IO.reader.inputlocation");
-
         mitk::DockerHelper helper("m2aia/extensions:mpm");
         helper.AddData(newImage, "--ionimage", "ionimage.nrrd");
         helper.AddData(image->GetMaskImage(), "--mask", "mask.nrrd");
         helper.AddApplicationArgument("--pval", std::to_string(m_Controls.spnBxMPMPValue->value()));
         helper.AddAutoLoadOutput("--out", "mpm.nrrd");
+        mitk::ProgressBar::GetInstance()->Progress();
 
         const auto results = helper.GetResults();
-
         auto lsImage = mitk::LabelSetImage::New();
         lsImage->InitializeByLabeledImage(dynamic_cast<mitk::Image *>(results[0].GetPointer()));
+        mitk::ProgressBar::GetInstance()->Progress();
 
         {
           using namespace std;
@@ -105,6 +107,7 @@ void QmitkMoleculaRView::OnStartMoleculaR()
             return a > 0 ? b : 0;
           });
         }
+        mitk::ProgressBar::GetInstance()->Progress();
 
         auto newNode = mitk::DataNode::New();
         newNode->SetData(lsImage);
@@ -127,6 +130,7 @@ void QmitkMoleculaRView::OnStartMoleculaR()
 
         lsImage->GetActiveLabelSet()->UpdateLookupTable(1);
         lsImage->GetActiveLabelSet()->UpdateLookupTable(2);
+        mitk::ProgressBar::GetInstance()->Progress();
       }
     }
   }
