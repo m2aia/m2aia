@@ -13,20 +13,22 @@ A PARTICULAR PURPOSE.
 See LICENSE.txt for details.
 
 ===================================================================*/
-#include <signal/m2PeakDetection.h>
 #include <m2SpectrumImageBase.h>
 #include <mitkDataNode.h>
+#include <mitkImagePixelReadAccessor.h>
 #include <mitkLevelWindowProperty.h>
 #include <mitkLookupTableProperty.h>
 #include <mitkOperation.h>
+#include <signal/m2PeakDetection.h>
 
-
-namespace m2{
+namespace m2
+{
   itkEventMacroDefinition(PeakListModifiedEvent, itk::AnyEvent);
   itkEventMacroDefinition(InitializationFinishedEvent, itk::AnyEvent);
-}
+} // namespace m2
 
-void m2::SpectrumImageBase::PeakListModified(){
+void m2::SpectrumImageBase::PeakListModified()
+{
   InvokeEvent(m2::PeakListModifiedEvent());
 }
 
@@ -58,19 +60,50 @@ void m2::SpectrumImageBase::InsertImageArtifact(const std::string &key, mitk::Im
   auto aS = this->GetGeometry()->GetSpacing();
   auto bS = img->GetGeometry()->GetSpacing();
 
-  if (!std::equal(aS.GetDataPointer(),
-                  aS.GetDataPointer() + DIMS,
-                  bS.GetDataPointer(),
-                  [](const auto &a, const auto &b) { return itk::Math::FloatAlmostEqual(a, b); }))
+  if (!std::equal(
+        aS.GetDataPointer(), aS.GetDataPointer() + DIMS, bS.GetDataPointer(), [](const auto &a, const auto &b) {
+          return itk::Math::FloatAlmostEqual(a, b);
+        }))
   {
     mitkThrow() << "SpectrumBaseImage related image artifacts require identical spacings.";
   }
 
-  
-
   // if spacing and dimensions are equal, copy origin and vtkMatrix to the new image artifact.
   img->SetClonedTimeGeometry(this->GetTimeGeometry());
+}
 
+std::vector<unsigned long> m2::SpectrumImageBase::GetIntensityDataShape(
+  const std::vector<m2::Interval> &intervals) const
+{
+  using namespace std;
+  // pixels in image
+  unsigned int N = accumulate(this->GetDimensions(), this->GetDimensions() + 3, 1, multiplies<unsigned int>());
+  return vector<unsigned long>{intervals.size(), N};
+}
+
+std::vector<float> m2::SpectrumImageBase::GetIntensityData(const std::vector<m2::Interval> &intervals) const
+{
+  using namespace std;
+  // pixels in image
+  unsigned int N = accumulate(this->GetDimensions(), this->GetDimensions() + 3, 1, multiplies<unsigned int>());
+  auto maskImage = GetMaskImage();
+
+  auto tmpImage = mitk::Image::New();
+  tmpImage->Initialize(this);
+  mitk::ImagePixelReadAccessor<m2::DisplayImagePixelType, 3> tAcc(tmpImage);
+
+  vector<float> values;
+  values.reserve(N * intervals.size());
+  auto inserter = back_inserter(values);
+  MITK_INFO << "Generate intensity values for #intervals (" << intervals.size()
+            << ") using interval centers and a tolerance of " << this->GetTolerance()
+            << " isUsingPPM=" << (GetUseToleranceInPPM() ? "True" : "False");
+  for (const auto &p : intervals)
+  {
+    GetImage(p.x.mean(), ApplyTolerance(p.x.mean()), maskImage, tmpImage);
+    copy(tAcc.GetData(), tAcc.GetData() + N, inserter);
+  }
+  return values;
 }
 
 void m2::SpectrumImageBase::ApplyMoveOriginOperation(const mitk::Vector3D &v)
@@ -141,6 +174,27 @@ mitk::Image::Pointer m2::SpectrumImageBase::GetMaskImage()
 }
 
 mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage()
+{
+  if (m_ImageArtifacts.find("index") != m_ImageArtifacts.end())
+    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("index").GetPointer());
+  return nullptr;
+}
+
+mitk::Image::Pointer m2::SpectrumImageBase::GetNormalizationImage() const
+{
+  if (m_ImageArtifacts.find("NormalizationImage") != m_ImageArtifacts.end())
+    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("NormalizationImage").GetPointer());
+  return nullptr;
+}
+
+mitk::Image::Pointer m2::SpectrumImageBase::GetMaskImage() const
+{
+  if (m_ImageArtifacts.find("mask") != m_ImageArtifacts.end())
+    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("mask").GetPointer());
+  return nullptr;
+}
+
+mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage() const
 {
   if (m_ImageArtifacts.find("index") != m_ImageArtifacts.end())
     return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("index").GetPointer());

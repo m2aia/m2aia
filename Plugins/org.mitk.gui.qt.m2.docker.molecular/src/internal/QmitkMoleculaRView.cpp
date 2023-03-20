@@ -87,8 +87,8 @@ void QmitkMoleculaRView::OnStartMoleculaR()
         auto newImage = image->Clone();
         newImage->GetPropertyList()->RemoveProperty("MITK.IO.reader.inputlocation");
         mitk::DockerHelper helper("m2aia/extensions:mpm");
-        helper.AddData(newImage, "--ionimage", "ionimage.nrrd");
-        helper.AddData(image->GetMaskImage(), "--mask", "mask.nrrd");
+        helper.AddAutoSaveData(newImage, "--ionimage", "ionimage.nrrd");
+        helper.AddAutoSaveData(image->GetMaskImage(), "--mask", "mask.nrrd");
         helper.AddApplicationArgument("--pval", std::to_string(m_Controls.spnBxMPMPValue->value()));
         helper.AddAutoLoadOutput("--out", "mpm.nrrd");
         mitk::ProgressBar::GetInstance()->Progress();

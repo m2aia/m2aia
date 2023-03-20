@@ -420,10 +420,10 @@ m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLS
 
   C->InitializeGeometry();
   std::set<m2::Interval> set;
-  set.insert(std::begin(A->GetPeaks()), std::end(A->GetPeaks()));
-  set.insert(std::begin(B->GetPeaks()), std::end(B->GetPeaks()));
+  set.insert(std::begin(A->GetIntervals()), std::end(A->GetIntervals()));
+  set.insert(std::begin(B->GetIntervals()), std::end(B->GetIntervals()));
 
-  C->GetPeaks().insert(std::end(C->GetPeaks()), std::begin(set), std::end(set));
+  C->GetIntervals().insert(std::end(C->GetIntervals()), std::begin(set), std::end(set));
   return C;
 }
 
@@ -981,30 +981,30 @@ void m2::ImzMLSpectrumImage::GetIntensities(unsigned int id, std::vector<float> 
   m_Processor->GetYValues(id, ys, source);
 }
 
-void m2::ImzMLSpectrumImage::GetIntensities(unsigned int id,
-                                            std::vector<m2::Interval> &I,
-                                            std::vector<float> &pys,
-                                            unsigned int source) const
-{
-  using namespace std;
-  vector<float> xs, ys;
-  this->GetSpectrum(id,xs,ys, source);
-  auto it = begin(xs);
-  auto xsBegin = begin(xs);
-  auto xsEnd = end(xs);
-  pys.clear();
-  auto inserter =std::back_inserter(pys);
-  for (unsigned int p = 0; p < I.size(); ++p)
-  {
-    it = lower_bound(it,xsEnd,I[p].x.min());
-    auto lower = distance(xsBegin, it);
-    it = upper_bound(it,xsEnd,I[p].x.max());
-    auto upper = distance(xsBegin, it);
+// void m2::ImzMLSpectrumImage::GetIntensities(unsigned int id,
+//                                             std::vector<m2::Interval> &I,
+//                                             std::vector<float> &pys,
+//                                             unsigned int source) const
+// {
+//   using namespace std;
+//   vector<float> xs, ys;
+//   this->GetSpectrum(id,xs,ys, source);
+//   auto it = begin(xs);
+//   auto xsBegin = begin(xs);
+//   auto xsEnd = end(xs);
+//   pys.clear();
+//   auto inserter =std::back_inserter(pys);
+//   for (unsigned int p = 0; p < I.size(); ++p)
+//   {
+//     it = lower_bound(it,xsEnd,I[p].x.min());
+//     auto lower = distance(xsBegin, it);
+//     it = upper_bound(it,xsEnd,I[p].x.max());
+//     auto upper = distance(xsBegin, it);
     
-    inserter = Signal::RangePooling<float>(begin(ys)+lower, begin(ys)+upper, GetRangePoolingStrategy());
+//     inserter = Signal::RangePooling<float>(begin(ys)+lower, begin(ys)+upper, GetRangePoolingStrategy());
 
-  }
-}
+//   }
+// }
 
 template <class MassAxisType, class IntensityType>
 template <class OutputType>

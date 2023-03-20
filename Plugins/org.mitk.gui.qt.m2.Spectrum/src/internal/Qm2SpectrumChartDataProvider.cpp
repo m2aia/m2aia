@@ -40,13 +40,13 @@ void Qm2SpectrumChartDataProvider::UpdateGroup(const std::string &groupName, dou
 
     if (groupName == "Peaks")
     {
-      if(image->GetPeaks().empty()){
+      if(image->GetIntervals().empty()){
         return;
       }
 
       using namespace std;
       m_Groups.at(groupName).series->setVisible(true);
-      const auto &peaks = image->GetPeaks(); //use for location
+      const auto &peaks = image->GetIntervals(); //use for location
       auto lower = lower_bound(begin(peaks), end(peaks), m2::Interval{xMin, 0});
       const auto upper = upper_bound(lower, end(peaks), m2::Interval{xMax, 0});
 
