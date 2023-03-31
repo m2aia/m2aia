@@ -4,7 +4,7 @@
 
 ## Welcome to *[M²aia][m2aia]*: a desktop application for mass spectrometry imaging.
 
-M²aia is open source software, based on the well-known [Medical Imaging Interaction Toolkit (MITK)](https://mitk.org/). The software enables interactive signal-processing and visualization of mass spectrometry imaging (MSI) datasets.
+M²aia is open source software, based on the well-known [Medical Imaging Interaction Toolkit (MITK)](https://mitk.org/). The software enables interactive visualization, signal-processing, 3D reconstruction and multi-modal image registration of mass spectrometry imaging (MSI) datasets.
 
 
 ## More information ##
@@ -15,14 +15,32 @@ M²aia is open source software, based on the well-known [Medical Imaging Interac
 
 [Protocols][m2aia]<br>
 
-[biotools:m2aia][biotools-m2aia]<br>
-[RRID:SCR_019324][scicrunch-m2aia]<br>
+## Cite M²aia ##
+
+Cordes J; Enzlein T; Marsching C; Hinze M; Engelhardt S; Hopf C; Wolf I (July, 2021): M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data https://doi.org/10.1093/gigascience/giab049
+
+[biotools:m2aia][biotools-m2aia]
 
 ## Docker ##
 
-[https://hub.docker.com/r/m2aia/m2aia](https://hub.docker.com/r/m2aia/m2aia)
+To use M²aia in a browser run:
+
+```docker pull ghcr.io/m2aia/m2aia:latest```<br>
+```docker run --rm -v /local/data/path:/data -p 8888:80 m2aia/m2aia:latest```
+
+with password:
+
+```docker run --rm -v /local/data/path:/data -e VNC_PASSWORD=<password> -p 8888:80 m2aia/m2aia:latest```
+
+Start M²aia by accessing http://localhost:8888
+
+The container will shut down if M²aia is closed (File->Exit).
+The results written to the mapped volume have root user ownership
+
 
 ## Python ##
+
+We provide ImzML Reader and the Signal Processing utilities for Python.
 
 [https://github.com/m2aia/pym2aia](https://github.com/m2aia/pym2aia)<br>
 [https://github.com/m2aia/pym2aia-examples](https://github.com/m2aia/pym2aia-examples)
