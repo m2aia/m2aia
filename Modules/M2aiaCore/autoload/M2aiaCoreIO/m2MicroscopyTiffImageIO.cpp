@@ -60,10 +60,11 @@ namespace m2
     // cast result and make shared pointer
     mitk::Image::Pointer image = dynamic_cast<mitk::Image *>(resultVec.back().GetPointer());
 
-    MITK_INFO << image->GetPixelType().GetNumberOfComponents();
-    MITK_INFO << image->GetPixelType().GetComponentTypeAsString();
-    MITK_INFO << image->GetPixelType().GetPixelType();
-    MITK_INFO << image->GetPixelType().GetPixelTypeAsString();
+    // MITK_INFO << image->GetPixelType().GetNumberOfComponents();
+    // MITK_INFO << image->GetPixelType().GetComponentTypeAsString();
+    // MITK_INFO << image->GetPixelType().GetPixelType();
+    // MITK_INFO << image->GetPixelType().GetPixelTypeAsString();
+    // MITK_INFO << image->GetGeometry()->GetSpacing();
 
     auto spacing = image->GetGeometry()->GetSpacing();
     spacing[0] = spacing[0] / 1000.0f;
