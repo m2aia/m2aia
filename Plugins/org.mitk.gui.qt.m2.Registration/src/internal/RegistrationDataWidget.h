@@ -31,11 +31,6 @@ private:
   std::shared_ptr<RegistrationData> m_RegistrationData;
   void UpdateRegistrationDataFromUI();
 
-  // std::vector<std::string> m_Transformations;
-  // mitk::DataNode::Pointer m_ResultNode;
-  // std::vector<mitk::DataNode::Pointer> m_ResultAttachments;
-  // std::vector<QmitkSingleNodeSelectionWidget *> m_Attachments;
-
 private slots:
   void OnLoadTransformations();
   void OnSaveTransformations();

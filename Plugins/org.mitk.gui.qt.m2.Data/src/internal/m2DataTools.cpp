@@ -232,6 +232,7 @@ void m2DataTools::OnToggleDataInteraction(bool checked)
         m_DataInteractor->SetEventConfig("PointSetConfig.xml");
         // set the DataNode (which already is added to the DataStorage
         m_DataInteractor->SetDataNode(node);
+        node->GetPropertyList()->SetStringProperty("m2.singlespectrum.id", "0");
       }
     }
     else
@@ -239,6 +240,7 @@ void m2DataTools::OnToggleDataInteraction(bool checked)
       m_Controls.toggleDataInteractor->setText("Activate");
       node->SetDataInteractor(nullptr);
       m_DataInteractor = nullptr;
+      node->GetPropertyList()->SetStringProperty("m2.singlespectrum.id", "");
     }
     // emit EditPointSets(checked);
   }

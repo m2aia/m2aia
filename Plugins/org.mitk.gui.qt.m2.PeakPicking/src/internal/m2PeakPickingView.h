@@ -49,26 +49,35 @@ public:
   static const std::string VIEW_ID;
 
 protected:
-  using VectorImageAdaptorType = itk::VectorImageToImageAdaptor<m2::DisplayImagePixelType, 3>;
-  using VectorImageType = itk::VectorImage<m2::DisplayImagePixelType, 3>;
-  using DisplayImageType = itk::Image<m2::DisplayImagePixelType, 3>;
+  
+  
   virtual void CreateQtPartControl(QWidget *parent) override;
-  mitk::Image::Pointer ResampleVectorImage(mitk::Image::Pointer lowResImage, mitk::Image::Pointer referenceImage);
 
   virtual void SetFocus() override;
   Ui::m2PeakPickingViewControls m_Controls;
-  QmitkSingleNodeSelectionWidget *m_MassSpecDataNodeSelectionWidget;
+  
   m2::UIUtils::NodesVectorType::Pointer m_ReceivedNodes = nullptr;
-  using PeakVectorType = m2::SpectrumImageBase::PeaksVectorType;
-  PeakVectorType m_PeakList;
+  // using PeakVectorType = m2::SpectrumImageBase::IntervalVectorType;
+  // PeakVectorType m_PeakList;
   QMetaObject::Connection m_Connection;
+  
+
 
 protected slots:
-  void OnStartPCA();
-  void OnStartTSNE();
+  // void OnStartLasso();
+  // void OnStartMPM();
+  
+  void OnUpdateUI();
+  void OnAddPeakList();
   void OnStartPeakPicking();
-  void OnImageSelectionChangedUpdatePeakList(int idx);
-  void OnUpdatePeakListLabel();
+  void OnStartPickPeaksAndBin();
+
+  void OnUpdatePeakListImage();
+  void OnUpdatePeakListUILabel();
+  void OnUpdatePeakListUI();
+
+  // void OnImageSelectionChanged();
+  void OnPeakListSelectionChanged();
 };
 
 #endif // m2PeakPickingView_h

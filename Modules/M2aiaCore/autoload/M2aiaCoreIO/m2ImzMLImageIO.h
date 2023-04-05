@@ -23,6 +23,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkImage.h>
 #include <mitkItkImageIO.h>
 
+#include <m2IntervalVector.h>
 #include <m2ImzMLSpectrumImage.h>
 
 
@@ -71,6 +72,7 @@ namespace m2
      *
      */
     void Write() override;
+    void SetIntervalVector(m2::IntervalVector::Pointer data);
 
     ConfidenceLevel GetWriterConfidenceLevel() const override;
     std::string GetIBDOutputPath() const;
@@ -84,6 +86,8 @@ namespace m2
     void EvaluateSpectrumFormatType(m2::SpectrumImageBase *);
     void LoadAssociatedData(m2::ImzMLSpectrumImage *);
     ImzMLImageIO *IOClone() const override;
+
+    m2::IntervalVector::Pointer m_Intervals;
   };
 } // namespace m2
 

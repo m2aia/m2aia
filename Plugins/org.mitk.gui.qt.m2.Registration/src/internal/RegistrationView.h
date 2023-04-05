@@ -61,16 +61,6 @@ protected:
   const unsigned int REGISTRATION_VOLUME = 1;
   const unsigned int REGISTRATION_SLICE = 0;
   unsigned int currentStrategy = REGISTRATION_VOLUME;
-  // struct RegistrationEntity{
-  //   QmitkSingleNodeSelectionWidget * m_ImageSelection;
-  //   QmitkSingleNodeSelectionWidget * m_ImageMaskSelection;
-  //   QmitkSingleNodeSelectionWidget * m_PointSetSelection;
-  //   std::vector<QmitkSingleNodeSelectionWidget *> m_Attachments;
-  //   mitk::DataNode::Pointer m_ResultNode;
-  //   std::vector<mitk::DataNode::Pointer> m_ResultAttachments;
-  //   QSpinBox * m_Index;
-  //   std::vector<std::string> m_Transformations;
-  // };
 
   std::shared_ptr<QFutureWatcher<void>> m_RegistrationJob;
   Ui::RegistrationViewControls m_Controls;

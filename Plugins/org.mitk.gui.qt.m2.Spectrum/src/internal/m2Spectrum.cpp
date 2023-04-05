@@ -169,12 +169,18 @@ void m2Spectrum::OnPropertyChanged(const itk::Object *caller, const itk::EventOb
       {
         if (specImage->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousProfile)
         {
-          auto id = std::stoul(idString);
-          std::vector<double> ys;
-          specImage->GetYValues(id, ys);
           auto &provider = m_DataProvider[node];
           QtCharts::QXYSeries *series;
           series = provider->GetGroupSeries("SingleSpectrum");
+          if (idString.empty())
+          {
+            provider->SetGroupVisiblity("SingleSpectrum", false);
+            series->clear();
+            return;
+          }
+          auto id = std::stoul(idString);
+          std::vector<double> ys;
+          specImage->GetYValues(id, ys);
           const auto &xs = specImage->GetXAxis();
 
           MITK_INFO << "Provide Data " << xs.size() << " " << ys.size();
@@ -192,24 +198,30 @@ void m2Spectrum::OnPropertyChanged(const itk::Object *caller, const itk::EventOb
   }
 }
 
+void m2Spectrum::OnInitializationFinished(const itk::Object * /*caller*/, const itk::EventObject & /*event*/)
+{
+  // if (auto node = dynamic_cast<const mitk::DataNode *>(caller))
+  // {
+
+  // }
+}
+
 void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
 {
   if (!node)
     return;
   if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-    // observer image modifications
-    auto imageModifiedCommand = itk::NodeMemberCommand<m2Spectrum>::New();
-    imageModifiedCommand->SetNode(node);
-    imageModifiedCommand->SetCallbackFunction(this, &m2Spectrum::OnPeakListChanged);
-    imageBase->AddObserver(m2::PeakListModifiedEvent(), imageModifiedCommand);
+    auto command = itk::NodeMemberCommand<m2Spectrum>::New();
+    command->SetNode(node);
+    command->SetCallbackFunction(this, &m2Spectrum::OnPeakListChanged);
+    imageBase->AddObserver(m2::PeakListModifiedEvent(), command);
 
-    auto chart = m_Controls.chartView->chart();
-    auto provider = std::make_shared<Qm2SpectrumChartDataProvider>(node);
-    m_DataProvider.emplace(node, provider);
+    command = itk::NodeMemberCommand<m2Spectrum>::New();
+    command->SetNode(node);
+    command->SetCallbackFunction(this, &m2Spectrum::OnInitializationFinished);
+    imageBase->AddObserver(m2::InitializationFinishedEvent(), command);
 
-    // Single Spectrum
-    {
       node->GetPropertyList()->SetStringProperty("m2.singlespectrum.id", "");
       auto prop = node->GetPropertyList()->GetProperty("m2.singlespectrum.id");
       auto propertyModifiedCommand = itk::NodeMemberCommand<m2Spectrum>::New();
@@ -217,30 +229,36 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
       propertyModifiedCommand->SetCallbackFunction(this, &m2Spectrum::OnPropertyChanged);
       prop->AddObserver(itk::ModifiedEvent(), propertyModifiedCommand);
 
-      auto series = provider->MakeSeries<QtCharts::QLineSeries>("SingleSpectrum");
       auto chart = m_Controls.chartView->chart();
-      series->setName((node->GetName() + " Single").c_str());
-      chart->addSeries(series);
+    auto provider = std::make_shared<Qm2SpectrumChartDataProvider>(node);
+    m_DataProvider.emplace(node, provider);
 
-      provider->SetGroupVisiblity("SingleSpectrum", false);
+    try
+    {
+      { // Overview spectra
+        auto series = provider->MakeSeries<QtCharts::QLineSeries>("Overview");
+        provider->Register("Overview", m2::SpectrumType::Maximum, imageBase->GetXAxis(), imageBase->SkylineSpectrum());
+        provider->Register("Overview", m2::SpectrumType::Mean, imageBase->GetXAxis(), imageBase->MeanSpectrum());
+        series->setName((node->GetName() + " Overview").c_str());
+        provider->UpdateGroup("Overview");
+      chart->addSeries(series);
+      }
+      {
+        // auto series = provider->MakeSeries<QtCharts::QLineSeries>("SingleSpectrum");
+        // series->setName((node->GetName() + " Single").c_str());
+        // chart->addSeries(series);
+
+        // provider->SetGroupVisiblity("SingleSpectrum", false);
     }
 
     { // Peak indicators
       auto scatterSeries = provider->MakeSeries<QtCharts::QScatterSeries>("Peaks");
-      provider->Register("Peaks", m2::SpectrumType::None);
+        provider->Register("Peaks", m2::SpectrumType::Maximum);
+        provider->Register("Peaks", m2::SpectrumType::Mean);
       scatterSeries->setName((node->GetName() + " Peaks").c_str());
       provider->UpdateGroup("Peaks");
       provider->SetGroupVisiblity("Peaks", true);
       chart->addSeries(scatterSeries);
-    }
-
-    { // Overview spectra
-      auto series = provider->MakeSeries<QtCharts::QLineSeries>("Overview");
-      provider->Register("Overview", m2::SpectrumType::Maximum);
-      provider->Register("Overview", m2::SpectrumType::Mean);
-      series->setName((node->GetName() + " Overview").c_str());
-      provider->UpdateGroup("Overview");
-      chart->addSeries(series);
     }
 
     chart->createDefaultAxes();
@@ -258,6 +276,11 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
 
     UpdateGlobalMinMaxValues();
     OnResetView();
+  }
+    catch (std::exception &e)
+    {
+      MITK_WARN << "Spectrum view: Adding a node to the spectrum view failed!";
+    }
   }
 
   //   bool isCentroidSpectrum = false;
@@ -469,8 +492,16 @@ void m2Spectrum::UpdateLocalMinMaxValues(double minX, double maxX)
   {
     for (const auto &groupKV : providerKV.second->m_Groups)
     {
-      if (groupKV.second.type == m2::SpectrumType::None)
+      const auto &type = groupKV.second.type;
+      if (!groupKV.second.series->isVisible() || !groupKV.second.series->count() || groupKV.second.data.empty())
         continue;
+
+      if (groupKV.second.data.empty())
+        continue;
+
+      if (groupKV.second.data.at(type).empty())
+        continue;
+        
       const auto cmpY = [](const auto &a, const auto &b) { return a.y() < b.y(); };
       const auto cmpX = [](const auto &a, const auto &b) { return a.x() < b.x(); };
       const auto &data = groupKV.second.GetRawData();
@@ -503,9 +534,13 @@ void m2Spectrum::UpdateGlobalMinMaxValues()
     for (const auto &group : provider.second->m_Groups)
     {
       const auto &type = group.second.type;
-      if (type == m2::SpectrumType::None)
+      if (!group.second.series->isVisible() || !group.second.series->count() || group.second.data.empty())
         continue;
-      if (!group.second.series->isVisible())
+
+      if (group.second.data.empty())
+        continue;
+
+      if (group.second.data.at(type).empty())
         continue;
 
       const auto &data = group.second.data.at(type).at(0);
@@ -566,6 +601,8 @@ void m2Spectrum::CreateQtPartControl(QWidget *parent)
 
   m_M2aiaPreferences =
     berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+
+  m_Controls.chartView->chart()->legend()->setVisible(false);
 }
 
 void m2Spectrum::CreateQChartViewMenu()
@@ -594,11 +631,7 @@ void m2Spectrum::CreateQChartViewMenu()
   m_SpectrumSelectionGroup->addAction(m_SpectrumSkyline);
   m_SpectrumSelectionGroup->addAction(m_SpectrumMean);
 
-  connect(m_SpectrumSkyline,
-          &QAction::toggled,
-          this,
-          [&](bool v)
-          {
+  connect(m_SpectrumSkyline, &QAction::toggled, this, [&](bool v) {
             if (!v)
               return;
 
@@ -606,6 +639,7 @@ void m2Spectrum::CreateQChartViewMenu()
             for (auto &kv : this->m_DataProvider)
             {
               kv.second->SetGroupSpectrumType("Overview", m_CurrentOverviewSpectrumType);
+      kv.second->SetGroupSpectrumType("Peaks", m_CurrentOverviewSpectrumType);
               kv.second->UpdateAllGroups();
             }
             UpdateGlobalMinMaxValues();
@@ -613,11 +647,7 @@ void m2Spectrum::CreateQChartViewMenu()
             emit m_xAxis->rangeChanged(m_xAxis->min(), m_xAxis->max());
           });
 
-  connect(m_SpectrumMean,
-          &QAction::toggled,
-          this,
-          [&](bool v)
-          {
+  connect(m_SpectrumMean, &QAction::toggled, this, [&](bool v) {
             if (!v)
               return;
 
@@ -625,6 +655,7 @@ void m2Spectrum::CreateQChartViewMenu()
             for (auto &kv : this->m_DataProvider)
             {
               kv.second->SetGroupSpectrumType("Overview", m_CurrentOverviewSpectrumType);
+      kv.second->SetGroupSpectrumType("Peaks", m_CurrentOverviewSpectrumType);
               kv.second->UpdateAllGroups();
             }
             UpdateGlobalMinMaxValues();
@@ -635,11 +666,7 @@ void m2Spectrum::CreateQChartViewMenu()
   m_Menu->addAction(m_ShowLegend);
   m_Menu->addAction(m_ShowAxesTitles);
 
-  connect(m_ShowAxesTitles,
-          &QAction::toggled,
-          this,
-          [this](bool s)
-          {
+  connect(m_ShowAxesTitles, &QAction::toggled, this, [this](bool s) {
             MITK_INFO(GetStaticClassName()) << m_yAxis << " " << m_xAxis;
             if (m_yAxis)
               m_yAxis->setTitleVisible(s);
@@ -693,11 +720,7 @@ void m2Spectrum::CreateQChartViewMenu()
   m_Menu->addAction(wActionY);
 
   m_Controls.chartView->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(m_Controls.chartView,
-          &QtCharts::QChartView::customContextMenuRequested,
-          this,
-          [&](const QPoint &pos)
-          {
+  connect(m_Controls.chartView, &QtCharts::QChartView::customContextMenuRequested, this, [&](const QPoint &pos) {
             m_FocusMenu->clear();
             for (auto &kv : this->m_DataProvider)
             {
@@ -768,17 +791,17 @@ void m2Spectrum::OnSeriesFocused(const mitk::DataNode *node)
     if (kv.first != node)
     {
       if (auto series = m_DataProvider[kv.first]->GetGroupSeries("Overview"))
-        SetSeriesVisible(series,false);
+        SetSeriesVisible(series, false);
       if (auto series = m_DataProvider[kv.first]->GetGroupSeries("Peaks"))
-        SetSeriesVisible(series,false);
+        SetSeriesVisible(series, false);
     }
   }
 
   if (auto series = m_DataProvider[node]->GetGroupSeries("Peaks"))
-    SetSeriesVisible(series,true);
+    SetSeriesVisible(series, true);
 
   if (auto series = m_DataProvider[node]->GetGroupSeries("Overview"))
-    SetSeriesVisible(series,true);
+    SetSeriesVisible(series, true);
 
   const auto &data = m_DataProvider[node]->m_Groups["Overview"].GetRawData();
   const auto xMin = data.front().x();
@@ -787,7 +810,7 @@ void m2Spectrum::OnSeriesFocused(const mitk::DataNode *node)
   m_xAxis->setMin(xMin);
   m_xAxis->setMax(xMax);
 
-  // UpdateLocalMinMaxValues(xMin, xMax);
+  UpdateLocalMinMaxValues(xMin, xMax);
   AutoZoomUseLocalExtremaY();
 }
 

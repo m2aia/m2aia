@@ -131,7 +131,7 @@ namespace m2
 
   void SpectrumImageStack::InitializeImageAccess()
   {
-    std::list<m2::Peak> peaks;
+    std::list<m2::Interval> peaks;
     const auto &bins = GetNumberOfBins();
     //    const auto normalizationStrategy = GetNormalizationStrategy();
 
@@ -208,6 +208,9 @@ namespace m2
 
     SetPropertyValue<double>("x_min", xVecFinal.front());
     SetPropertyValue<double>("x_max", xVecFinal.back());
+
+    m_IsDataAccessInitialized = true;
+    
   }
 
   void SpectrumImageStack::SpectrumImageStack::CopyWarpedImageToStackImage(mitk::Image *warped,

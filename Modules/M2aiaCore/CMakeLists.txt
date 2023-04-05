@@ -1,7 +1,7 @@
 set(MITK_MODULE_NAME_PREFIX "")
 
 MITK_CREATE_MODULE(
-  DEPENDS MitkCore MitkMultilabel
+  DEPENDS MitkCore MitkMultilabel MitkElastix
   PACKAGE_DEPENDS
     PUBLIC Poco
   )

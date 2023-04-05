@@ -62,7 +62,7 @@ namespace m2
       // In imzML-file defined normalization constant
       m2::NormImagePixelType normalizationFactor = 1.0;
       m2::NormImagePixelType inFileNormalizationFactor = 1.0;
-      std::vector<m2::Peak> peaks;
+      // std::vector<m2::Peak> peaks;
     };
     using SpectrumVectorType = std::vector<BinarySpectrumMetaData>;
 

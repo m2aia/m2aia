@@ -14,14 +14,13 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
-#include <itkMultiThreaderBase.h>
 #include <M2aiaCoreExports.h>
 #include <itkMetaDataObject.h>
+#include <itkMultiThreaderBase.h>
 #include <m2CoreCommon.h>
 #include <m2ElxRegistrationHelper.h>
 #include <m2ISpectrumDataAccess.h>
-#include <m2IonImageReference.h>
-#include <m2Peak.h>
+#include <m2IntervalVector.h>
 #include <m2SpectrumInfo.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
@@ -37,8 +36,7 @@ namespace m2
     using SpectrumArtifactDataType = double;
     using SpectrumArtifactVectorType = std::vector<SpectrumArtifactDataType>;
     using SpectrumArtifactMapType = std::map<m2::SpectrumType, SpectrumArtifactVectorType>;
-    using IonImageReferenceVectorType = std::vector<IonImageReference::Pointer>;
-    using PeaksVectorType = std::vector<m2::Peak>;
+    using IntervalVectorType = std::vector<m2::Interval>;
     using TransformParameterVectorType = std::vector<std::string>;
 
     mitkClassMacro(SpectrumImageBase, mitk::Image);
@@ -58,27 +56,24 @@ namespace m2
     itkSetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
     itkGetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
 
-    virtual void GetXValues(unsigned int /*id*/, std::vector<double> &/*xs*/, unsigned int /*source*/ = 0)
+    virtual void GetXValues(unsigned int /*id*/, std::vector<double> & /*xs*/, unsigned int /*source*/ = 0)
     {
       MITK_WARN(GetStaticNameOfClass()) << "GetXValues[double] is not implemented!";
     }
 
-    virtual void GetXValues(unsigned int /*id*/, std::vector<float> &/*xs*/, unsigned int /*source*/ = 0)
+    virtual void GetXValues(unsigned int /*id*/, std::vector<float> & /*xs*/, unsigned int /*source*/ = 0)
     {
       MITK_WARN(GetStaticNameOfClass()) << "GetXValues[float] is not implemented!";
     }
 
-    virtual void GetYValues(unsigned int /*id*/, std::vector<double> &/*ys*/, unsigned int /*source*/ = 0)
+    virtual void GetYValues(unsigned int /*id*/, std::vector<double> & /*ys*/, unsigned int /*source*/ = 0)
     {
       MITK_WARN(GetStaticNameOfClass()) << "GetYValues[double] is not implemented!";
-    }   
-    virtual void GetYValues(unsigned int /*id*/, std::vector<float> &/*ys*/, unsigned int /*source*/ = 0)
+    }
+    virtual void GetYValues(unsigned int /*id*/, std::vector<float> & /*ys*/, unsigned int /*source*/ = 0)
     {
       MITK_WARN(GetStaticNameOfClass()) << "GetYValues[float] is not implemented!";
     }
-
-
-
 
     itkSetMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
@@ -95,14 +90,18 @@ namespace m2
     itkSetMacro(Tolerance, double);
     itkGetConstReferenceMacro(Tolerance, double);
 
+    itkGetConstReferenceMacro(CurrentX, double);
+
     itkSetMacro(UseToleranceInPPM, bool);
     itkGetConstReferenceMacro(UseToleranceInPPM, bool);
 
-    itkGetMacro(Peaks, PeaksVectorType &);
-    itkGetConstReferenceMacro(Peaks, PeaksVectorType);
+    itkGetMacro(Intervals, IntervalVectorType &);
+    itkGetConstReferenceMacro(Intervals, IntervalVectorType);
 
     itkGetConstReferenceMacro(NumberOfThreads, unsigned int);
     itkSetMacro(NumberOfThreads, unsigned int);
+
+    itkGetConstReferenceMacro(NumberOfValidPixels, unsigned int);
 
     itkGetMacro(ImageArtifacts, ImageArtifactMapType &);
     itkGetConstReferenceMacro(ImageArtifacts, ImageArtifactMapType);
@@ -110,16 +109,12 @@ namespace m2
     itkGetMacro(SpectraArtifacts, SpectrumArtifactMapType &);
     itkGetConstReferenceMacro(SpectraArtifacts, SpectrumArtifactMapType);
 
-    itkGetMacro(IonImageReferenceVector, IonImageReferenceVectorType &);
-    itkGetConstReferenceMacro(IonImageReferenceVector, IonImageReferenceVectorType);
-
-    itkGetObjectMacro(CurrentIonImageReference, IonImageReference);
-    itkGetConstObjectMacro(CurrentIonImageReference, IonImageReference);
-    itkSetObjectMacro(CurrentIonImageReference, IonImageReference);
-
     mitk::Image::Pointer GetNormalizationImage();
     mitk::Image::Pointer GetMaskImage();
     mitk::Image::Pointer GetIndexImage();
+    mitk::Image::Pointer GetNormalizationImage() const;
+    mitk::Image::Pointer GetMaskImage() const;
+    mitk::Image::Pointer GetIndexImage() const;
 
     itkGetConstMacro(UseExternalMask, bool);
     itkSetMacro(UseExternalMask, bool);
@@ -134,7 +129,7 @@ namespace m2
     itkBooleanMacro(UseExternalNormalization);
 
     itkGetConstMacro(IsDataAccessInitialized, bool);
-    
+
     virtual void InitializeImageAccess() = 0;
     virtual void InitializeGeometry() = 0;
     virtual void InitializeProcessor() = 0;
@@ -173,28 +168,48 @@ namespace m2
 
     virtual void PeakListModified();
 
+    /**
+     * @brief Get the Intensity Data representing a matrix of shape [#intervals, #pixels] as a contiguous array of floats.
+     * 
+     * @param intervals: list of intervals (e.g. a peak center). 
+     * @return std::vector<float> 
+     */
+    virtual std::vector<float> GetIntensityData(const std::vector<m2::Interval> & intervals) const;
+
+    /**
+     * @brief Get the shape of the assumed data matrix generated with GetIntensityData(...)
+     * 
+     * @param intervals: list of intervals (e.g. a peak center). Same as used in GetIntensityData(...).
+     * @return std::vector<unsigned long> 
+     */
+    virtual std::vector<unsigned long> GetIntensityDataShape(const std::vector<m2::Interval> & intervals)const;
+
   protected:
     bool mutable m_InSaveMode = false;
     double m_Tolerance = 10;
     double m_BinningTolerance = 50;
     int m_NumberOfBins = 2000;
+    double mutable m_CurrentX = -1;
 
     bool m_UseExternalMask = false;
     bool m_UseExternalIndices = false;
     bool m_UseExternalNormalization = false;
-    bool m_UseToleranceInPPM = false;
+    bool m_UseToleranceInPPM = true;
     bool m_IsDataAccessInitialized = false;
 
     std::shared_ptr<m2::ElxRegistrationHelper> m_ElxRegistrationHelper;
 
+    unsigned int m_NumberOfValidPixels = 0;
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
     unsigned int m_NumberOfThreads = itk::MultiThreaderBase::GetGlobalMaximumNumberOfThreads();
     // unsigned int m_NumberOfThreads = 2;
-    PeaksVectorType m_Peaks;
+
+    // 
+    IntervalVectorType m_Intervals;
 
     ImageArtifactMapType m_ImageArtifacts;
-    SpectrumArtifactMapType m_SpectraArtifacts;    
+    SpectrumArtifactMapType m_SpectraArtifacts;
 
     BaselineCorrectionType m_BaselineCorrectionStrategy = m2::BaselineCorrectionType::None;
     SmoothingType m_SmoothingStrategy = m2::SmoothingType::None;
@@ -202,20 +217,6 @@ namespace m2
 
     SpectrumInfo m_SpectrumType;
     SpectrumInfo m_ExportSpectrumType;
-
-
-    /**
-     * @brief Vector of ion images associated with this ims file. E.g. peaks or individual picked ion
-     * images.
-     */
-    IonImageReferenceVectorType m_IonImageReferenceVector;
-
-    /**
-     * @brief Information about the represented ion image distribution captured by this image instance.
-     * This property is updated by UpdateImage.
-     *
-     */
-    IonImageReference::Pointer m_CurrentIonImageReference;
 
     NormalizationStrategyType m_NormalizationStrategy = NormalizationStrategyType::TIC;
     RangePoolingStrategyType m_RangePoolingStrategy = RangePoolingStrategyType::Sum;
@@ -227,7 +228,7 @@ namespace m2
   };
 
   itkEventMacroDeclaration(PeakListModifiedEvent, itk::AnyEvent);
-  
+  itkEventMacroDeclaration(InitializationFinishedEvent, itk::AnyEvent);
 
 } // namespace m2
 

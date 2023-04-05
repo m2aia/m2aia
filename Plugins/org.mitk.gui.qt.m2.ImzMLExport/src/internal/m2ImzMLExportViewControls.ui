@@ -17,9 +17,15 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>QmitkTemplate</string>
+   <string>ImzML Export</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QmitkSingleNodeSelectionWidget" name="imageSelection" native="true"/>
+   </item>
+   <item>
+    <widget class="QmitkSingleNodeSelectionWidget" name="listSelection" native="true"/>
+   </item>
    <item>
     <widget class="QComboBox" name="cmbBxOutputMode">
      <property name="currentIndex">
@@ -155,6 +161,13 @@
     </layout>
    </item>
    <item>
+    <widget class="QPushButton" name="pushButton">
+     <property name="text">
+      <string>Export</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <spacer name="spacer1">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -173,6 +186,14 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QmitkSingleNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkSingleNodeSelectionWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

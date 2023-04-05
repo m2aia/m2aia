@@ -97,7 +97,7 @@ int main(int /*argc*/, char *argv[])
     const auto &source = I->GetImzMLSpectrumImageSource();
     auto filename = itksys::SystemTools::GetFilenameWithoutExtension(source.m_BinaryDataPath);
     for (const auto &p : binPeaks)
-      I->GetPeaks().push_back(p);
+      I->GetIntervals().push_back(p);
     I->GetExportSpectrumType().Format = m2::SpectrumFormat::ContinuousCentroid;
     //mitk::IOUtil::Save(I, "D:\\" + filename + "_testresult.imzML");
   }

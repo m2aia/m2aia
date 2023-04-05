@@ -422,6 +422,13 @@
         </property>
        </widget>
       </item>
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Usage: [Shift + left mouse click]</string>
+        </property>
+       </widget>
+      </item>
      </layout>
     </widget>
    </item>

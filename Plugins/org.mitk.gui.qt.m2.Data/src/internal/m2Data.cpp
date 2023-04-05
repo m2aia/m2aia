@@ -513,16 +513,15 @@ void m2Data::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/, const Q
     auto node = nodes.front();
     if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
-      if (auto current = image->GetCurrentIonImageReference())
-      {
-        QString labelText = str(boost::format("%.2f +/- %.2f Da") % current->mz % current->tol).c_str();
+      
+      QString labelText = str(boost::format("%.2f +/- %.2f Da") % image->GetCurrentX() % image->GetTolerance()).c_str();
 
         labelText += "\n";
         if (nodes.size() == 1)
           labelText += node->GetName().c_str();
 
         this->UpdateTextAnnotations(labelText.toStdString());
-      }
+    
     }
   }
 }

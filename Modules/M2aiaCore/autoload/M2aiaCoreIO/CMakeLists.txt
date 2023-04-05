@@ -3,5 +3,6 @@ MITK_CREATE_MODULE(
   INCLUDE_DIRS
     PRIVATE src/M2aiaCoreIO
   DEPENDS MitkCore M2aiaCore MitkSceneSerialization M2aiaOpenSlideIO
+  PACKAGE_DEPENDS PRIVATE ITK|IOTIFF
   AUTOLOAD_WITH MitkCore
 )

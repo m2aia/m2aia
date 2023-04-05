@@ -16,7 +16,8 @@ See LICENSE.txt for details.
 #pragma once
 
 #include <M2aiaDimensionReductionExports.h>
-#include <eigen3/Eigen/Dense>
+// #include <eigen3/Eigen/Dense>
+#include <itkeigen/Eigen/Dense>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2MassSpecVisualizationFilter.h>
 #include <mitkImage.h>
