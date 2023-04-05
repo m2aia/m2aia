@@ -6,15 +6,14 @@ set(H_FILES
   include/m2SpectrumImageStack.h
   include/m2SpectrumImageDataInteractor.h
 
-  include/m2IonImageReference.h
   include/m2ImzMLSpectrumImage.h
   include/m2ImzMLParser.h
   include/m2FsmSpectrumImage.h
   include/m2Timer.h
   include/m2SpectrumInfo.h
 
-  include/m2ElxUtil.h
-  include/m2ElxRegistrationHelper.h
+  # include/m2ElxUtil.h
+  # include/m2ElxRegistrationHelper.h
   include/m2SubdivideImage2DFilter.h
 
   include/npy/npy.hpp
@@ -36,12 +35,9 @@ set(H_FILES
 )
 
 set(CPP_FILES
-  m2IonImageReference.cpp
   m2SpectrumImageBase.cpp
   m2SpectrumImageStack.cpp
   m2CoreObjectFactory.cpp 
-  m2ElxUtil.cpp
-  m2ElxRegistrationHelper.cpp
   m2ImzMLParser.cpp
   m2ImzMLSpectrumImage.cpp
   m2FsmSpectrumImage.cpp

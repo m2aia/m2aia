@@ -33,7 +33,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2CoreCommon.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2IntervalVector.h>
-#include <m2IonImageReference.h>
 #include <m2UIUtils.h>
 #include <signal/m2Binning.h>
 #include <signal/m2MedianAbsoluteDeviation.h>

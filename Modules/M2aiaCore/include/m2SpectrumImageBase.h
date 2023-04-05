@@ -21,7 +21,6 @@ See LICENSE.txt for details.
 #include <m2ElxRegistrationHelper.h>
 #include <m2ISpectrumDataAccess.h>
 #include <m2IntervalVector.h>
-#include <m2IonImageReference.h>
 #include <m2SpectrumInfo.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
@@ -37,7 +36,6 @@ namespace m2
     using SpectrumArtifactDataType = double;
     using SpectrumArtifactVectorType = std::vector<SpectrumArtifactDataType>;
     using SpectrumArtifactMapType = std::map<m2::SpectrumType, SpectrumArtifactVectorType>;
-    using IonImageReferenceVectorType = std::vector<IonImageReference::Pointer>;
     using IntervalVectorType = std::vector<m2::Interval>;
     using TransformParameterVectorType = std::vector<std::string>;
 
@@ -92,6 +90,8 @@ namespace m2
     itkSetMacro(Tolerance, double);
     itkGetConstReferenceMacro(Tolerance, double);
 
+    itkGetConstReferenceMacro(CurrentX, double);
+
     itkSetMacro(UseToleranceInPPM, bool);
     itkGetConstReferenceMacro(UseToleranceInPPM, bool);
 
@@ -108,13 +108,6 @@ namespace m2
 
     itkGetMacro(SpectraArtifacts, SpectrumArtifactMapType &);
     itkGetConstReferenceMacro(SpectraArtifacts, SpectrumArtifactMapType);
-
-    itkGetMacro(IonImageReferenceVector, IonImageReferenceVectorType &);
-    itkGetConstReferenceMacro(IonImageReferenceVector, IonImageReferenceVectorType);
-
-    itkGetObjectMacro(CurrentIonImageReference, IonImageReference);
-    itkGetConstObjectMacro(CurrentIonImageReference, IonImageReference);
-    itkSetObjectMacro(CurrentIonImageReference, IonImageReference);
 
     mitk::Image::Pointer GetNormalizationImage();
     mitk::Image::Pointer GetMaskImage();
@@ -196,6 +189,7 @@ namespace m2
     double m_Tolerance = 10;
     double m_BinningTolerance = 50;
     int m_NumberOfBins = 2000;
+    double mutable m_CurrentX = -1;
 
     bool m_UseExternalMask = false;
     bool m_UseExternalIndices = false;
@@ -223,19 +217,6 @@ namespace m2
 
     SpectrumInfo m_SpectrumType;
     SpectrumInfo m_ExportSpectrumType;
-
-    /**
-     * @brief Vector of ion images associated with this ims file. E.g. peaks or individual picked ion
-     * images.
-     */
-    IonImageReferenceVectorType m_IonImageReferenceVector;
-
-    /**
-     * @brief Information about the represented ion image distribution captured by this image instance.
-     * This property is updated by UpdateImage.
-     *
-     */
-    IonImageReference::Pointer m_CurrentIonImageReference;
 
     NormalizationStrategyType m_NormalizationStrategy = NormalizationStrategyType::TIC;
     RangePoolingStrategyType m_RangePoolingStrategy = RangePoolingStrategyType::Sum;

@@ -36,6 +36,7 @@ See LICENSE.txt for details.
 void m2::ImzMLSpectrumImage::GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
   m_Processor->GetImagePrivate(mz, tol, mask, img);
+  m_CurrentX = mz;
 }
 
 m2::ImzMLSpectrumImage::ImzMLImageSource &m2::ImzMLSpectrumImage::GetImzMLSpectrumImageSource(unsigned int i)
