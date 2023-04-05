@@ -111,7 +111,7 @@ void QmitkMoleculaRView::OnStartMoleculaR()
 
         auto newNode = mitk::DataNode::New();
         newNode->SetData(lsImage);
-        newNode->SetName(node->GetName() + "_mpm");
+        newNode->SetName(node->GetName() + "_mpm_" + std::to_string(image->GetCurrentX()));
         GetDataStorage()->Add(newNode, node);
         lsImage->Update();
         RequestRenderWindowUpdate();
@@ -131,6 +131,8 @@ void QmitkMoleculaRView::OnStartMoleculaR()
         lsImage->GetActiveLabelSet()->UpdateLookupTable(1);
         lsImage->GetActiveLabelSet()->UpdateLookupTable(2);
         mitk::ProgressBar::GetInstance()->Progress();
+      }else{
+        MITK_INFO << "Docker Failed to run";
       }
     }
   }
