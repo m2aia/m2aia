@@ -270,8 +270,8 @@ void m2PeakPickingView::OnUpdateUI()
 //           if (labelNode)
 //           {
 //             mitk::DockerHelper helper("m2aia/extensions:lasso");
-//             helper.AddData(image, "--imzml", "*.imzML");
-//             helper.AddData(labelNode->GetData(), "--labels", "labels.nrrd");
+//             helper.AddAutoSaveData(image, "--imzml", "*.imzML");
+//             helper.AddAutoSaveData(labelNode->GetData(), "--labels", "labels.nrrd");
 //             helper.AddLoadLaterOutput("--importance", "test.csv");
 //             helper.AddLoadLaterOutput("--metrics", "metrics.csv");
 
@@ -420,7 +420,7 @@ void m2PeakPickingView::OnStartPickPeaksAndBin()
     {
       auto vectorNode = mitk::DataNode::New();
       auto intervals = m2::IntervalVector::New();
-      image->GetPeaks() = intervals->GetIntervals() = newI;
+      image->GetIntervals() = intervals->GetIntervals() = newI;
       vectorNode->SetName(imageNode->GetName() + "_binned");
       vectorNode->SetData(intervals);
       GetDataStorage()->Add(vectorNode, imageNode);
@@ -562,7 +562,7 @@ void m2PeakPickingView::OnUpdatePeakListImage()
   auto vectorNode = m_Controls.peakListSelection->GetSelectedNode();
   if (!vectorNode)
   {
-    image->GetPeaks().clear();
+    image->GetIntervals().clear();
     image->PeakListModified();
     return;
   }
@@ -571,7 +571,7 @@ void m2PeakPickingView::OnUpdatePeakListImage()
   if (!vector)
     return;
 
-  image->GetPeaks() = vector->GetIntervals();
+  image->GetIntervals() = vector->GetIntervals();
   image->PeakListModified();
 }
 
