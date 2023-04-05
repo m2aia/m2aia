@@ -179,7 +179,7 @@ void QmitkDataCompressionView::OnStartUMAP()
         if (mitk::DockerHelper::CheckDocker())
         {
           mitk::DockerHelper helper("m2aia/extensions:umap");
-          helper.AddData(image, "--imzml", "*.imzML");
+          helper.AddAutoSaveData(image, "--imzml", "*.imzML");
           helper.AddAutoLoadOutput("--image", "umap_image.nrrd");
           helper.AddApplicationArgument("--num_comp", std::to_string(m_Controls.spnBxComponents->value()));
           helper.AddApplicationArgument("--num_neighbors", std::to_string(m_Controls.spnBxNeighbors->value()));
@@ -222,7 +222,7 @@ void QmitkDataCompressionView::OnStartSparsePCA()
         if (mitk::DockerHelper::CheckDocker())
         {
           mitk::DockerHelper helper("sparse_pca");
-          helper.AddData(image, "--imzml", "*.imzML");
+          helper.AddAutoSaveData(image, "--imzml", "*.imzML");
 
           auto iter = helper.AddLoadLaterOutput("--csv", "pca_data.csv");
           helper.AddAutoLoadOutput("--image", "pca_data.nrrd");
