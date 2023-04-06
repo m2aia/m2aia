@@ -167,7 +167,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
 
 void m2PeakPickingView::OnPeakListSelectionChanged()
 {
-  bool status = false, isProcessedCentroid = false, isContinuousProfile = false;
+  bool status = false, isProcessedCentroid = false, isProfile = false;
   if (auto imageNode = m_Controls.imageSelection->GetSelectedNode())
     if (auto image = dynamic_cast<m2::SpectrumImageBase *>(imageNode->GetData()))
       if (image->GetIsDataAccessInitialized())
