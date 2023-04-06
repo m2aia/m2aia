@@ -30,7 +30,7 @@ void QmitkSpectrumImagingPerspective::CreateInitialLayout(berry::IPageLayout::Po
 
   layout->AddStandaloneView("org.mitk.views.m2.Spectrum", false, berry::IPageLayout::BOTTOM, 0.68f, editorArea);
   
-  folder = layout->CreateFolder("left", berry::IPageLayout::LEFT, 0.21f, editorArea);
+  folder = layout->CreateFolder("left", berry::IPageLayout::LEFT, 0.29f, editorArea);
   folder->AddView("org.mitk.views.datamanager");
   
   
