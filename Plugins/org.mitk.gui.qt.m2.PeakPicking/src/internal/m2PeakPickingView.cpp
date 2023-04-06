@@ -173,10 +173,11 @@ void m2PeakPickingView::OnPeakListSelectionChanged()
       if (image->GetIsDataAccessInitialized())
       {
         auto format = image->GetSpectrumType().Format;
-        isProcessedCentroid = format == m2::SpectrumFormat::ProcessedCentroid;
-        isContinuousProfile = format == m2::SpectrumFormat::ContinuousProfile;
+        isProcessedCentroid = (format == m2::SpectrumFormat::ProcessedCentroid);
+        isProfile =
+          (format == m2::SpectrumFormat::ContinuousProfile) || (format == m2::SpectrumFormat::ProcessedProfile);
 
-        if (isContinuousProfile)
+        if (isProfile)
           m_Controls.btnPickAndBin->setText("Start peak picking and binning (individual spectra)");
 
         if (isProcessedCentroid)
@@ -188,25 +189,24 @@ void m2PeakPickingView::OnPeakListSelectionChanged()
   
       }
 
-  m_Controls.btnPickAndBin->setVisible(status & ( isContinuousProfile | isProcessedCentroid));
-  m_Controls.sbBinningTolerance->setVisible(status & ( isContinuousProfile | isProcessedCentroid));
-  m_Controls.sbFilterPeaks->setVisible(status & ( isContinuousProfile | isProcessedCentroid));
+  m_Controls.btnPickAndBin->setVisible(status & (isProfile | isProcessedCentroid));
+  m_Controls.sbBinningTolerance->setVisible(status & (isProfile | isProcessedCentroid));
+  m_Controls.sbFilterPeaks->setVisible(status & (isProfile | isProcessedCentroid));
   
-  
-  m_Controls.labelCOR->setVisible(status & isContinuousProfile);
-  m_Controls.labelOverviewSpectra->setVisible(status & isContinuousProfile);
-  m_Controls.labelHWS->setVisible(status & isContinuousProfile);
-  m_Controls.labelSNR->setVisible(status & isContinuousProfile);
-  m_Controls.labelTolerance->setVisible(status & isContinuousProfile);
-  m_Controls.labelDistance->setVisible(status & isContinuousProfile);
-  m_Controls.sliderSNR->setVisible(status & isContinuousProfile);
-  m_Controls.sliderCOR->setVisible(status & isContinuousProfile);
-  m_Controls.sliderHWS->setVisible(status & isContinuousProfile);
-  m_Controls.sbTolerance->setVisible(status & isContinuousProfile);
-  m_Controls.sbDistance->setVisible(status & isContinuousProfile);
-  m_Controls.ckbMonoisotopic->setVisible(status & isContinuousProfile);
-  m_Controls.cbOverviewSpectra->setVisible(status & isContinuousProfile);
-  m_Controls.labelOverviewSpectra_2->setVisible(status & isContinuousProfile);
+  m_Controls.labelCOR->setVisible(status & isProfile);
+  m_Controls.labelOverviewSpectra->setVisible(status & isProfile);
+  m_Controls.labelHWS->setVisible(status & isProfile);
+  m_Controls.labelSNR->setVisible(status & isProfile);
+  m_Controls.labelTolerance->setVisible(status & isProfile);
+  m_Controls.labelDistance->setVisible(status & isProfile);
+  m_Controls.sliderSNR->setVisible(status & isProfile);
+  m_Controls.sliderCOR->setVisible(status & isProfile);
+  m_Controls.sliderHWS->setVisible(status & isProfile);
+  m_Controls.sbTolerance->setVisible(status & isProfile);
+  m_Controls.sbDistance->setVisible(status & isProfile);
+  m_Controls.ckbMonoisotopic->setVisible(status & isProfile);
+  m_Controls.cbOverviewSpectra->setVisible(status & isProfile);
+  m_Controls.labelOverviewSpectra_2->setVisible(status & isProfile);
   
   m_Controls.labelPeakList->setVisible(status);
   m_Controls.btnSelectAll->setVisible(status);
