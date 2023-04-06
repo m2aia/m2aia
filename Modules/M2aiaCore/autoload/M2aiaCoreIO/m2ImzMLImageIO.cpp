@@ -759,6 +759,11 @@ namespace m2
       MITK_ERROR << "Fallback to profile spectrum (MS:1000127)";
       object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
     }
+
+    if (object->GetProperty("profile spectrum") && object->GetProperty("processed"))
+    {
+      MITK_WARN << "Processed profile spectrum is not fully supported! Check the ImzML file.";
+    }
   }
 
   void ImzMLImageIO::LoadAssociatedData(m2::ImzMLSpectrumImage *object)
