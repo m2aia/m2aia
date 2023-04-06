@@ -26,7 +26,7 @@ int main(int argc, char **argv)
 
   app.setSingleMode(true);
   app.setApplicationName("M2aia Workbench");
-  app.setOrganizationName("Mannheim University of Applied Sciences");
+  app.setOrganizationName("m2aia");
 
   // Preload the org.blueberry.core.expressions plugin to work around a bug in
   // GCC that leads to undefined symbols while loading certain libraries even though

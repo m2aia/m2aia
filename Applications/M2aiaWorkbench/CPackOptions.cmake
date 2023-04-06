@@ -4,12 +4,12 @@ set(CPACK_PACKAGE_EXECUTABLES "M2aiaWorkbench;M2aiaWorkbench")
 set(CPACK_PACKAGE_NAME "M2aiaWorkbench")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "M²aia - Mass spectrometry imaging applications for interactive analysis in MITK.")
 # Major version is the year of release
-set(CPACK_PACKAGE_VERSION_MAJOR "2022")
+set(CPACK_PACKAGE_VERSION_MAJOR "2023")
 # Minor version is the month of release
-set(CPACK_PACKAGE_VERSION_MINOR "10")
+set(CPACK_PACKAGE_VERSION_MINOR "04")
 # Patch versioning
 set(CPACK_PACKAGE_VERSION_PATCH "00")
-set(CPACK_PACKAGE_VENDOR "Mannheim University of Applied Sciences")
+set(CPACK_PACKAGE_VENDOR "m2aia")
 
 # this should result in names like 2011.09, 2012.06, ...
 # version has to be set explicitly to avoid such things as CMake creating the install directory "M2aiaWorkbench 2021.."

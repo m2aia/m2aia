@@ -11,7 +11,7 @@ if(CPACK_GENERATOR MATCHES "NSIS")
 
   # tell cpack to create links to the doc files
   SET(CPACK_NSIS_MENU_LINKS
-    "http://www.github.com/jtfcordes/" "M2aia Github"
+    "http://www.github.com/m2aia/" "M2aia Github"
     )
 
   # tell cpack the executables you want in the start menu as links
@@ -20,8 +20,8 @@ if(CPACK_GENERATOR MATCHES "NSIS")
   # tell cpack to create a desktop link to M2aia
   # SET(CPACK_CREATE_DESKTOP_LINKS "M2aiaWorkbench")
   SET(CPACK_NSIS_INSTALLED_ICON_NAME "bin\\\\icon.ico")
-  SET(CPACK_NSIS_HELP_LINK "http:\\\\www.github.com/jtfcordes/")
-  SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\www.github.com/jtfcordes/")
+  SET(CPACK_NSIS_HELP_LINK "http:\\\\www.github.com/m2aia/")
+  SET(CPACK_NSIS_URL_INFO_ABOUT "http:\\\\www.github.com/m2aia/")
   SET(CPACK_NSIS_CONTACT j.cordes@hs-mannheim.de)
   SET(CPACK_NSIS_MODIFY_PATH ON)
 
