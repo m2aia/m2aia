@@ -482,7 +482,8 @@ void m2PeakPickingView::OnStartPeakPicking()
       // I[i].index(i);
     }
   }
-  else if (image->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousProfile)
+  else if (image->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousProfile ||
+           image->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedProfile)
   {
     // MITK_INFO << "ContinuousProfile";
     std::vector<m2::Interval> peaks;
