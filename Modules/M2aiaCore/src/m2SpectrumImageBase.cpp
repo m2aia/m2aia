@@ -78,7 +78,10 @@ std::vector<unsigned long> m2::SpectrumImageBase::GetIntensityDataShape(
   using namespace std;
   // pixels in image
   unsigned int N = accumulate(this->GetDimensions(), this->GetDimensions() + 3, 1, multiplies<unsigned int>());
-  return vector<unsigned long>{intervals.size(), N};
+  std::vector<unsigned long> v;
+  v.push_back(intervals.size());
+  v.push_back(N);
+  return v;
 }
 
 std::vector<float> m2::SpectrumImageBase::GetIntensityData(const std::vector<m2::Interval> &intervals) const
