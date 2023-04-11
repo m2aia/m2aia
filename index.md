@@ -15,7 +15,7 @@ Downloads
 
 |Installers and packages for M²aia||
 |---|---|
-|**Latest/Nightly**|[[M²aia:latest](http://data.jtfc.de/latest/)]|
+|**Latest/Nightly** (April 2023)|[[M²aia:latest](http://data.jtfc.de/latest/)]|
 |**Releases**|[[M²aia:v2022.08](https://github.com/m2aia/M2aia/releases/tag/v2022.08.00)]|
 ||[[M²aia:v2021.07](https://github.com/m2aia/M2aia/releases/tag/v2021.07.00)]|
 ||[[M²aia:Archive](https://github.com/m2aia/M2aia/releases)]|
