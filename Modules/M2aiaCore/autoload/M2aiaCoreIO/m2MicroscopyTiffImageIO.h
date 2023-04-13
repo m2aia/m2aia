@@ -57,5 +57,12 @@ namespace m2
   private:
     // MicroscopyTiffImageIO(const MicroscopyTiffImageIO &other);
     MicroscopyTiffImageIO *IOClone() const override;
+    const std::string A_IMPORT_VOLUME = "a. Import as volume";
+    const std::string B_SPLIT_CHANNELS = "b. Split channels";
+    const std::string C_REMOVE_DUPLICATES = "c. No duplicates on split";
+    const std::string D_THICKNESS = "d. Slice thickness (µm)";
+    const std::string E_USE_USER_DEFS = "e. User pixel size";
+    const std::string F_PIXEL_SIZE_X = "f. Pixel size x (µm)";
+    const std::string G_PIXEL_SIZE_Y = "g. Pixel size y (µm)";
   };
 } // namespace m2
