@@ -26,7 +26,7 @@ Cordes J; Enzlein T; Marsching C; Hinze M; Engelhardt S; Hopf C; Wolf I (July, 2
 To use M²aia in a browser run:
 
 ```docker pull ghcr.io/m2aia/m2aia:latest```<br>
-```docker run --rm -v /local/data/path:/data -p 8888:80 m2aia/m2aia:latest```
+```docker run --rm -v /local/data/path:/data -p 8888:80 ghcr.io/m2aia/m2aia:latest```
 
 with password:
 
