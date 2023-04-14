@@ -30,7 +30,7 @@ To use M²aia in a browser run:
 
 with password:
 
-```docker run --rm -v /local/data/path:/data -e VNC_PASSWORD=<password> -p 8888:80 m2aia/m2aia:latest```
+```docker run --rm -v /local/data/path:/data -e VNC_PASSWORD=<password> -p 8888:80 ghcr.io/m2aia/m2aia:latest```
 
 Start M²aia by accessing http://localhost:8888
 
