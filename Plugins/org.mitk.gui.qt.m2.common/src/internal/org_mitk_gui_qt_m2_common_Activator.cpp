@@ -25,23 +25,23 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkNodePredicateOr.h>
 #include <mitkNodePredicateProperty.h>
 
+// #include "QmitkDataNodeColorAction.h"
+#include "QmitkDataNodePlotColorAction.h"
+#include "QmitkDataNodeColorMapAction.h"
+#include "QmitkDataNodeTextureInterpolationAction.h"
 #include "QmitkDataNodeExportComponentAction.h"
-#include <QmitkDataNodeColorAction.h>
-#include <QmitkDataNodeColorMapAction.h>
-#include <QmitkDataNodeTextureInterpolationAction.h>
-#include <mitkIContextMenuActionProvider.h>
-#include <QmitkDataNodeConvertPixelTypeAction.h>
+#include "QmitkDataNodeConvertPixelTypeAction.h"
 
 
 
 void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)
 {
   BERRY_REGISTER_EXTENSION_CLASS(m2BrowserPreferencesPage, context)
-  BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeExportComponentActionProvider, context)
-  BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeColorMapActionProvider, context)
-  BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeColorActionProvider, context)
-  BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeTextureInterpolationActionProvider, context)
-  BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeConvertPixelTypeActionProvider, context)
+  // BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeExportComponentActionProvider, context)
+  // BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeColorMapActionProvider, context)
+  // BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeColorActionProvider, context)
+  // BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeTextureInterpolationActionProvider, context)
+  // BERRY_REGISTER_EXTENSION_CLASS(QmitkDataNodeConvertPixelTypeActionProvider, context)
 
   auto descriptorManager = QmitkNodeDescriptorManager::GetInstance();
 
@@ -50,15 +50,20 @@ void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)
   auto b = mitk::NodePredicateDataType::New("ImzMLSpectrumImage");
   auto spectrumImageDataType = mitk::NodePredicateOr::New(a, b);
   auto spectrumImageDescriptorPredicate = mitk::NodePredicateAnd::New(spectrumImageDataType, imageDataType);
+  
+  
   descriptorManager->AddDescriptor(new QmitkNodeDescriptor(
     tr("SpectrumImage"), QString(":/QmitkM2aiaCore/SpectrumImage_48.png"), spectrumImageDescriptorPredicate, this));
 
-  auto mcImageDescriptorPredicate =
-    mitk::NodePredicateAnd::New(mitk::NodePredicateProperty::New("Image.Displayed Component"), imageDataType);
-  descriptorManager->AddDescriptor(new QmitkNodeDescriptor(tr("MultiComponentImage"),
-                                                           QString(":/QmitkM2aiaCore/MultiComponentImages_48.png"),
-                                                           mcImageDescriptorPredicate,
-                                                           this));
+  auto desc = descriptorManager->GetDescriptor("SpectrumImage");
+  desc->AddAction(new QmitkDataNodeConvertPixelTypeAction(nullptr,nullptr), false);
+  desc->AddAction(new QmitkDataNodeColorMapAction(nullptr,nullptr), false);
+  desc->AddAction(new QmitkDataNodeTextureInterpolationAction(nullptr,nullptr), false);
+  // desc->AddAction(new QmitkDataNodeColorAction(nullptr,nullptr), false);
+  desc->AddAction(new QmitkDataNodePlotColorAction(nullptr,nullptr), false);
+
+  desc = descriptorManager->GetDescriptor("MultiComponentImage");
+  desc->AddAction(new QmitkDataNodeExportComponentAction(nullptr,nullptr), false);
 
 
 }

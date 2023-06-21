@@ -10,7 +10,7 @@ found in the LICENSE file.
 
 ============================================================================*/
 
-#include <QmitkDataNodeConvertPixelTypeAction.h>
+#include "QmitkDataNodeConvertPixelTypeAction.h"
 
 #include <mitkImageAccessByItk.h>
 #include <mitkImageCast.h>
@@ -20,17 +20,22 @@ found in the LICENSE file.
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkImageIOBase.h>
 
-#include <m2NameDialog.h>
-
 #include <QString>
+#include <QAction>
 #include <QMenu>
 
-QmitkDataNodeConvertPixelTypeAction::QmitkDataNodeConvertPixelTypeAction(QWidget *parent,
-                                                       berry::IWorkbenchPartSite *workbenchPartSite,
-                                                       berry::IConfigurationElement *configElement)
-  : QAction(parent), QmitkAbstractDataNodeAction(workbenchPartSite, configElement)
+QmitkDataNodeConvertPixelTypeAction::QmitkDataNodeConvertPixelTypeAction(QWidget* parent, berry::IWorkbenchPartSite::Pointer workbenchPartSite): 
+  QAction(parent),
+  QmitkAbstractDataNodeAction(workbenchPartSite)
 {
-  this->InitializeAction();
+  InitializeAction();
+}
+
+QmitkDataNodeConvertPixelTypeAction::QmitkDataNodeConvertPixelTypeAction(QWidget* parent, berry::IWorkbenchPartSite* workbenchPartSite): 
+  QAction(parent),
+  QmitkAbstractDataNodeAction(berry::IWorkbenchPartSite::Pointer(workbenchPartSite))
+{
+  InitializeAction();
 }
 
 void QmitkDataNodeConvertPixelTypeAction::InitializeAction()
@@ -67,10 +72,7 @@ void QmitkDataNodeConvertPixelTypeAction::OnMenuAboutShow()
         if (referenceNode.IsNotNull())
         {
           if (mitk::Image::Pointer image = dynamic_cast<mitk::Image *>(referenceNode->GetData()))
-          {
-            m2NameDialog dialog(this->parentWidget());
-            
-
+          {       
             auto newImage = OnApplyCastImage(image, type);
             auto dataNodeNew = mitk::DataNode::New();
             auto lut = mitk::LookupTable::New();
@@ -79,14 +81,8 @@ void QmitkDataNodeConvertPixelTypeAction::OnMenuAboutShow()
             dataNodeNew->SetData(newImage);
             dataNodeNew->SetVisibility(false);
             auto dummyName = referenceNode->GetName() + "_" + itk::ImageIOBase::GetComponentTypeAsString(type);
-            dialog.SetName(dummyName);
-            if(dialog.exec()){
-              dataNodeNew->SetName(dialog.GetName());
-            }else{
-              dataNodeNew->SetName(dummyName);
-            }
+            dataNodeNew->SetName(dummyName);
             this->m_DataStorage.Lock()->Add(dataNodeNew);
-            // UpdateLevelWindow(dataNodeNew);
           }
         }
       }
@@ -166,9 +162,4 @@ mitk::Image::Pointer QmitkDataNodeConvertPixelTypeAction::OnApplyCastImage(mitk:
   }));
 
   return outImage;
-}
-
-
-void QmitkDataNodeConvertPixelTypeAction::OnActionTriggered(bool){
- 
 }

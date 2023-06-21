@@ -20,12 +20,16 @@ found in the LICENSE file.
 // needed for qApp
 #include <qcoreapplication.h>
 
-QmitkDataNodeExportComponentAction::QmitkDataNodeExportComponentAction(QWidget *parent,
-                                                       berry::IWorkbenchPartSite *workbenchPartSite,
-                                                       berry::IConfigurationElement *configElement)
-  : QAction(parent), QmitkAbstractDataNodeAction(workbenchPartSite, configElement)
+QmitkDataNodeExportComponentAction::QmitkDataNodeExportComponentAction(QWidget *parent, berry::IWorkbenchPartSite::Pointer workbenchPartSite)
+  : QAction(parent), QmitkAbstractDataNodeAction(berry::IWorkbenchPartSite::Pointer(workbenchPartSite))
 {
-  this->InitializeAction();
+  InitializeAction();
+}
+
+QmitkDataNodeExportComponentAction::QmitkDataNodeExportComponentAction(QWidget *parent, berry::IWorkbenchPartSite *workbenchPartSite)
+  : QAction(parent), QmitkAbstractDataNodeAction(berry::IWorkbenchPartSite::Pointer(workbenchPartSite))
+{
+  InitializeAction();
 }
 
 void QmitkDataNodeExportComponentAction::InitializeAction()
@@ -37,8 +41,8 @@ void QmitkDataNodeExportComponentAction::InitializeAction()
   connect(this, &QAction::triggered, this, &QmitkDataNodeExportComponentAction::OnActionTriggered);
 }
 
-
-mitk::Image::Pointer QmitkDataNodeExportComponentAction::ExportComponentImage(const mitk::Image *img, unsigned int component)
+mitk::Image::Pointer QmitkDataNodeExportComponentAction::ExportComponentImage(const mitk::Image *img,
+                                                                              unsigned int component)
 {
   const auto inputPixelType = img->GetPixelType();
   const auto nComponents = inputPixelType.GetNumberOfComponents();
@@ -68,7 +72,8 @@ mitk::Image::Pointer QmitkDataNodeExportComponentAction::ExportComponentImage(co
   return output;
 }
 
-void QmitkDataNodeExportComponentAction::OnActionTriggered(bool){
+void QmitkDataNodeExportComponentAction::OnActionTriggered(bool)
+{
   auto selectedNodes = this->GetSelectedNodes();
   for (const auto &referenceNode : selectedNodes)
   {
