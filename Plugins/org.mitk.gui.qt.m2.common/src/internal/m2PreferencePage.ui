@@ -169,7 +169,7 @@
    <item>
     <widget class="QLabel" name="label_6">
      <property name="text">
-      <string>Below mentioned image artifacts are generated on import of spectrum images and visibility can be toggled</string>
+      <string>Load settings:</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
@@ -178,6 +178,10 @@
    </item>
    <item>
     <widget class="QCheckBox" name="chkBxMaskImage">
+     <property name="toolTip">
+      <string>A new image node is added to the DataManager. 
+Maskimage: background (pixel value = 0) and all valid spectra/pixels (pixel value = 1) .</string>
+     </property>
      <property name="text">
       <string>Show mask image</string>
      </property>
@@ -185,6 +189,10 @@
    </item>
    <item>
     <widget class="QCheckBox" name="chkBxIndexImage">
+     <property name="toolTip">
+      <string>A new image node is added to the DataManager. 
+Index-image: background (pixel value = 0) and for all valid spectra/pixels the associated spectrum-index (pixel values = {1,...,n}) is given.</string>
+     </property>
      <property name="text">
       <string>Show index image</string>
      </property>
@@ -192,6 +200,10 @@
    </item>
    <item>
     <widget class="QCheckBox" name="chkBxNormalizationImage">
+     <property name="toolTip">
+      <string>A new image node is added to the DataManager. 
+Normalization-image: background (pixel value = 0) and for all valid spectra/pixels the associated spectrum-normalization factor (real pixel values) is given. E.g. if TIC normalization was selected for data loading, the Normalization-image containse the TIC factors for each spectrum/pixel.</string>
+     </property>
      <property name="text">
       <string>Show normalization image</string>
      </property>

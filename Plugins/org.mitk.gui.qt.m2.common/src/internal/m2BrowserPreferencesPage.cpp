@@ -16,7 +16,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include "m2BrowserPreferencesPage.h"
 
-#include <berryIPreferencesService.h>
+#include <mitkCoreServices.h>
+#include <mitkIPreferencesService.h>
+#include <mitkIPreferences.h>
 #include <berryPlatform.h>
 
 #include <mitkExceptionMacro.h>
@@ -25,15 +27,15 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QFileDialog>
 #include <QTextCodec>
 
-static berry::IPreferences::Pointer GetPreferences()
+static mitk::IPreferences* GetPreferences()
 {
-	berry::IPreferencesService* preferencesService = berry::Platform::GetPreferencesService();
+	auto preferencesService = mitk::CoreServices::GetPreferencesService();
 
 	if (preferencesService != nullptr)
 	{
-		berry::IPreferences::Pointer systemPreferences = preferencesService->GetSystemPreferences();
+		auto systemPreferences = preferencesService->GetSystemPreferences();
 
-		if (systemPreferences.IsNotNull())
+		if (systemPreferences)
 			return systemPreferences->Node("/org.mitk.gui.qt.m2aia.preferences");
 	}
 
@@ -89,7 +91,7 @@ void m2BrowserPreferencesPage::CreateQtControl(QWidget* parent)
 
 
 void m2BrowserPreferencesPage::OnBinsSpinBoxValueChanged(const QString & text){
-	m_Preferences->Put("bins", text);
+	m_Preferences->Put("bins", text.toStdString());
 }
 
 
@@ -107,7 +109,7 @@ void m2BrowserPreferencesPage::OnElastixButtonClicked()
 
 	if (!path.isEmpty())
 	{
-		m_ElastixPath = path;
+		m_ElastixPath = path.toStdString();
 		m_ElastixProcess->start(path, QStringList() << "--version", QProcess::ReadOnly);
 	}
 }
@@ -126,7 +128,7 @@ void m2BrowserPreferencesPage::OnElastixProcessFinished(int exitCode, QProcess::
 
 		if (output.startsWith("elastix"))
 		{
-			m_Ui->elastixLineEdit->setText(m_ElastixPath);
+			m_Ui->elastixLineEdit->setText(m_ElastixPath.c_str());
 			return;
 		}
 	}
@@ -149,7 +151,7 @@ void m2BrowserPreferencesPage::OnTransformixButtonClicked()
 
 	if (!path.isEmpty())
 	{
-		m_TransformixPath = path;
+		m_TransformixPath = path.toStdString();
 		m_TransformixProcess->start(path, QStringList() << "--version", QProcess::ReadOnly);
 	}
 }
@@ -168,7 +170,7 @@ void m2BrowserPreferencesPage::OnTransformixProcessFinished(int exitCode, QProce
 
 		if (output.startsWith("transformix"))
 		{
-			m_Ui->transformixLineEdit->setText(m_TransformixPath);
+			m_Ui->transformixLineEdit->setText(m_TransformixPath.c_str());
 			return;
 		}
 	}
@@ -230,21 +232,21 @@ void m2BrowserPreferencesPage::Update()
 	
 
 	auto bins = m_Preferences->Get("bins", "");
-	if(bins.isEmpty())
-		m_Preferences->Put("bins", m_Ui->spnBxBins->text());
+	if(bins.empty())
+		m_Preferences->Put("bins", m_Ui->spnBxBins->text().toStdString());
 	else
-		m_Ui->spnBxBins->setValue(bins.toInt());
+		m_Ui->spnBxBins->setValue(std::stoi(bins));
 	
 	
 
 	m_ElastixPath = m_Preferences->Get("elastix", "");
 
-	if (!m_ElastixPath.isEmpty())
-		m_ElastixProcess->start(m_ElastixPath, QStringList() << "--version", QProcess::ReadOnly);
+	if (!m_ElastixPath.empty())
+		m_ElastixProcess->start(m_ElastixPath.c_str(), QStringList() << "--version", QProcess::ReadOnly);
 
 
 	m_TransformixPath = m_Preferences->Get("transformix", "");
 
-	if (!m_TransformixPath.isEmpty())
-		m_TransformixProcess->start(m_TransformixPath, QStringList() << "--version", QProcess::ReadOnly);
+	if (!m_TransformixPath.empty())
+		m_TransformixProcess->start(m_TransformixPath.c_str(), QStringList() << "--version", QProcess::ReadOnly);
 }
