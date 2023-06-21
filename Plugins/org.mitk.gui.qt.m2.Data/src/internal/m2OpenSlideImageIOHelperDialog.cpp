@@ -28,6 +28,7 @@ See LICENSE.txt for details.
 #include <itkVectorImage.h>
 #include <itkVectorImageToImageAdaptor.h>
 #include <mitkDataNode.h>
+#include <mitkAnatomicalPlanes.h>
 #include <mitkExtractSliceFilter.h>
 #include <mitkImage.h>
 #include <mitkImageCast.h>
@@ -41,7 +42,7 @@ QPixmap GetPixmapFromImageNode(const mitk::Image *image, int height)
 {
   mitk::PlaneGeometry::Pointer planeGeometry = mitk::PlaneGeometry::New();
   int sliceNumber = image->GetDimension(2) / 2;
-  planeGeometry->InitializeStandardPlane(image->GetGeometry(), mitk::PlaneGeometry::Axial, sliceNumber);
+  planeGeometry->InitializeStandardPlane(image->GetGeometry(), mitk::AnatomicalPlane::Axial, sliceNumber);
 
   mitk::ExtractSliceFilter::Pointer extractSliceFilter = mitk::ExtractSliceFilter::New();
   extractSliceFilter->SetInput(image);

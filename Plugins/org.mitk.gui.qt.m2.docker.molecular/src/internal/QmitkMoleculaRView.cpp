@@ -37,7 +37,7 @@ void QmitkMoleculaRView::CreateQtPartControl(QWidget *parent)
   // Setting up the UI is a true pleasure when using .ui files, isn't it?
   m_Controls.setupUi(parent);
 
-  m_Controls.imageSelection->SetAutoSelectNewNodes(true);
+  // m_Controls.imageSelection->SetAutoSelectNewNodes(true);
   m_Controls.imageSelection->SetDataStorage(this->GetDataStorage());
   m_Controls.imageSelection->SetSelectionIsOptional(true);
   m_Controls.imageSelection->SetEmptyInfo(QStringLiteral("Select an image"));
@@ -47,24 +47,12 @@ void QmitkMoleculaRView::CreateQtPartControl(QWidget *parent)
                                                            mitk::NodePredicateProperty::New("hidden object")))));
 
   // Wire up the UI widgets with our functionality.
-  connect(m_Controls.imageSelection,
-          &QmitkSingleNodeSelectionWidget::CurrentSelectionChanged,
-          this,
-          &QmitkMoleculaRView::OnImageChanged);
   connect(m_Controls.btnRunMoleculaR, SIGNAL(clicked()), this, SLOT(OnStartMoleculaR()));
-
-  // Make sure to have a consistent UI state at the very beginning.
-  this->OnImageChanged(m_Controls.imageSelection->GetSelectedNodes());
 }
 
 void QmitkMoleculaRView::SetFocus()
 {
   m_Controls.btnRunMoleculaR->setFocus();
-}
-
-void QmitkMoleculaRView::OnImageChanged(const QmitkSingleNodeSelectionWidget::NodeList &)
-{
-  this->EnableWidgets(m_Controls.imageSelection->GetSelectedNode().IsNotNull());
 }
 
 void QmitkMoleculaRView::EnableWidgets(bool enable)
@@ -74,65 +62,74 @@ void QmitkMoleculaRView::EnableWidgets(bool enable)
 
 void QmitkMoleculaRView::OnStartMoleculaR()
 {
-  if (auto node = m_Controls.imageSelection->GetSelectedNode())
+  if (mitk::DockerHelper::CheckDocker())
   {
-    if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    for (auto node : m_Controls.imageSelection->GetSelectedNodes())
     {
-      if (!image->GetIsDataAccessInitialized())
-        return;
-
-      if (mitk::DockerHelper::CheckDocker())
+      if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
       {
-        mitk::ProgressBar::GetInstance()->AddStepsToDo(4);
-        auto newImage = image->Clone();
-        newImage->GetPropertyList()->RemoveProperty("MITK.IO.reader.inputlocation");
-        mitk::DockerHelper helper("m2aia/extensions:mpm");
-        helper.AddAutoSaveData(newImage, "--ionimage", "ionimage.nrrd");
-        helper.AddAutoSaveData(image->GetMaskImage(), "--mask", "mask.nrrd");
-        helper.AddApplicationArgument("--pval", std::to_string(m_Controls.spnBxMPMPValue->value()));
-        helper.AddAutoLoadOutput("--out", "mpm.nrrd");
-        mitk::ProgressBar::GetInstance()->Progress();
+        if (!image->GetIsDataAccessInitialized())
+          return;
 
-        const auto results = helper.GetResults();
-        auto lsImage = mitk::LabelSetImage::New();
-        lsImage->InitializeByLabeledImage(dynamic_cast<mitk::Image *>(results[0].GetPointer()));
-        mitk::ProgressBar::GetInstance()->Progress();
-
+        try
         {
-          using namespace std;
-          mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType> mAcc(image->GetMaskImage());
-          mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType> lsAcc(lsImage);
-          auto N = accumulate(lsImage->GetDimensions(), lsImage->GetDimensions() + 3, 1, multiplies<unsigned long>());
-          transform(mAcc.GetData(), mAcc.GetData() + N, lsAcc.GetData(), lsAcc.GetData(), [](auto a, auto b) {
-            return a > 0 ? b : 0;
-          });
+          mitk::ProgressBar::GetInstance()->AddStepsToDo(4);
+          auto newImage = image->Clone();
+          newImage->GetPropertyList()->RemoveProperty("MITK.IO.reader.inputlocation");
+          mitk::DockerHelper helper("ghcr.io/m2aia/extensions:mpm");
+          helper.EnableAutoRemoveContainer(true);
+          helper.AddAutoSaveData(newImage, "--ionimage", "ionimage.nrrd");
+          helper.AddAutoSaveData(image->GetMaskImage(), "--mask", "mask.nrrd");
+          helper.AddApplicationArgument("--pval", std::to_string(m_Controls.spnBxMPMPValue->value()));
+          helper.AddAutoLoadOutput("--out", "mpm.nrrd");
+          mitk::ProgressBar::GetInstance()->Progress();
+
+          const auto results = helper.GetResults();
+          auto lsImage = mitk::LabelSetImage::New();
+          lsImage->InitializeByLabeledImage(dynamic_cast<mitk::Image *>(results[0].GetPointer()));
+          mitk::ProgressBar::GetInstance()->Progress();
+
+          // {
+          //   using namespace std;
+          //   mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType> mAcc(image->GetMaskImage());
+          //   mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType> lsAcc(lsImage);
+          //   auto N = accumulate(lsImage->GetDimensions(), lsImage->GetDimensions() + 3, 1, multiplies<unsigned
+          //   long>()); transform(mAcc.GetData(), mAcc.GetData() + N, lsAcc.GetData(), lsAcc.GetData(), [](auto a, auto
+          //   b) {
+          //     return a > 0 ? b : 0;
+          //   });
+          // }
+          mitk::ProgressBar::GetInstance()->Progress();
+
+          auto newNode = mitk::DataNode::New();
+          newNode->SetData(lsImage);
+          newNode->SetName(node->GetName() + "_mpm_" + std::to_string(image->GetCurrentX()));
+          GetDataStorage()->Add(newNode, node);
+          lsImage->Update();
+          RequestRenderWindowUpdate();
+
+          mitk::Color h;
+          h.Set(245 / 255.0, 93 / 255.0, 80 / 255.0);
+          lsImage->GetLabel(1)->SetName("Hotspots");
+          lsImage->GetLabel(1)->SetColor(h);
+          lsImage->GetLabel(1)->SetOpacity(0.1);
+
+          mitk::Color c;
+          c.Set(66 / 255.0, 151 / 255.0, 160 / 255.0);
+          lsImage->GetLabel(2)->SetName("Coldspots");
+          lsImage->GetLabel(2)->SetColor(c);
+          lsImage->GetLabel(2)->SetOpacity(0.1);
+
+          lsImage->GetActiveLabelSet()->UpdateLookupTable(1);
+          lsImage->GetActiveLabelSet()->UpdateLookupTable(2);
+          lsImage->GetActiveLabelSet()->SetActiveLabel(1);
+          mitk::ProgressBar::GetInstance()->Progress();
         }
-        mitk::ProgressBar::GetInstance()->Progress();
-
-        auto newNode = mitk::DataNode::New();
-        newNode->SetData(lsImage);
-        newNode->SetName(node->GetName() + "_mpm_" + std::to_string(image->GetCurrentX()));
-        GetDataStorage()->Add(newNode, node);
-        lsImage->Update();
-        RequestRenderWindowUpdate();
-
-        mitk::Color c;
-        c.Set(66 / 255.0, 151 / 255.0, 160 / 255.0);
-        lsImage->GetLabel(1)->SetName("Coldspots");
-        lsImage->GetLabel(1)->SetColor(c);
-        lsImage->GetLabel(1)->SetOpacity(0.1);
-
-        mitk::Color h;
-        h.Set(245 / 255.0, 93 / 255.0, 80 / 255.0);
-        lsImage->GetLabel(2)->SetName("Hotspots");
-        lsImage->GetLabel(2)->SetColor(h);
-        lsImage->GetLabel(2)->SetOpacity(0.1);
-
-        lsImage->GetActiveLabelSet()->UpdateLookupTable(1);
-        lsImage->GetActiveLabelSet()->UpdateLookupTable(2);
-        mitk::ProgressBar::GetInstance()->Progress();
-      }else{
-        MITK_INFO << "Docker Failed to run";
+        catch (std::exception &e)
+        {
+          mitk::ProgressBar::GetInstance()->Reset();
+          mitkThrow() << "Running MoleculaR failed.\nException: " << e.what();
+        }
       }
     }
   }

@@ -18,9 +18,9 @@ See LICENSE.txt for details.
 #include "m2DataTools.h"
 
 #include <QmitkRenderWindow.h>
-#include <m2UIUtils.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageBase.h>
+#include <m2UIUtils.h>
 #include <mitkLayoutAnnotationRenderer.h>
 #include <mitkLookupTableProperty.h>
 #include <mitkNodePredicateAnd.h>
@@ -29,8 +29,6 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateProperty.h>
 
 const std::string m2DataTools::VIEW_ID = "org.mitk.views.m2.DataTools";
-
-
 
 void m2DataTools::CreateQtPartControl(QWidget *parent)
 {
@@ -64,18 +62,16 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
     m_Controls.ReferenceSelectionForDataInteraction->SetPopUpTitel(QString("Image"));
   }
 
-  
   // disable reference point set
   m_Controls.refPointSetGroup->setVisible(false);
 
-  connect(m_Controls.btnEqualizeLW, &QAbstractButton::clicked, this ,&m2DataTools::OnEqualizeLW);
+  connect(m_Controls.btnEqualizeLW, &QAbstractButton::clicked, this, &m2DataTools::OnEqualizeLW);
   connect(m_Controls.resetTiling, &QAbstractButton::clicked, this, &m2DataTools::OnResetTiling);
   connect(m_Controls.applyTiling, &QAbstractButton::clicked, this, &m2DataTools::OnApplyTiling);
   connect(m_Controls.toggleDataInteractor, &QAbstractButton::toggled, this, &m2DataTools::OnToggleDataInteraction);
-  
 
   // scale bar
-  
+
   // m_Controls.sclaeBarLabel->setEnabled(true);
   m_Controls.ReferenceSelectionForScaleBar->setEnabled(true);
 
@@ -154,9 +150,8 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
 
 void m2DataTools::OnResetTiling()
 {
-
   auto allNodes = m2::UIUtils::AllNodes(GetDataStorage());
-  
+
   //	unsigned int maxWidth = 0, maxHeight = 0;
   if (allNodes->Size() == 0)
     return;
@@ -248,32 +243,24 @@ void m2DataTools::OnToggleDataInteraction(bool checked)
 
 void m2DataTools::OnApplyTiling()
 {
-
-  auto allNodes = m2::UIUtils::AllNodes(GetDataStorage());
-
-  auto v = m_Controls.mosaicRows->value();
-  if (v < 1)
-    return;
   
-  std::vector<mitk::DataNode::Pointer> nodes;
+  auto rows = m_Controls.mosaicRows->value();
   unsigned int maxWidth = 0, maxHeight = 0;
-  if (allNodes->Size() == 0)
-    return;
-
-  for (auto &&e : *allNodes)
-  {
-    if (auto *image = dynamic_cast<m2::SpectrumImageBase *>(e->GetData()))
+  
+  // Spectrum Image Base nodes should never be child nodes!
+  std::vector<mitk::DataNode::Pointer> nodes;
+  auto allNode = GetDataStorage()->GetAll();
+  for (auto node : *allNode)
+    if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
       maxWidth = std::max(maxWidth, image->GetDimensions()[0]);
       maxHeight = std::max(maxHeight, image->GetDimensions()[1]);
-      nodes.push_back(e);
+      nodes.push_back(node);
     }
-  }
-
-  int R = v;
-  int N = (nodes.size() + 1) / R;
-  int i = 0;
-  if (N < 1)
+  
+  int nodesInRow = std::ceil(nodes.size() / double(rows));
+  MITK_INFO << "NodesInRow: " << nodesInRow;
+  if (nodesInRow < 1)
     return;
 
   std::sort(nodes.begin(),
@@ -281,36 +268,52 @@ void m2DataTools::OnApplyTiling()
             [](mitk::DataNode::Pointer &a, mitk::DataNode::Pointer &b) -> bool
             { return a->GetName().compare(b->GetName()) < 0; });
 
-  for (auto &&e : nodes)
+  int i = 0;
+  for (auto node : nodes)
   {
+
+    // SpectrumImageBase Nodes
     mitk::Point3D origin, prevOrigin;
-    prevOrigin.Fill(0);
-    if (auto *image = dynamic_cast<m2::SpectrumImageBase *>(e->GetData()))
+    if (auto *image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
       prevOrigin = image->GetGeometry()->GetOrigin();
-      origin[0] = maxWidth * int(i % N) * image->GetGeometry()->GetSpacing()[0];
-      origin[1] = maxHeight * int(i / N) * image->GetGeometry()->GetSpacing()[1];
+      origin[0] = maxWidth * int(i % nodesInRow) * image->GetGeometry()->GetSpacing()[0];
+      origin[1] = maxHeight * int(i / nodesInRow) * image->GetGeometry()->GetSpacing()[1];
       origin[2] = double(0.0);
-      ++i;
       image->GetGeometry()->SetOrigin(origin);
       for (auto &&kv : image->GetImageArtifacts())
         kv.second->GetGeometry()->SetOrigin(origin);
+    }else{
+      continue;
     }
 
+    // child node images
+    auto predicateImage = mitk::TNodePredicateDataType<mitk::Image>::New();
+    auto childNodes = this->GetDataStorage()->GetDerivations(node, predicateImage);
+    for (auto child : *childNodes)
+      if (auto image = dynamic_cast<mitk::Image *>(child->GetData()))
+        image->GetGeometry()->SetOrigin(origin);
+
+    // child node pointsets
+    auto predicatePointSet = mitk::TNodePredicateDataType<mitk::PointSet>::New();
     double dx = origin[0] - prevOrigin[0];
     double dy = origin[1] - prevOrigin[1];
-
-    auto der = this->GetDataStorage()->GetDerivations(e, mitk::TNodePredicateDataType<mitk::PointSet>::New());
-    for (auto &&e : *der)
+    childNodes = this->GetDataStorage()->GetDerivations(node, predicatePointSet);
+    for (auto child : *childNodes)
     {
-      auto pts = dynamic_cast<mitk::PointSet *>(e->GetData());
-      for (auto p = pts->Begin(); p != pts->End(); ++p)
+      if (auto pts = dynamic_cast<mitk::PointSet *>(child->GetData()))
       {
-        auto &pp = p->Value();
-        pp[0] += dx;
-        pp[1] += dy;
+        for (auto p = pts->Begin(); p != pts->End(); ++p)
+        {
+          auto &pp = p->Value();
+          pp[0] += dx;
+          pp[1] += dy;
+        }
       }
     }
+
+    ++i;
+    
   }
   mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
   // this->RequestRenderWindowUpdate();

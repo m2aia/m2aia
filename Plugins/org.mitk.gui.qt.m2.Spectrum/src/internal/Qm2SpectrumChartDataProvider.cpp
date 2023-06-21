@@ -156,10 +156,10 @@ int Qm2SpectrumChartDataProvider::FindGroupLoD(const std::string &groupName, dou
   return lod;
 }
 
-void Qm2SpectrumChartDataProvider::UpdateAllGroups(double xMin, double xMax)
+void Qm2SpectrumChartDataProvider::UpdateAllSeries(double , double )
 {
-  for (auto &kv : m_Groups)
-    UpdateGroup(kv.first, xMin, xMax);
+  // for (auto &kv1 : m_Groups) 
+      // kv1.second->UpdateBoundaries(xMin, xMax);
 }
 
 void Qm2SpectrumChartDataProvider::SetGroupVisiblity(const std::string &groupName, bool v)

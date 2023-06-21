@@ -43,6 +43,15 @@ private:
   mitk::Image::Pointer ResampleVectorImage(mitk::Image::Pointer lowResImage, mitk::Image::Pointer referenceImage);
   void SetFocus() override;
   void EnableWidgets(bool enable);
+  QWidget * m_Parent;
+
+  void Green(QLabel * l){
+    l->setStyleSheet("color: #008000");
+  }
+
+  void Red(QLabel * l){
+    l->setStyleSheet("color: #ff0000");
+  }
 
 
   Ui::DataCompressionViewControls m_Controls;

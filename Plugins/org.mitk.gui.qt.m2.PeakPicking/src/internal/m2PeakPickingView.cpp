@@ -120,8 +120,10 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   });
 
   const auto itemHandler = [this](QTableWidgetItem *item) {
-    auto mz = std::stod(item->text().toStdString());
-    emit m2::UIUtils::Instance()->UpdateImage(mz, -1);    
+    auto str = item->text().toStdString();
+    auto p = str.find_first_of(' ');
+    auto mz = std::stod(str.substr(p+1));
+    emit m2::UIUtils::Instance()->UpdateImage(mz);    
   };
 
   connect(m_Controls.tableWidget, &QTableWidget::itemActivated, this, itemHandler);
@@ -614,9 +616,7 @@ void m2PeakPickingView::OnUpdatePeakListUI()
   m_Controls.tableWidget->blockSignals(true);
   for (auto &p : I)
   {
-    auto item = new QTableWidgetItem((std::to_string(p.x.mean()) + " [" + std::to_string(p.y.min()) + "; " +
-                                      std::to_string(p.y.mean()) + "; " + std::to_string(p.y.max()) + "]")
-                                       .c_str());
+    auto item = new QTableWidgetItem((image->GetSpectrumType().XAxisLabel + " " +std::to_string(p.x.mean())).c_str());
     item->setCheckState(Qt::CheckState::Checked);
     m_Controls.tableWidget->setItem(row++, 0, item);
   }

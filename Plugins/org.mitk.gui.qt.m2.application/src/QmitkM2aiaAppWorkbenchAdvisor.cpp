@@ -26,10 +26,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkExtWorkbenchWindowAdvisor.h>
 #include <QmitkM2aiaAboutDialog.h>
 #include <QmitkM2aiaViewAction.h>
-#include <berryIBerryPreferences.h>
-#include <berryIBerryPreferencesService.h>
-#include <berryIPreferences.h>
-#include <berryIPreferencesService.h>
+#include <mitkCoreServices.h>
+#include <mitkIPreferences.h>
+#include <mitkIPreferencesService.h>
 #include <berryIWorkbenchWindow.h>
 #include <berryPlatform.h>
 #include <berryQtPreferences.h>
@@ -117,7 +116,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
   
   // ==== RenderwindowViewNames ======================
 
-  berry::IPreferencesService *prefService = berry::Platform::GetPreferencesService();
+  mitk::IPreferencesService *prefService = mitk::CoreServices::GetPreferencesService();
   Q_ASSERT(prefService);
 
 
@@ -145,8 +144,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
 
   {
     auto prefService = berry::WorkbenchPlugin::GetDefault()->GetPreferencesService();
-    berry::IPreferences::Pointer stylePrefs =
-      prefService->GetSystemPreferences()->Node(berry::QtPreferences::QT_STYLES_NODE);
+    auto stylePrefs = prefService->GetSystemPreferences()->Node(berry::QtPreferences::QT_STYLES_NODE);
     bool showCategoryNames = stylePrefs->GetBool(berry::QtPreferences::QT_SHOW_TOOLBAR_CATEGORY_NAMES, true);
 
     // Order view descriptors by category

@@ -62,7 +62,26 @@ namespace m2
      * @param x
      * @param tol
      */
-    void UpdateImage(qreal x, qreal tol);
+    void UpdateImage(qreal x, qreal tol = -1);
+
+
+     /**
+     * @brief This signal can be emitted to add/update a spectrum to the spectrum view.
+     *
+     * @param name std::string
+     * @param xs vector of x positions
+     * @param ys vector of y positions
+     */
+    void AddSpectrumToSpectrumView(std::string name, const std::vector<double> & xs, const std::vector<double> & ys);
+
+     /**
+     * @brief This signal can be emitted to remove a spectrum from the spectrum view.
+     *
+     * @param x
+     * @param tol
+     */
+    void RemoveSpectrumFromSpectrumView(std::string name);
+    
 
     void NextImage();
     void PreviousImage();

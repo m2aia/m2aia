@@ -46,7 +46,6 @@ public:
   void CreateQtPartControl(QWidget* parent) override;
 
 private slots:
-  void OnImageChanged(const QmitkSingleNodeSelectionWidget::NodeList& nodes);
   void OnStartMoleculaR();
 
 private:

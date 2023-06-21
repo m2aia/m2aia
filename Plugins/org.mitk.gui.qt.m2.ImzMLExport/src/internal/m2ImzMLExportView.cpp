@@ -24,12 +24,15 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 // Qt
 #include <QMessageBox>
 #include <QPushButton>
+#include <QFileDialog>
 
 // mitk image
 #include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageBase.h>
 #include <mitkImage.h>
+#include <m2ImzMLImageIO.h>
 
+#include <QmitkIOUtil.h>
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateFunction.h>
@@ -87,36 +90,25 @@ void m2ImzMLExportView::CreateQtPartControl(QWidget *parent)
   m_Controls.listSelection->SetEmptyInfo(QString("PeakList selection"));
   m_Controls.listSelection->SetPopUpTitel(QString("PeakList"));
 
+  connect(m_Controls.btnExport, &QPushButton::clicked, this, [this, parent](){
+    if(auto node = this->m_Controls.imageSelection->GetSelectedNode()){
+      this->UpdateExportSettings(node);
+      auto name = QFileDialog::getSaveFileName(parent);
+      
+      m2::ImzMLImageIO io;
 
-  connect(m_Controls.cmbBxOutputDatatypeInt,
-          qOverload<int>(&QComboBox::currentIndexChanged),
-          this,
-          &m2ImzMLExportView::UpdateExportSettingsAllNodes,
-          Qt::UniqueConnection);
+      if(auto listNode = this->m_Controls.listSelection->GetSelectedNode()){
+        auto list = dynamic_cast<m2::IntervalVector*>(listNode->GetData());
+        io.SetIntervalVector(list);
+      }
 
-  connect(m_Controls.cmbBxOutputDatatypeMz,
-          qOverload<int>(&QComboBox::currentIndexChanged),
-          this,
-          &m2ImzMLExportView::UpdateExportSettingsAllNodes,
-          Qt::UniqueConnection);
+      io.SetOutputLocation(name.toStdString());
+      io.mitk::AbstractFileIOWriter::SetInput(node->GetData());
+      io.Write();     
 
-  connect(m_Controls.cmbBxOutputMode,
-          qOverload<int>(&QComboBox::currentIndexChanged),
-          this,
-          &m2ImzMLExportView::UpdateExportSettingsAllNodes,
-          Qt::UniqueConnection);
+    }
+  });
 
-  // connect(m_Controls.spnBxPeakPickingHWS,
-  //        qOverload<int>(&QSpinBox::valueChanged),
-  //        this,
-  //        &m2ImzMLExportView::UpdateExportSettingsAllNodes,
-  //        Qt::UniqueConnection);
-
-  // connect(m_Controls.spnBxSNR,
-  //        qOverload<int>(&QSpinBox::valueChanged),
-  //        this,
-  //        &m2ImzMLExportView::UpdateExportSettingsAllNodes,
-  //        Qt::UniqueConnection);
 }
 
 
@@ -137,19 +129,6 @@ void m2ImzMLExportView::UpdateExportSettings(const mitk::DataNode *node)
 
     auto xType = static_cast<m2::NumericType>(m_Controls.cmbBxOutputDatatypeMz->currentData(Qt::UserRole).toUInt());
     image->GetExportSpectrumType().XAxisType = xType;
-
-
-    image->SetPropertyValue<bool>("imzML.bounds", m_Controls.ckBxBounds->isChecked());
-    if (m_Controls.ckBxBounds->isChecked())
-    {
-      image->SetPropertyValue<double>("imzML.bounds.lower", m_Controls.spBxLower->value());
-      image->SetPropertyValue<double>("imzML.bounds.upper", m_Controls.spBxUpper->value());
-    }
-    else
-    {
-      image->RemoveProperty("imzML.bounds.lower");
-      image->RemoveProperty("imzML.bounds.upper");
-    }
 
     switch (format)
     {

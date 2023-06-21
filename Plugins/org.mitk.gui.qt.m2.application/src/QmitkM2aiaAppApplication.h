@@ -19,6 +19,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <berryIApplication.h>
 
+
 class QmitkM2aiaAppApplication : public QObject, public berry::IApplication
 {
   Q_OBJECT

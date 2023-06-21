@@ -56,7 +56,7 @@ public:
   void SetGroupVisiblity(const std::string &groupName, bool v);
   void SetGroupSpectrumType(const std::string &groupName, m2::SpectrumType type);
 
-  void UpdateAllGroups(double xMin = -1, double xMax = -1);
+  void UpdateAllSeries(double xMin = -1, double xMax = -1);
   void UpdateGroup(const std::string &groupName, double xMin = -1, double xMax = -1);
 
   static void SetProfileSpectrumDefaultStyle(QtCharts::QXYSeries *series);

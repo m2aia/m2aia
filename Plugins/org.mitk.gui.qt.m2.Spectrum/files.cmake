@@ -5,8 +5,8 @@ set(SRC_CPP_FILES
 set(INTERNAL_CPP_FILES
   org_mitk_gui_qt_m2_Spectrum_Activator.cpp 
   m2Spectrum.cpp
-  m2Crosshair.cpp
   Qm2SpectrumChartDataProvider.cpp
+  m2SeriesDataProvider.cpp
 )
 
 set(UI_FILES
@@ -16,8 +16,8 @@ set(UI_FILES
 set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_Spectrum_Activator.h
   src/internal/m2Spectrum.h
-  src/internal/m2Crosshair.h
   src/internal/Qm2SpectrumChartDataProvider.h
+  src/internal/m2SeriesDataProvider.h
   src/m2ChartView.h
 )
 

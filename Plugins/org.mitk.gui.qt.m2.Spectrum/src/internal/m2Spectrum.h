@@ -18,15 +18,15 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <QmitkAbstractView.h>
 #include <berryISelectionListener.h>
-#include <berryIPreferences.h>
+#include <mitkIPreferences.h>
 
 #include <itkCommand.h>
+#include <m2SpectrumImageBase.h>
 
 #include "m2ChartView.h"
-#include "m2Crosshair.h"
-#include <m2SpectrumImageBase.h>
 #include "ui_m2Spectrum.h"
-#include "Qm2SpectrumChartDataProvider.h"
+#include "m2SeriesDataProvider.h"
+
 #include <qlegendmarker.h>
 #include <qscatterseries.h>
 #include <qslider.h>
@@ -35,6 +35,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 class QMenu;
 class QActionGroup;
+class QGraphicsItem;
+class QGraphicsSimpleTextItem;
 namespace QtCharts
 {
   class QValueAxis;
@@ -69,11 +71,14 @@ namespace itk{
   };
 }
 
+
+
 class m2Spectrum : public QmitkAbstractView
 {
   // this is needed for all Qt objects that should have a Qt meta-object
   // (everything that derives from QObject and wants to have signal/slots)
   Q_OBJECT
+  class DataProviderHelper;
 
 public:
   static const std::string VIEW_ID;
@@ -83,10 +88,13 @@ protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
   void CreateQChartView();
   void CreateQChartViewMenu();
-  m2Crosshair *m_Crosshair;
+  QGraphicsSimpleTextItem *m_Crosshair;
   QFutureWatcher<void> m_Watcher;
 
-  std::map<const mitk::DataNode *, std::shared_ptr<Qm2SpectrumChartDataProvider>> m_DataProvider;
+  
+
+  std::map<const mitk::DataNode *, std::shared_ptr<DataProviderHelper>> m_DataProvider;
+  
   
   void UpdateLineSeriesWindow(const mitk::DataNode *);
   void UpdateAxisLabels(const mitk::DataNode *, bool remove = false);
@@ -96,6 +104,7 @@ protected:
 
 protected slots:
   void OnDataNodeReceived(const mitk::DataNode *node);
+  
 
   void OnMassRangeChanged(qreal x, qreal tol);
   void OnSeriesFocused(const mitk::DataNode *node);
@@ -116,17 +125,19 @@ protected slots:
   void OnRangeChangedAxisY(qreal min, qreal max);
 
 protected:
-  void OnPropertyChanged(const itk::Object *caller, const itk::EventObject &event);
+  void OnPropertyListChanged(const itk::Object *caller, const itk::EventObject &event);
   void OnPeakListChanged(const itk::Object *caller, const itk::EventObject &event);
   void OnInitializationFinished(const itk::Object *caller, const itk::EventObject &event);
+  
 
   unsigned int m_yAxisTicks = 4;
   unsigned int m_xAxisTicks = 9;
 
-  berry::IPreferences::Pointer m_M2aiaPreferences;
+  mitk::IPreferences * m_M2aiaPreferences;
 
   void UpdateGlobalMinMaxValues();
-  void UpdateLocalMinMaxValues(double minX, double maxX);
+  void UpdateCurrentMinMaxY();
+  void UpdateAllSeries();
   void SetSelectedAreaStartX(double v) { m_SelectedAreaStartX = v; }
   void SetSelectedAreaEndX(double v) { m_SelectedAreaEndX = v; }
   void DrawSelectedArea();
@@ -139,6 +150,7 @@ protected:
   QtCharts::QLineSeries *m_SelectedAreaLower = nullptr;
   double m_SelectedAreaStartX = 0;
   double m_SelectedAreaEndX = 0;
+  std::map<const mitk::DataNode *, std::vector<std::shared_ptr<QGraphicsItem>>> m_NodeRealtedGraphicItems;
 
   char m_StatusBarTextBuffer[500];
   double m_CurrentMousePosMz = 0;
@@ -153,8 +165,9 @@ protected:
   std::unique_ptr<QtCharts::QScatterSeries> m_LastMzMarker;
   std::vector<std::pair<double, double>> m_AlignmentRegions;
 
-  // virtual void NodeAdded(const mitk::DataNode *node) override;
+  
   virtual void NodeRemoved(const mitk::DataNode *node) override;
+  std::map<const mitk::DataNode *, std::vector<unsigned int>> m_NodeObserverTags;
 
   QtCharts::QChart *m_chart = nullptr;
   QtCharts::QAbstractSeries *m_IonImageIndicator = nullptr;
@@ -174,6 +187,9 @@ protected:
 
   double m_LocalMaximumY;
   double m_LocalMinimumY;
+  double m_LocalMaximumX;
+  double m_LocalMinimumX;
+  
 
   double m_MouseDragCenterPos = 0;
   double m_MouseDragLowerDelta = 0;
@@ -199,4 +215,49 @@ private:
   QtCharts::QValueAxis *m_yAxis;
 
   QVector<QString> m_xAxisTitels;
+
+
+  /**
+   * Helper Calss for structuring DataProviders
+  */
+  class DataProviderHelper{
+    private:
+      std::weak_ptr<m2::SeriesDataProvider> m_ActiveProvider;
+      std::map<std::string, std::shared_ptr<m2::SeriesDataProvider>> m_SubProvider;
+
+    public:
+
+      void AddProvider(const std::string & name, std::shared_ptr<m2::SeriesDataProvider> & provider)
+      {
+        try{
+          m_SubProvider.emplace(name, provider);
+        }catch(std::exception & e){
+          MITK_INFO << e.what();
+        }
+      }
+
+      std::weak_ptr<m2::SeriesDataProvider> GetActiveProvider(){
+        if(!m_ActiveProvider.lock()){
+          mitkThrow() << "(SpectrumView) No Active Provider selected for SeriesDataProvided!";
+        }
+        return m_ActiveProvider;
+      }
+
+      std::weak_ptr<m2::SeriesDataProvider> GetProviderByName(std:: string name){
+        return m_SubProvider[name];
+      }
+
+      std::map<std::string, std::shared_ptr<m2::SeriesDataProvider>> & GetProviders(){
+        return m_SubProvider;
+      }
+
+      void SetActiveProviderTo(const std::string & name){
+        for(auto kv : m_SubProvider)
+          kv.second->GetSeries()->setVisible(false);
+    
+        m_ActiveProvider = m_SubProvider[name];
+        m_ActiveProvider.lock()->GetSeries()->setVisible(true);
+      }
+    };
 };
+

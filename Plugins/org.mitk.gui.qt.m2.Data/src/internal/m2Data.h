@@ -154,5 +154,5 @@ protected:
 
   const int FROM_GUI = -1;
 
-  berry::IPreferences::Pointer m_M2aiaPreferences;
+  mitk::IPreferences * m_M2aiaPreferences;
 };

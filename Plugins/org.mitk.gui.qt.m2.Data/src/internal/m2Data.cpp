@@ -19,6 +19,7 @@ See LICENSE.txt for details.
 
 #include <QtConcurrent>
 #include <QInputDialog>
+#include <QColorDialog>
 
 #include <boost/format.hpp>
 
@@ -26,11 +27,19 @@ See LICENSE.txt for details.
 #include <itkRescaleIntensityImageFilter.h>
 
 #include <berryPlatform.h>
+#include <mitkCoreServices.h>
+#include <mitkIPreferences.h>
+#include <mitkIPreferencesService.h>
 
 #include <QmitkRenderWindow.h>
+#include <mitkNodePredicateDataType.h>
+#include <mitkNodePredicateAnd.h>
+#include <mitkNodePredicateNot.h>
+#include <mitkNodePredicateProperty.h>
 #include <mitkImageCast.h>
 #include <mitkLookupTableProperty.h>
 #include <mitkLayoutAnnotationRenderer.h>
+#include <mitkColorProperty.h>
 
 #include <m2SubdivideImage2DFilter.h>
 #include <m2SpectrumImageBase.h>
@@ -66,15 +75,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
           this,
           [&] { OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI); });
 
-  // connect(m_Controls.btnCreateImageToNewNode,
-  //         &QAbstractButton::clicked,
-  //         this,
-  //         [&]
-  //         {
-  //           m_InitializeNewNode = true;
-  //           OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
-  //         });
-
+ 
   // step through
   // signals are triggered by key strokes (arrows) from spectrum view (Spectrum.ccp)
   auto UIUtilsObject = m2::UIUtils::Instance();
@@ -82,23 +83,6 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   connect(UIUtilsObject, SIGNAL(NextImage()), this, SLOT(OnCreateNextImage()));
   connect(UIUtilsObject, SIGNAL(IncreaseTolerance()), this, SLOT(OnIncreaseTolerance()));
   connect(UIUtilsObject, SIGNAL(DecreaseTolerance()), this, SLOT(OnDecreaseTolerance()));
-
-  connect(m_Controls.maskSubstring,
-          &QLineEdit::textChanged,
-          [this](const QString &c)
-          {
-            auto allNodes = m2::UIUtils::AllNodes(GetDataStorage());
-            bool v = false;
-            for (auto node : *allNodes)
-            {
-              v |= FindChildNodeRegex(node, c.toStdString()).IsNotNull();
-
-              if (v)
-                m_Controls.labelTextRegexStatus->setText("OK");
-              else
-                m_Controls.labelTextRegexStatus->setText("None");
-            }
-          });
 
   // Make sure, that data nodes added before this view
   // is initialized are handled correctly!!
@@ -152,6 +136,21 @@ void m2Data::CreateQtPartControl(QWidget *parent)
               watcher.reset();
             });
   }
+
+  
+
+
+  m_Controls.multiLabelImageSelection->SetDataStorage(GetDataStorage());
+  m_Controls.multiLabelImageSelection->SetAutoSelectNewNodes(false);
+  m_Controls.multiLabelImageSelection->SetNodePredicate(
+  
+  mitk::NodePredicateAnd::New(mitk::NodePredicateDataType::New("LabelSetImage"), 
+                              mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+  m_Controls.multiLabelImageSelection->SetSelectionIsOptional(true);
+  m_Controls.multiLabelImageSelection->SetEmptyInfo(QString("LabelSetImage selection"));
+  m_Controls.multiLabelImageSelection->SetPopUpTitel(QString("LabelSetImage"));
+
+
 }
 
 void m2Data::InitNormalizationStrategyComboBox()
@@ -320,10 +319,9 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
     data->SetBaseLineCorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
     data->SetUseToleranceInPPM(m_Controls.rbtnTolPPM->isChecked());
 
-    berry::IPreferences::Pointer preferences =
-      berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+    auto preferences = mitk::CoreServices::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
 
-    data->SetNumberOfBins(preferences->Get("bins", "10000").toUInt());
+    data->SetNumberOfBins(std::stoi(preferences->Get("bins", "10000")));
 
     // data->SetBinningTolerance(m_Controls.spnBxPeakBinning->value());
   }
@@ -379,11 +377,13 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
         continue;
 
       mitk::Image::Pointer maskImage;
-      auto maskNode = FindChildNodeRegex(dataNode, Controls()->maskSubstring->text().toStdString());
+      if(auto node = m_Controls.multiLabelImageSelection->GetSelectedNode()){
+        if(auto image = dynamic_cast<mitk::LabelSetImage*>(node->GetData())){
+          maskImage = image;
+        }
+      }
 
-      if (maskNode && Controls()->chkBxUseMask->isChecked())
-        maskImage = dynamic_cast<mitk::Image *>(maskNode->GetData());
-
+      
       // The smartpointer will stay alive until all captured copies are relesed. Additional
       // all connected signals must be disconnected to make sure that the future is not kept
       // alive after the 'finished-callback' is processed.
@@ -558,6 +558,9 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
 
     SpectrumImageNodeAdded(node);
     emit m2::UIUtils::Instance()->SpectrumImageNodeAdded(node);
+  }else if (dynamic_cast<m2::IntervalVector *>(node->GetData()))
+  {
+    // emit m2::UIUtils::Instance()->SpectrumImageNodeAdded(node);
   }
 }
 
@@ -631,9 +634,9 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
   }
 }
 
-void m2Data::ImzMLImageNodeAdded(const mitk::DataNode *)
+void m2Data::ImzMLImageNodeAdded(const mitk::DataNode*)
 {
-  //
+ 
 }
 
 void m2Data::FsmImageNodeAdded(const mitk::DataNode *)
@@ -650,7 +653,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   {
     bool ok;
     QString text = QInputDialog::getText(
-      this->m_Parent, tr("Name conflict"), tr("Postfix:"), QLineEdit::Normal, QDir::home().dirName(), &ok);
+    this->m_Parent, tr("Name conflict"), tr("Postfix:"), QLineEdit::Normal, QDir::home().dirName(), &ok);
     const_cast<mitk::DataNode *>(node)->SetName((node->GetName() + "_" + text.toStdString()).c_str());
   }
 

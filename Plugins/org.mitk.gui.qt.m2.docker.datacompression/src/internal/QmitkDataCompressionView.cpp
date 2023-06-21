@@ -46,6 +46,7 @@ found in the LICENSE file.
 #include <itkLinearInterpolateImageFunction.h>
 #include <itkResampleImageFilter.h>
 #include <itkVectorImageToImageAdaptor.h>
+#include <itkBinaryThresholdImageFilter.h>
 
 // boost
 #include <boost/algorithm/string.hpp>
@@ -60,6 +61,7 @@ using VectorImageType = itk::VectorImage<m2::DisplayImagePixelType, 3>;
 
 void QmitkDataCompressionView::CreateQtPartControl(QWidget *parent)
 {
+  m_Parent = parent;
   // Setting up the UI is a true pleasure when using .ui files, isn't it?
   m_Controls.setupUi(parent);
 
@@ -71,6 +73,18 @@ void QmitkDataCompressionView::CreateQtPartControl(QWidget *parent)
   m_Controls.imageSelection->SetSelectionIsOptional(true);
   m_Controls.imageSelection->SetEmptyInfo(QString("Image selection"));
   m_Controls.imageSelection->SetPopUpTitel(QString("Image"));
+
+
+  // m_Controls.tsne_imageSelection->SetDataStorage(GetDataStorage());
+  // m_Controls.tsne_imageSelection->SetAutoSelectNewNodes(false);
+  // m_Controls.tsne_imageSelection->SetNodePredicate(
+  // mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::Image>::New(), 
+  //                             mitk::NodePredicateProperty::New("Image.Displayed Component"), 
+  //                             mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+    
+  // m_Controls.tsne_imageSelection->SetSelectionIsOptional(true);
+  // m_Controls.tsne_imageSelection->SetEmptyInfo(QString("Multi Component Image selection"));
+  // m_Controls.tsne_imageSelection->SetPopUpTitel(QString("Multi Component Image"));
 
   auto isChildOfImageNode = [this](const mitk::DataNode *node) {
     if (auto imageNode = m_Controls.imageSelection->GetSelectedNode())
@@ -147,6 +161,20 @@ void QmitkDataCompressionView::CreateQtPartControl(QWidget *parent)
   m_Controls.lassoLabelImageSelection->SetSelectionIsOptional(true);
   m_Controls.lassoLabelImageSelection->SetEmptyInfo(QString("LabelImage selection"));
   m_Controls.lassoLabelImageSelection->SetPopUpTitel(QString("LabelImage"));
+
+  QPalette palette_green;
+  palette_green.setColor(QPalette::WindowText, Qt::green);
+
+  QPalette palette_red;
+  palette_red.setColor(QPalette::WindowText, Qt::red);
+  Red(m_Controls.labelDocker);
+  Red(m_Controls.labelData);
+    
+
+  if(mitk::DockerHelper::CheckDocker()){
+    Green(m_Controls.labelDocker);
+  }
+
 }
 
 void QmitkDataCompressionView::SetFocus() {}
@@ -154,6 +182,24 @@ void QmitkDataCompressionView::SetFocus() {}
 void QmitkDataCompressionView::OnImageChanged(const QmitkSingleNodeSelectionWidget::NodeList &)
 {
   this->EnableWidgets(m_Controls.imageSelection->GetSelectedNode().IsNotNull());
+  if(auto node = m_Controls.imageSelection->GetSelectedNode()){
+    if(auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData())){
+      std::string path;
+      node->GetStringProperty("MITK.IO.reader.inputlocation", path);
+      if(itksys::SystemTools::FileExists(path) && image->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousCentroid){
+        Green(m_Controls.labelData);
+      }else{
+        Red(m_Controls.labelData);
+      }
+    }
+  }
+
+  if(mitk::DockerHelper::CheckDocker()){
+    Green(m_Controls.labelDocker);
+  }else{
+    Red(m_Controls.labelDocker);
+  }
+
 }
 
 void QmitkDataCompressionView::OnPeakListChanged(const QmitkSingleNodeSelectionWidget::NodeList &)
@@ -178,7 +224,7 @@ void QmitkDataCompressionView::OnStartUMAP()
       {
         if (mitk::DockerHelper::CheckDocker())
         {
-          mitk::DockerHelper helper("m2aia/extensions:umap");
+          mitk::DockerHelper helper("ghcr.io/m2aia/extensions:umap");
           helper.AddAutoSaveData(image, "--imzml", "*.imzML");
           helper.AddAutoLoadOutput("--image", "umap_image.nrrd");
           helper.AddApplicationArgument("--num_comp", std::to_string(m_Controls.spnBxComponents->value()));
@@ -198,6 +244,8 @@ void QmitkDataCompressionView::OnStartUMAP()
           for (unsigned int pixelInSlice = 0; pixelInSlice < dims[0] * dims[1]; ++pixelInSlice)
             for (unsigned int i = 0; i < components; ++i)
               outAcc.GetData()[pixelInSlice * components + i] = inAcc.GetData()[i * dims[0] * dims[1] + pixelInSlice];
+
+          vimage->SetTimeGeometry(image->GetTimeGeometry()->Clone());
 
           auto newNode = mitk::DataNode::New();
           newNode->SetData(vimage);
@@ -221,7 +269,7 @@ void QmitkDataCompressionView::OnStartSparsePCA()
       {
         if (mitk::DockerHelper::CheckDocker())
         {
-          mitk::DockerHelper helper("sparse_pca");
+          mitk::DockerHelper helper("ghcr.io/m2aia/extensions:sparse_pca");
           helper.AddAutoSaveData(image, "--imzml", "*.imzML");
 
           auto iter = helper.AddLoadLaterOutput("--csv", "pca_data.csv");
@@ -296,16 +344,31 @@ void QmitkDataCompressionView::OnStartSparsePCA()
 void QmitkDataCompressionView::OnStartPCA()
 {
   auto imageNode = m_Controls.imageSelection->GetSelectedNode();
-  auto vectorNode = m_Controls.peakListSelection->GetSelectedNode();
-
-  if (!(imageNode || vectorNode))
+  if (!imageNode){
+    QMessageBox::warning(this->m_Parent, "Warning", "No image DataNode selected!", QMessageBox::StandardButton::Close, QMessageBox::StandardButton::NoButton);
     return;
+  }
 
   auto image = dynamic_cast<m2::SpectrumImageBase *>(imageNode->GetData());
-  auto vector = dynamic_cast<m2::IntervalVector *>(vectorNode->GetData());
-
-  if (!(image || vector))
+  if(!image){
+    QMessageBox::warning(this->m_Parent, "Warning", "The selected image is not derived from m2::SpectrumImageBase!", QMessageBox::StandardButton::Close, QMessageBox::StandardButton::NoButton);
     return;
+  }
+
+  auto vectorNode = m_Controls.peakListSelection->GetSelectedNode();
+  if(!vectorNode){
+    QMessageBox::warning(this->m_Parent, "Warning", "No PeakList selected!", QMessageBox::StandardButton::Close, QMessageBox::StandardButton::NoButton);
+    return;
+  }
+
+  auto vector = dynamic_cast<m2::IntervalVector *>(vectorNode->GetData());
+  const auto & intervals = vector->GetIntervals();
+
+  
+  if(intervals.empty()){
+    QMessageBox::warning(this->m_Parent, "Warning", "No intervals selected!", QMessageBox::StandardButton::Close, QMessageBox::StandardButton::NoButton);
+    return;
+  }
 
   if (!image->GetIsDataAccessInitialized())
     return;
@@ -317,14 +380,14 @@ void QmitkDataCompressionView::OnStartPCA()
 
   std::vector<mitk::Image::Pointer> temporaryImages;
   auto progressBar = mitk::ProgressBar::GetInstance();
-  progressBar->AddStepsToDo(vector->GetIntervals().size() + 1);
+  progressBar->AddStepsToDo(intervals.size() + 1);
   size_t inputIdx = 0;
-  for (size_t row = 0; row < vector->GetIntervals().size(); ++row)
+  for (size_t row = 0; row < intervals.size(); ++row)
   {
     progressBar->Progress();
     temporaryImages.push_back(mitk::Image::New());
     temporaryImages.back()->Initialize(image);
-    const auto mz = vector->GetIntervals().at(row).x.mean();
+    const auto mz = intervals.at(row).x.mean();
     image->GetImage(mz, image->ApplyTolerance(mz), image->GetMaskImage(), temporaryImages.back());
     filter->SetInput(inputIdx, temporaryImages.back());
     ++inputIdx;
@@ -334,7 +397,7 @@ void QmitkDataCompressionView::OnStartPCA()
   {
     progressBar->Progress();
     QMessageBox::warning(nullptr,
-                         "Select images first!",
+                         "Select image,s first!",
                          "Select at least three peaks!",
                          QMessageBox::StandardButton::NoButton,
                          QMessageBox::StandardButton::Ok);
