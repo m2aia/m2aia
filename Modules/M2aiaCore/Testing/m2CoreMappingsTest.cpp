@@ -44,6 +44,8 @@ private:
       case m2::SpectrumFormat::ContinuousProfile:
       case m2::SpectrumFormat::ProcessedCentroid:
       case m2::SpectrumFormat::ProcessedProfile:
+      case m2::SpectrumFormat::Profile:
+      case m2::SpectrumFormat::Centroid:
       case m2::SpectrumFormat::None:
         // add your new case here
         {

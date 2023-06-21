@@ -23,17 +23,23 @@ namespace m2
 
   enum class SpectrumFormat : unsigned int
   {
-    None = 0,
-    ContinuousProfile = 1,
-    ProcessedProfile = 2,
-    ContinuousCentroid = 4,
-    ProcessedCentroid = 8
+    None=1,
+    Profile=2,
+    Centroid=4,
+    ContinuousProfile=10,
+    ProcessedProfile=18,
+    ContinuousCentroid=36,
+    ProcessedCentroid=68,
   };
 
   inline std::string to_string(const SpectrumFormat &type) noexcept
   {
     switch (type)
     {
+      case SpectrumFormat::Centroid:
+        return "Centroid";
+      case SpectrumFormat::Profile:
+        return "Profile";
       case SpectrumFormat::ContinuousProfile:
         return "ContinuousProfile";
       case SpectrumFormat::ProcessedProfile:
