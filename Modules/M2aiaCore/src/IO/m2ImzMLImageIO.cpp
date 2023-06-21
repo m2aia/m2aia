@@ -22,7 +22,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLEngine.h>
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLParser.h>
-#include <m2ImzMLTemplate.h>
 #include <m2Timer.h>
 #include <mitkIOUtil.h>
 #include <mitkImagePixelReadAccessor.h>
@@ -55,12 +54,12 @@ namespace m2
 
   mitk::IFileIO::ConfidenceLevel ImzMLImageIO::GetWriterConfidenceLevel() const
   {
-    // if (AbstractFileIO::GetWriterConfidenceLevel() == Unsupported)
-    //   return Unsupported;
-    // const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
-    // if (input)
-    //   return Supported;
-    // else
+    if (AbstractFileIO::GetWriterConfidenceLevel() == Unsupported)
+      return Unsupported;
+    const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
+    if (input)
+      return Supported;
+    else
       return Unsupported;
   }
 
@@ -150,43 +149,30 @@ namespace m2
     unsigned long long offset = 16;
     unsigned long long offsetDelta = 0;
 
-    // Used for min/max limits on x axis
-    std::pair<unsigned int, unsigned int> bounds;
-
+    
     boost::progress_display show_progress(std::accumulate(std::begin(sourceList),std::end(sourceList),0, [](auto s, m2::ImzMLSpectrumImage::ImzMLImageSource source){
       return s + source.m_Spectra.size();}) + 1);
 
     // write mzs
     {
       auto &source = sourceList.front();
-      // input->GetSpectrum(0, mzs, ints, sourceId); // get x axis
-      // bounds = {0, mzs.size()};
-      // image properties
-      auto useLimits = input->GetExportSpectrumType().UseLimits;
-
-      // Bounds of sub-spectrum
-      if (useLimits)
-      {
-        auto xLimMin = input->GetExportSpectrumType().XLimMin;
-        auto xLimMax = input->GetExportSpectrumType().XLimMax;
-        bounds = m2::Signal::Subrange(mzs, xLimMin, xLimMax);
-      }
+      input->GetSpectrum(0, mzs, ints, sourceId); // get x axis
 
       source.m_Spectra[0].mzOffset = 16;
-      source.m_Spectra[0].mzLength = bounds.second;
+      source.m_Spectra[0].mzLength = mzs.size();
 
-      auto start = std::begin(mzs) + bounds.first;
-      auto end = std::end(mzs) + bounds.first + bounds.second;
+      auto start = std::begin(mzs);
+      auto end = std::end(mzs);
       switch (input->GetExportSpectrumType().XAxisType)
       {
         case m2::NumericType::Float:
           // input->GetProcessor()
           writeData<float>(start, end, b);
-          offsetDelta = bounds.second * sizeof(float);
+          offsetDelta = mzs.size() * sizeof(float);
           break;
         case m2::NumericType::Double:
           writeData<double>(start, end, b);
-          offsetDelta = bounds.second * sizeof(double);
+          offsetDelta = mzs.size() * sizeof(double);
           break;
       }
       offset += offsetDelta;
@@ -209,20 +195,20 @@ namespace m2
           input->GetSpectrum(id, mzs, ints, sourceId);
 
           s.intOffset = offset;
-          s.intLength = bounds.second;
+          s.intLength = ints.size();
 
-          auto start = std::begin(ints) + bounds.first;
-          auto end = std::end(ints) + bounds.first + bounds.second;
+          auto start = std::begin(ints);
+          auto end = std::end(ints);
 
           switch (input->GetExportSpectrumType().YAxisType)
           {
             case m2::NumericType::Float:
               writeData<float>(start, end, b);
-              offsetDelta = bounds.second * sizeof(float);
+              offsetDelta = ints.size() * sizeof(float);
               break;
             case m2::NumericType::Double:
               writeData<double>(start, end, b);
-              offsetDelta = bounds.second * sizeof(double);
+              offsetDelta = ints.size() * sizeof(double);
               break;
           }
 
@@ -242,7 +228,7 @@ namespace m2
   void ImzMLImageIO::WriteContinuousCentroid(m2::ImzMLSpectrumImage::SourceListType &sourceList) const
   {
     if (m_Intervals.IsNull() || m_Intervals->GetIntervals().empty())
-      mitkThrow() << "No mass mask indices provided!";
+      mitkThrow() << "No intervals provided!";
 
     std::vector<float> mzs, mzsMasked;
     std::vector<float> ints, intsMasked;
@@ -460,11 +446,6 @@ namespace m2
 
     try
     {
-      MITK_INFO << "Start writing ImzML!";
-      //// define working vectors
-      std::vector<double> mzs;
-      std::vector<double> ints;
-
       using m2::SpectrumFormat;
 
       // copy the whole source meta data container; spectra information is
@@ -528,6 +509,8 @@ namespace m2
           context["spectrumtype"] = "profile spectrum";
           context["mode"] = "processed";
           break;
+        default:
+          break;
       }
       std::string sha1string = Poco::SHA1Engine::digestToHex(generator.digest());
       MITK_INFO << "[ibd SHA1] " << sha1string << "\n";
@@ -562,13 +545,13 @@ namespace m2
           break;
       }
 
-      context["mz_data_type_code"] = m2::Template::TextToCodeMap[context["mz_data_type"]];
-      context["int_data_type_code"] = m2::Template::TextToCodeMap[context["int_data_type"]];
+      context["mz_data_type_code"] = TextToCodeMap[context["mz_data_type"]];
+      context["int_data_type_code"] = TextToCodeMap[context["int_data_type"]];
       context["mz_compression"] = "no compression";
       context["int_compression"] = "no compression";
 
-      context["mode_code"] = m2::Template::TextToCodeMap[context["mode"]];
-      context["spectrumtype_code"] = m2::Template::TextToCodeMap[context["spectrumtype"]];
+      context["mode_code"] = TextToCodeMap[context["mode"]];
+      context["spectrumtype_code"] = TextToCodeMap[context["spectrumtype"]];
 
       context["size_x"] = std::to_string(input->GetDimensions()[0]);
       context["size_y"] = std::to_string(input->GetDimensions()[1]);
@@ -603,16 +586,16 @@ namespace m2
         std::begin(sources), std::end(sources), unsigned(0), [](auto s, auto v) { return s + v.m_Spectra.size(); });
       context["num_spectra"] = std::to_string(N);
 
-      context["int_compression_code"] = m2::Template::TextToCodeMap[context["int_compression"]];
-      context["mz_compression_code"] = m2::Template::TextToCodeMap[context["mz_compression"]];
+      context["int_compression_code"] = TextToCodeMap[context["int_compression"]];
+      context["mz_compression_code"] = TextToCodeMap[context["mz_compression"]];
 
       // Output file stream for imzML
       std::ofstream f(GetImzMLOutputPath(), std::ofstream::binary);
 
-      std::string view = m2::Template::IMZML_TEMPLATE_START;
+      std::string view = IMZML_TEMPLATE_START;
       f << m2::TemplateEngine::render(view, context);
 
-      view = m2::Template::IMZML_SPECTRUM_TEMPLATE;
+      view = IMZML_SPECTRUM_TEMPLATE;
       unsigned long id = 0;
       for (const auto &source : sourceCopy)
       {
@@ -647,7 +630,7 @@ namespace m2
         }
       }
 
-      f << m2::Template::IMZML_TEMPLATE_END;
+      f << IMZML_TEMPLATE_END;
       f.close();
     }
     catch (std::exception &e)

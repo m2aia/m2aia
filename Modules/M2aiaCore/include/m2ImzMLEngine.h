@@ -23,7 +23,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 namespace m2
 {
-  class TemplateEngine
+  class M2AIACORE_EXPORT TemplateEngine
   {
     enum RenderIf
     {
