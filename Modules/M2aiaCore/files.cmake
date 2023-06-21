@@ -11,6 +11,8 @@ set(H_FILES
   include/m2FsmSpectrumImage.h
   include/m2Timer.h
   include/m2SpectrumInfo.h
+  include/m2ImzMLImageIO.h
+  include/m2ImzMLEngine.h
 
   # include/m2ElxUtil.h
   # include/m2ElxRegistrationHelper.h
@@ -44,6 +46,9 @@ set(CPP_FILES
   m2SubdivideImage2DFilter.cpp
   m2SpectrumImageDataInteractor.cpp
   m2IntervalVector.cpp
+
+  IO/m2ImzMLImageIO.cpp
+  IO/m2ImzMLEngine.cpp
 )
 
 set(RESOURCE_FILES
