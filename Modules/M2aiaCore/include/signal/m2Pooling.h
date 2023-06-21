@@ -28,6 +28,8 @@ namespace m2
     PoolingValue RangePooling(ItFirst first, ItLast last, RangePoolingStrategyType strategy)
     {
       PoolingValue val = 0;
+      if(std::distance(first,last) == 0)
+        return val;
       switch (strategy)
       {
         case RangePoolingStrategyType::None:
