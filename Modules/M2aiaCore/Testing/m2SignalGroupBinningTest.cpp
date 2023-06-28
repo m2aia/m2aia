@@ -19,12 +19,12 @@ See LICENSE.txt for details.
 #include <m2TestingConfig.h>
 #include <m2Timer.h>
 #include <mitkIOUtil.h>
-#include <mitkTestFixture.h>
+#include <m2TestFixture.h>
 #include <mitkTestingMacros.h>
 #include <signal/m2Binning.h>
 #include <signal/m2SignalCommon.h>
 
-class m2SignalGroupBinningTestSuite : public mitk::TestFixture
+class m2SignalGroupBinningTestSuite : public m2::TestFixture
 {
   CPPUNIT_TEST_SUITE(m2SignalGroupBinningTestSuite);
   MITK_TEST(RunGroupBinning_Strict_Tol0_002);

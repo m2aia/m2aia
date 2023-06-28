@@ -19,14 +19,14 @@ See LICENSE.txt for details.
 #include <signal/m2Normalization.h>
 #include <m2FsmSpectrumImage.h>
 #include <m2TestingConfig.h>
-#include <mitkTestFixture.h>
+#include <m2TestFixture.h>
 #include <mitkTestingMacros.h>
 #include <numeric>
 #include <random>
 
 //#include <boost/algorithm/string.hpp>
 
-class m2FSMImageIOTestSuite : public mitk::TestFixture
+class m2FSMImageIOTestSuite : public m2::TestFixture
 {
   CPPUNIT_TEST_SUITE(m2FSMImageIOTestSuite);
   MITK_TEST(LoadTestData_shouldReturnTrue);

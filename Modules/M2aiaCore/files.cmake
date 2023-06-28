@@ -13,6 +13,7 @@ set(H_FILES
   include/m2SpectrumInfo.h
   include/m2ImzMLImageIO.h
   include/m2ImzMLEngine.h
+  include/m2TestFixture.h
 
   # include/m2ElxUtil.h
   # include/m2ElxRegistrationHelper.h

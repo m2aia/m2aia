@@ -16,12 +16,12 @@ See LICENSE.txt for details.
 
 #include "mitkIOUtil.h"
 #include <m2CoreCommon.h>
-#include <mitkTestFixture.h>
+#include <m2TestFixture.h>
 #include <mitkTestingMacros.h>
 
 //#include <boost/algorithm/string.hpp>
 
-class m2CoreMappingsTestSuite : public mitk::TestFixture
+class m2CoreMappingsTestSuite : public m2::TestFixture
 {
   CPPUNIT_TEST_SUITE(m2CoreMappingsTestSuite);
   MITK_TEST(CreateSwitches);

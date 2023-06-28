@@ -17,14 +17,14 @@ See LICENSE.txt for details.
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
 #include <m2TestingConfig.h>
+#include <m2TestFixture.h>
 #include <mitkImageCast.h>
 #include <mitkImagePixelWriteAccessor.h>
-#include <mitkTestFixture.h>
 #include <mitkTestingMacros.h>
 
 //#include <boost/algorithm/string.hpp>
 
-class m2ElxUtilTestSuite : public mitk::TestFixture
+class m2ElxUtilTestSuite : public m2::TestFixture
 {
   CPPUNIT_TEST_SUITE(m2ElxUtilTestSuite);
   MITK_TEST(FindElastixExecutables);
