@@ -739,8 +739,25 @@ namespace m2
     {
       MITK_ERROR << "Set the profile spectrum (MS:1000127) or centroid spectrum (MS:1000128) property in the ImzML "
                     "fileContent element.";
-      MITK_ERROR << "Fallback to profile spectrum (MS:1000127)";
-      object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
+      if (object->GetProperty("processed")){
+        MITK_ERROR << "Fallback to processed (IMS:1000031) centroid spectrum (MS:1000128)";
+        MITK_ERROR << "To prevent this error message, add the following content to your imzML file:"
+                      "\n<fileContent>\n\t...\n\t<cvParam cvRef=\"IMS\" accession=\"IMS:1000031\" "
+                      "name=\"processed\" value=\"\"/>\n\t<cvParam cvRef=\"MS\" accession=\"MS:1000128\" "
+                      "name=\"centroid spectrum\" value=\"\"/>\n\t...\n</fileContent>";
+        object->GetSpectrumType().Format = m2::SpectrumFormat::ProcessedCentroid;
+        object->SetPropertyValue("centroid spectrum", std::string()); 
+      }
+      
+      if(object->GetProperty("continuous")){
+        MITK_ERROR << "Fallback to continuos (IMS:1000030) profile spectrum (MS:1000127)";
+        MITK_ERROR << "To prevent this error message, add the following content to your imzML file:"
+                      "\n<fileContent>\n\t...\n\t<cvParam cvRef=\"IMS\" accession=\"IMS:1000030\" "
+                      "name=\"continuous\" value=\"\"/>\n\t<cvParam cvRef=\"MS\" accession=\"MS:1000127\" "
+                      "name=\"profile spectrum\" value=\"\"/>\n\t...\n</fileContent>";
+        object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
+        object->SetPropertyValue("profile spectrum", std::string()); 
+      }
     }
 
     if (object->GetProperty("profile spectrum") && object->GetProperty("processed"))
