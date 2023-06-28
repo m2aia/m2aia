@@ -103,8 +103,8 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
 
     m_Controls.scaleBarFontSize->setValue(cbAnnotation->GetFontSize());
     m_Controls.scaleBarOrientation->setCurrentIndex(cbAnnotation->GetOrientation());
-    m_Controls.scaleBarLenght->setValue(cbAnnotation->GetLenght());
-    m_Controls.scaleBarWidth->setValue(cbAnnotation->GetWidth());
+    // m_Controls.scaleBarLenght->setValue(cbAnnotation->GetLenght());
+    // m_Controls.scaleBarWidth->setValue(cbAnnotation->GetWidth());
 
     connect(m_Controls.scaleBarFontSize,
             &QSlider::sliderMoved,
@@ -121,7 +121,8 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
             this,
             [this, i](int pos)
             {
-              m_ColorBarAnnotations[i]->SetLength(pos);
+              Q_UNUSED(pos)
+              // m_ColorBarAnnotations[i]->SetLength(pos);
               UpdateColorBarAndRenderWindows();
               RequestRenderWindowUpdate();
             });
@@ -131,7 +132,8 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
             this,
             [this, i](int pos)
             {
-              m_ColorBarAnnotations[i]->SetWidth(pos);
+              Q_UNUSED(pos)
+              // m_ColorBarAnnotations[i]->SetWidth(pos);
               UpdateColorBarAndRenderWindows();
               RequestRenderWindowUpdate();
             });

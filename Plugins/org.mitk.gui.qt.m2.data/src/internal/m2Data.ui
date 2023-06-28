@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>557</width>
-    <height>782</height>
+    <height>1189</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -703,19 +703,74 @@
         </property>
        </widget>
       </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>Settings</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
-       <widget class="Line" name="line">
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+       <widget class="QCheckBox" name="showIndexImages">
+        <property name="text">
+         <string>Show index images</string>
+        </property>
+        <property name="tristate">
+         <bool>false</bool>
         </property>
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_14">
-        <item>
-         <widget class="QmitkSingleNodeSelectionWidget" name="multiLabelImageSelection" native="true"/>
-        </item>
-       </layout>
+       <widget class="QCheckBox" name="showNormImages">
+        <property name="text">
+         <string>Show normalization images</string>
+        </property>
+        <property name="tristate">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="showMaskImages">
+        <property name="text">
+         <string>Show mask images</string>
+        </property>
+        <property name="tristate">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="showMeanSpectrum">
+        <property name="text">
+         <string>Show mean spectrum node</string>
+        </property>
+        <property name="tristate">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="showMaxSpectrum">
+        <property name="text">
+         <string>Show max spectrum node</string>
+        </property>
+        <property name="tristate">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="showSingleSpectrum">
+        <property name="text">
+         <string>Show single spectrum node</string>
+        </property>
+        <property name="tristate">
+         <bool>false</bool>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -736,14 +791,6 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <customwidgets>
-  <customwidget>
-   <class>QmitkSingleNodeSelectionWidget</class>
-   <extends>QWidget</extends>
-   <header>QmitkSingleNodeSelectionWidget.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

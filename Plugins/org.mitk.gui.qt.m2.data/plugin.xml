@@ -2,8 +2,9 @@
 <plugin>
 
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.m2.Data" name="Data" category="Spectrum imaging" class="m2Data" icon="resources/icon_data.svg" />
-    <view id="org.mitk.views.m2.DataTools" name="Data Tools" category="Spectrum imaging" class="m2DataTools" icon="resources/icon_tools.svg" />
+    <view id="org.mitk.views.m2.data" name="Data" category="Spectrum imaging" class="m2Data" icon="resources/icon_data.svg" />
+    <view id="org.mitk.views.m2.datatools" name="Data Tools" category="Spectrum imaging" class="m2DataTools" icon="resources/icon_tools.svg" />
+    <view id="org.mitk.views.m2.datastatistics" name="Data Statistics" category="Spectrum imaging" class="m2DataStatistics" icon="resources/icon_stats.svg" />
   </extension>
 
   <extension point="org.blueberry.ui.keywords">

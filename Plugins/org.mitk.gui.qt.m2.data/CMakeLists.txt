@@ -1,4 +1,4 @@
-project(org_mitk_gui_qt_m2_Data)
+project(org_mitk_gui_qt_m2_data)
 
 mitk_create_plugin(
   EXPORT_DIRECTIVE IMSBASE_EXPORT

@@ -15,42 +15,37 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 
-#include <regex>
+#include "m2Data.h"
 
-#include <QtConcurrent>
-#include <QInputDialog>
+#include "Qm2OpenSlideImageIOHelperDialog.h"
 #include <QColorDialog>
-
-#include <boost/format.hpp>
-
-#include <itksys/SystemTools.hxx>
-#include <itkRescaleIntensityImageFilter.h>
-
+#include <QInputDialog>
+#include <QmitkRenderWindow.h>
+#include <QtConcurrent>
 #include <berryPlatform.h>
+#include <boost/format.hpp>
+#include <itkRescaleIntensityImageFilter.h>
+#include <itksys/SystemTools.hxx>
+#include <m2ImzMLSpectrumImage.h>
+#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImageStack.h>
+#include <m2SubdivideImage2DFilter.h>
+#include <m2UIUtils.h>
+#include <mitkColorProperty.h>
 #include <mitkCoreServices.h>
 #include <mitkIPreferences.h>
 #include <mitkIPreferencesService.h>
-
-#include <QmitkRenderWindow.h>
-#include <mitkNodePredicateDataType.h>
-#include <mitkNodePredicateAnd.h>
-#include <mitkNodePredicateNot.h>
-#include <mitkNodePredicateProperty.h>
 #include <mitkImageCast.h>
-#include <mitkLookupTableProperty.h>
 #include <mitkLayoutAnnotationRenderer.h>
-#include <mitkColorProperty.h>
+#include <mitkLookupTableProperty.h>
+#include <mitkNodePredicateAnd.h>
+#include <mitkNodePredicateDataType.h>
+#include <mitkNodePredicateNot.h>
+#include <mitkNodePredicateOr.h>
+#include <mitkNodePredicateProperty.h>
+#include <regex>
 
-#include <m2SubdivideImage2DFilter.h>
-#include <m2SpectrumImageBase.h>
-#include <m2ImzMLSpectrumImage.h>
-#include <m2UIUtils.h>
-
-#include "m2Data.h"
-#include "m2OpenSlideImageIOHelperDialog.h"
-
-
-const std::string m2Data::VIEW_ID = "org.mitk.views.m2.Data";
+const std::string m2Data::VIEW_ID = "org.mitk.views.m2.data";
 
 void m2Data::CreateQtPartControl(QWidget *parent)
 {
@@ -75,7 +70,6 @@ void m2Data::CreateQtPartControl(QWidget *parent)
           this,
           [&] { OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI); });
 
- 
   // step through
   // signals are triggered by key strokes (arrows) from spectrum view (Spectrum.ccp)
   auto UIUtilsObject = m2::UIUtils::Instance();
@@ -83,6 +77,33 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   connect(UIUtilsObject, SIGNAL(NextImage()), this, SLOT(OnCreateNextImage()));
   connect(UIUtilsObject, SIGNAL(IncreaseTolerance()), this, SLOT(OnIncreaseTolerance()));
   connect(UIUtilsObject, SIGNAL(DecreaseTolerance()), this, SLOT(OnDecreaseTolerance()));
+
+  // Settings (show hlper objects)
+  using namespace mitk;
+
+  const auto callback = [&](int v, const char *name)
+  {
+    auto a = TNodePredicateDataType<m2::SpectrumImageStack>::New();
+    auto b = TNodePredicateDataType<m2::ImzMLSpectrumImage>::New();
+    auto predicate = NodePredicateOr::New(a, b);
+    auto nodes = this->GetDataStorage()->GetAll();
+    for (auto node : *nodes)
+      if (predicate->CheckNode(node))
+        if (auto targetNode = this->GetDataStorage()->GetNamedDerivedNode(name, node))
+        {
+          targetNode->SetVisibility(v != 0);
+          targetNode->SetBoolProperty("helper object", v == 0);
+          this->RequestRenderWindowUpdate();
+        }
+  };
+
+  connect(m_Controls.showIndexImages, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "IndexImage"); });
+
+  connect(m_Controls.showNormImages, &QCheckBox::stateChanged,this,[callback](int v) { callback(v, "NormalizationImage"); });
+  connect(m_Controls.showMaskImages, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MaskImage"); });
+  connect(m_Controls.showMeanSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MeanSpectrum"); });
+  connect(m_Controls.showMaxSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MaxSpectrum"); });
+  connect(m_Controls.showSingleSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "SingleSpectrum"); });
 
   // Make sure, that data nodes added before this view
   // is initialized are handled correctly!!
@@ -106,11 +127,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
   if (count)
   {
-    auto future = QtConcurrent::run(
-      [parent, this]()
-      {
-        QThread::currentThread()->sleep(1);
-      });
+    auto future = QtConcurrent::run([parent, this]() { QThread::currentThread()->sleep(1); });
 
     auto watcher = std::make_shared<QFutureWatcher<void>>();
     watcher->setFuture(future);
@@ -136,21 +153,6 @@ void m2Data::CreateQtPartControl(QWidget *parent)
               watcher.reset();
             });
   }
-
-  
-
-
-  m_Controls.multiLabelImageSelection->SetDataStorage(GetDataStorage());
-  m_Controls.multiLabelImageSelection->SetAutoSelectNewNodes(false);
-  m_Controls.multiLabelImageSelection->SetNodePredicate(
-  
-  mitk::NodePredicateAnd::New(mitk::NodePredicateDataType::New("LabelSetImage"), 
-                              mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
-  m_Controls.multiLabelImageSelection->SetSelectionIsOptional(true);
-  m_Controls.multiLabelImageSelection->SetEmptyInfo(QString("LabelSetImage selection"));
-  m_Controls.multiLabelImageSelection->SetPopUpTitel(QString("LabelSetImage"));
-
-
 }
 
 void m2Data::InitNormalizationStrategyComboBox()
@@ -319,7 +321,8 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
     data->SetBaseLineCorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
     data->SetUseToleranceInPPM(m_Controls.rbtnTolPPM->isChecked());
 
-    auto preferences = mitk::CoreServices::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+    auto preferences =
+      mitk::CoreServices::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
 
     data->SetNumberOfBins(std::stoi(preferences->Get("bins", "10000")));
 
@@ -377,13 +380,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
         continue;
 
       mitk::Image::Pointer maskImage;
-      if(auto node = m_Controls.multiLabelImageSelection->GetSelectedNode()){
-        if(auto image = dynamic_cast<mitk::LabelSetImage*>(node->GetData())){
-          maskImage = image;
-        }
-      }
 
-      
       // The smartpointer will stay alive until all captured copies are relesed. Additional
       // all connected signals must be disconnected to make sure that the future is not kept
       // alive after the 'finished-callback' is processed.
@@ -456,8 +453,6 @@ void m2Data::UpdateSpectrumImageTable(const mitk::DataNode *node)
   // item = m_Controls.tableWidget->item(0, 0)->setData()
 }
 
-
-
 void m2Data::OnRenderSpectrumImages(double min, double max)
 {
   Q_UNUSED(min);
@@ -513,15 +508,13 @@ void m2Data::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/, const Q
     auto node = nodes.front();
     if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
-      
       QString labelText = str(boost::format("%.2f +/- %.2f Da") % image->GetCurrentX() % image->GetTolerance()).c_str();
 
-        labelText += "\n";
-        if (nodes.size() == 1)
-          labelText += node->GetName().c_str();
+      labelText += "\n";
+      if (nodes.size() == 1)
+        labelText += node->GetName().c_str();
 
-        this->UpdateTextAnnotations(labelText.toStdString());
-    
+      this->UpdateTextAnnotations(labelText.toStdString());
     }
   }
 }
@@ -558,7 +551,8 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
 
     SpectrumImageNodeAdded(node);
     emit m2::UIUtils::Instance()->SpectrumImageNodeAdded(node);
-  }else if (dynamic_cast<m2::IntervalVector *>(node->GetData()))
+  }
+  else if (dynamic_cast<m2::IntervalVector *>(node->GetData()))
   {
     // emit m2::UIUtils::Instance()->SpectrumImageNodeAdded(node);
   }
@@ -569,7 +563,7 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
   if (auto openSlideIOHelper = dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
   {
     const auto name = node->GetName();
-    auto dialog = new m2OpenSlideImageIOHelperDialog(m_Parent);
+    auto dialog = new Qm2OpenSlideImageIOHelperDialog(m_Parent);
     dialog->SetOpenSlideImageIOHelperObject(openSlideIOHelper);
     auto result = dialog->exec();
     if (result == QDialog::Accepted)
@@ -634,10 +628,7 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
   }
 }
 
-void m2Data::ImzMLImageNodeAdded(const mitk::DataNode*)
-{
- 
-}
+void m2Data::ImzMLImageNodeAdded(const mitk::DataNode *) {}
 
 void m2Data::FsmImageNodeAdded(const mitk::DataNode *)
 {
@@ -647,13 +638,14 @@ void m2Data::FsmImageNodeAdded(const mitk::DataNode *)
 void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
 {
   auto nodes = GetDataStorage()->GetAll();
+  // resolve name-conflicts
   if (std::any_of(nodes->begin(),
                   nodes->end(),
                   [node](auto f) { return f != node && f->GetName().compare(node->GetName()) == 0; }))
   {
     bool ok;
     QString text = QInputDialog::getText(
-    this->m_Parent, tr("Name conflict"), tr("Postfix:"), QLineEdit::Normal, QDir::home().dirName(), &ok);
+      this->m_Parent, tr("Name conflict"), tr("Postfix:"), QLineEdit::Normal, QDir::home().dirName(), &ok);
     const_cast<mitk::DataNode *>(node)->SetName((node->GetName() + "_" + text.toStdString()).c_str());
   }
 
@@ -661,58 +653,109 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   lut->SetType(mitk::LookupTable::LookupTableType::CIVIDS_TRANSPARENT);
   const_cast<mitk::DataNode *>(node)->SetProperty("LookupTable", mitk::LookupTableProperty::New(lut));
   const_cast<mitk::DataNode *>(node)->SetBoolProperty("binary", false);
-  mitk::LevelWindow lw;
-  const_cast<mitk::DataNode *>(node)->GetLevelWindow(lw);
-  lw.SetToMaxWindowSize();
-  const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
 
+  // add nodes to data storage (default: helper objects)
   if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-    //    // and add as child node
-    //    if (spectrumImage->GetImageArtifacts().find("references") != std::end(spectrumImage->GetImageArtifacts()))
-    //    {
-    //      auto helperNode = mitk::DataNode::New();
-    //      helperNode->SetName(node->GetName());
-    //      helperNode->SetVisibility(false);
-    //      helperNode->SetData(spectrumImage->GetImageArtifacts()["references"]);
-    //      helperNode->SetFloatProperty("point 2D size",
-    //                                   spectrumImage->GetGeometry()->GetSpacing()[0] * 3);              // x
-    //                                   spacing
-    //      helperNode->SetFloatProperty("pointsize", spectrumImage->GetGeometry()->GetSpacing()[0] * 3); // x
-    //      spacing this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-    //    }
-
     // -------------- add Mask to datastorage --------------
-    if (m_M2aiaPreferences->GetBool("showMaskImage", false) && spectrumImage->GetMaskImage())
-    {
-      auto helperNode = mitk::DataNode::New();
-      helperNode->SetName(node->GetName() + "_mask");
-      helperNode->SetVisibility(true);
-      helperNode->SetData(spectrumImage->GetMaskImage());
+    auto helperNode = mitk::DataNode::New();
+    helperNode->SetName("MaskImage");
+    helperNode->SetVisibility(m_Controls.showMaskImages->isChecked());
+    helperNode->SetData(spectrumImage->GetMaskImage());
+    helperNode->SetBoolProperty("helper object", !m_Controls.showMaskImages->isChecked());
+    helperNode->SetStringProperty("spectrum.image.type", "mask");
 
-      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-    }
+    this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
 
     // -------------- add Index to datastorage --------------
-    if (m_M2aiaPreferences->GetBool("showIndexImage", false) && spectrumImage->GetIndexImage())
-    {
-      auto helperNode = mitk::DataNode::New();
-      helperNode->SetName(node->GetName() + "_index");
-      helperNode->SetVisibility(false);
-      helperNode->SetData(spectrumImage->GetIndexImage());
+    helperNode = mitk::DataNode::New();
+    helperNode->SetName("IndexImage");
+    helperNode->SetVisibility(m_Controls.showIndexImages->isChecked());
+    helperNode->SetData(spectrumImage->GetIndexImage());
+    helperNode->SetBoolProperty("helper object", !m_Controls.showIndexImages->isChecked());
+    helperNode->SetStringProperty("spectrum.image.type", "index");
 
-      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-    }
+    this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
 
     // -------------- add Normalization to datastorage --------------
+    helperNode = mitk::DataNode::New();
+    helperNode->SetName("NormalizationImage");
+    helperNode->SetVisibility(m_Controls.showNormImages->isChecked());
+    helperNode->SetData(spectrumImage->GetNormalizationImage());
+    helperNode->SetBoolProperty("helper object", !m_Controls.showNormImages->isChecked());
+    helperNode->SetStringProperty("spectrum.image.type", "normaliztion");
+    this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
 
-    if (m_M2aiaPreferences->GetBool("showNormalizationImage", false) && spectrumImage->GetNormalizationImage())
+    // -------------- add Spectra to datastorage --------------
+    const auto &xs = spectrumImage->GetXAxis();
+    bool isProfileSpectrumFormat = spectrumImage->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousProfile ||
+                                  spectrumImage->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedProfile;
+    using namespace std;
+
+    // single pixel spectrum
+    auto singleSpectrumHelperNode = mitk::DataNode::New();
+    singleSpectrumHelperNode->SetName("SingleSpectrum");
+    singleSpectrumHelperNode->SetVisibility(m_Controls.showSingleSpectrum->isChecked());
     {
-      auto helperNode = mitk::DataNode::New();
-      helperNode->SetName(node->GetName() + "_normalization");
-      helperNode->SetVisibility(false);
-      helperNode->SetData(spectrumImage->GetNormalizationImage());
+      auto spectrum = m2::IntervalVector::New();
+      auto &i = spectrum->GetIntervals();
+      auto &ys = spectrumImage->MeanSpectrum();
+      transform(begin(xs), end(xs), begin(ys), back_inserter(i), [](auto &a, auto &b) { return m2::Interval(a, b); });
+      singleSpectrumHelperNode->SetData(spectrum);
+    }
+    singleSpectrumHelperNode->SetBoolProperty("helper object", !m_Controls.showMeanSpectrum->isChecked());
+    this->GetDataStorage()->Add(singleSpectrumHelperNode, const_cast<mitk::DataNode *>(node));
 
+    if (isProfileSpectrumFormat)
+    {
+      singleSpectrumHelperNode->SetStringProperty("spectrum.overview.type", "profile");
+
+      // Mean spectrum
+      helperNode = mitk::DataNode::New();
+      helperNode->SetName("MeanSpectrum");
+      helperNode->SetVisibility(m_Controls.showMeanSpectrum->isChecked());
+      {
+        auto spectrum = m2::IntervalVector::New();
+        auto &i = spectrum->GetIntervals();
+        auto &ys = spectrumImage->MeanSpectrum();
+        transform(begin(xs), end(xs), begin(ys), back_inserter(i), [](auto &a, auto &b) { return m2::Interval(a, b); });
+        helperNode->SetData(spectrum);
+      }
+      helperNode->SetBoolProperty("helper object", !m_Controls.showMeanSpectrum->isChecked());
+      helperNode->SetStringProperty("spectrum.overview.type", "profile");
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+
+      // Max spectrum
+      helperNode = mitk::DataNode::New();
+      helperNode->SetName("MaxSpectrum");
+      helperNode->SetVisibility(m_Controls.showMeanSpectrum->isChecked());
+      {
+        auto spectrum = m2::IntervalVector::New();
+        auto &i = spectrum->GetIntervals();
+        auto &ys = spectrumImage->SkylineSpectrum();
+        transform(begin(xs), end(xs), begin(ys), back_inserter(i), [](auto &a, auto &b) { return m2::Interval(a, b); });
+        helperNode->SetData(spectrum);
+      }
+      helperNode->SetBoolProperty("helper object", !m_Controls.showMeanSpectrum->isChecked());
+      helperNode->SetStringProperty("spectrum.overview.type", "profile");
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    }
+    else
+    {
+      singleSpectrumHelperNode->SetStringProperty("spectrum.overview.type", "centroid");
+      // Centroid spectrum
+      helperNode = mitk::DataNode::New();
+      helperNode->SetName("CentroidSpectrum");
+      helperNode->SetVisibility(m_Controls.showMeanSpectrum->isChecked());
+      {
+        auto spectrum = m2::IntervalVector::New();
+        auto &i = spectrum->GetIntervals();
+        auto &ys = spectrumImage->MeanSpectrum();
+        transform(begin(xs), end(xs), begin(ys), back_inserter(i), [](auto &a, auto &b) { return m2::Interval(a, b); });
+        helperNode->SetData(spectrum);
+      }
+      helperNode->SetBoolProperty("helper object", !m_Controls.showMeanSpectrum->isChecked());
+      helperNode->SetStringProperty("spectrum.overview.type", "centroid");
       this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
     }
   }

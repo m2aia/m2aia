@@ -14,7 +14,7 @@ A PARTICULAR PURPOSE.
 See LICENSE.txt for details.
 
 ===================================================================*/
-#include "m2OpenSlideImageIOHelperDialog.h"
+#include "Qm2OpenSlideImageIOHelperDialog.h"
 
 #include "GL/gl.h"
 #include <QMessageBox>
@@ -89,12 +89,12 @@ QPixmap GetPixmapFromImageNode(const mitk::Image *image, int height)
   return QPixmap::fromImage(thumbnailImage);
 }
 
-void m2OpenSlideImageIOHelperDialog::SetOpenSlideImageIOHelperObject(m2::OpenSlideImageIOHelperObject *helper)
+void Qm2OpenSlideImageIOHelperDialog::SetOpenSlideImageIOHelperObject(m2::OpenSlideImageIOHelperObject *helper)
 {
   m_Helper = helper;
 }
 
-void m2OpenSlideImageIOHelperDialog::UpdateImageInformation()
+void Qm2OpenSlideImageIOHelperDialog::UpdateImageInformation()
 {
   auto IO = m_Helper->GetOpenSlideIO();
 
@@ -186,7 +186,7 @@ void m2OpenSlideImageIOHelperDialog::UpdateImageInformation()
           });
 }
 
-mitk::Image::Pointer m2OpenSlideImageIOHelperDialog::GetPreviewData()
+mitk::Image::Pointer Qm2OpenSlideImageIOHelperDialog::GetPreviewData()
 {
   auto IO = m_Helper->GetOpenSlideIO();
   if (this->GetSelectedLevel() == IO->GetLevelCount() - 1)
@@ -203,7 +203,7 @@ mitk::Image::Pointer m2OpenSlideImageIOHelperDialog::GetPreviewData()
   return lowResImage;
 }
 
-std::vector<mitk::Image::Pointer> m2OpenSlideImageIOHelperDialog::GetData()
+std::vector<mitk::Image::Pointer> Qm2OpenSlideImageIOHelperDialog::GetData()
 {
   auto IO = m_Helper->GetOpenSlideIO();
 

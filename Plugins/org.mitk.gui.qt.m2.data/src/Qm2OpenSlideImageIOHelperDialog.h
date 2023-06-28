@@ -15,18 +15,18 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #pragma once
-#include "ui_m2OpenSlideImageIOHelperDialog.h"
+#include "ui_Qm2OpenSlideImageIOHelperDialog.h"
 #include <QDialog>
 #include <itkImageRegionConstIterator.h>
 #include <itkImageRegionIterator.h>
 #include <m2OpenSlideImageIOHelperObject.h>
 
-class m2OpenSlideImageIOHelperDialog : public QDialog
+class Qm2OpenSlideImageIOHelperDialog : public QDialog
 {
   Q_OBJECT
 
 public:
-  explicit m2OpenSlideImageIOHelperDialog(QWidget *parent = nullptr) : QDialog(parent)
+  explicit Qm2OpenSlideImageIOHelperDialog(QWidget *parent = nullptr) : QDialog(parent)
   {
     m_Controls.setupUi(this);
     this->setSizeGripEnabled(true);

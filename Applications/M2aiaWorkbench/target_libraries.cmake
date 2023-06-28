@@ -22,7 +22,7 @@ set(target_libraries
   org_mitk_gui_qt_preprocessing_resampling
   org_mitk_gui_qt_m2_application
   org_mitk_gui_qt_m2_common
-  org_mitk_gui_qt_m2_Data
+  org_mitk_gui_qt_m2_data
   org_mitk_gui_qt_m2_CombineImages
   org_mitk_gui_qt_m2_Spectrum
   org_mitk_gui_qt_m2_PeakPicking
