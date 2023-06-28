@@ -53,8 +53,14 @@ mitk::Image::Pointer QmitkDataNodeExportComponentAction::ExportComponentImage(co
   const auto inGeometry = img->GetSlicedGeometry();
 
   auto output = mitk::Image::New();
-  mitk::PixelType newPixelType = mitk::MakePixelType(inputPixelType, 1);
-  output->Initialize(newPixelType, 3, img->GetDimensions());
+  
+  AccessByItk(img, ([&](auto itkImage){
+    using SourceImageType = typename std::remove_pointer<decltype(itkImage)>::type;
+    mitk::PixelType newPixelType = mitk::MakePixelType<SourceImageType>(1);
+    output->Initialize(newPixelType, 3, img->GetDimensions());
+  }));
+
+  
   // auto newPixelType = mitk::MakePixelType(inputPixelType, 1);
   output->GetSlicedGeometry()->SetSpacing(inGeometry->GetSpacing());
   output->GetSlicedGeometry()->SetOrigin(inGeometry->GetOrigin());
