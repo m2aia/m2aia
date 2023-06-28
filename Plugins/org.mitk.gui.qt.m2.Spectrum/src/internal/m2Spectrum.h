@@ -90,11 +90,7 @@ protected:
   void CreateQChartViewMenu();
   QGraphicsSimpleTextItem *m_Crosshair;
   QFutureWatcher<void> m_Watcher;
-
-  
-
   std::map<const mitk::DataNode *, std::shared_ptr<DataProviderHelper>> m_DataProvider;
-  
   
   void UpdateLineSeriesWindow(const mitk::DataNode *);
   void UpdateAxisLabels(const mitk::DataNode *, bool remove = false);
@@ -104,8 +100,6 @@ protected:
 
 protected slots:
   void OnDataNodeReceived(const mitk::DataNode *node);
-  
-
   void OnMassRangeChanged(qreal x, qreal tol);
   void OnSeriesFocused(const mitk::DataNode *node);
   void OnLegnedHandleMarkerClicked();
@@ -150,7 +144,7 @@ protected:
   QtCharts::QLineSeries *m_SelectedAreaLower = nullptr;
   double m_SelectedAreaStartX = 0;
   double m_SelectedAreaEndX = 0;
-  std::map<const mitk::DataNode *, std::vector<std::shared_ptr<QGraphicsItem>>> m_NodeRealtedGraphicItems;
+  std::map<const mitk::DataNode *, std::vector<QGraphicsItem*>> m_NodeRealtedGraphicItems;
 
   char m_StatusBarTextBuffer[500];
   double m_CurrentMousePosMz = 0;

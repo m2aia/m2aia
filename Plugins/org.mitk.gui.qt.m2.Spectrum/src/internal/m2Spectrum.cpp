@@ -117,7 +117,7 @@ void m2Spectrum::UpdateSelectedArea()
 
     m_Controls.chartView->repaint();
 
-    m_NodeRealtedGraphicItems.clear();
+    
 
     using namespace std;
     double size = 5;
@@ -125,6 +125,12 @@ void m2Spectrum::UpdateSelectedArea()
     {
       try
       {
+        for(auto items : m_NodeRealtedGraphicItems[kv1.first]){
+          m_chart->scene()->removeItem(items);
+          delete items;
+        }
+        m_NodeRealtedGraphicItems[kv1.first].clear();
+
         auto p = kv1.second->GetActiveProvider().lock();
         auto lowerX = lower_bound(begin(p->xs()), end(p->xs()), std::max(m_SelectedAreaStartX, m_xAxis->min()));
         auto upperX = upper_bound(lowerX, end(p->xs()), std::min(m_SelectedAreaEndX, m_xAxis->max()));
@@ -132,7 +138,7 @@ void m2Spectrum::UpdateSelectedArea()
 
         for (; lowerX < upperX; ++lowerX, ++lowerY)
         {
-          auto rect = std::make_shared<QGraphicsRectItem>();
+          auto rect = new QGraphicsRectItem();
           if (auto prop = kv1.first->GetProperty("spectrum.marker.size"))
           {
             if (auto sizeProp = dynamic_cast<mitk::IntProperty *>(prop))
@@ -156,8 +162,9 @@ void m2Spectrum::UpdateSelectedArea()
           }
 
           rect->setZValue(20);
-
           m_NodeRealtedGraphicItems[kv1.first].push_back(rect);
+          m_chart->scene()->addItem(rect);
+
         }
       }
       catch (std::exception &e)
@@ -248,7 +255,7 @@ void m2Spectrum::OnPropertyListChanged(const itk::Object *caller, const itk::Eve
         {
           QColor c;
           c.setRgbF(mc.GetRed(), mc.GetGreen(), mc.GetBlue());
-          auto rect = dynamic_cast<QGraphicsRectItem *>(item.get());
+          auto rect = dynamic_cast<QGraphicsRectItem *>(item);
           rect->setBrush(QBrush(c));
           rect->setPen(QPen(c));
         }
@@ -262,7 +269,7 @@ void m2Spectrum::OnPropertyListChanged(const itk::Object *caller, const itk::Eve
         auto size = sizeProp->GetValue();
         for (auto item : m_NodeRealtedGraphicItems[node])
         {
-          auto rect = dynamic_cast<QGraphicsRectItem *>(item.get());
+          auto rect = dynamic_cast<QGraphicsRectItem *>(item);
           auto itemPos = rect->rect().center();
           rect->setRect(itemPos.x() - size / 2.0, itemPos.y() - size / 2.0, size, size);
         }
@@ -332,16 +339,11 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
     auto provider = std::make_shared<m2::SeriesDataProvider>();
     provider->Initialize(intervals->GetXMean(), intervals->GetYMean(), m2::SeriesDataProvider::Format::centorid);
     m_chart->addSeries(provider->GetSeries());
-    provider->GetSeries()->setName((node->GetName() + " Mean_peaks").c_str());
-    provider->GetSeries()->setVisible(m_CurrentOverviewSpectrumType == m2::SpectrumType::Mean);
-    m_DataProvider[node]->AddProvider("Mean", provider);
-
-    provider = std::make_shared<m2::SeriesDataProvider>();
-    provider->Initialize(intervals->GetXMean(), intervals->GetYMax(), m2::SeriesDataProvider::Format::centorid);
-    m_chart->addSeries(provider->GetSeries());
-    provider->GetSeries()->setName((node->GetName() + " Max_peaks").c_str());
-    provider->GetSeries()->setVisible(m_CurrentOverviewSpectrumType == m2::SpectrumType::Maximum);
-    m_DataProvider[node]->AddProvider("Max", provider);
+    provider->GetSeries()->setName(node->GetName().c_str());
+    provider->GetSeries()->setVisible(true);
+    m_DataProvider[node]->AddProvider("Interval", provider);
+    m_DataProvider[node]->SetActiveProviderTo("Interval");
+    MITK_INFO << "Added PEaklist";
   }
 
   if (auto imageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
@@ -356,7 +358,7 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
     auto command = itk::NodeMemberCommand<m2Spectrum>::New();
     command->SetNode(node);
     command->SetCallbackFunction(this, &m2Spectrum::OnPropertyListChanged);
-    m_NodeObserverTags[node].push_back(node->AddObserver(itk::ModifiedEvent(), command));
+    m_NodeObserverTags[node].push_back(node->GetPropertyList()->AddObserver(itk::ModifiedEvent(), command));
 
     // command = itk::NodeMemberCommand<m2Spectrum>::New();
     // command->SetNode(node);
@@ -383,13 +385,15 @@ void m2Spectrum::OnDataNodeReceived(const mitk::DataNode *node)
 
     m2::SeriesDataProvider::Format format;
     if (imageBase->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousCentroid ||
-        imageBase->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousCentroid)
+        imageBase->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedCentroid)
     {
       format = m2::SeriesDataProvider::Format::centorid;
+      MITK_INFO << "Added Centroid Spectrum to spectrum view";
     }
     else
     {
       format = m2::SeriesDataProvider::Format::profile;
+      MITK_INFO << "Added Profile Spectrum to spectrum view";
     }
     // Overview spectra
     auto provider = std::make_shared<m2::SeriesDataProvider>();
@@ -968,6 +972,10 @@ void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
 
     const_cast<mitk::DataNode*>(node)->RemoveAllObservers();
     for(auto kv: m_NodeRealtedGraphicItems){
+      for(auto item: kv.second){
+        m_chart->scene()->removeItem(item);
+        delete item;
+      }
       kv.second.clear();
     }
 
