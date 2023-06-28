@@ -29,7 +29,17 @@ namespace m2
   class M2AIACORE_EXPORT ImzMLSpectrumImage final : public SpectrumImageBase
   {
   public:
-    mitkClassMacro(ImzMLSpectrumImage, SpectrumImageBase);
+    // mitkClassMacro(ImzMLSpectrumImage, SpectrumImageBase);
+    typedef ImzMLSpectrumImage Self;                                                                                            
+    typedef SpectrumImageBase Superclass;                                                                                   
+    typedef itk::SmartPointer<Self> Pointer;                                                                             
+    typedef itk::SmartPointer<const Self> ConstPointer;                                                                  
+    virtual std::vector<std::string> GetClassHierarchy() const override { return mitk::GetClassHierarchy<Self>(); }      
+    // itkTypeMacro(ImzMLSpectrumImage, SpectrumImageBase);
+
+    static const char *GetStaticNameOfClass() { return "Image"; }
+    const char *GetNameOfClass() const override { return "Image"; }
+
     itkNewMacro(Self);
 
     itkSetEnumMacro(ImageGeometryInitialized, bool);

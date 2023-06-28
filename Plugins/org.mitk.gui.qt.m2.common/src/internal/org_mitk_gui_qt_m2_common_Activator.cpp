@@ -46,11 +46,10 @@ void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)
   auto descriptorManager = QmitkNodeDescriptorManager::GetInstance();
 
   auto imageDataType = mitk::TNodePredicateDataType<mitk::Image>::New();
-  auto a = mitk::NodePredicateDataType::New("SpectrumImageStack");
-  auto b = mitk::NodePredicateDataType::New("ImzMLSpectrumImage");
+  auto a = mitk::TNodePredicateDataType<m2::SpectrumImageStack>::New();
+  auto b = mitk::TNodePredicateDataType<m2::ImzMLSpectrumImage>::New();
   auto spectrumImageDataType = mitk::NodePredicateOr::New(a, b);
   auto spectrumImageDescriptorPredicate = mitk::NodePredicateAnd::New(spectrumImageDataType, imageDataType);
-  
   
   descriptorManager->AddDescriptor(new QmitkNodeDescriptor(
     tr("SpectrumImage"), QString(":/QmitkM2aiaCore/SpectrumImage_48.png"), spectrumImageDescriptorPredicate, this));
