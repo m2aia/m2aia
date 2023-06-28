@@ -32,6 +32,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "QmitkDataNodeExportComponentAction.h"
 #include "QmitkDataNodeConvertPixelTypeAction.h"
 
+#include <m2ImzMLSpectrumImage.h>
+#include <m2SpectrumImageStack.h>
+
 
 
 void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)
@@ -63,6 +66,10 @@ void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)
 
   desc = descriptorManager->GetDescriptor("MultiComponentImage");
   desc->AddAction(new QmitkDataNodeExportComponentAction(nullptr,nullptr), false);
+
+  
+  descriptorManager->AddDescriptor(new QmitkNodeDescriptor(
+    tr("IntervalVector"), QString(":/QmitkM2aiaCore/Spectrum_48.png"), mitk::TNodePredicateDataType<m2::IntervalVector>::New(), this));
 
 
 }

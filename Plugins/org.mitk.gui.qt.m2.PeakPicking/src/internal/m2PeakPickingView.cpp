@@ -87,12 +87,25 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.imageSelection->SetEmptyInfo(QString("Image selection"));
   m_Controls.imageSelection->SetPopUpTitel(QString("Image"));
 
-  auto isChildOfImageNode = [this](const mitk::DataNode *node) {
+  auto isChildAndCheckProperties = [this](const mitk::DataNode *node) {
     if (auto imageNode = m_Controls.imageSelection->GetSelectedNode())
     {
       auto childNodes = GetDataStorage()->GetDerivations(imageNode);
       using namespace std;
-      return find(begin(*childNodes), end(*childNodes), node) != end(*childNodes);
+      auto intervalVectorNode = find(begin(*childNodes), end(*childNodes), node);
+      if(intervalVectorNode != end(*childNodes)){
+        mitk::DataNode::Pointer d = *intervalVectorNode;
+        bool isHelperObject;
+        std::string overviewType;
+        bool hasHelperObjectProperty = d->GetBoolProperty("helper object", isHelperObject);
+        bool hasSpectrumTypeProperty = d->GetStringProperty("spectrum.overview.type", overviewType);
+        if(hasHelperObjectProperty && !hasSpectrumTypeProperty)
+          return !isHelperObject;
+        else if(hasHelperObjectProperty && hasSpectrumTypeProperty)
+          return !isHelperObject && (overviewType == "centroid");
+        return true;
+        
+      }
     }
     return false;
   };
@@ -100,8 +113,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.peakListSelection->SetDataStorage(GetDataStorage());
   m_Controls.peakListSelection->SetNodePredicate(
     mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::IntervalVector>::New(),
-                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")),
-                                mitk::NodePredicateFunction::New(isChildOfImageNode)));
+                                mitk::NodePredicateFunction::New(isChildAndCheckProperties)));
 
   m_Controls.peakListSelection->SetAutoSelectNewNodes(true);
   m_Controls.peakListSelection->SetSelectionIsOptional(true);
