@@ -97,13 +97,25 @@ void m2Data::CreateQtPartControl(QWidget *parent)
         }
   };
 
+  // connect checkboxes to handle visibility of helper objects in the DataManager
   connect(m_Controls.showIndexImages, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "IndexImage"); });
-
-  connect(m_Controls.showNormImages, &QCheckBox::stateChanged,this,[callback](int v) { callback(v, "NormalizationImage"); });
+  connect(m_Controls.showNormImages,
+          &QCheckBox::stateChanged,
+          this,
+          [callback](int v) { callback(v, "NormalizationImage"); });
   connect(m_Controls.showMaskImages, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MaskImage"); });
-  connect(m_Controls.showMeanSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MeanSpectrum"); });
-  connect(m_Controls.showMaxSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MaxSpectrum"); });
-  connect(m_Controls.showSingleSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "SingleSpectrum"); });
+  connect(
+    m_Controls.showMeanSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MeanSpectrum"); });
+  connect(
+    m_Controls.showMaxSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MaxSpectrum"); });
+  connect(m_Controls.showSingleSpectrum,
+          &QCheckBox::stateChanged,
+          this,
+          [callback](int v) { callback(v, "SingleSpectrum"); });
+  connect(m_Controls.showCentroidSpectrum,
+          &QCheckBox::stateChanged,
+          this,
+          [callback](int v) { callback(v, "CentroidSpectrum"); });
 
   // Make sure, that data nodes added before this view
   // is initialized are handled correctly!!
@@ -657,6 +669,8 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   // add nodes to data storage (default: helper objects)
   if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
+   
+
     // -------------- add Mask to datastorage --------------
     auto helperNode = mitk::DataNode::New();
     helperNode->SetName("MaskImage");
@@ -687,76 +701,53 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
 
     // -------------- add Spectra to datastorage --------------
-    const auto &xs = spectrumImage->GetXAxis();
-    bool isProfileSpectrumFormat = spectrumImage->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousProfile ||
-                                  spectrumImage->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedProfile;
-    using namespace std;
+     // color for plots in spectrum view
+    QColor color = QColor::fromHsv(QRandomGenerator::global()->generateDouble() * 255, 255, 255);
+    mitk::Color mitkColor;
+    mitkColor.Set(color.redF(), color.greenF(), color.blueF());
 
-    // single pixel spectrum
-    auto singleSpectrumHelperNode = mitk::DataNode::New();
-    singleSpectrumHelperNode->SetName("SingleSpectrum");
-    singleSpectrumHelperNode->SetVisibility(m_Controls.showSingleSpectrum->isChecked());
+
+
+    const auto AddSpectrum = [&node, this](std::string name, 
+                                           std::string type,
+                                           std::string info, 
+                                           mitk::Color color, 
+                                           const std::vector<double> xs, 
+                                           const std::vector<double> ys, 
+                                           bool checkState)
     {
+      auto helperNode = mitk::DataNode::New();
       auto spectrum = m2::IntervalVector::New();
+      spectrum->SetProperty("spectrum.type", mitk::StringProperty::New(type));
+      spectrum->SetProperty("spectrum.info", mitk::StringProperty::New(info));
+
+      using namespace std;
       auto &i = spectrum->GetIntervals();
-      auto &ys = spectrumImage->MeanSpectrum();
       transform(begin(xs), end(xs), begin(ys), back_inserter(i), [](auto &a, auto &b) { return m2::Interval(a, b); });
-      singleSpectrumHelperNode->SetData(spectrum);
-    }
-    singleSpectrumHelperNode->SetBoolProperty("helper object", !m_Controls.showMeanSpectrum->isChecked());
-    this->GetDataStorage()->Add(singleSpectrumHelperNode, const_cast<mitk::DataNode *>(node));
+      helperNode->SetData(spectrum);
 
-    if (isProfileSpectrumFormat)
+      helperNode->SetName(name);
+      helperNode->SetVisibility(checkState);
+      helperNode->SetBoolProperty("helper object", !checkState);
+      helperNode->SetProperty("spectrum.plot.color", mitk::ColorProperty::New(color));
+      helperNode->SetProperty("spectrum.marker.color", mitk::ColorProperty::New(color));
+      helperNode->SetProperty("spectrum.marker.size", mitk::IntProperty::New(2));
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    };
+
+    const auto &xs = spectrumImage->GetXAxis();
+    
+    if (spectrumImage->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousProfile ||
+        spectrumImage->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedProfile)
     {
-      singleSpectrumHelperNode->SetStringProperty("spectrum.overview.type", "profile");
-
-      // Mean spectrum
-      helperNode = mitk::DataNode::New();
-      helperNode->SetName("MeanSpectrum");
-      helperNode->SetVisibility(m_Controls.showMeanSpectrum->isChecked());
-      {
-        auto spectrum = m2::IntervalVector::New();
-        auto &i = spectrum->GetIntervals();
-        auto &ys = spectrumImage->MeanSpectrum();
-        transform(begin(xs), end(xs), begin(ys), back_inserter(i), [](auto &a, auto &b) { return m2::Interval(a, b); });
-        helperNode->SetData(spectrum);
-      }
-      helperNode->SetBoolProperty("helper object", !m_Controls.showMeanSpectrum->isChecked());
-      helperNode->SetStringProperty("spectrum.overview.type", "profile");
-      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
-
-      // Max spectrum
-      helperNode = mitk::DataNode::New();
-      helperNode->SetName("MaxSpectrum");
-      helperNode->SetVisibility(m_Controls.showMeanSpectrum->isChecked());
-      {
-        auto spectrum = m2::IntervalVector::New();
-        auto &i = spectrum->GetIntervals();
-        auto &ys = spectrumImage->SkylineSpectrum();
-        transform(begin(xs), end(xs), begin(ys), back_inserter(i), [](auto &a, auto &b) { return m2::Interval(a, b); });
-        helperNode->SetData(spectrum);
-      }
-      helperNode->SetBoolProperty("helper object", !m_Controls.showMeanSpectrum->isChecked());
-      helperNode->SetStringProperty("spectrum.overview.type", "profile");
-      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+      AddSpectrum("MaxSpectrum", "profile", "overview.max", mitkColor, xs, spectrumImage->SkylineSpectrum(), m_Controls.showMaxSpectrum->isChecked());
+      AddSpectrum("MeanSpectrum", "profile", "overview.mean", mitkColor, xs, spectrumImage->MeanSpectrum(), m_Controls.showMeanSpectrum->isChecked());
+      AddSpectrum("SingleSpectrum", "profile", "pixel.spectrum", mitkColor, {}, {}, m_Controls.showSingleSpectrum->isChecked());
     }
     else
     {
-      singleSpectrumHelperNode->SetStringProperty("spectrum.overview.type", "centroid");
-      // Centroid spectrum
-      helperNode = mitk::DataNode::New();
-      helperNode->SetName("CentroidSpectrum");
-      helperNode->SetVisibility(m_Controls.showMeanSpectrum->isChecked());
-      {
-        auto spectrum = m2::IntervalVector::New();
-        auto &i = spectrum->GetIntervals();
-        auto &ys = spectrumImage->MeanSpectrum();
-        transform(begin(xs), end(xs), begin(ys), back_inserter(i), [](auto &a, auto &b) { return m2::Interval(a, b); });
-        helperNode->SetData(spectrum);
-      }
-      helperNode->SetBoolProperty("helper object", !m_Controls.showMeanSpectrum->isChecked());
-      helperNode->SetStringProperty("spectrum.overview.type", "centroid");
-      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+      AddSpectrum("CentroidSpectrum", "centroid", "overview.centroids", mitkColor, xs, spectrumImage->MeanSpectrum(), m_Controls.showCentroidSpectrum->isChecked());
+      AddSpectrum("SingleSpectrum", "centroid", "pixel.spectrum", mitkColor, {}, {}, m_Controls.showSingleSpectrum->isChecked());
     }
   }
 }

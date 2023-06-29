@@ -107,6 +107,10 @@ signals:
   void SendNodes(m2::UIUtils::NodesVectorType::Pointer vec);
 
 protected:
+  void CreateQtPartControl(QWidget *parent) override;
+  void NodeAdded(const mitk::DataNode *node) override;
+  void NodeRemoved(const mitk::DataNode *node) override;
+  void SetFocus() override {}
 
 	mitk::DataNode::Pointer FindChildNodeRegex(mitk::DataNode::Pointer & parent, std::string regexString);
 
@@ -114,14 +118,10 @@ protected:
                                   const QList<mitk::DataNode::Pointer> &nodes) override;
   void UpdateLevelWindow(const mitk::DataNode *node);
   void UpdateSpectrumImageTable(const mitk::DataNode* node);
-  virtual void NodeAdded(const mitk::DataNode *node) override;
   void OpenSlideImageNodeAdded(const mitk::DataNode *node);
   void ImzMLImageNodeAdded(const mitk::DataNode *node);
   void FsmImageNodeAdded(const mitk::DataNode *node);
   void SpectrumImageNodeAdded(const mitk::DataNode *node);
-  virtual void NodeRemoved(const mitk::DataNode *node) override;
-  virtual void CreateQtPartControl(QWidget *parent) override;
-  virtual void SetFocus() override {}
 
   // 20201023: custom selection service did not work as expected
   //  m2::SelectionProvider::Pointer m_SelectionProvider;

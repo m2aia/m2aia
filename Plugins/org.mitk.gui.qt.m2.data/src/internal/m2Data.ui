@@ -32,7 +32,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>QmitkTemplate</string>
+   <string>ImzML Data View</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
@@ -713,6 +713,13 @@
      </property>
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Helper Images</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QCheckBox" name="showIndexImages">
         <property name="text">
          <string>Show index images</string>
@@ -743,9 +750,19 @@
        </widget>
       </item>
       <item>
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Overview Spectra</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QCheckBox" name="showMeanSpectrum">
         <property name="text">
-         <string>Show mean spectrum node</string>
+         <string>Show mean spectrum node (profile spectra )</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
         </property>
         <property name="tristate">
          <bool>false</bool>
@@ -755,10 +772,30 @@
       <item>
        <widget class="QCheckBox" name="showMaxSpectrum">
         <property name="text">
-         <string>Show max spectrum node</string>
+         <string>Show max spectrum node (profile spectra )</string>
         </property>
         <property name="tristate">
          <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="showCentroidSpectrum">
+        <property name="text">
+         <string>Show centroid spectrum node</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <property name="tristate">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Interactive Spectra</string>
         </property>
        </widget>
       </item>
