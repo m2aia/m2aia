@@ -85,12 +85,26 @@ public:
   ~m2Spectrum() {}
 
 protected:
-  virtual void CreateQtPartControl(QWidget *parent) override;
+  void CreateQtPartControl(QWidget *parent) override;
+  void NodeAdded(const mitk::DataNode *node) override;
+  void NodeRemoved(const mitk::DataNode *node) override;
+  void SetFocus() override {}
+
+  mitk::IPreferences * m_M2aiaPreferences;
+  Ui::imsSpectrumControls m_Controls;
+  QGraphicsSimpleTextItem *m_Crosshair;
+  
+  std::array<unsigned int,2> m_AxisTicks = {4,9};
+  std::array<double, 2> m_SelectedAreaX = {0,0};
+  std::array<QtCharts::QLineSeries *, 3> m_SelectedArea = {nullptr,nullptr,nullptr};
+
+  std::map<const mitk::DataNode *, std::vector<QGraphicsItem*>> m_NodeRealtedGraphicItems;
+  std::map<const mitk::DataNode *, std::vector<unsigned int>> m_NodeObserverTags;
+
   void CreateQChartView();
   void CreateQChartViewMenu();
-  QGraphicsSimpleTextItem *m_Crosshair;
-  QFutureWatcher<void> m_Watcher;
-  std::map<const mitk::DataNode *, std::shared_ptr<DataProviderHelper>> m_DataProvider;
+  
+  std::map<const mitk::DataNode *, std::shared_ptr<m2::SeriesDataProvider>> m_DataProvider;
   
   void UpdateLineSeriesWindow(const mitk::DataNode *);
   void UpdateAxisLabels(const mitk::DataNode *, bool remove = false);
@@ -123,57 +137,21 @@ protected:
   void OnPeakListChanged(const itk::Object *caller, const itk::EventObject &event);
   void OnInitializationFinished(const itk::Object *caller, const itk::EventObject &event);
   
-
-  unsigned int m_yAxisTicks = 4;
-  unsigned int m_xAxisTicks = 9;
-
-  mitk::IPreferences * m_M2aiaPreferences;
-
   void UpdateGlobalMinMaxValues();
   void UpdateCurrentMinMaxY();
   void UpdateAllSeries();
-  void SetSelectedAreaStartX(double v) { m_SelectedAreaStartX = v; }
-  void SetSelectedAreaEndX(double v) { m_SelectedAreaEndX = v; }
-  void DrawSelectedArea();
   void AutoZoomUseLocalExtremaY();
-
-
-  const std::vector<double> m_Scales = {1.0, 2.0, 4.0, 8.0, 16.0};
-  QtCharts::QLineSeries *m_SelectedAreaLeft = nullptr;
-  QtCharts::QLineSeries *m_SelectedAreaRight = nullptr;
-  QtCharts::QLineSeries *m_SelectedAreaLower = nullptr;
-  double m_SelectedAreaStartX = 0;
-  double m_SelectedAreaEndX = 0;
-  std::map<const mitk::DataNode *, std::vector<QGraphicsItem*>> m_NodeRealtedGraphicItems;
-
-  char m_StatusBarTextBuffer[500];
-  double m_CurrentMousePosMz = 0;
-  double m_CurrentVisibleDataPoints = 0;
-
-  m2::SpectrumType m_CurrentOverviewSpectrumType = m2::SpectrumType::Mean;
-  bool m_CurrentOverviewSpectrumTypeChanged = false;
-
-  virtual void SetFocus() override {}
-  Ui::imsSpectrumControls m_Controls;
-
-  std::unique_ptr<QtCharts::QScatterSeries> m_LastMzMarker;
-  std::vector<std::pair<double, double>> m_AlignmentRegions;
-
   
-  virtual void NodeRemoved(const mitk::DataNode *node) override;
-  std::map<const mitk::DataNode *, std::vector<unsigned int>> m_NodeObserverTags;
+  void DrawSelectedArea();
+  void SetSelectedAreaStartX(double v) { m_SelectedAreaX[0] = v; }
+  void SetSelectedAreaEndX(double v) { m_SelectedAreaX[1] = v; }
+  
+  
 
-  QtCharts::QChart *m_chart = nullptr;
-  QtCharts::QAbstractSeries *m_IonImageIndicator = nullptr;
-
+  QtCharts::QChart *m_Chart = nullptr;
+  
   bool m_BlockAutoScaling = false;
-
-  double m_LastDa = 1;
-  double m_LastPPM = 75;
-
-  double m_LastMz = -1;
-  double m_LastTol = -1;
-
+  
   double m_GlobalMinimumY;
   double m_GlobalMaximumY;
   double m_GlobalMaximumX;
@@ -189,20 +167,18 @@ protected:
   double m_MouseDragLowerDelta = 0;
   double m_MouseDragUpperDelta = 0;
   bool m_DraggingActive = false;
-  QRectF m_DragBounds = QRectF(0, 0, 0, 0);
-  QFuture<void> m_DragFuture;
-
   bool m_RangeSelectionStarted = false;
 
 private:
   QMenu *m_Menu;
-  QAction *m_SpectrumSkyline;
-  QAction *m_SpectrumMean;
-  QAction *m_SpectrumSum;
-  QActionGroup *m_SpectrumSelectionGroup;
-  QAction *m_ShowLegend;
-  QMenu *m_FocusMenu;
+  // QAction *m_SpectrumSkyline;
+  // QAction *m_SpectrumMean;
+  // QAction *m_SpectrumSum;
+  // QActionGroup *m_SpectrumSelectionGroup;
+  // QAction *m_ShowLegend;
+  
   QAction *m_ShowAxesTitles;
+  QMenu *m_FocusMenu;
   QSlider *m_TickCountX;
   QSlider *m_TickCountY;
   QtCharts::QValueAxis *m_xAxis;

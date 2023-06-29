@@ -34,11 +34,18 @@ m2::SeriesDataProvider::SeriesDataProvider()
 {
 }
 
-void m2::SeriesDataProvider::Initialize(const std::vector<double> &xs, const std::vector<double> &ys, Format format)
+void m2::SeriesDataProvider::Initialize(const m2::IntervalVector * data)
 {
-  m_Format = format;
-  m_xs = xs;
-  m_ys = ys;
+  if(auto prop = data->GetProperty("spectrum.type")){
+    auto type = dynamic_cast<mitk::StringProperty *>(prop.GetPointer())->GetValueAsString();
+    m_Format = type == "centroid" ? Format::centorid : Format::profile ;
+  }else{
+    mitkThrow() << "IntervalVector provided to SeriesDataProvider is missing 'spectrum.type' property!";
+  }
+  
+  m_xs = data->GetXMean();
+  m_ys = data->GetYMean(); // Critical?
+  
   InitializeSeries();
   InitializeData();
   UpdateBoundaries();
@@ -218,7 +225,7 @@ void m2::SeriesDataProvider::SetMarkerSpectrumDefaultMarkerStyle(QtCharts::QXYSe
 int m2::SeriesDataProvider::FindLoD(double xMin, double xMax) const
 {
 
-  if(m_Format) return 0;
+  if(m_Format == Format::centorid) return 0;
 
   int level, levelIndex = 0;
   const auto wantedDensity = m_WantedPointsInView / double(xMax - xMin);
@@ -234,7 +241,7 @@ int m2::SeriesDataProvider::FindLoD(double xMin, double xMax) const
     }
     ++levelIndex;
   }
-  
+  MITK_INFO << level;
   return level;
 }
 

@@ -20,6 +20,7 @@ See LICENSE.txt or https://www.github.com/m2aia/m2aia for details.
 #include <QVector>
 #include <QXYSeries>
 #include <array>
+#include <m2IntervalVector.h>
 
 namespace m2
 {
@@ -39,7 +40,7 @@ namespace m2
 
     SeriesDataProvider();
     virtual ~SeriesDataProvider(){}
-    void Initialize(const std::vector<double> & xs, const std::vector<double> & ys, Format format);
+    void Initialize(const m2::IntervalVector * data);
     void UpdateBoundaries(double x1 = -1, double x2 = -1);
     
     const std::vector<double> & xs() const {return m_xs;}

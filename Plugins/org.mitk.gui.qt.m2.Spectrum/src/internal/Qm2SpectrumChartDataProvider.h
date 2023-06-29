@@ -141,6 +141,6 @@ private:
   };
   int FindGroupLoD(const std::string &groupName, double xMin = -1, double xMax = -1) const;
   unsigned int m_WantedPointInView = 1500; // ~ 1p
-  std::array<unsigned int, 7> m_BinSizes = {1, 2, 4, 8, 16, 32, 64};
+  std::array<unsigned int, 7> m_BinSizes = {1, 3, 6, 12, 24, 48, 96};
   QColor m_Color;
 };
