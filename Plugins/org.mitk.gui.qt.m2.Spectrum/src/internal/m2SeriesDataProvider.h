@@ -33,15 +33,20 @@ namespace m2
   public:
     using PointsVector = QVector<QPointF>;
 
-    enum Format{
-        centorid,
-        profile
-    };
-
     SeriesDataProvider();
     virtual ~SeriesDataProvider(){}
     void Initialize(const m2::IntervalVector * data);
+    
+    /**
+     *  @brief Series point data is replaced with valid points from within [x1, x2]. 
+     * This method is used if x1 and x2 of the chart view changes.
+    */
     void UpdateBoundaries(double x1 = -1, double x2 = -1);
+
+    /**
+     *  @brief Degenerate rawdata for LoD data.
+    */
+    void Update();
     
     const std::vector<double> & xs() const {return m_xs;}
     const std::vector<double> & ys() const {return m_ys;}
@@ -55,6 +60,11 @@ namespace m2
      * Qt Series for providing XY data for the QtChartsView
      */
     QtCharts::QXYSeries *m_Series;
+
+    /**
+     * 
+    */
+    m2::IntervalVector::ConstPointer m_IntervalVector;
 
     /**
      * This series is used to add line information to scatter plots
@@ -80,7 +90,7 @@ namespace m2
     /**
      * Indicate if it is a centorid or profile dataset.
      */
-    Format m_Format;
+    m2::SpectrumFormat m_Format;
 
     /**
      * 
@@ -94,12 +104,7 @@ namespace m2
     */
     void InitializeSeries();
 
-    /**
-     *  @brief Degenerate rawdata for LoD data.
-     *  @param seriesName 
-     *  @param series 
-    */
-    void InitializeData();
+
 
 
     static void SetProfileSpectrumDefaultStyle(QtCharts::QXYSeries *series);

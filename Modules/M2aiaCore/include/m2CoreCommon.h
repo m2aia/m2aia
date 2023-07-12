@@ -15,6 +15,7 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 
+#include <mitkDataNode.h>
 #include <mitkLabelSetImage.h>
 #include <type_traits>
 
@@ -23,13 +24,21 @@ namespace m2
 
   enum class SpectrumFormat : unsigned int
   {
-    None=1,
-    Profile=2,
-    Centroid=4,
-    ContinuousProfile=10,
-    ProcessedProfile=18,
-    ContinuousCentroid=36,
-    ProcessedCentroid=68,
+    None = 1,
+    Profile = 2,
+    Centroid = 4,
+    ContinuousProfile = 8 + 2,
+    ProcessedProfile = 16 + 2,
+    ContinuousCentroid = 32 + 4,
+    ProcessedCentroid = 64 + 4
+  };
+
+  enum class ImzMLFormat : unsigned int
+  {
+    None = 0,
+    Continuous = 1,
+    Processed = 2
+
   };
 
   inline std::string to_string(const SpectrumFormat &type) noexcept
@@ -68,16 +77,21 @@ namespace m2
   {
     switch (type)
     {
-      case SpectrumType::None:return "None";
-      case SpectrumType::Mean: return "Mean";
-      case SpectrumType::Median: return "Median";
-      case SpectrumType::Maximum: return "Maximum";
-      case SpectrumType::Sum: return "Sum";
-      case SpectrumType::Variance: return "Variance";
+      case SpectrumType::None:
+        return "None";
+      case SpectrumType::Mean:
+        return "Mean";
+      case SpectrumType::Median:
+        return "Median";
+      case SpectrumType::Maximum:
+        return "Maximum";
+      case SpectrumType::Sum:
+        return "Sum";
+      case SpectrumType::Variance:
+        return "Variance";
     }
     return "";
   }
-
 
   enum class NumericType : unsigned int
   {
@@ -109,9 +123,18 @@ namespace m2
     return 0;
   }
 
-  inline double MicroMeterToMilliMeter(double x) { return x * 10e-4; }
-  inline double MilliMeterToMicroMeter(double x) { return x * 10e2; }
-  inline double PartPerMillionToFactor(double x) { return x * 10e-6; }
+  inline double MicroMeterToMilliMeter(double x)
+  {
+    return x * 10e-4;
+  }
+  inline double MilliMeterToMicroMeter(double x)
+  {
+    return x * 10e2;
+  }
+  inline double PartPerMillionToFactor(double x)
+  {
+    return x * 10e-6;
+  }
 
   //////////////////////////////////////////////////////////////////////
   /////////////////// ATTENTION ////////////////////////////////////////
@@ -167,14 +190,14 @@ namespace m2
 
       auto e = str.find(end, p);
       auto val = str.substr(s + 1, e - s - 1);
-      map[searchString] = val;  
+      map[searchString] = val;
       std::stringstream buffer(val);
 
       if (std::is_same<decltype(defaultValue), bool>::value)
         buffer >> std::boolalpha >> converted;
       else
         buffer >> converted;
-      
+
       return converted;
     }
 
@@ -193,7 +216,7 @@ namespace m2
 inline m2::SpectrumFormat operator|(m2::SpectrumFormat lhs, m2::SpectrumFormat rhs)
 {
   return static_cast<m2::SpectrumFormat>(static_cast<std::underlying_type<m2::SpectrumFormat>::type>(lhs) |
-                                             static_cast<std::underlying_type<m2::SpectrumFormat>::type>(rhs));
+                                         static_cast<std::underlying_type<m2::SpectrumFormat>::type>(rhs));
 }
 
 inline m2::SpectrumFormat operator|=(m2::SpectrumFormat lhs, m2::SpectrumFormat rhs)
@@ -204,7 +227,7 @@ inline m2::SpectrumFormat operator|=(m2::SpectrumFormat lhs, m2::SpectrumFormat 
 inline m2::SpectrumFormat operator&(m2::SpectrumFormat lhs, m2::SpectrumFormat rhs)
 {
   return static_cast<m2::SpectrumFormat>(static_cast<std::underlying_type<m2::SpectrumFormat>::type>(lhs) &
-                                             static_cast<std::underlying_type<m2::SpectrumFormat>::type>(rhs));
+                                         static_cast<std::underlying_type<m2::SpectrumFormat>::type>(rhs));
 }
 
 inline bool any(m2::SpectrumFormat lhs)

@@ -94,11 +94,11 @@ protected:
   Ui::imsSpectrumControls m_Controls;
   QGraphicsSimpleTextItem *m_Crosshair;
   
-  std::array<unsigned int,2> m_AxisTicks = {4,9};
+  std::array<unsigned int,2> m_AxisTicks = {9,4};
   std::array<double, 2> m_SelectedAreaX = {0,0};
   std::array<QtCharts::QLineSeries *, 3> m_SelectedArea = {nullptr,nullptr,nullptr};
 
-  std::map<const mitk::DataNode *, std::vector<QGraphicsItem*>> m_NodeRealtedGraphicItems;
+   std::map<const mitk::DataNode *, QGraphicsItemGroup *> m_NodeRealtedGraphicItems;
   std::map<const mitk::DataNode *, std::vector<unsigned int>> m_NodeObserverTags;
 
   void CreateQChartView();
@@ -134,7 +134,7 @@ protected slots:
 
 protected:
   void OnPropertyListChanged(const itk::Object *caller, const itk::EventObject &event);
-  void OnPeakListChanged(const itk::Object *caller, const itk::EventObject &event);
+  void OnDataModified(const itk::Object *caller, const itk::EventObject &event);
   void OnInitializationFinished(const itk::Object *caller, const itk::EventObject &event);
   
   void UpdateGlobalMinMaxValues();

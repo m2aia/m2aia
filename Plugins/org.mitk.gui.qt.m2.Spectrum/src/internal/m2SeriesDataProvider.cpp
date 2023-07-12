@@ -17,14 +17,12 @@ See LICENSE.txt or https://www.github.com/m2aia/m2aia for details.
 #include "m2SeriesDataProvider.h"
 
 #include <QColor>
+#include <QHash>
 #include <QLineSeries>
 #include <QRandomGenerator>
 #include <QScatterSeries>
-#include <QHash>
 #include <QVariant>
 #include <QXYSeries>
-
-
 #include <m2IntervalVector.h>
 #include <mitkExceptionMacro.h>
 #include <signal/m2Binning.h>
@@ -34,20 +32,13 @@ m2::SeriesDataProvider::SeriesDataProvider()
 {
 }
 
-void m2::SeriesDataProvider::Initialize(const m2::IntervalVector * data)
+void m2::SeriesDataProvider::Initialize(const m2::IntervalVector *data)
 {
-  if(auto prop = data->GetProperty("spectrum.type")){
-    auto type = dynamic_cast<mitk::StringProperty *>(prop.GetPointer())->GetValueAsString();
-    m_Format = type == "centroid" ? Format::centorid : Format::profile ;
-  }else{
-    mitkThrow() << "IntervalVector provided to SeriesDataProvider is missing 'spectrum.type' property!";
-  }
-  
-  m_xs = data->GetXMean();
-  m_ys = data->GetYMean(); // Critical?
-  
+  m_Format = data->GetType();
+  m_IntervalVector = data;
+
   InitializeSeries();
-  InitializeData();
+  Update();
   UpdateBoundaries();
 }
 
@@ -64,13 +55,13 @@ m2::SeriesDataProvider::PointsVector m2::SeriesDataProvider::ConvertToQVector(co
 
 void m2::SeriesDataProvider::InitializeSeries()
 {
-  if (m_Format == Format::centorid)
+  if (m_Format == m2::SpectrumFormat::Centroid)
   {
     m_Series = new QtCharts::QLineSeries();
     SetProfileSpectrumDefaultStyle(m_Series);
     m_Series->setPointsVisible(true);
   }
-  else if (m_Format == Format::profile)
+  else if (m_Format == m2::SpectrumFormat::Profile)
   {
     m_Series = new QtCharts::QLineSeries();
     SetProfileSpectrumDefaultStyle(m_Series);
@@ -79,23 +70,34 @@ void m2::SeriesDataProvider::InitializeSeries()
   m_Series->setColor(m_DefaultColor);
 }
 
-void m2::SeriesDataProvider::InitializeData()
+void m2::SeriesDataProvider::Update()
 {
-  if (m_Format == Format::centorid){
-    PointsVector target;
-    using namespace std;
-    transform(begin(m_xs),end(m_xs), begin(m_ys), back_inserter(target), [](auto a, auto b){return QPointF(a,b);});
-    m_DataLoD.push_back(target);
-    return;
-  }
-
-  m_DataLoD.resize(m_Levels.size());
-  unsigned int dataLodVectorIndex = 0;
-
-  for (unsigned int level : m_Levels)
+  if (m_IntervalVector)
   {
-    m_DataLoD[dataLodVectorIndex] = GenerateLoDData(m_xs, m_ys, level);
-    ++dataLodVectorIndex;
+    m_xs = m_IntervalVector->GetXMean();
+    m_ys = m_IntervalVector->GetYMean(); // Critical?
+
+    m_DataLoD.clear();
+    if (m_Format == m2::SpectrumFormat::Centroid)
+    {
+      PointsVector target;
+      using namespace std;
+      transform(
+        begin(m_xs), end(m_xs), begin(m_ys), back_inserter(target), [](auto a, auto b) { return QPointF(a, b); });
+      m_DataLoD.push_back(target);
+      return;
+    }
+
+    m_DataLoD.resize(m_Levels.size());
+    unsigned int dataLodVectorIndex = 0;
+
+    for (unsigned int level : m_Levels)
+    {
+      m_DataLoD[dataLodVectorIndex] = GenerateLoDData(m_xs, m_ys, level);
+      ++dataLodVectorIndex;
+    }
+  }else{
+    mitkThrow() << "Interval Vector not set correctly";
   }
 }
 
@@ -145,13 +147,13 @@ void m2::SeriesDataProvider::UpdateBoundaries(double x1, double x2)
     QVector<QPointF> seriesData;
     seriesData.reserve(std::distance(lower, upper));
     auto insert = std::back_inserter(seriesData);
-    
+
     // marker highlighting
     unsigned int i = std::distance(std::begin(currentData), lower);
 
     for (; lower != upper; ++lower, ++i)
     {
-      if (m_Format == Format::centorid)
+      if (m_Format == m2::SpectrumFormat::Centroid)
       {
         insert = QPointF{lower->x(), -0.001};
         insert = QPointF{lower->x(), lower->y()};
@@ -166,8 +168,6 @@ void m2::SeriesDataProvider::UpdateBoundaries(double x1, double x2)
 
     using namespace QtCharts;
     // process series after points were added
-    
-    
   }
 }
 
@@ -224,8 +224,8 @@ void m2::SeriesDataProvider::SetMarkerSpectrumDefaultMarkerStyle(QtCharts::QXYSe
 
 int m2::SeriesDataProvider::FindLoD(double xMin, double xMax) const
 {
-
-  if(m_Format == Format::centorid) return 0;
+  if (m_Format == m2::SpectrumFormat::Centroid)
+    return 0;
 
   int level, levelIndex = 0;
   const auto wantedDensity = m_WantedPointsInView / double(xMax - xMin);
@@ -233,7 +233,7 @@ int m2::SeriesDataProvider::FindLoD(double xMin, double xMax) const
   for (const auto &dataLodVector : m_DataLoD)
   {
     const auto lodDensity = dataLodVector.size() / double(dataLodVector.back().x() - dataLodVector.front().x());
-  
+
     if (std::abs(wantedDensity - lodDensity) < delta)
     {
       level = levelIndex;
@@ -241,14 +241,14 @@ int m2::SeriesDataProvider::FindLoD(double xMin, double xMax) const
     }
     ++levelIndex;
   }
-  MITK_INFO << level;
   return level;
 }
 
-
-void m2::SeriesDataProvider::SetColor(QColor c){
+void m2::SeriesDataProvider::SetColor(QColor c)
+{
   m_DefaultColor = c;
-  if(m_Series){
+  if (m_Series)
+  {
     m_Series->setColor(c);
   }
 }
@@ -257,5 +257,5 @@ void m2::SeriesDataProvider::SetColor(qreal r, qreal g, qreal b)
 {
   QColor c;
   c.setRgbF(r, g, b);
-  SetColor(c); 
+  SetColor(c);
 }
