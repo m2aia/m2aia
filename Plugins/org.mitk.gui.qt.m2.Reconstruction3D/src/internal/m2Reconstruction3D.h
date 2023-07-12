@@ -55,28 +55,33 @@ public:
 protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
   virtual void SetFocus() override {}
-  QWidget *  m_Parent;
-  
+  QWidget *m_Parent;
 
-  
+  struct DataTuple
+  {
+    mitk::Image::Pointer image, mask;
+    mitk::PointSet::Pointer points;
+  };
 
-struct DataTuple
-{
-  mitk::Image::Pointer image, mask;
-  mitk::PointSet::Pointer points;
-};
+  Ui::m2Reconstruction3DControls m_Controls;
+  std::shared_ptr<QProcess> m_Process;
 
-Ui::m2Reconstruction3DControls m_Controls;
-std::shared_ptr<QProcess> m_Process;
+  DataTuple GetImageDataById(unsigned int id, QListWidget *listWidget);
 
-QListWidget *m_List1, *m_List2;
+  std::shared_ptr<m2::ElxRegistrationHelper> RegistrationStep(unsigned int fixedId,
+                                                                      QListWidget *fixedSource,
+                                                                      std::shared_ptr<m2::ElxRegistrationHelper> fixedTransformer,
+                                                                      unsigned int movingId,
+                                                                      QListWidget *movingSource);
+  std::vector<std::string> GetParameters();
 
-std::map<unsigned int, DataTuple> m_referenceMap;
+  QListWidget *m_List1, *m_List2;
+
+  std::map<unsigned int, DataTuple> m_referenceMap;
 
 public slots:
-void OnUpdateList();
-void OnStartStacking();
-}
-;
+  void OnUpdateList();
+  void OnStartStacking();
+};
 
 #endif // m2Reconstruction3D_h

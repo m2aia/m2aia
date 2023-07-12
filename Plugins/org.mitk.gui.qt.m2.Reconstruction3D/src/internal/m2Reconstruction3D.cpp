@@ -70,7 +70,7 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
   connect(m_Controls.btnRemove,&QAbstractButton::clicked, this, [this](){
     for(auto item : m_List1->selectedItems()){
       delete m_List1->takeItem(m_List1->row(item));
-}
+    }
 
     for(auto item : m_List2->selectedItems()){
       delete m_List2->takeItem(m_List2->row(item));
@@ -88,45 +88,91 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
   });
 }
 
+m2Reconstruction3D::DataTuple m2Reconstruction3D::GetImageDataById(unsigned int id, QListWidget *listWidget)
+{
+  auto referenceIndex = listWidget->item(id)->data(Qt::UserRole).toUInt();
+  return m_referenceMap.at(referenceIndex);
+}
+
+std::shared_ptr<m2::ElxRegistrationHelper> m2Reconstruction3D::RegistrationStep(
+  unsigned int fixedId,
+  QListWidget *fixedSource,
+  std::shared_ptr<m2::ElxRegistrationHelper> fixedTransformer,
+  unsigned int movingId,
+  QListWidget *movingSource)
+{
+  auto fixedData = GetImageDataById(fixedId, fixedSource);
+  auto movingData = GetImageDataById(movingId, movingSource);
+  auto fixedImage = fixedData.image;
+
+  // check if a transformer exist for fixed image and apply
+  if (fixedTransformer && !fixedTransformer->GetTransformation().empty())
+    fixedImage = fixedTransformer->WarpImage(fixedImage);
+
+  std::vector<std::string> parameters = GetParameters();
+
+  // start of the registration procedure
+  auto elxHelper = std::make_shared<m2::ElxRegistrationHelper>();
+  elxHelper->SetImageData(fixedImage, movingData.image);
+  elxHelper->SetRegistrationParameters(parameters);
+  elxHelper->GetRegistration();
+  return elxHelper;
+};
+
+std::vector<std::string> m2Reconstruction3D::GetParameters()
+{
+  auto rigidParameters = m_Controls.textRigid->toPlainText().toStdString();
+  m2::ElxUtil::ReplaceParameter(
+    rigidParameters, "MaximumNumberOfIterations", std::to_string(m_Controls.RigidMaxIters->value()));
+
+  auto deformableParameters = m_Controls.textDeformable->toPlainText().toStdString();
+  m2::ElxUtil::ReplaceParameter(
+    deformableParameters, "MaximumNumberOfIterations", std::to_string(m_Controls.DeformableMaxIters->value()));
+
+  std::vector<std::string> parameter{rigidParameters, deformableParameters};
+  return parameter;
+}
+
 void m2Reconstruction3D::OnStartStacking()
 {
-  // helper function
-  auto getImageDataById = [this](auto id, QListWidget *listWidget) -> DataTuple
-  {
-    auto referenceIndex = listWidget->item(id)->data(Qt::UserRole).toUInt();
-    return m_referenceMap.at(referenceIndex);
-  };
-
-
   // check input data
   const auto numItems = m_List1->count();
   const bool PerformMultimodalSteps = m_List1->count() == m_List2->count();
-  if(!numItems){
+  
+  if (!numItems)
+  {
     QMessageBox::warning(m_Parent, "No data available!", "The list for 3D reconstruction must not be empty!");
     return;
   }
 
   // name of the result stack
-  std::string stackName;
-  {
+  std::array<std::string, 2> stackNames;
+  std::array<QListWidget *, 2> lists = {m_List1, m_List2};
+  for(int i = 0 ; i <  1 + PerformMultimodalSteps; ++i){
+    auto d = GetImageDataById(0, lists[i]);
+
     m2NameDialog dialog(m_Parent);
-    auto d = getImageDataById(0,m_List1);
-    if(auto bp = d.image->GetProperty("x_range_center")){
+    if (auto bp = d.image->GetProperty("x_range_center"))
+    {
       auto center = dynamic_cast<mitk::DoubleProperty *>(bp.GetPointer())->GetValueAsString();
       dialog.SetName(std::string("stack") + " " + center);
     }
-    if(dialog.exec()){
-      stackName = dialog.GetName();
-    }else{
+    if (dialog.exec())
+    {
+      stackNames[i] = dialog.GetName();
+    }
+    else
+    {
       MITK_WARN << "Cancle stacking.";
       return;
     }
-    
   }
 
   // prepare stacks
-  auto spectrumImageStack1 = m2::SpectrumImageStack::New(m2::MicroMeterToMilliMeter(m_Controls.spinBoxZSpacing->value()));
-  auto spectrumImageStack2 = m2::SpectrumImageStack::New(m2::MicroMeterToMilliMeter(m_Controls.spinBoxZSpacing->value()));
+  auto spectrumImageStack1 =
+    m2::SpectrumImageStack::New(m2::MicroMeterToMilliMeter(m_Controls.spinBoxZSpacing->value()));
+  auto spectrumImageStack2 =
+    m2::SpectrumImageStack::New(m2::MicroMeterToMilliMeter(m_Controls.spinBoxZSpacing->value()));
   /*
    * Two modalities
    * M2 is optional
@@ -146,69 +192,57 @@ void m2Reconstruction3D::OnStartStacking()
    */
 
   // prepare workbench
-
+  mitk::ProgressBar::GetInstance()->AddStepsToDo(numItems - 1);
   
-  if (PerformMultimodalSteps)
-  {
-    mitk::ProgressBar::GetInstance()->AddStepsToDo(numItems * 2 - 1);
-  }
-  else
-  {
-    mitk::ProgressBar::GetInstance()->AddStepsToDo(numItems - 1);
-  }
-
-  // prepare parameter files
-  auto rigidParameters = m_Controls.textRigid->toPlainText().toStdString();
-  m2::ElxUtil::ReplaceParameter(
-    rigidParameters, "MaximumNumberOfIterations", std::to_string(m_Controls.RigidMaxIters->value()));
-
-  auto deformableParameters = m_Controls.textDeformable->toPlainText().toStdString();
-  m2::ElxUtil::ReplaceParameter(
-    deformableParameters, "MaximumNumberOfIterations", std::to_string(m_Controls.DeformableMaxIters->value()));
-
-  std::vector<std::string> parameter{rigidParameters, deformableParameters};
-
   const bool UseSubsequentOrdering = m_Controls.chkBxUseConsecutiveSequence->isChecked();
   const auto currentRow = m_List1->currentRow() < 0 ? numItems / 2 : m_List1->currentRow();
 
   // Initialize by fixed image of stack 1
   {
-    auto M1 = getImageDataById(currentRow, m_List1);
+    auto M1 = GetImageDataById(currentRow, m_List1);
     auto elxHelper = std::make_shared<m2::ElxRegistrationHelper>();
     elxHelper->SetImageData(M1.image, M1.image);
     elxHelper->SetRegistrationParameters({}); // identity
     spectrumImageStack1->Insert(currentRow, elxHelper);
+    mitk::ProgressBar::GetInstance()->Progress();
   }
 
-  auto registrationStep = [&](auto fixedId, auto movingId){
-  
-
-    const auto & transformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
-    auto fixedImage = transformer->GetMovingImage();
-    
-    if(!transformer->GetTransformation().empty())
-      fixedImage = transformer->WarpImage(fixedImage);
-    
-    auto movingData = getImageDataById(movingId, m_List1);
-    auto elxHelper = std::make_shared<m2::ElxRegistrationHelper>();
-    elxHelper->SetImageData(fixedImage, movingData.image);
-    elxHelper->SetRegistrationParameters(parameter);
-    elxHelper->GetRegistration();
-    spectrumImageStack1->Insert(movingId, elxHelper);
-   
-  };
+  // Initialize stack 2
+  if(PerformMultimodalSteps){
+    auto elxHelper = RegistrationStep(currentRow, m_List1, nullptr, currentRow, m_List2);
+    spectrumImageStack2->Insert(currentRow, elxHelper);
+    mitk::ProgressBar::GetInstance()->Progress();
+  }
 
   for (int movingId = currentRow - 1; movingId >= 0; --movingId)
   {
+    // stack 1
     int fixedId = UseSubsequentOrdering ? movingId + 1 : currentRow;
-    registrationStep(fixedId, movingId);
+    auto fixedTransformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
+    auto elxHelper = RegistrationStep(fixedId, m_List1, fixedTransformer, movingId, m_List1);
+    spectrumImageStack1->Insert(movingId, elxHelper);
+
+    // stack 2
+    if(PerformMultimodalSteps){
+      elxHelper = RegistrationStep(movingId, m_List1, elxHelper, movingId, m_List2);
+      spectrumImageStack2->Insert(movingId, elxHelper);
+    }
     mitk::ProgressBar::GetInstance()->Progress();
   }
 
   for (int movingId = currentRow + 1; movingId < numItems; ++movingId)
   {
+    // stack 1
     int fixedId = UseSubsequentOrdering ? movingId - 1 : currentRow;
-    registrationStep(fixedId, movingId);
+    auto fixedTransformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
+    auto elxHelper = RegistrationStep(fixedId, m_List1, fixedTransformer, movingId, m_List1);
+    spectrumImageStack1->Insert(movingId, elxHelper);
+
+    // stack 2
+    if(PerformMultimodalSteps){
+      elxHelper = RegistrationStep(movingId, m_List1, elxHelper, movingId, m_List2);
+      spectrumImageStack2->Insert(movingId, elxHelper);
+    }
     mitk::ProgressBar::GetInstance()->Progress();
   }
 
@@ -217,14 +251,18 @@ void m2Reconstruction3D::OnStartStacking()
 
   auto node = mitk::DataNode::New();
   node->SetData(spectrumImageStack1);
-  node->SetName(stackName);
+  node->SetName(stackNames[0]);
   GetDataStorage()->Add(node);
-  // future release all connections and destroy itself
-  // future->disconnect();
-  // });
+  
+  if(PerformMultimodalSteps){
+    spectrumImageStack2->InitializeProcessor();
+    spectrumImageStack2->InitializeGeometry();
 
-
-  // m_Controls.btnCancel->setEnabled(true);
+    node = mitk::DataNode::New();
+    node->SetData(spectrumImageStack2);
+    node->SetName(stackNames[1] + "(2)");
+    GetDataStorage()->Add(node);
+  }
 }
 
 void m2Reconstruction3D::OnUpdateList()
