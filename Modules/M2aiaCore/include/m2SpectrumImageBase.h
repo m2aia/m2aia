@@ -22,13 +22,18 @@ See LICENSE.txt for details.
 #include <m2ISpectrumDataAccess.h>
 #include <m2IntervalVector.h>
 #include <m2SpectrumInfo.h>
+
+#include <mitkProperties.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
 #include <mitkImageStatisticsHolder.h>
 #include <signal/m2SignalCommon.h>
 
+#include <random>
+
 namespace m2
 {
+
   class M2AIACORE_EXPORT SpectrumImageBase : public ISpectrumDataAccess, public mitk::Image
   {
   public:
@@ -229,6 +234,42 @@ namespace m2
 
   itkEventMacroDeclaration(PeakListModifiedEvent, itk::AnyEvent);
   itkEventMacroDeclaration(InitializationFinishedEvent, itk::AnyEvent);
+
+  /**
+   * Clone and add properties:
+   * - spectrum.plot.color
+   * - spectrum.marker.color
+   * - spectrum.marker.size
+  */
+  inline void CopyNodeProperties(const mitk::DataNode *sourceNode, mitk::DataNode *targetNode)
+  {
+    if(const auto plotColorProp = sourceNode->GetProperty("spectrum.plot.color"))
+      targetNode->SetProperty("spectrum.plot.color", plotColorProp->Clone());
+
+    if(const auto markerColorProp = sourceNode->GetProperty("spectrum.marker.color"))
+      targetNode->SetProperty("spectrum.marker.color", markerColorProp->Clone());
+
+    if(const auto markerSizeProp = sourceNode->GetProperty("spectrum.marker.size"))
+      targetNode->SetProperty("spectrum.marker.size", markerSizeProp->Clone());
+  }
+
+    /**
+   * Create default properties:
+   * - spectrum.plot.color (=randomColor)
+   * - spectrum.marker.color (=spectrum.plot.color)
+   * - spectrum.marker.size (=2)
+  */
+  inline void DefaultNodeProperties(const mitk::DataNode *node)
+  {
+      std::random_device rd;
+      std::mt19937 e2(rd());
+      std::uniform_real_distribution<> dist(0, 1);
+      mitk::Color mitkColor;
+      mitkColor.Set(dist(e2), dist(e2), dist(e2));
+      node->GetPropertyList()->SetProperty("spectrum.plot.color", mitk::ColorProperty::New(mitkColor));
+      node->GetPropertyList()->SetProperty("spectrum.marker.color", mitk::ColorProperty::New(mitkColor));
+      node->GetPropertyList()->SetProperty("spectrum.marker.size", mitk::IntProperty::New(2));
+  }
 
 } // namespace m2
 

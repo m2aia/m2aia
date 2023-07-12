@@ -968,7 +968,7 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
   }
 }
 
-void m2::ImzMLSpectrumImage::GetSpectrum(unsigned int id,
+void m2::ImzMLSpectrumImage::GetSpectrumFloat(unsigned int id,
                                          std::vector<float> &xs,
                                          std::vector<float> &ys,
                                          unsigned int source) const
@@ -977,7 +977,21 @@ void m2::ImzMLSpectrumImage::GetSpectrum(unsigned int id,
   m_Processor->GetYValues(id, ys, source);
 }
 
-void m2::ImzMLSpectrumImage::GetIntensities(unsigned int id, std::vector<float> &ys, unsigned int source) const
+void m2::ImzMLSpectrumImage::GetSpectrum(unsigned int id,
+                                         std::vector<double> &xs,
+                                         std::vector<double> &ys,
+                                         unsigned int source) const
+{
+  m_Processor->GetXValues(id, xs, source);
+  m_Processor->GetYValues(id, ys, source);
+}
+
+void m2::ImzMLSpectrumImage::GetIntensitiesFloat(unsigned int id, std::vector<float> &ys, unsigned int source) const
+{
+  m_Processor->GetYValues(id, ys, source);
+}
+
+void m2::ImzMLSpectrumImage::GetIntensities(unsigned int id, std::vector<double> &ys, unsigned int source) const
 {
   m_Processor->GetYValues(id, ys, source);
 }

@@ -17,24 +17,23 @@ See LICENSE.txt for details.
 
 #include <M2aiaCoreExports.h>
 #include <m2SpectrumImageBase.h>
+#include <m2SpectrumImageProcessor.h>
 #include <signal/m2Baseline.h>
 #include <signal/m2Smoothing.h>
 #include <signal/m2Transformer.h>
-#include <m2SpectrumImageProcessor.h>
 
 namespace m2
 {
- 
 
   class M2AIACORE_EXPORT ImzMLSpectrumImage final : public SpectrumImageBase
   {
   public:
     // mitkClassMacro(ImzMLSpectrumImage, SpectrumImageBase);
-    typedef ImzMLSpectrumImage Self;                                                                                            
-    typedef SpectrumImageBase Superclass;                                                                                   
-    typedef itk::SmartPointer<Self> Pointer;                                                                             
-    typedef itk::SmartPointer<const Self> ConstPointer;                                                                  
-    virtual std::vector<std::string> GetClassHierarchy() const override { return mitk::GetClassHierarchy<Self>(); }      
+    typedef ImzMLSpectrumImage Self;
+    typedef SpectrumImageBase Superclass;
+    typedef itk::SmartPointer<Self> Pointer;
+    typedef itk::SmartPointer<const Self> ConstPointer;
+    virtual std::vector<std::string> GetClassHierarchy() const override { return mitk::GetClassHierarchy<Self>(); }
     // itkTypeMacro(ImzMLSpectrumImage, SpectrumImageBase);
 
     static const char *GetStaticNameOfClass() { return "Image"; }
@@ -97,7 +96,7 @@ namespace m2
       std::vector<std::string> m_Transformations;
     };
     using SourceListType = std::vector<ImzMLImageSource>;
-
+    
     SourceListType &GetImzMLSpectrumImageSourceList() noexcept { return m_SourcesList; }
     const SourceListType &GetImzMLSpectrumImageSourceList() const noexcept { return m_SourcesList; }
     ImzMLImageSource &GetImzMLSpectrumImageSource(unsigned int i = 0);
@@ -106,14 +105,12 @@ namespace m2
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
     void InitializeProcessor() override;
-    void GetSpectrum(unsigned int id,
-                     std::vector<float> &xs,
-                     std::vector<float> &ys,
-                     unsigned int source = 0) const override;
     
-    void GetIntensities(unsigned int id,
-                     std::vector<float> &xs,
-                     unsigned int source = 0) const override;
+    void GetSpectrumFloat(unsigned int id, std::vector<float> &xs, std::vector<float> &ys, unsigned int source = 0) const override;
+    void GetIntensitiesFloat(unsigned int id, std::vector<float> &xs, unsigned int source = 0) const override;
+
+    void GetSpectrum(unsigned int id, std::vector<double> &xs, std::vector<double> &ys, unsigned int source = 0) const override;
+    void GetIntensities(unsigned int id, std::vector<double> &xs, unsigned int source = 0) const override;
 
     template <class OffsetType, class LengthType, class DataType>
     static void binaryDataToVector(std::ifstream &f, OffsetType offset, LengthType length, DataType *vec) noexcept
@@ -141,7 +138,6 @@ namespace m2
     {
       m_Processor->GetYValues(id, ys, source);
     }
-
 
     static m2::ImzMLSpectrumImage::Pointer Combine(const m2::ImzMLSpectrumImage *A,
                                                    const m2::ImzMLSpectrumImage *B,
@@ -185,54 +181,55 @@ namespace m2
       void InitializeImageAccessContinuousCentroid();
 
       /**
-       * @brief See InitializeImageAccessProcessedData()       
+       * @brief See InitializeImageAccessProcessedData()
        */
       void InitializeImageAccessProcessedProfile();
 
       /**
-       * @brief See InitializeImageAccessProcessedData()       
+       * @brief See InitializeImageAccessProcessedData()
        */
       void InitializeImageAccessProcessedCentroid();
 
       /**
        * @brief Provides acces to processed centroid and processed profile spectra.
        * It includes binning for visualization purposes of the overview spectra
-       * and invokes the calculation of normalization factors, but no further 
+       * and invokes the calculation of normalization factors, but no further
        * signal-processing is supported here.
        */
       void InitializeImageAccessProcessedData();
 
-      
-      static double GetNormalizationFactor(m2::NormalizationStrategyType strategy, MassAxisType * xFirst, MassAxisType * xLast, IntensityType * yFirst, IntensityType * yLast){
-               using namespace std;
-            switch (strategy)
-            {
-              case m2::NormalizationStrategyType::Median:
-                return m2::Signal::Median(yFirst, yLast);
-              case m2::NormalizationStrategyType::TIC:
-                return m2::Signal::TotalIonCurrent(xFirst, xLast, yFirst);
-              case m2::NormalizationStrategyType::Sum:
-                return accumulate(yFirst, yLast, double(0.0));
-              case m2::NormalizationStrategyType::Mean:
-                return accumulate(yFirst, yLast, double(0.0)) / double(std::distance(yFirst, yLast));
-              case m2::NormalizationStrategyType::Max:
-                return *max_element(yFirst, yLast);
-              case m2::NormalizationStrategyType::RMS:
-                return m2::Signal::RootMeanSquare(yFirst, yLast);
-              case m2::NormalizationStrategyType::InFile:
-              default:
-                return 1;
-
-            }
+      static double GetNormalizationFactor(m2::NormalizationStrategyType strategy,
+                                           MassAxisType *xFirst,
+                                           MassAxisType *xLast,
+                                           IntensityType *yFirst,
+                                           IntensityType *yLast)
+      {
+        using namespace std;
+        switch (strategy)
+        {
+          case m2::NormalizationStrategyType::Median:
+            return m2::Signal::Median(yFirst, yLast);
+          case m2::NormalizationStrategyType::TIC:
+            return m2::Signal::TotalIonCurrent(xFirst, xLast, yFirst);
+          case m2::NormalizationStrategyType::Sum:
+            return accumulate(yFirst, yLast, double(0.0));
+          case m2::NormalizationStrategyType::Mean:
+            return accumulate(yFirst, yLast, double(0.0)) / double(std::distance(yFirst, yLast));
+          case m2::NormalizationStrategyType::Max:
+            return *max_element(yFirst, yLast);
+          case m2::NormalizationStrategyType::RMS:
+            return m2::Signal::RootMeanSquare(yFirst, yLast);
+          case m2::NormalizationStrategyType::InFile:
+          default:
+            return 1;
+        }
       }
-
 
       using XIteratorType = typename std::vector<MassAxisType>::iterator;
       using YIteratorType = typename std::vector<IntensityType>::iterator;
       m2::Signal::SmoothingFunctor<IntensityType> m_Smoother;
       m2::Signal::BaselineFunctor<IntensityType> m_BaselineSubstractor;
       m2::Signal::IntensityTransformationFunctor<IntensityType> m_Transformer;
-
 
       virtual void GetYValues(unsigned int id, std::vector<float> &yd, unsigned int source = 0)
       {

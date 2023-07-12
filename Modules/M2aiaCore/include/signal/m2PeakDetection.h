@@ -109,7 +109,7 @@ namespace m2
     {
       std::vector<std::vector<unsigned int>> r;
 
-      for (unsigned int i = 0; i < x.size() - size; ++i)
+      for (unsigned int i = 0; i < (x.size() - size > x.size() ? 0:x.size()- size); ++i)
       {
         bool eval = true;
         std::vector<unsigned int> indices;

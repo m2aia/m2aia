@@ -138,7 +138,6 @@ namespace m2
     const char * category = "ImzMLImageIO::WriteContinuousProfile";
     MITK_INFO(category) << "ImzMLImageSource list size " << sourceList.size();
 
-    // WHAT A MESS 
     std::vector<float> mzs;
     std::vector<float> ints;
 
@@ -156,7 +155,7 @@ namespace m2
     // write mzs
     {
       auto &source = sourceList.front();
-      input->GetSpectrum(0, mzs, ints, sourceId); // get x axis
+      input->GetSpectrumFloat(0, mzs, ints, sourceId); // get x axis
 
       source.m_Spectra[0].mzOffset = 16;
       source.m_Spectra[0].mzLength = mzs.size();
@@ -192,7 +191,7 @@ namespace m2
 
         // write ints
         {
-          input->GetSpectrum(id, mzs, ints, sourceId);
+          input->GetSpectrumFloat(id, mzs, ints, sourceId);
 
           s.intOffset = offset;
           s.intLength = ints.size();
@@ -287,7 +286,7 @@ namespace m2
 
         // write ints
         {
-          input->GetSpectrum(id, mzs, ints, sourceId);
+          input->GetSpectrumFloat(id, mzs, ints, sourceId);
           intsMasked.clear();
 
           for (const Interval & I : m_Intervals->GetIntervals())

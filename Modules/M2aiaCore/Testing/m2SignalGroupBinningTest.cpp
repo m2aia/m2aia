@@ -55,7 +55,7 @@ public:
 
       for (unsigned int i = 0; i < image->GetNumberOfValidPixels(); ++i)
       {
-        image->GetSpectrum(i, xs, ys);
+        image->GetSpectrumFloat(i, xs, ys);
         copy(begin(xs), end(xs), xsAllIt);
         copy(begin(ys), end(ys), ysAllIt);
         fill_n(ssAllIt, xs.size(), i);

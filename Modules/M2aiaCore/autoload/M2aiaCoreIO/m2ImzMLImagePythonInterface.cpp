@@ -125,7 +125,7 @@ extern "C"
   M2AIACOREIO_EXPORT void GetSpectrum(m2::sys::ImageHandle *handle, unsigned int id, float *xd, float *yd)
   {
     std::vector<float> xs, ys;
-    handle->m_Image->GetSpectrum(id, xs, ys);
+    handle->m_Image->GetSpectrumFloat(id, xs, ys);
     std::copy(xs.begin(), xs.end(), xd);
     std::copy(ys.begin(), ys.end(), yd);
   }
@@ -134,7 +134,7 @@ extern "C"
   {
     std::vector<float> ys;
     for(unsigned int i = 0 ; i < N; ++i){
-      handle->m_Image->GetIntensities(id[i], ys);
+      handle->m_Image->GetIntensitiesFloat(id[i], ys);
       std::copy(ys.begin(), ys.end(), yd + i*ys.size());
     }
   }
@@ -142,7 +142,7 @@ extern "C"
   M2AIACOREIO_EXPORT void GetIntensities(m2::sys::ImageHandle *handle, unsigned int id, float *yd)
   {
     std::vector<float> ys;
-    handle->m_Image->GetIntensities(id, ys);
+    handle->m_Image->GetIntensitiesFloat(id, ys);
     std::copy(ys.begin(), ys.end(), yd);
   }
 

@@ -68,8 +68,10 @@ namespace m2
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
     void InitializeProcessor() override;
-    void GetSpectrum(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int) const override {}
-    void GetIntensities(unsigned int, std::vector<float> &, unsigned int) const override {}
+    void GetSpectrum(unsigned int, std::vector<double> &, std::vector<double> &, unsigned int) const override {}
+    void GetIntensities(unsigned int, std::vector<double> &, unsigned int) const override {}
+    void GetSpectrumFloat(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int) const override {}
+    void GetIntensitiesFloat(unsigned int, std::vector<float> &, unsigned int) const override {}
 
   private:
     SpectrumVectorType m_Spectra;

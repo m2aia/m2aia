@@ -82,7 +82,7 @@ public:
     CPPUNIT_ASSERT_ASSERTION_PASS(CPPUNIT_ASSERT(imzMLImage != nullptr));
 
     std::vector<float> ints, mzs;
-    imzMLImage->GetSpectrum(0, mzs, ints);
+    imzMLImage->GetSpectrumFloat(0, mzs, ints);
     WriteVector(ints, "lipid_spectrum0.data");
     auto reference = ReadDoubleVector("lipid_spectrum0.data");
 
