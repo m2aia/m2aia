@@ -74,24 +74,32 @@ void QmitkDataCompressionView::CreateQtPartControl(QWidget *parent)
   m_Controls.imageSelection->SetEmptyInfo(QString("Image selection"));
   m_Controls.imageSelection->SetPopUpTitel(QString("Image"));
 
-  auto isChildAndCheckProperties = [this](const mitk::DataNode *node) {
+    auto isChildAndCheckProperties = [this](const mitk::DataNode *node)
+  {
     if (auto imageNode = m_Controls.imageSelection->GetSelectedNode())
     {
       auto childNodes = GetDataStorage()->GetDerivations(imageNode);
       using namespace std;
       auto intervalVectorNode = find(begin(*childNodes), end(*childNodes), node);
-      if(intervalVectorNode != end(*childNodes)){
+      if (intervalVectorNode != end(*childNodes))
+      {
         mitk::DataNode::Pointer d = *intervalVectorNode;
-        bool isHelperObject;
-        std::string overviewType;
-        bool hasHelperObjectProperty = d->GetBoolProperty("helper object", isHelperObject);
-        bool hasSpectrumTypeProperty = d->GetStringProperty("spectrum.overview.type", overviewType);
-        if(hasHelperObjectProperty && !hasSpectrumTypeProperty)
-          return !isHelperObject;
-        else if(hasHelperObjectProperty && hasSpectrumTypeProperty)
-          return !isHelperObject && (overviewType == "centroid");
-        return true;
-        
+        std::string type, info;
+        if (auto intervalVector = dynamic_cast<m2::IntervalVector *>(d->GetData()))
+        {
+          if(d->IsOn("helper object", nullptr, false))
+            return false;
+          
+          std::string info = intervalVector->GetInfo();         
+          if(info.find("overview") != std::string::npos)
+            return false;
+
+          auto type = intervalVector->GetType();
+          if (type == m2::SpectrumFormat::Profile)
+            return false;
+
+          return true;
+        }
       }
     }
     return false;
