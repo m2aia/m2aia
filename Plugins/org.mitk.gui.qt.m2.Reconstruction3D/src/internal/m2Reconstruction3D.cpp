@@ -28,10 +28,10 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 // m2aia
 #include "m2Reconstruction3D.h"
-#include <m2NameDialog.h>
 #include <m2ElxRegistrationHelper.h>
 #include <m2ElxUtil.h>
 #include <m2ImzMLSpectrumImage.h>
+#include <m2NameDialog.h>
 
 const std::string m2Reconstruction3D::VIEW_ID = "org.mitk.views.m2.Reconstruction3D";
 
@@ -45,32 +45,47 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
   connect(m_Controls.btnStartStacking, SIGNAL(clicked()), this, SLOT(OnStartStacking()));
 
   {
-    auto customList = new QListWidget();
-    m_List1 = customList;
-    m_Controls.dataSelection->addWidget(customList);
-
-    customList->setDragEnabled(true);
-    customList->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    customList->setDragDropMode(QAbstractItemView::DragDrop);
-    customList->setDefaultDropAction(Qt::MoveAction);
-    customList->setAlternatingRowColors(true);
-    customList->setSelectionMode(QAbstractItemView::MultiSelection);
-    customList->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectItems);
-    customList->setSortingEnabled(true);
+    m_List1 = m_Controls.listWidget;
+    m_List1->setDragEnabled(true);
+    m_List1->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_List1->setDragDropMode(QAbstractItemView::NoDragDrop);
+    // m_List1->setDefaultDropAction(Qt::MoveAction);
+    m_List1->setAlternatingRowColors(true);
+    m_List1->setSelectionMode(QAbstractItemView::MultiSelection);
+    m_List1->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectItems);
+    m_List1->setSortingEnabled(true);
   }
   {
-    auto customList = new QListWidget();
-    m_Controls.dataSelection->addWidget(customList);
-    m_List2 = customList;
-    customList->setDragEnabled(true);
-    customList->setEditTriggers(QAbstractItemView::NoEditTriggers);
-    customList->setDragDropMode(QAbstractItemView::DragDrop);
-    customList->setDefaultDropAction(Qt::MoveAction);
-    customList->setAlternatingRowColors(true);
-    customList->setSelectionMode(QAbstractItemView::MultiSelection);
-    customList->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectItems);
-    customList->setSortingEnabled(true);
+    m_List2 = m_Controls.listWidget_2;
+    m_List2->setDragEnabled(true);
+    m_List2->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_List2->setDragDropMode(QAbstractItemView::NoDragDrop);
+    // m_List2->setDefaultDropAction(Qt::MoveAction);
+    m_List2->setAlternatingRowColors(true);
+    m_List2->setSelectionMode(QAbstractItemView::MultiSelection);
+    m_List2->setSelectionBehavior(QAbstractItemView::SelectionBehavior::SelectItems);
+    m_List2->setSortingEnabled(true);
   }
+
+  connect(m_Controls.btnRemove,&QAbstractButton::clicked, this, [this](){
+    for(auto item : m_List1->selectedItems()){
+      delete m_List1->takeItem(m_List1->row(item));
+}
+
+    for(auto item : m_List2->selectedItems()){
+      delete m_List2->takeItem(m_List2->row(item));
+    }
+  });
+  
+  connect(m_Controls.btnSwitch,&QAbstractButton::clicked, this, [this](){
+    for(auto item : m_List1->selectedItems()){
+      m_List2->addItem(m_List1->takeItem(m_List1->row(item)));
+    }
+
+    for(auto item : m_List2->selectedItems()){
+      m_List1->addItem(m_List2->takeItem(m_List2->row(item)));
+    }
+  });
 }
 
 void m2Reconstruction3D::OnStartStacking()
