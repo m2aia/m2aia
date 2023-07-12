@@ -28,7 +28,7 @@ class QmitkDataNodeConvertPixelTypeAction : public QAction, public QmitkAbstract
 public:
 
   QmitkDataNodeConvertPixelTypeAction(QWidget* parent, berry::IWorkbenchPartSite::Pointer workbenchPartSite);
-  QmitkDataNodeConvertPixelTypeAction(QWidget* parent, berry::IWorkbenchPartSite* workbenchPartSite);
+  QmitkDataNodeConvertPixelTypeAction(QWidget* parent = nullptr, berry::IWorkbenchPartSite* workbenchPartSite = nullptr);
   mitk::Image::Pointer OnApplyCastImage(mitk::Image::Pointer image, itk::IOComponentEnum type);
   
 private Q_SLOTS:

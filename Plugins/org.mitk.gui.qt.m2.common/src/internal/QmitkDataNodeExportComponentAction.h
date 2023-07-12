@@ -23,7 +23,7 @@ class QmitkDataNodeExportComponentAction : public QAction, public QmitkAbstractD
 public:
 
   QmitkDataNodeExportComponentAction(QWidget* parent, berry::IWorkbenchPartSite::Pointer workbenchPartSite);
-  QmitkDataNodeExportComponentAction(QWidget* parent, berry::IWorkbenchPartSite* workbenchPartSite);
+  QmitkDataNodeExportComponentAction(QWidget* parent = nullptr, berry::IWorkbenchPartSite* workbenchPartSite = nullptr);
 
   static mitk::Image::Pointer ExportComponentImage(const mitk::Image * img, unsigned int i);
 

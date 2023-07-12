@@ -25,7 +25,7 @@ class QmitkDataNodePlotColorAction : public QWidgetAction, public QmitkAbstractD
 public:
 
   QmitkDataNodePlotColorAction(QWidget* parent, berry::IWorkbenchPartSite::Pointer workbenchPartSite);
-  QmitkDataNodePlotColorAction(QWidget* parent, berry::IWorkbenchPartSite* workbenchPartSite);
+  QmitkDataNodePlotColorAction(QWidget* parent = nullptr, berry::IWorkbenchPartSite* workbenchPartSite = nullptr);
 
   void InitializeWithDataNode(const mitk::DataNode* dataNode) override;
 

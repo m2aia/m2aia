@@ -58,19 +58,17 @@ void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)
     tr("SpectrumImage"), QString(":/QmitkM2aiaCore/SpectrumImage_48.png"), spectrumImageDescriptorPredicate, this));
 
   auto desc = descriptorManager->GetDescriptor("SpectrumImage");
-  desc->AddAction(new QmitkDataNodeConvertPixelTypeAction(nullptr,nullptr), false);
-  desc->AddAction(new QmitkDataNodeColorMapAction(nullptr,nullptr), false);
-  desc->AddAction(new QmitkDataNodeTextureInterpolationAction(nullptr,nullptr), false);
-  // desc->AddAction(new QmitkDataNodeColorAction(nullptr,nullptr), false);
+    desc->AddAction(new QmitkDataNodeConvertPixelTypeAction(), false);
+    desc->AddAction(new QmitkDataNodePlotColorAction(), false);
 
   desc = descriptorManager->GetDescriptor("MultiComponentImage");
-  desc->AddAction(new QmitkDataNodeExportComponentAction(nullptr,nullptr), false);
+  desc->AddAction(new QmitkDataNodeExportComponentAction(), false);
 
   
   descriptorManager->AddDescriptor(new QmitkNodeDescriptor(
     tr("IntervalVector"), QString(":/QmitkM2aiaCore/Spectrum_48.png"), mitk::TNodePredicateDataType<m2::IntervalVector>::New(), this));
   desc = descriptorManager->GetDescriptor("IntervalVector");
-  desc->AddAction(new QmitkDataNodePlotColorAction(nullptr,nullptr), false);
+  desc->AddAction(new QmitkDataNodePlotColorAction(), false);
   
 
 

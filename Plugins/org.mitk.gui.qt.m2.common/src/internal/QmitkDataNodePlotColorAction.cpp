@@ -13,6 +13,8 @@ found in the LICENSE file.
 #include "QmitkDataNodePlotColorAction.h"
 
 // mitk core
+#include <m2IntervalVector.h>
+#include <m2SpectrumImageBase.h>
 #include <mitkColorProperty.h>
 #include <mitkRenderingManager.h>
 
@@ -41,7 +43,7 @@ void QmitkDataNodePlotColorAction::InitializeAction()
   m_ColorButton->setToolTip("Change color of the plot line (node property key: spectrum.plot.color)");
   m_ColorButton->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
   connect(m_ColorButton, &QPushButton::clicked, this, &QmitkDataNodePlotColorAction::OnPlotColorChanged);
-  
+
   m_ColorButtonMarker = new QPushButton;
   m_ColorButtonMarker->setToolTip("Change color of the true measurements (node property key: spectrum.marker.color)");
   m_ColorButtonMarker->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
@@ -118,9 +120,21 @@ void QmitkDataNodePlotColorAction::OnPlotColorChanged()
     }
     color = QColorDialog::getColor(color, nullptr, QString(tr("Change plot color")));
     dataNode->SetProperty("spectrum.plot.color", mitk::ColorProperty::New(color.redF(), color.greenF(), color.blueF()));
+
+     if (dynamic_cast<m2::SpectrumImageBase *>(dataNode->GetData()))
+    {
+      auto derivations = m_DataStorage.Lock()->GetDerivations(dataNode);
+      for (auto node : *derivations)
+      {
+        if (dynamic_cast<m2::IntervalVector *>(node->GetData()))
+        {
+          node->SetProperty("spectrum.plot.color",
+                            mitk::ColorProperty::New(color.redF(), color.greenF(), color.blueF()));
+        }
+      }
+    }
   }
 }
-
 
 void QmitkDataNodePlotColorAction::OnMarkerColorChanged()
 {
@@ -146,8 +160,21 @@ void QmitkDataNodePlotColorAction::OnMarkerColorChanged()
       }
     }
     color = QColorDialog::getColor(color, nullptr, QString(tr("Change marker color")));
-    dataNode->SetProperty("spectrum.marker.color", mitk::ColorProperty::New(color.redF(), color.greenF(), color.blueF()));
-    
+    dataNode->SetProperty("spectrum.marker.color",
+                          mitk::ColorProperty::New(color.redF(), color.greenF(), color.blueF()));
+
+    if (dynamic_cast<m2::SpectrumImageBase *>(dataNode->GetData()))
+    {
+      auto derivations = m_DataStorage.Lock()->GetDerivations(dataNode);
+      for (auto node : *derivations)
+      {
+        if (dynamic_cast<m2::IntervalVector *>(node->GetData()))
+        {
+          node->SetProperty("spectrum.marker.color",
+                            mitk::ColorProperty::New(color.redF(), color.greenF(), color.blueF()));
+        }
+      }
+    }
   }
 }
 
