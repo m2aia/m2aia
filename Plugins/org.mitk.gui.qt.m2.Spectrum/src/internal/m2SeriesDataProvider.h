@@ -35,7 +35,7 @@ namespace m2
 
     SeriesDataProvider();
     virtual ~SeriesDataProvider(){}
-    void Initialize(const m2::IntervalVector * data);
+    void Initialize(const m2::IntervalVector * data, m2::SpectrumFormat format = m2::SpectrumFormat::None);
     
     /**
      *  @brief Series point data is replaced with valid points from within [x1, x2]. 

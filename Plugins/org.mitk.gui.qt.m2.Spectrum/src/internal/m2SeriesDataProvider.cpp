@@ -32,9 +32,12 @@ m2::SeriesDataProvider::SeriesDataProvider()
 {
 }
 
-void m2::SeriesDataProvider::Initialize(const m2::IntervalVector *data)
+void m2::SeriesDataProvider::Initialize(const m2::IntervalVector *data, m2::SpectrumFormat format)
 {
-  m_Format = data->GetType();
+  if(format == m2::SpectrumFormat::None)
+    m_Format = data->GetType();
+  else
+    m_Format = format;
   m_IntervalVector = data;
 
   InitializeSeries();
@@ -252,9 +255,9 @@ void m2::SeriesDataProvider::SetColor(QColor c)
   }
 }
 
-void m2::SeriesDataProvider::SetColor(qreal r, qreal g, qreal b)
+void m2::SeriesDataProvider::SetColor(qreal r, qreal g, qreal b, qreal a = 1.0)
 {
   QColor c;
-  c.setRgbF(r, g, b);
+  c.setRgbF(r, g, b, a);
   SetColor(c);
 }
