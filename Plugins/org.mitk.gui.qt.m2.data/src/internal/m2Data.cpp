@@ -31,6 +31,7 @@ See LICENSE.txt for details.
 #include <m2SpectrumImageBase.h>
 #include <m2SpectrumImageStack.h>
 #include <m2SubdivideImage2DFilter.h>
+#include <m2SpectrumImageDataInteractor.h>
 #include <m2UIUtils.h>
 #include <mitkColorProperty.h>
 #include <mitkCoreServices.h>
@@ -78,6 +79,11 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   connect(UIUtilsObject, SIGNAL(NextImage()), this, SLOT(OnCreateNextImage()));
   connect(UIUtilsObject, SIGNAL(IncreaseTolerance()), this, SLOT(OnIncreaseTolerance()));
   connect(UIUtilsObject, SIGNAL(DecreaseTolerance()), this, SLOT(OnDecreaseTolerance()));
+
+  
+
+
+
 
   // Settings (show hlper objects)
   using namespace mitk;
@@ -675,6 +681,16 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   // add nodes to data storage (default: helper objects)
   if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
+      // -------------- add data interactor --------------
+    
+    auto interactor = m2::SpectrumImageDataInteractor::New();
+    interactor->LoadStateMachine("PointSet.xml");
+    interactor->SetEventConfig("PointSetConfig.xml");
+    interactor->EnableInteraction(false);
+    interactor->SetDataNode(const_cast<mitk::DataNode *>(node));
+    interactor->SetDataStorage(GetDataStorage());
+    interactor->EnableInteraction(true);
+    const_cast<mitk::DataNode *>(node)->SetDataInteractor(interactor);
 
     m2::DefaultNodeProperties(node);
 
@@ -718,13 +734,18 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
                                            std::string info, 
                                            const std::vector<double> xs, 
                                            const std::vector<double> ys, 
-                                           bool checkState)
+                                           bool checkState,
+                                           float alpha = 1.0)
     {
       auto intervalsNode = mitk::DataNode::New();
       auto intervals = m2::IntervalVector::New();
       intervals->SetType(type);
       intervals->SetInfo(info);
+      intervals->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(xs.size()));
 
+      if(auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+        intervals->SetProperty("spectrum.pixel.count", mitk::IntProperty::New(image->GetNumberOfValidPixels()));
+      
 
       using namespace std;
       auto &i = intervals->GetIntervals();
@@ -735,9 +756,12 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
       intervalsNode->SetVisibility(checkState);
       intervalsNode->SetBoolProperty("helper object", !checkState);
       m2::CopyNodeProperties(node, intervalsNode);
-      intervalsNode->SetStringProperty("node.selection.button.info", std::string("(" + node->GetName() + ")").c_str());
+      if((unsigned int)(type) & (unsigned int)(m2::SpectrumFormat::Centroid))
+        intervalsNode->SetOpacity(1-alpha);
+
       
       this->GetDataStorage()->Add(intervalsNode, const_cast<mitk::DataNode *>(node));
+      intervalsNode->Modified();
     };
 
     const auto &xs = spectrumImage->GetXAxis();
@@ -751,8 +775,8 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
     }
     else
     {
-      AddSpectrum("CentroidSpectrum ("+node->GetName()+")", m2::SpectrumFormat::Centroid, "overview.centroids", xs, spectrumImage->MeanSpectrum(), m_Controls.showCentroidSpectrum->isChecked());
-      AddSpectrum("SingleSpectrum ("+node->GetName()+")", m2::SpectrumFormat::Centroid, "overview.single",  {}, {}, m_Controls.showSingleSpectrum->isChecked());
+      AddSpectrum("CentroidSpectrum ("+node->GetName()+")", m2::SpectrumFormat::Centroid, "overview.centroids", xs, spectrumImage->MeanSpectrum(), m_Controls.showCentroidSpectrum->isChecked(), 0.5);
+      AddSpectrum("SingleSpectrum ("+node->GetName()+")", m2::SpectrumFormat::Centroid, "overview.single",  {}, {}, m_Controls.showSingleSpectrum->isChecked(), 0.5);
     }
   }
 }

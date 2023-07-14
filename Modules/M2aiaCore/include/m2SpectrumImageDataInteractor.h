@@ -21,6 +21,7 @@ See LICENSE.txt for details.
 #include "mitkCommon.h"
 #include "mitkDataInteractor.h"
 #include <M2aiaCoreExports.h>
+#include <mitkDataStorage.h>
 #include <mitkInteractionEvent.h>
 #include <mitkPointSet.h>
 #include <mitkStateMachineAction.h>
@@ -31,16 +32,26 @@ namespace m2
   class M2AIACORE_EXPORT SpectrumImageDataInteractor : public mitk::DataInteractor
   {
   public:
-    mitkClassMacro(SpectrumImageDataInteractor, mitk::DataInteractor) itkFactorylessNewMacro(Self) itkCloneMacro(Self)
+    mitkClassMacro(SpectrumImageDataInteractor, mitk::DataInteractor);
+    itkFactorylessNewMacro(Self);
+    itkCloneMacro(Self);
 
-      protected : SpectrumImageDataInteractor();
+    void SetDataStorage(mitk::DataStorage *ds);
+    mitk::DataStorage *GetDataStorage() const;
+
+  protected:
+    SpectrumImageDataInteractor();
     ~SpectrumImageDataInteractor() override;
 
     void ConnectActionsAndFunctions() override;
     void ConfigurationChanged() override;
+    bool FilterEvents(mitk::InteractionEvent *, mitk::DataNode *) override;
 
   private:
     void SelectSingleSpectrumByPoint(mitk::StateMachineAction *, mitk::InteractionEvent *);
     bool IsOver(const mitk::InteractionEvent *);
+    mitk::DataNode * FindSingleSpectrumDataNode(mitk::DataNode *);
+    
+    mitk::DataStorage * m_DataStorage;
   };
-} // namespace mitk
+} // namespace m2
