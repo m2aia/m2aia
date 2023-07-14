@@ -95,7 +95,7 @@ namespace m2
     friend bool operator<(const Interval &lhs, const Interval &rhs) { return lhs.x.mean() < rhs.x.mean(); }
     // friend bool operator==(const Interval &lhs, const Interval &rhs) { return lhs.x.mean() == rhs.x.mean(); }
   };
-
+  
   
   /**
    * DataNode properties:
@@ -139,24 +139,32 @@ namespace m2
 
     std::vector<Interval> &GetIntervals() { return m_Data; }
     const std::vector<Interval> &GetIntervals() const { return m_Data; }
-    void SetType(SpectrumFormat type) { m_Type = type; }
-    void SetInfo(std::string info) { m_Info = info; }
+    void SetType(SpectrumFormat type)
+    {
+      m_Type = type;
+      this->SetProperty("spectrum.type", mitk::StringProperty::New(m2::to_string(type)));
+    }
+    void SetInfo(std::string info)
+    {
+      m_Info = info;
+      this->SetProperty("spectrum.info", mitk::StringProperty::New(info));
+    }
 
     /**
      * Get the type of an interval vector.
      * See enum definition: m2::SpectrumFormat
-    */
+     */
     SpectrumFormat GetType() const { return m_Type; }
 
     /**
-     * Custom data info 
+     * Custom data info
      * e.g. if it is an overview spectrum:
      * - overview.mean
      * - overview.max
      * - overview.single
      * - overview.centroids
      * ToDo: write as string property of the data
-    */
+     */
     std::string GetInfo() const { return m_Info; }
 
   private:
