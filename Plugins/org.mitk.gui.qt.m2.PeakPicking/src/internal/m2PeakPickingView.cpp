@@ -133,12 +133,12 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.sourceProfileSelector->SetNodePredicate(mitk::NodePredicateAnd::New(
     NodePredicateNoActiveHelper, NodePredicateIsOverviewSpectrum, NodePredicateIsProfileSpectrum));
 
-  m_Controls.sourceCenroidSelector->SetDataStorage(GetDataStorage());
-  m_Controls.sourceCenroidSelector->SetSelectionIsOptional(true);
+  m_Controls.sourceMultipleCenroidsSelector->SetDataStorage(GetDataStorage());
+  m_Controls.sourceMultipleCenroidsSelector->SetSelectionIsOptional(true);
   // m_Controls.sourceCenroidSelector->SetAutoSelectNewNodes(true);
-  m_Controls.sourceCenroidSelector->SetEmptyInfo(QString("Select Source Centroid Spectra"));
-  m_Controls.sourceCenroidSelector->SetPopUpTitel(QString("Select Source Centroid Spectra"));
-  m_Controls.sourceCenroidSelector->SetNodePredicate(NodePredicateIsCentroidSpectrum);
+  m_Controls.sourceMultipleCenroidsSelector->SetEmptyInfo(QString("Select Source Centroid Spectra"));
+  m_Controls.sourceMultipleCenroidsSelector->SetPopUpTitel(QString("Select Source Centroid Spectra"));
+  m_Controls.sourceMultipleCenroidsSelector->SetNodePredicate(NodePredicateIsCentroidSpectrum);
 
   m_Controls.sourceProfileImageSelector->SetDataStorage(GetDataStorage());
   m_Controls.sourceProfileImageSelector->SetSelectionIsOptional(true);
@@ -157,8 +157,6 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
 
   parent->layout()->removeWidget(m_Controls.peakPickingControls);
   parent->layout()->removeWidget(m_Controls.binningControls);
-
-  MITK_INFO << m_Controls.peakPickingControls << " " << m_Controls.peakPickingControls->objectName();
 
   connect(m_Controls.tabWidget, &QTabWidget::currentChanged, this, &m2PeakPickingView::OnCurrentTabChanged);
   m_Controls.tabWidget->setCurrentIndex(0);
@@ -188,7 +186,9 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   connect(
     m_Controls.btnPickPeaksOverview, &QAbstractButton::clicked, this, &m2PeakPickingView::OnStartPeakPickingOverview);
 
-  // connect(m_Controls.btnRunSparsePCA, SIGNAL(clicked()), this, SLOT(OnStartSparsePCA()));
+  connect(m_Controls.btnCombineList, &QAbstractButton::clicked, this, &m2PeakPickingView::OnCombineLists);
+  
+    // connect(m_Controls.btnRunSparsePCA, SIGNAL(clicked()), this, SLOT(OnStartSparsePCA()));
   // connect(m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this,
   // &m2PeakPickingView::OnStartPeakPicking);
   // connect(m_Controls.btnPCA, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPCA);
@@ -206,7 +206,6 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
 void m2PeakPickingView::OnCurrentTabChanged(unsigned int idx)
 {
   const auto tabText = m_Controls.tabWidget->tabText(idx);
-  MITK_INFO << tabText;
 
   m_Controls.tabWidget->widget(0)->layout()->removeWidget(m_Controls.peakPickingControls);
   m_Controls.tabWidget->widget(1)->layout()->removeWidget(m_Controls.peakPickingControls);
@@ -284,7 +283,6 @@ mitk::DataNode::Pointer m2PeakPickingView::AddNewPeakListToDataStorage(const mit
     m2::DefaultNodeProperties(node);
 
   node->SetIntProperty("spectrum.marker.size", 4);
-  node->SetStringProperty("node.selection.button.info", std::string("(" + parent->GetName() + ")").c_str());
   auto intervals = m2::IntervalVector::New();
   intervals->SetType(m2::SpectrumFormat::Centroid);
   intervals->SetInfo("centroids");
@@ -386,10 +384,7 @@ void m2PeakPickingView::OnStartPeakPickingOverview()
     auto image = dynamic_cast<m2::SpectrumImageBase *>(parentNode->GetData());
     
     targetData->SetProperty("spectrum.pixel.count", mitk::IntProperty::New(image->GetNumberOfValidPixels()));
-    targetData->SetProperty("spectrum.centroid.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
-    targetData->SetProperty("spectrum.centroid.parent", mitk::StringProperty::New(parentNode->GetName().c_str()));
-    targetData->SetProperty("spectrum.centroid.source", mitk::StringProperty::New(sourceNode->GetName().c_str()));
-    targetData->SetProperty("spectrum.centroid.info", mitk::StringProperty::New(targetNodeName.c_str()));
+    targetData->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
     targetNode->Modified();
   }
 
@@ -477,10 +472,7 @@ void m2PeakPickingView::OnStartPeakPickingImage()
     targetData->GetIntervals() = newI;
 
     targetData->SetProperty("spectrum.pixel.count", mitk::IntProperty::New(image->GetNumberOfValidPixels()));
-    targetData->SetProperty("spectrum.centroid.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
-    targetData->SetProperty("spectrum.centroid.parent", mitk::StringProperty::New(imageNode->GetName().c_str()));
-    targetData->SetProperty("spectrum.centroid.source", mitk::StringProperty::New(imageNode->GetName().c_str()));
-    targetData->SetProperty("spectrum.centroid.info", mitk::StringProperty::New(targetNodeName.c_str()));
+    targetData->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
     targetNode->Modified();
 
     OnUpdateUILabel();
@@ -489,7 +481,8 @@ void m2PeakPickingView::OnStartPeakPickingImage()
 
 void m2PeakPickingView::OnCombineLists()
 {
-  auto sourceNodes = m_Controls.sourceCenroidSelector->GetSelectedNodesStdVector();
+  auto sourceNodes = m_Controls.sourceMultipleCenroidsSelector->GetSelectedNodesStdVector();
+  if(sourceNodes.empty()) return;
 
   using namespace std;
   vector<double> xs, ys, xsAll, ysAll;
@@ -517,9 +510,6 @@ void m2PeakPickingView::OnCombineLists()
 
     int count = 0;
     sourceNode->GetIntProperty("spectrum.pixel.count", count);
-    targetNode->SetStringProperty(("spectrum.centroid.source." + std::to_string(i)).c_str(),
-                                  sourceNode->GetName().c_str());
-
     countSum += count;
     ++i;
   }
@@ -548,8 +538,8 @@ void m2PeakPickingView::OnCombineLists()
           [frequency](const m2::Interval &in) { return in.x.count() > frequency; });
 
 
-  targetData->SetProperty("spectrum.centroid.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
-  targetData->SetProperty("spectrum.centroid.info", mitk::StringProperty::New(targetNodeName.c_str()));
+  targetData->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
+  targetNode->Modified();
 }
 
 void m2PeakPickingView::OnUpdateUILabel()
