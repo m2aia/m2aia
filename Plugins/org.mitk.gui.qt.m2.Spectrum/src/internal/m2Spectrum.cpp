@@ -259,7 +259,10 @@ void m2Spectrum::OnPropertyListChanged(const itk::Object *caller, const itk::Eve
           if (auto colorProperty = dynamic_cast<mitk::ColorProperty *>(genericProperty))
           {
             auto c = colorProperty->GetColor();
-            provider->SetColor(c.GetRed(), c.GetGreen(), c.GetBlue());
+            float a = 0;
+            // MITK_INFO << "opacity " << a;
+            node->GetOpacity(a, nullptr);
+            provider->SetColor(c.GetRed(), c.GetGreen(), c.GetBlue(), 1-a);
           }
         }
 
@@ -908,7 +911,7 @@ void m2Spectrum::OnRangeChangedAxisX(qreal xMin, qreal xMax)
   auto axis = m_xAxis;
   if (xMax > m_GlobalMaximumX)
   {
-    MITK_INFO("OnRangeChangedAxisX") << xMax << " > " << m_GlobalMaximumX;
+    // MITK_INFO("OnRangeChangedAxisX") << xMax << " > " << m_GlobalMaximumX;
     this->m_MouseDragUpperDelta = std::abs(m_GlobalMaximumX - this->m_MouseDragCenterPos);
     axis->blockSignals(true);
     axis->setMax(m_GlobalMaximumX);

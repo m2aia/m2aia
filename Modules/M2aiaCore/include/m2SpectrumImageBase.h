@@ -269,6 +269,8 @@ namespace m2
       node->GetPropertyList()->SetProperty("spectrum.plot.color", mitk::ColorProperty::New(mitkColor));
       node->GetPropertyList()->SetProperty("spectrum.marker.color", mitk::ColorProperty::New(mitkColor));
       node->GetPropertyList()->SetProperty("spectrum.marker.size", mitk::IntProperty::New(2));
+      node->GetPropertyList()->Set("opacity", 1.0f);
+
   }
 
 } // namespace m2

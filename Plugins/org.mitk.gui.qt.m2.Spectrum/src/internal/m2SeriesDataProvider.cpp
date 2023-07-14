@@ -67,7 +67,6 @@ void m2::SeriesDataProvider::InitializeSeries()
     SetProfileSpectrumDefaultStyle(m_Series);
     m_Series->setPointsVisible(false);
   }
-  m_Series->setColor(m_DefaultColor);
 }
 
 void m2::SeriesDataProvider::Update()

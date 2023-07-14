@@ -51,7 +51,7 @@ namespace m2
     const std::vector<double> & xs() const {return m_xs;}
     const std::vector<double> & ys() const {return m_ys;}
     
-    void SetColor(qreal r, qreal g, qreal b);
+    void SetColor(qreal r, qreal g, qreal b, qreal a);
     void SetColor(QColor c);
     
     QtCharts::QXYSeries * GetSeries() const{return m_Series;}

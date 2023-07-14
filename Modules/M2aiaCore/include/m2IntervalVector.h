@@ -96,6 +96,17 @@ namespace m2
     // friend bool operator==(const Interval &lhs, const Interval &rhs) { return lhs.x.mean() == rhs.x.mean(); }
   };
 
+  
+  /**
+   * DataNode properties:
+   * - spectrum.plot.color: color of plot lines in spectrum view's
+   * - spectrum.marker.color: color of markers in spectrum view's selected area
+   * - spectrum.marker.size: size of markers in spectrum view's selected area
+   * 
+   * BaseData properties:
+   * - spectrum.pixel.count: number of reference pixels for this spectrum container
+   * - spectrum.xaxis.count: number of values on the x axis (i.e. number of m/z values or centroids)
+   */
   class M2AIACORE_EXPORT IntervalVector : public mitk::BaseData
   {
   public:
