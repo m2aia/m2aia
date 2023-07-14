@@ -18,10 +18,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "ui_m2DataTools.h"
 #include <QThreadPool>
 #include <QmitkAbstractView.h>
-
 #include <mitkColorBarAnnotation.h>
 #include <mitkTextAnnotation2D.h>
-#include <m2SpectrumImageDataInteractor.h>
 #include <m2UIUtils.h>
 
 
@@ -40,7 +38,6 @@ public slots:
   void OnApplyTiling();
   void OnResetTiling();  
   void UpdateColorBarAndRenderWindows();
-  void OnToggleDataInteraction(bool checked);
   
   
 protected:
@@ -49,7 +46,6 @@ protected:
   virtual void CreateQtPartControl(QWidget *parent) override;
   virtual void SetFocus() override {}
 
-  mitk::DataInteractor::Pointer m_DataInteractor;
   Ui::imsDataToolsControls m_Controls;
   QWidget * m_Parent = nullptr;
   QThreadPool m_pool;
