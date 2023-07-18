@@ -45,6 +45,7 @@ See LICENSE.txt for details.
 
 // internal includes
 #include "m2SeriesDataProvider.h"
+#include <m2SpectrumImageBase.h>
 
 const std::string m2Spectrum::VIEW_ID = "org.mitk.views.m2.Spectrum";
 
@@ -358,6 +359,7 @@ void m2Spectrum::NodeAdded(const mitk::DataNode *node)
     OnResetView();
     AutoZoomUseLocalExtremaY();
 
+    m2::DefaultNodeProperties(node, false);
     node->GetPropertyList()->Modified();
     node->Modified();
 

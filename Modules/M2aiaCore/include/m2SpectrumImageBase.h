@@ -22,14 +22,12 @@ See LICENSE.txt for details.
 #include <m2ISpectrumDataAccess.h>
 #include <m2IntervalVector.h>
 #include <m2SpectrumInfo.h>
-
-#include <mitkProperties.h>
 #include <mitkBaseData.h>
 #include <mitkImage.h>
 #include <mitkImageStatisticsHolder.h>
-#include <signal/m2SignalCommon.h>
-
+#include <mitkProperties.h>
 #include <random>
+#include <signal/m2SignalCommon.h>
 
 namespace m2
 {
@@ -174,20 +172,21 @@ namespace m2
     virtual void PeakListModified();
 
     /**
-     * @brief Get the Intensity Data representing a matrix of shape [#intervals, #pixels] as a contiguous array of floats.
-     * 
-     * @param intervals: list of intervals (e.g. a peak center). 
-     * @return std::vector<float> 
+     * @brief Get the Intensity Data representing a matrix of shape [#intervals, #pixels] as a contiguous array of
+     * floats.
+     *
+     * @param intervals: list of intervals (e.g. a peak center).
+     * @return std::vector<float>
      */
-    virtual std::vector<float> GetIntensityData(const std::vector<m2::Interval> & intervals) const;
+    virtual std::vector<float> GetIntensityData(const std::vector<m2::Interval> &intervals) const;
 
     /**
      * @brief Get the shape of the assumed data matrix generated with GetIntensityData(...)
-     * 
+     *
      * @param intervals: list of intervals (e.g. a peak center). Same as used in GetIntensityData(...).
-     * @return std::vector<unsigned long> 
+     * @return std::vector<unsigned long>
      */
-    virtual std::vector<unsigned long> GetIntensityDataShape(const std::vector<m2::Interval> & intervals)const;
+    virtual std::vector<unsigned long> GetIntensityDataShape(const std::vector<m2::Interval> &intervals) const;
 
   protected:
     bool mutable m_InSaveMode = false;
@@ -210,7 +209,7 @@ namespace m2
     unsigned int m_NumberOfThreads = itk::MultiThreaderBase::GetGlobalMaximumNumberOfThreads();
     // unsigned int m_NumberOfThreads = 2;
 
-    // 
+    //
     IntervalVectorType m_Intervals;
 
     ImageArtifactMapType m_ImageArtifacts;
@@ -240,37 +239,38 @@ namespace m2
    * - spectrum.plot.color
    * - spectrum.marker.color
    * - spectrum.marker.size
-  */
+   */
   inline void CopyNodeProperties(const mitk::DataNode *sourceNode, mitk::DataNode *targetNode)
   {
-    if(const auto plotColorProp = sourceNode->GetProperty("spectrum.plot.color"))
+    if (const auto plotColorProp = sourceNode->GetProperty("spectrum.plot.color"))
       targetNode->SetProperty("spectrum.plot.color", plotColorProp->Clone());
 
-    if(const auto markerColorProp = sourceNode->GetProperty("spectrum.marker.color"))
+    if (const auto markerColorProp = sourceNode->GetProperty("spectrum.marker.color"))
       targetNode->SetProperty("spectrum.marker.color", markerColorProp->Clone());
 
-    if(const auto markerSizeProp = sourceNode->GetProperty("spectrum.marker.size"))
+    if (const auto markerSizeProp = sourceNode->GetProperty("spectrum.marker.size"))
       targetNode->SetProperty("spectrum.marker.size", markerSizeProp->Clone());
   }
 
-    /**
+  /**
    * Create default properties:
    * - spectrum.plot.color (=randomColor)
    * - spectrum.marker.color (=spectrum.plot.color)
    * - spectrum.marker.size (=2)
-  */
-  inline void DefaultNodeProperties(const mitk::DataNode *node)
+   */
+  inline void DefaultNodeProperties(const mitk::DataNode *node, bool override = true)
   {
-      std::random_device rd;
-      std::mt19937 e2(rd());
-      std::uniform_real_distribution<> dist(0, 1);
-      mitk::Color mitkColor;
-      mitkColor.Set(dist(e2), dist(e2), dist(e2));
+    std::random_device rd;
+    std::mt19937 e2(rd());
+    std::uniform_real_distribution<> dist(0, 1);
+    mitk::Color mitkColor;
+    mitkColor.Set(dist(e2), dist(e2), dist(e2));
+    if (override || !node->GetPropertyList()->GetProperty("spectrum.plot.color"))
       node->GetPropertyList()->SetProperty("spectrum.plot.color", mitk::ColorProperty::New(mitkColor));
+    if (override || !node->GetPropertyList()->GetProperty("spectrum.marker.color"))
       node->GetPropertyList()->SetProperty("spectrum.marker.color", mitk::ColorProperty::New(mitkColor));
-      node->GetPropertyList()->SetProperty("spectrum.marker.size", mitk::IntProperty::New(2));
-      node->GetPropertyList()->Set("opacity", 1.0f);
-
+    if (override || !node->GetPropertyList()->GetProperty("spectrum.marker.size"))
+      node->GetPropertyList()->SetProperty("spectrum.marker.size", mitk::IntProperty::New(2));    
   }
 
 } // namespace m2
