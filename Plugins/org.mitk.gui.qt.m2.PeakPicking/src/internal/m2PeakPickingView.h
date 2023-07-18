@@ -62,7 +62,7 @@ protected:
   // using PeakVectorType = m2::SpectrumImageBase::IntervalVectorType;
   // PeakVectorType m_PeakList;
   QMetaObject::Connection m_Connection;
-  mitk::DataNode::Pointer AddNewPeakListToDataStorage(const mitk::DataNode *parent, std::string name);
+  mitk::DataNode::Pointer CreatePeakList(const mitk::DataNode *parent, std::string name);
   std::vector<m2::Interval> PeakPicking(const std::vector<double> &xs, const std::vector<double> &ys);
 
   void SetGroupProcessProfileSpectraEnabled(bool v);

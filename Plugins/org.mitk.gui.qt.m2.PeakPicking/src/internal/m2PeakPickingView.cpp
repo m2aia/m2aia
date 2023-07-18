@@ -138,7 +138,16 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   // m_Controls.sourceCenroidSelector->SetAutoSelectNewNodes(true);
   m_Controls.sourceMultipleCenroidsSelector->SetEmptyInfo(QString("Select Source Centroid Spectra"));
   m_Controls.sourceMultipleCenroidsSelector->SetPopUpTitel(QString("Select Source Centroid Spectra"));
-  m_Controls.sourceMultipleCenroidsSelector->SetNodePredicate(NodePredicateIsCentroidSpectrum);
+  m_Controls.sourceMultipleCenroidsSelector->SetNodePredicate(
+    mitk::NodePredicateAnd::New(NodePredicateIsCentroidSpectrum, NodePredicateNoActiveHelper));
+
+  m_Controls.sourceCentroidsSelector->SetDataStorage(GetDataStorage());
+  m_Controls.sourceCentroidsSelector->SetSelectionIsOptional(true);
+  m_Controls.sourceCentroidsSelector->SetAutoSelectNewNodes(true);
+  m_Controls.sourceCentroidsSelector->SetEmptyInfo(QString("Select Source Centroid Spectrum"));
+  m_Controls.sourceCentroidsSelector->SetPopUpTitel(QString("Select Source Centroid Spectrum"));
+  m_Controls.sourceCentroidsSelector->SetNodePredicate(
+    mitk::NodePredicateAnd::New(NodePredicateIsCentroidSpectrum, NodePredicateNoActiveHelper));
 
   m_Controls.sourceProfileImageSelector->SetDataStorage(GetDataStorage());
   m_Controls.sourceProfileImageSelector->SetSelectionIsOptional(true);
@@ -187,8 +196,9 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
     m_Controls.btnPickPeaksOverview, &QAbstractButton::clicked, this, &m2PeakPickingView::OnStartPeakPickingOverview);
 
   connect(m_Controls.btnCombineList, &QAbstractButton::clicked, this, &m2PeakPickingView::OnCombineLists);
-  
-    // connect(m_Controls.btnRunSparsePCA, SIGNAL(clicked()), this, SLOT(OnStartSparsePCA()));
+  connect(m_Controls.btnBinPeaks, &QAbstractButton::clicked, this, &m2PeakPickingView::OnStartPeakBinning);
+
+  // connect(m_Controls.btnRunSparsePCA, SIGNAL(clicked()), this, SLOT(OnStartSparsePCA()));
   // connect(m_Controls.btnStartPeakPicking, &QCommandLinkButton::clicked, this,
   // &m2PeakPickingView::OnStartPeakPicking);
   // connect(m_Controls.btnPCA, &QCommandLinkButton::clicked, this, &m2PeakPickingView::OnStartPCA);
@@ -210,7 +220,7 @@ void m2PeakPickingView::OnCurrentTabChanged(unsigned int idx)
   m_Controls.tabWidget->widget(0)->layout()->removeWidget(m_Controls.peakPickingControls);
   m_Controls.tabWidget->widget(1)->layout()->removeWidget(m_Controls.peakPickingControls);
   m_Controls.tabWidget->widget(1)->layout()->removeWidget(m_Controls.binningControls);
-  m_Controls.tabWidget->widget(2)->layout()->removeWidget(m_Controls.binningControls);
+  m_Controls.tabWidget->widget(3)->layout()->removeWidget(m_Controls.binningControls);
 
   disconnect(m_Controls.sbTolerance, SIGNAL(valueChanged(double)), this, 0);
   disconnect(m_Controls.sbDistance, SIGNAL(valueChanged(double)), this, 0);
@@ -236,6 +246,11 @@ void m2PeakPickingView::OnCurrentTabChanged(unsigned int idx)
       ->insertWidget(2, m_Controls.binningControls);
   }
   else if (tabText == "Combine Centroids")
+  { // 2
+    // dynamic_cast<QVBoxLayout *>(m_Controls.tabWidget->currentWidget()->layout())
+    //   ->insertWidget(1, m_Controls.binningControls);
+  }
+  else if (tabText == "Binning")
   { // 2
     dynamic_cast<QVBoxLayout *>(m_Controls.tabWidget->currentWidget()->layout())
       ->insertWidget(1, m_Controls.binningControls);
@@ -273,11 +288,11 @@ void m2PeakPickingView::OnUpdateUIPixelWiseTab() {}
 
 void m2PeakPickingView::OnUpdateUICentroidTab() {}
 
-mitk::DataNode::Pointer m2PeakPickingView::AddNewPeakListToDataStorage(const mitk::DataNode *parent, std::string name)
+mitk::DataNode::Pointer m2PeakPickingView::CreatePeakList(const mitk::DataNode *parent, std::string name)
 {
   auto node = mitk::DataNode::New();
-  
-  if(parent)
+
+  if (parent)
     m2::CopyNodeProperties(parent, node);
   else
     m2::DefaultNodeProperties(node);
@@ -288,7 +303,6 @@ mitk::DataNode::Pointer m2PeakPickingView::AddNewPeakListToDataStorage(const mit
   intervals->SetInfo("centroids");
   node->SetName(name);
   node->SetData(intervals);
-  GetDataStorage()->Add(node, const_cast<mitk::DataNode *>(parent));
   return node;
 }
 
@@ -318,7 +332,51 @@ std::vector<m2::Interval> m2PeakPickingView::PeakPicking(const std::vector<doubl
   return peaks;
 }
 
-void m2PeakPickingView::OnStartPeakBinning() {}
+void m2PeakPickingView::OnStartPeakBinning()
+{
+  if (auto sourceNode = m_Controls.sourceCentroidsSelector->GetSelectedNode())
+  {
+    auto sourceData = dynamic_cast<m2::IntervalVector *>(sourceNode->GetData());
+    std::vector<double> xsAll = sourceData->GetXMean();
+    std::vector<double> ysAll = sourceData->GetYMax();
+    std::vector<unsigned int> ssAll(xsAll.size(), 0);
+    std::iota(std::begin(ssAll), std::end(ssAll), 0);
+
+    using dIt = decltype(cbegin(xsAll));
+    using iIt = decltype(cbegin(ssAll));
+    auto Grouper = m2::Signal::grouperStrict<dIt, dIt, dIt, iIt>;
+
+    // auto Grouper = m2::Signal::grouperRelaxed<dIt, dIt, dIt, iIt>;
+    auto R = m2::Signal::groupBinning(xsAll, ysAll, ssAll, Grouper, m_Controls.sbBinningTolerance->value());
+    // no filtering: How to filter peaks if multiple images sources?
+
+    auto I = std::get<0>(R);
+    std::string targetNodeName = "Binned Centroids (" + sourceNode->GetName() + ")";
+    auto targetNode = GetDerivations(sourceNode, targetNodeName);
+    bool targetNodeAlreadyInDataStorage = targetNode;
+    if (!targetNode)
+      targetNode = CreatePeakList(sourceNode, targetNodeName);
+
+    auto targetData = dynamic_cast<m2::IntervalVector *>(targetNode->GetData());
+    targetData->GetIntervals() = I;
+
+    if (auto prop = sourceData->GetProperty("spectrum.pixel.count"))
+    {
+      auto numberOfValidPixels = dynamic_cast<mitk::IntProperty *>(prop.GetPointer())->GetValue();
+      targetData->SetProperty("spectrum.pixel.count", mitk::IntProperty::New(numberOfValidPixels));
+    }
+    else
+    {
+      MITK_WARN << "Number Source pixel is not given!";
+    }
+
+    targetData->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
+    targetNode->Modified();
+
+    if (!targetNodeAlreadyInDataStorage)
+      GetDataStorage()->Add(targetNode, sourceNode);
+  }
+}
 
 mitk::DataNode::Pointer m2PeakPickingView::GetParent(const mitk::DataNode *node)
 {
@@ -329,8 +387,8 @@ mitk::DataNode::Pointer m2PeakPickingView::GetParent(const mitk::DataNode *node)
     return nullptr;
 }
 
-
-mitk::DataNode::Pointer m2PeakPickingView::GetNode(std::string substring){
+mitk::DataNode::Pointer m2PeakPickingView::GetNode(std::string substring)
+{
   auto nodes = GetDataStorage()->GetAll();
   if (!nodes->empty())
   {
@@ -340,7 +398,6 @@ mitk::DataNode::Pointer m2PeakPickingView::GetNode(std::string substring){
   }
   return nullptr;
 }
-
 
 mitk::DataNode::Pointer m2PeakPickingView::GetDerivations(const mitk::DataNode *parentNode, std::string substring)
 {
@@ -364,14 +421,14 @@ void m2PeakPickingView::OnStartPeakPickingOverview()
     auto parentNode = GetParent(sourceNode);
     const auto sourceName = sourceNode->GetName();
     const auto parentName = parentNode->GetName();
-    
+
     // auto p1 = sourceName.find(parentNode->GetName());
     std::string targetNodeName = "Overview Centroids";
     auto targetNode = GetDerivations(parentNode, targetNodeName);
     // find target if in selection
-
+    bool targetNodeAlreadyInDataStorage = targetNode;
     if (!targetNode)
-      targetNode = AddNewPeakListToDataStorage(parentNode, targetNodeName);
+      targetNode = CreatePeakList(parentNode, targetNodeName);
 
     auto targetData = dynamic_cast<m2::IntervalVector *>(targetNode->GetData());
     auto sourceData = dynamic_cast<m2::IntervalVector *>(sourceNode->GetData());
@@ -382,10 +439,13 @@ void m2PeakPickingView::OnStartPeakPickingOverview()
 
     targetData->GetIntervals() = PeakPicking(xs, ys);
     auto image = dynamic_cast<m2::SpectrumImageBase *>(parentNode->GetData());
-    
+
     targetData->SetProperty("spectrum.pixel.count", mitk::IntProperty::New(image->GetNumberOfValidPixels()));
     targetData->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
     targetNode->Modified();
+
+    if (!targetNodeAlreadyInDataStorage)
+      GetDataStorage()->Add(targetNode, parentNode);
   }
 
   OnUpdateUILabel();
@@ -464,9 +524,9 @@ void m2PeakPickingView::OnStartPeakPickingImage()
 
     std::string targetNodeName = "Image Centeoids (" + imageNode->GetName() + ")";
     auto targetNode = GetDerivations(imageNode, targetNodeName);
-
+    bool targetNodeAlreadyInDataStorage = targetNode;
     if (!targetNode)
-      targetNode = AddNewPeakListToDataStorage(imageNode, targetNodeName);
+      targetNode = CreatePeakList(imageNode, targetNodeName);
 
     auto targetData = dynamic_cast<m2::IntervalVector *>(targetNode->GetData());
     targetData->GetIntervals() = newI;
@@ -475,69 +535,54 @@ void m2PeakPickingView::OnStartPeakPickingImage()
     targetData->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
     targetNode->Modified();
 
-    OnUpdateUILabel();
+    if (!targetNodeAlreadyInDataStorage)
+      GetDataStorage()->Add(targetNode, imageNode);
   }
 }
 
 void m2PeakPickingView::OnCombineLists()
 {
   auto sourceNodes = m_Controls.sourceMultipleCenroidsSelector->GetSelectedNodesStdVector();
-  if(sourceNodes.empty()) return;
+  if (sourceNodes.empty())
+    return;
 
-  using namespace std;
-  vector<double> xs, ys, xsAll, ysAll;
-  vector<int> ssAll;
+  int numberOfValidPixels = 0;
   std::string targetNodeName = "Combined Centeoids";
-  
   auto targetNode = GetNode(targetNodeName);
+  bool targetNodeAlreadyInDataStorage = targetNode;
   if (!targetNode)
-    targetNode = AddNewPeakListToDataStorage(nullptr, targetNodeName);
-  
+    targetNode = CreatePeakList(nullptr, targetNodeName);
+
   int i = 0;
-  int countSum = 0;
+  auto targetData = dynamic_cast<m2::IntervalVector *>(targetNode->GetData());
   for (auto sourceNode : sourceNodes)
   {
-    auto source = dynamic_cast<const m2::IntervalVector *>(sourceNode->GetData());
-
-    auto xsAllIt = back_inserter(xsAll);
-    auto ysAllIt = back_inserter(ysAll);
-    auto ssAllIt = back_inserter(ssAll);
-    auto xs = source->GetXMean();
-    auto ys = source->GetYMax();
-    copy(begin(xs), end(xs), xsAllIt);
-    copy(begin(ys), end(ys), ysAllIt);
-    fill_n(ssAllIt, xs.size(), i);
-
-    int count = 0;
-    sourceNode->GetIntProperty("spectrum.pixel.count", count);
-    countSum += count;
+    auto sourceData = dynamic_cast<const m2::IntervalVector *>(sourceNode->GetData());
+    std::transform(sourceData->GetIntervals().begin(),
+                   sourceData->GetIntervals().end(),
+                   std::back_inserter(targetData->GetIntervals()),
+                   [i](m2::Interval v)
+                   {
+                     v.sourceId = i;
+                     return v;
+                   });
     ++i;
+
+    if (auto prop = sourceData->GetProperty("spectrum.pixel.count"))
+    {
+      numberOfValidPixels += dynamic_cast<mitk::IntProperty *>(prop.GetPointer())->GetValue();
+    }
+    else
+    {
+      MITK_WARN << "Number Source pixel is not given!";
+    }
   }
 
-  auto indices = m2::argsort(xsAll);
-  auto xsSorted = m2::argsortApply(xsAll, indices);
-  auto ysSorted = m2::argsortApply(ysAll, indices);
-  auto ssSorted = m2::argsortApply(ssAll, indices);
-  // idxSorted = m2::argsortApply(idxAll, indices);
+  std::sort(targetData->GetIntervals().begin(), targetData->GetIntervals().end());
 
-  using dIt = decltype(cbegin(xsAll));
-  using iIt = decltype(cbegin(ssAll));
-  auto Grouper = m2::Signal::grouperStrict<dIt, dIt, dIt, iIt>;
-  // auto Grouper = m2::Signal::grouperRelaxed<dIt, dIt, dIt, iIt>;
-  auto R = m2::Signal::groupBinning(xsSorted, ysSorted, ssSorted, Grouper, m_Controls.sbBinningTolerance->value());
-
-  // mean number of spectra
-  auto frequency = m_Controls.sbFilterPeaks->value() / double(100) * countSum/double(i);
-  auto I = get<0>(R);
-
-  auto targetData = dynamic_cast<m2::IntervalVector *>(targetNode->GetData());
-
-  copy_if(begin(I),
-          end(I),
-          back_inserter(targetData->GetIntervals()),
-          [frequency](const m2::Interval &in) { return in.x.count() > frequency; });
-
-
+  if (!targetNodeAlreadyInDataStorage)
+    GetDataStorage()->Add(targetNode);
+  targetData->SetProperty("spectrum.pixel.count", mitk::IntProperty::New(numberOfValidPixels));
   targetData->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
   targetNode->Modified();
 }
