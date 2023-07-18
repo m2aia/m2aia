@@ -366,13 +366,24 @@ QGroupBox#ckbMonoisotopic::title {
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>3</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabOverviewSpectra">
       <attribute name="title">
        <string>Overview</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
+        <widget class="QLabel" name="label_3">
+         <property name="text">
+          <string>Apply Peak Picking for the selected continuous profile overview spectrum.
+Different overview spectrum types (mean/max/single) can be handled in the Data view.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QmitkSingleNodeSelectionWidget" name="sourceProfileSelector" native="true">
          <property name="sizePolicy">
@@ -420,6 +431,18 @@ QGroupBox#ckbMonoisotopic::title {
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <item>
+        <widget class="QLabel" name="label_4">
+         <property name="text">
+          <string>Select a continuous profile spectrum image.
+Apply Peak Picking for each individual spectrum.
+Combines all  peaks to a single list and apply binning.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QmitkSingleNodeSelectionWidget" name="sourceProfileImageSelector" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -465,6 +488,13 @@ QGroupBox#ckbMonoisotopic::title {
        <string>Combine Centroids</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_7">
+       <item>
+        <widget class="QLabel" name="label_5">
+         <property name="text">
+          <string>Select and combine multiple lists centroids.</string>
+         </property>
+        </widget>
+       </item>
        <item>
         <widget class="QmitkMultiNodeSelectionWidget" name="sourceMultipleCenroidsSelector" native="true">
          <property name="sizePolicy">
@@ -526,6 +556,13 @@ QGroupBox#ckbMonoisotopic::title {
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout_3">
        <item>
+        <widget class="QLabel" name="label_6">
+         <property name="text">
+          <string>Apply binning to the selected list of centroids.</string>
+         </property>
+        </widget>
+       </item>
+       <item>
         <widget class="QmitkSingleNodeSelectionWidget" name="sourceCentroidsSelector" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
@@ -553,6 +590,63 @@ QGroupBox#ckbMonoisotopic::title {
        </item>
        <item>
         <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tab_2">
+      <attribute name="title">
+       <string>Export Images</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_10">
+       <item>
+        <widget class="QLabel" name="label_7">
+         <property name="text">
+          <string>Create and save individual images to disk. Select a spectrum image, a list of centroids, and define the tolerance in the Data View.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QmitkMultiNodeSelectionWidget" name="imageExportSelector" native="true">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>15</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QmitkSingleNodeSelectionWidget" name="centroidExportSelector" native="true">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>15</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="btnExportImages">
+         <property name="text">
+          <string>Export</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_5">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
          </property>

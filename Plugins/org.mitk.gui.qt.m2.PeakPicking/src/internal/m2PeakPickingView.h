@@ -69,7 +69,7 @@ protected:
   void SetGroupProcessCentroidSpectraEnabled(bool v);
   mitk::DataNode *GetParent(mitk::DataNode *) const;
 
-  mitk::NodePredicateFunction::Pointer m_NodePredicateIsProfileSpectrumImage = mitk::NodePredicateFunction::New(
+  mitk::NodePredicateFunction::Pointer NodePredicateIsProfileSpectrumImage = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) -> bool
     {
       if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
@@ -78,16 +78,37 @@ protected:
       return false;
     });
 
-  mitk::NodePredicateFunction::Pointer m_NodePredicateIsVisible = mitk::NodePredicateFunction::New(
+  mitk::NodePredicateFunction::Pointer NodePredicateIsVisible = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) { return node->IsVisible(nullptr, "visible", false); });
 
-  mitk::NodePredicateFunction::Pointer m_NodePredicateIsActiveHelperNode = mitk::NodePredicateFunction::New(
+  mitk::NodePredicateFunction::Pointer NodePredicateIsActiveHelperNode = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) { return node->IsOn("helper object", nullptr, false); });
 
-  mitk::NodePredicateAnd::Pointer m_NodePredicateProcessableProfileImage =
-    mitk::NodePredicateAnd::New(m_NodePredicateIsProfileSpectrumImage,
-                                m_NodePredicateIsVisible,
-                                mitk::NodePredicateNot::New(m_NodePredicateIsActiveHelperNode));
+  mitk::NodePredicateFunction::Pointer NodePredicateIsCentroidSpectrum = mitk::NodePredicateFunction::New(
+    [this](const mitk::DataNode *node) -> bool
+    {
+      if (auto intervals = dynamic_cast<m2::IntervalVector *>(node->GetData()))
+        return ((unsigned int)(intervals->GetType())) & ((unsigned int)(m2::SpectrumFormat::Centroid));
+      return false;
+    });
+
+  mitk::NodePredicateFunction::Pointer NodePredicateIsProfileSpectrum = mitk::NodePredicateFunction::New(
+    [this](const mitk::DataNode *node) -> bool
+    {
+      if (auto intervals = dynamic_cast<m2::IntervalVector *>(node->GetData()))
+        return ((unsigned int)(intervals->GetType())) & ((unsigned int)(m2::SpectrumFormat::Profile));
+      return false;
+    });
+
+  mitk::NodePredicateFunction::Pointer NodePredicateIsOverviewSpectrum = mitk::NodePredicateFunction::New(
+    [this](const mitk::DataNode *node)
+    {
+      if (auto intervals = dynamic_cast<m2::IntervalVector *>(node->GetData()))
+        return intervals->GetInfo().find("overview") != std::string::npos;
+      return false;
+    });
+
+  mitk::NodePredicateNot::Pointer NodePredicateNoActiveHelper = mitk::NodePredicateNot::New(NodePredicateIsActiveHelperNode);
 
   /**
    * Find the parent node of a given node
@@ -106,16 +127,13 @@ protected:
 
 
   protected slots:
-    void OnUpdateUI();
-    void OnUpdateUIOverviewTab();
-    void OnUpdateUIPixelWiseTab();
-    void OnUpdateUICentroidTab();
+    
     void OnCurrentTabChanged(unsigned int);
 
     void OnStartPeakPickingOverview();
     void OnStartPeakPickingImage();
-    void OnUpdateUILabel();
-    void OnCombineLists();
+    void OnStartCombineLists();
+    void OnStartExportImages();
     void OnStartPeakBinning();
   };
 

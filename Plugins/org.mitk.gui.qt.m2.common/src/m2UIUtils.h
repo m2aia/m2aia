@@ -86,10 +86,8 @@ namespace m2
     void NextImage();
     void PreviousImage();
     void IncreaseTolerance();
-    void DecreaseTolerance();
-
-    void OverviewSpectrumChanged(const mitk::DataNode *, m2::SpectrumType);
-    
+    void DecreaseTolerance(); 
+    void RequestTolerance(float x, float & tol);
   
   private:
   };

@@ -62,7 +62,6 @@ const std::string m2PeakPickingView::VIEW_ID = "org.mitk.views.m2.PeakPicking";
 
 void m2PeakPickingView::SetFocus()
 {
-  OnUpdateUI();
   OnStartPeakPickingOverview();
 }
 
@@ -80,50 +79,13 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
 {
   using namespace std;
 
-  auto NodePredicateIsCentroidSpectrum = mitk::NodePredicateFunction::New(
-    [this](const mitk::DataNode *node) -> bool
-    {
-      if (auto intervals = dynamic_cast<m2::IntervalVector *>(node->GetData()))
-        return ((unsigned int)(intervals->GetType())) & ((unsigned int)(m2::SpectrumFormat::Centroid));
-      return false;
-    });
-
-  auto NodePredicateIsProfileSpectrum = mitk::NodePredicateFunction::New(
-    [this](const mitk::DataNode *node) -> bool
-    {
-      if (auto intervals = dynamic_cast<m2::IntervalVector *>(node->GetData()))
-        return ((unsigned int)(intervals->GetType())) & ((unsigned int)(m2::SpectrumFormat::Profile));
-      return false;
-    });
-
-  auto NodePredicateIsOverviewSpectrum = mitk::NodePredicateFunction::New(
-    [this](const mitk::DataNode *node)
-    {
-      if (auto intervals = dynamic_cast<m2::IntervalVector *>(node->GetData()))
-        return intervals->GetInfo().find("overview") != std::string::npos;
-      return false;
-    });
-
-  auto NodePredicateNoActiveHelper = mitk::NodePredicateNot::New(m_NodePredicateIsActiveHelperNode);
-
-  // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
-  // m_Controls.peakPickingControls->setAutoFillBackground(false);
   m_Controls.peakPickingControls->setWindowOpacity(1);
 
   m_Controls.sliderCOR->setMinimum(0.0);
   m_Controls.sliderCOR->setMaximum(1.0);
   m_Controls.sliderCOR->setValue(0.95);
   m_Controls.sliderCOR->setSingleStep(0.01);
-
-  // m_Controls.targetCenroidSelector->SetDataStorage(GetDataStorage());
-  // m_Controls.targetCenroidSelector->SetSelectionIsOptional(true);
-  // m_Controls.targetCenroidSelector->SetEmptyInfo(QString("Target Spectrum"));
-  // m_Controls.targetCenroidSelector->SetPopUpTitel(QString("Target Spectrum"));
-  // m_Controls.targetCenroidSelector->SetNodePredicate(
-  //   mitk::NodePredicateAnd::New(NodePredicateIsCentroidSpectrum,
-  //                               NodePredicateNoActiveHelper,
-  //                               mitk::NodePredicateNot::New(NodePredicateIsOverviewSpectrum)));
 
   m_Controls.sourceProfileSelector->SetDataStorage(GetDataStorage());
   m_Controls.sourceProfileSelector->SetSelectionIsOptional(true);
@@ -154,7 +116,21 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.sourceProfileImageSelector->SetAutoSelectNewNodes(true);
   m_Controls.sourceProfileImageSelector->SetEmptyInfo(QString("Select Source Profile Spectrum Image"));
   m_Controls.sourceProfileImageSelector->SetPopUpTitel(QString("Select Source Profile Spectrum Image"));
-  m_Controls.sourceProfileImageSelector->SetNodePredicate(m_NodePredicateIsProfileSpectrumImage);
+  m_Controls.sourceProfileImageSelector->SetNodePredicate(NodePredicateIsProfileSpectrumImage);
+
+  m_Controls.imageExportSelector->SetDataStorage(GetDataStorage());
+  m_Controls.imageExportSelector->SetSelectionIsOptional(true);
+  m_Controls.imageExportSelector->SetEmptyInfo(QString("Select Spectrum Image(s)"));
+  m_Controls.imageExportSelector->SetPopUpTitel(QString("Select Spectrum Image(s)"));
+  m_Controls.imageExportSelector->SetNodePredicate(mitk::NodePredicateAnd::New(
+    mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(), NodePredicateNoActiveHelper, NodePredicateIsVisible));
+
+  m_Controls.centroidExportSelector->SetDataStorage(GetDataStorage());
+  m_Controls.centroidExportSelector->SetSelectionIsOptional(true);
+  m_Controls.centroidExportSelector->SetEmptyInfo(QString("Select Centroids"));
+  m_Controls.centroidExportSelector->SetPopUpTitel(QString("Select Centroids"));
+  m_Controls.centroidExportSelector->SetNodePredicate(
+    mitk::NodePredicateAnd::New(NodePredicateIsCentroidSpectrum, NodePredicateNoActiveHelper));
 
   connect(m_Controls.sbTolerance, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
   connect(m_Controls.sbDistance, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
@@ -163,27 +139,14 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   connect(m_Controls.sliderCOR, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
   connect(
     m_Controls.btnPickPeaksPixelWise, &QAbstractButton::clicked, this, &m2PeakPickingView::OnStartPeakPickingImage);
+  connect(m_Controls.btnExportImages, &QAbstractButton::clicked, this, &m2PeakPickingView::OnStartExportImages);
 
   parent->layout()->removeWidget(m_Controls.peakPickingControls);
   parent->layout()->removeWidget(m_Controls.binningControls);
 
   connect(m_Controls.tabWidget, &QTabWidget::currentChanged, this, &m2PeakPickingView::OnCurrentTabChanged);
   m_Controls.tabWidget->setCurrentIndex(0);
-
-  connect(m_Controls.sourceProfileSelector,
-          &QmitkAbstractNodeSelectionWidget::CurrentSelectionChanged,
-          this,
-          [this]() { OnUpdateUI(); });
-
-  connect(m_Controls.sourceProfileSelector,
-          &QmitkAbstractNodeSelectionWidget::CurrentSelectionChanged,
-          this,
-          [this]() { OnUpdateUI(); });
-
-  // connect(m_Controls.targetCenroidSelector,
-  //         &QmitkAbstractNodeSelectionWidget::CurrentSelectionChanged,
-  //         this,
-  //         [this]() { OnUpdateUI(); });
+  OnCurrentTabChanged(0);
 
   connect(m_Controls.ckbMonoisotopic,
           &QCheckBox::toggled,
@@ -195,7 +158,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   connect(
     m_Controls.btnPickPeaksOverview, &QAbstractButton::clicked, this, &m2PeakPickingView::OnStartPeakPickingOverview);
 
-  connect(m_Controls.btnCombineList, &QAbstractButton::clicked, this, &m2PeakPickingView::OnCombineLists);
+  connect(m_Controls.btnCombineList, &QAbstractButton::clicked, this, &m2PeakPickingView::OnStartCombineLists);
   connect(m_Controls.btnBinPeaks, &QAbstractButton::clicked, this, &m2PeakPickingView::OnStartPeakBinning);
 
   // connect(m_Controls.btnRunSparsePCA, SIGNAL(clicked()), this, SLOT(OnStartSparsePCA()));
@@ -210,12 +173,13 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   // const auto dockerAvailable = mitk::DockerHelper::CheckDocker();
   // m_Controls.tabSparsePCA->setEnabled(dockerAvailable);
   // m_Controls.tabUmap->setEnabled(dockerAvailable);
-  OnUpdateUI();
 }
 
 void m2PeakPickingView::OnCurrentTabChanged(unsigned int idx)
 {
   const auto tabText = m_Controls.tabWidget->tabText(idx);
+  m_Controls.peakPickingControls->setVisible(false);
+  m_Controls.binningControls->setVisible(false);
 
   m_Controls.tabWidget->widget(0)->layout()->removeWidget(m_Controls.peakPickingControls);
   m_Controls.tabWidget->widget(1)->layout()->removeWidget(m_Controls.peakPickingControls);
@@ -228,65 +192,60 @@ void m2PeakPickingView::OnCurrentTabChanged(unsigned int idx)
   disconnect(m_Controls.sliderHWS, SIGNAL(valueChanged(double)), this, 0);
   disconnect(m_Controls.sliderCOR, SIGNAL(valueChanged(double)), this, 0);
 
-  if (tabText == "Overview")
-  { // 0
+  if (idx == 0) // "Overview"
+  {             // 0
     dynamic_cast<QVBoxLayout *>(m_Controls.tabWidget->currentWidget()->layout())
-      ->insertWidget(1, m_Controls.peakPickingControls);
+      ->insertWidget(2, m_Controls.peakPickingControls);
     connect(m_Controls.sbTolerance, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
     connect(m_Controls.sbDistance, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
     connect(m_Controls.sliderSNR, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
     connect(m_Controls.sliderHWS, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
     connect(m_Controls.sliderCOR, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
+    m_Controls.peakPickingControls->setVisible(true);
   }
-  else if (tabText == "Pixel-wise")
-  { // 1
+  else if (idx == 1) // "Pixel-wise"
+  {                  // 1
     dynamic_cast<QVBoxLayout *>(m_Controls.tabWidget->currentWidget()->layout())
-      ->insertWidget(1, m_Controls.peakPickingControls);
+      ->insertWidget(2, m_Controls.peakPickingControls);
     dynamic_cast<QVBoxLayout *>(m_Controls.tabWidget->currentWidget()->layout())
-      ->insertWidget(2, m_Controls.binningControls);
+      ->insertWidget(3, m_Controls.binningControls);
+    m_Controls.peakPickingControls->setVisible(true);
+    m_Controls.binningControls->setVisible(true);
   }
-  else if (tabText == "Combine Centroids")
-  { // 2
+  else if (idx == 2) // "Combine Centroids"
+  {                  // 2
     // dynamic_cast<QVBoxLayout *>(m_Controls.tabWidget->currentWidget()->layout())
     //   ->insertWidget(1, m_Controls.binningControls);
   }
-  else if (tabText == "Binning")
-  { // 2
+  else if (idx == 3) // "Binning"
+  {                  // 2
     dynamic_cast<QVBoxLayout *>(m_Controls.tabWidget->currentWidget()->layout())
-      ->insertWidget(1, m_Controls.binningControls);
+      ->insertWidget(2, m_Controls.binningControls);
+    m_Controls.binningControls->setVisible(true);
   }
 }
 
-void m2PeakPickingView::OnUpdateUI()
-{
-  m_Controls.btnPickPeaksPixelWise->setEnabled(m_Controls.sourceProfileImageSelector->GetSelectedNode());
-  // m_Controls.peakPickingControls->setEnabled(false);
+void m2PeakPickingView::OnStartExportImages() {
 
-  // const auto profileSelection = m_Controls.sourceProfileSelector->GetSelectedNodesStdVector();
-  // if (profileSelection.empty())
-  // {
-  //   auto subset = GetDataStorage()->GetSubset(m_NodePredicateProcessableProfileImage);
-  //   if(subset && !subset->empty()){
-  //     m_Controls.peakPickingControls->setEnabled(true);
-  //   }
-  // }
-  // else
-  // {
-  //   m_Controls.peakPickingControls->setEnabled(true);
-  // }
+  auto imageNodes = m_Controls.imageExportSelector->GetSelectedNodesStdVector();
+  auto centroidNodes = m_Controls.centroidExportSelector->GetSelectedNodesStdVector();
+  float tol = 1;
 
-  // const auto centroidSelection = m_Controls.sourceCenroidSelector->GetSelectedNodesStdVector();
-  // if (!centroidSelection.empty())
-  // {
-  //   m_Controls.centroidControls->setEnabled(true);
-  // }
+  for(auto imageNode : imageNodes){
+    auto image = dynamic_cast<m2::SpectrumImageBase *>(imageNode->GetData());
+    for(auto centroidNode : centroidNodes){
+      auto centroids = dynamic_cast<m2::IntervalVector *>(centroidNode->GetData());
+      for(const m2::Interval & i: centroids->GetIntervals()){
+        emit m2::UIUtils::Instance()->RequestTolerance(i.x.mean(), tol);
+        auto ionImage = mitk::Image::New();
+        ionImage->Initialize(dynamic_cast<mitk::Image *>(image));
+        image->GetImage(i.x.mean(), tol, nullptr, ionImage );
+        mitk::IOUtil::Save(ionImage, "/tmp/" +imageNode->GetName() + "_" + std::to_string(i.x.mean()) + ".nrrd");
+      }
+    }
+  }
+
 }
-
-void m2PeakPickingView::OnUpdateUIOverviewTab() {}
-
-void m2PeakPickingView::OnUpdateUIPixelWiseTab() {}
-
-void m2PeakPickingView::OnUpdateUICentroidTab() {}
 
 mitk::DataNode::Pointer m2PeakPickingView::CreatePeakList(const mitk::DataNode *parent, std::string name)
 {
@@ -296,6 +255,26 @@ mitk::DataNode::Pointer m2PeakPickingView::CreatePeakList(const mitk::DataNode *
     m2::CopyNodeProperties(parent, node);
   else
     m2::DefaultNodeProperties(node);
+
+  if (auto prop = node->GetPropertyList()->GetProperty("spectrum.plot.color"))
+  {
+    mitk::Color mitkColor = dynamic_cast<mitk::ColorProperty *>(prop)->GetColor();
+    float variationAmount = 0.50;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<float> distribution(-variationAmount, variationAmount);
+
+    // Add random offset to each RGB component
+    mitkColor[0] += distribution(gen);
+    mitkColor[1] += distribution(gen);
+    mitkColor[2] += distribution(gen);
+
+    // Clamp the values to [0, 1]
+    mitkColor[0] = std::max(0.0f, std::min(1.0f, mitkColor[0]));
+    mitkColor[1] = std::max(0.0f, std::min(1.0f, mitkColor[1]));
+    mitkColor[2] = std::max(0.0f, std::min(1.0f, mitkColor[2]));
+    node->GetPropertyList()->SetProperty("spectrum.plot.color", mitk::ColorProperty::New(mitkColor));
+  }
 
   node->SetIntProperty("spectrum.marker.size", 4);
   auto intervals = m2::IntervalVector::New();
@@ -447,9 +426,6 @@ void m2PeakPickingView::OnStartPeakPickingOverview()
     if (!targetNodeAlreadyInDataStorage)
       GetDataStorage()->Add(targetNode, parentNode);
   }
-
-  OnUpdateUILabel();
-  // emit m2::UIUtils::Instance()->BroadcastProcessingNodes("", node);
 }
 
 void m2PeakPickingView::OnStartPeakPickingImage()
@@ -540,7 +516,7 @@ void m2PeakPickingView::OnStartPeakPickingImage()
   }
 }
 
-void m2PeakPickingView::OnCombineLists()
+void m2PeakPickingView::OnStartCombineLists()
 {
   auto sourceNodes = m_Controls.sourceMultipleCenroidsSelector->GetSelectedNodesStdVector();
   if (sourceNodes.empty())
@@ -585,21 +561,4 @@ void m2PeakPickingView::OnCombineLists()
   targetData->SetProperty("spectrum.pixel.count", mitk::IntProperty::New(numberOfValidPixels));
   targetData->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
   targetNode->Modified();
-}
-
-void m2PeakPickingView::OnUpdateUILabel()
-{
-  // auto vectorNode = m_Controls.targetCenroidSelector->GetSelectedNode();
-  // if (!vectorNode)
-  // {
-  //   m_Controls.labelPeakList->setText(QString("Peaks (%1/%2)").arg(0).arg(0));
-  //   return;
-  // }
-
-  // auto vector = dynamic_cast<m2::IntervalVector *>(vectorNode->GetData());
-  // if (!vector)
-  //   return;
-
-  // m_Controls.labelPeakList->setText(QString("Peaks
-  // (%1/%2)").arg(selected).arg((int)vector->GetIntervals().size()));
 }
