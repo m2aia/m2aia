@@ -26,7 +26,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <usModule.h>
 #include <usModuleActivator.h>
 #include <usModuleContext.h>
-
+#include <m2IntervalVectorIO.h>
 namespace m2
 {
   /**
@@ -44,6 +44,7 @@ namespace m2
       m_FileIOs.push_back(new OpenSlideIO());
       m_FileIOs.push_back(new FSMImageIO());
       m_FileIOs.push_back(new MicroscopyTiffImageIO());
+      m_FileIOs.push_back(new IntervalVectorIO());
     }
     void Unload(us::ModuleContext *) override
     {
