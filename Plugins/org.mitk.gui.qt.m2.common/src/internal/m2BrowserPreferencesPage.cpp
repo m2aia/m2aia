@@ -19,7 +19,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkCoreServices.h>
 #include <mitkIPreferencesService.h>
 #include <mitkIPreferences.h>
-#include <berryPlatform.h>
 
 #include <mitkExceptionMacro.h>
 #include <ui_m2PreferencePage.h>
@@ -29,17 +28,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 static mitk::IPreferences* GetPreferences()
 {
-	auto preferencesService = mitk::CoreServices::GetPreferencesService();
-
-	if (preferencesService != nullptr)
-	{
-		auto systemPreferences = preferencesService->GetSystemPreferences();
-
-		if (systemPreferences)
-			return systemPreferences->Node("/org.mitk.gui.qt.m2aia.preferences");
-	}
-
-	mitkThrow();
+	auto* preferencesService = mitk::CoreServices::GetPreferencesService();
+	return preferencesService->GetSystemPreferences();
 }
 
 m2BrowserPreferencesPage::m2BrowserPreferencesPage()
@@ -65,6 +55,22 @@ void m2BrowserPreferencesPage::CreateQtControl(QWidget* parent)
 
 	m_Ui->setupUi(m_Control);
 
+	// init widgets	
+	auto bins = m_Preferences->GetInt("m2aia.view.spectrum.bins", 1500);
+	m_Ui->spnBxBins->setValue(bins);
+
+	m_Ui->useMaxIntensity->setChecked(m_Preferences->GetBool("m2aia.view.spectrum.useMaxIntensity", true));
+    m_Ui->useMinIntensity->setChecked(m_Preferences->GetBool("m2aia.view.spectrum.useMinIntensity", true));
+
+	m_ElastixPath = m_Preferences->Get("m2aia.external.elastix", "");
+	if (!m_ElastixPath.empty())
+		m_ElastixProcess->start(m_ElastixPath.c_str(), QStringList() << "--version", QProcess::ReadOnly);
+
+	m_TransformixPath = m_Preferences->Get("m2aia.external.transformix", "");
+	if (!m_TransformixPath.empty())
+		m_TransformixProcess->start(m_TransformixPath.c_str(), QStringList() << "--version", QProcess::ReadOnly);
+
+	// connect widgts
 	connect(m_ElastixProcess, SIGNAL(error(QProcess::ProcessError)), this, SLOT(OnElastixProcessError(QProcess::ProcessError)));
 	connect(m_ElastixProcess, SIGNAL(finished(int, QProcess::ExitStatus)), this, SLOT(OnElastixProcessFinished(int, QProcess::ExitStatus)));
 	connect(m_Ui->elastixButton, SIGNAL(clicked()), this, SLOT(OnElastixButtonClicked()));
@@ -77,21 +83,14 @@ void m2BrowserPreferencesPage::CreateQtControl(QWidget* parent)
 		SLOT(OnTransformixProcessFinished(int, QProcess::ExitStatus)));
 	connect(m_Ui->transformixButton, SIGNAL(clicked()), this, SLOT(OnTransformixButtonClicked()));
 
-	connect(m_Ui->spnBxBins, SIGNAL(valueChanged(const QString &)), this, SLOT(OnBinsSpinBoxValueChanged(const QString &)));
+	connect(m_Ui->spnBxBins, SIGNAL(valueChanged(int)), this, SLOT(OnBinsSpinBoxValueChanged(int)));
 	connect(m_Ui->useMaxIntensity, SIGNAL(toggled(bool)), this, SLOT(OnUseMaxIntensity(bool)));
 	connect(m_Ui->useMinIntensity, SIGNAL(toggled(bool)), this, SLOT(OnUseMinIntensity(bool)));
-
-    // image artifacts
-    connect(m_Ui->chkBxIndexImage, SIGNAL(toggled(bool)), this, SLOT(OnShowIndexImage(bool)));
-    connect(m_Ui->chkBxMaskImage, SIGNAL(toggled(bool)), this, SLOT(OnShowMaskImage(bool)));
-    connect(m_Ui->chkBxNormalizationImage, SIGNAL(toggled(bool)), this, SLOT(OnShowNormalizationImage(bool)));
-
-	this->Update();
 }
 
 
-void m2BrowserPreferencesPage::OnBinsSpinBoxValueChanged(const QString & text){
-	m_Preferences->Put("bins", text.toStdString());
+void m2BrowserPreferencesPage::OnBinsSpinBoxValueChanged(int value){
+	m_Preferences->PutInt("m2aia.view.spectrum.bins", value);
 }
 
 
@@ -195,58 +194,22 @@ void m2BrowserPreferencesPage::PerformCancel()
 
 bool m2BrowserPreferencesPage::PerformOk()
 {
-	m_Preferences->Put("elastix", m_ElastixPath);
-	m_Preferences->Put("transformix", m_TransformixPath);
+	m_Preferences->Put("m2aia.external.elastix", m_ElastixPath);
+	m_Preferences->Put("m2aia.external.transformix", m_TransformixPath);
 	return true;
 }
 
 void m2BrowserPreferencesPage::OnUseMaxIntensity(bool v){
-	m_Preferences->PutBool("useMaxIntensity", v);
+	m_Preferences->PutBool("m2aia.view.spectrum.useMaxIntensity", v);
 }
 
 void m2BrowserPreferencesPage::OnUseMinIntensity(bool v){
-	m_Preferences->PutBool("useMinIntensity", v);
-}
-
-void m2BrowserPreferencesPage::OnShowIndexImage(bool v){
-    m_Preferences->PutBool("showIndexImage", v);
-}
-
-void m2BrowserPreferencesPage::OnShowMaskImage(bool v){
-    m_Preferences->PutBool("showMaskImage", v);
-}
-
-void m2BrowserPreferencesPage::OnShowNormalizationImage(bool v){
-    m_Preferences->PutBool("showNormalizationImage", v);
+	m_Preferences->PutBool("m2aia.view.spectrum.useMinIntensity", v);
 }
 
 void m2BrowserPreferencesPage::Update()
 {
-    //optin
-    m_Ui->useMaxIntensity->setChecked(m_Preferences->GetBool("useMaxIntensity", true));
-    m_Ui->useMinIntensity->setChecked(m_Preferences->GetBool("useMinIntensity", true));
-
-    m_Ui->chkBxIndexImage->setChecked(m_Preferences->GetBool("showIndexImage", false));
-    m_Ui->chkBxMaskImage->setChecked(m_Preferences->GetBool("showMaskImage", false));
-    m_Ui->chkBxNormalizationImage->setChecked(m_Preferences->GetBool("showNormalizationImage", false));
 	
-
-	auto bins = m_Preferences->Get("bins", "");
-	if(bins.empty())
-		m_Preferences->Put("bins", m_Ui->spnBxBins->text().toStdString());
-	else
-		m_Ui->spnBxBins->setValue(std::stoi(bins));
-	
-	
-
-	m_ElastixPath = m_Preferences->Get("elastix", "");
-
-	if (!m_ElastixPath.empty())
-		m_ElastixProcess->start(m_ElastixPath.c_str(), QStringList() << "--version", QProcess::ReadOnly);
-
-
-	m_TransformixPath = m_Preferences->Get("transformix", "");
-
-	if (!m_TransformixPath.empty())
-		m_TransformixProcess->start(m_TransformixPath.c_str(), QStringList() << "--version", QProcess::ReadOnly);
+	//optin
+   
 }

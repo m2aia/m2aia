@@ -16,6 +16,10 @@ See LICENSE.txt or https://www.github.com/m2aia/m2aia for details.
 
 #include "m2SeriesDataProvider.h"
 
+#include <mitkCoreServices.h>
+#include <mitkIPreferencesService.h>
+#include <mitkIPreferences.h>
+
 #include <QColor>
 #include <QHash>
 #include <QLineSeries>
@@ -229,8 +233,12 @@ int m2::SeriesDataProvider::FindLoD(double xMin, double xMax) const
   if (m_Format == m2::SpectrumFormat::Centroid)
     return 0;
 
+  auto* preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto* preferences = preferencesService->GetSystemPreferences();
+  auto pointsWanted = preferences->GetInt("m2aia.view.spectrum.bins", 1500);
+
   int level, levelIndex = 0;
-  const auto wantedDensity = m_WantedPointsInView / double(xMax - xMin);
+  const auto wantedDensity = pointsWanted / double(xMax - xMin);
   double delta = std::numeric_limits<double>::max();
   for (const auto &dataLodVector : m_DataLoD)
   {

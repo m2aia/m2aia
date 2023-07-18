@@ -35,6 +35,10 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageStack.h>
 
+#include <usModuleInitialization.h>
+
+US_INITIALIZE_MODULE
+
 
 
 void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)

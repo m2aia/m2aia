@@ -119,7 +119,7 @@ namespace m2
 
     int FindLoD(double xMin, double xMax) const;
 
-    unsigned int m_WantedPointsInView = 1500;
+    unsigned int m_WantedPointsInView = 500;
 
   };
 } // namespace m2

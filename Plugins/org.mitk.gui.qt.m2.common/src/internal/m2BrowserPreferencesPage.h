@@ -59,14 +59,10 @@ public slots:
 	void OnTransformixProcessError(QProcess::ProcessError error);
 	void OnTransformixProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
-	void OnBinsSpinBoxValueChanged(const QString &);
+	void OnBinsSpinBoxValueChanged(int);
 
 	void OnUseMinIntensity(bool v);
 	void OnUseMaxIntensity(bool v);
-
-	void OnShowIndexImage(bool v);
-	void OnShowNormalizationImage(bool v);
-	void OnShowMaskImage(bool v);
 
 	void CreateQtControl(QWidget* parent) override;
 	QWidget* GetQtControl() const override;

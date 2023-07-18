@@ -19,7 +19,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 // Blueberry
 #include <berryISelectionService.h>
 #include <berryIWorkbenchWindow.h>
-#include <berryPlatform.h>
 #include <berryPlatformUI.h>
 
 // Qmitk
@@ -51,6 +50,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkPointSet.h>
 #include <mitkProgressBar.h>
 #include <mitkSceneIO.h>
+#include <mitkCoreServices.h>
+#include <mitkIPreferencesService.h>
+#include <mitkIPreferences.h>
 
 // itk
 #include <itkInvertIntensityImageFilter.h>
@@ -234,10 +236,10 @@ void RegistrationView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*
 
 QString RegistrationView::GetElastixPathFromPreferences() const
 {
-  berry::IPreferences::Pointer preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto* preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto* preferences = preferencesService->GetSystemPreferences();
 
-  return preferences.IsNotNull() ? preferences->Get("elastix", "") : "";
+  return preferences.IsNotNull() ? preferences->Get("m2aia.external.elastix", "") : "";
 }
 
 void RegistrationView::OnPostProcessReconstruction()

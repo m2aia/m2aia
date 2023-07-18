@@ -15,6 +15,11 @@ See LICENSE.txt for details.
 ===================================================================*/
 
 #include <m2ImzMLSpectrumImage.h>
+
+#include <mitkCoreServices.h>
+#include <mitkIPreferencesService.h>
+#include <mitkIPreferences.h>
+
 #include <m2Process.hpp>
 #include <m2SpectrumImageProcessor.h>
 #include <m2Timer.h>
@@ -819,11 +824,15 @@ template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeImageAccessProcessedData()
 {
   std::vector<std::list<m2::Interval>> peaksT(p->GetNumberOfThreads());
+
+  auto* preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto* preferences = preferencesService->GetSystemPreferences();
+  const auto binsN = preferences->GetInt("m2aia.view.spectrum.bins", 1500);
+
   for (auto &source : p->GetImzMLSpectrumImageSourceList())
   {
     auto &spectra = source.m_Spectra;
     const auto &T = p->GetNumberOfThreads();
-    const auto &binsN = p->GetNumberOfBins();
     std::vector<double> xMin(T, std::numeric_limits<double>::max());
     std::vector<double> xMax(T, std::numeric_limits<double>::min());
 

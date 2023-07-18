@@ -22,16 +22,15 @@ See LICENSE.txt for details.
 #include <QInputDialog>
 #include <QmitkRenderWindow.h>
 #include <QtConcurrent>
-#include <berryPlatform.h>
 #include <boost/format.hpp>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itksys/SystemTools.hxx>
-#include <m2ImzMLSpectrumImage.h>
 #include <m2FsmSpectrumImage.h>
+#include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageBase.h>
+#include <m2SpectrumImageDataInteractor.h>
 #include <m2SpectrumImageStack.h>
 #include <m2SubdivideImage2DFilter.h>
-#include <m2SpectrumImageDataInteractor.h>
 #include <m2UIUtils.h>
 #include <mitkColorProperty.h>
 #include <mitkCoreServices.h>
@@ -55,9 +54,6 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   m_Controls.setupUi(parent);
   m_Parent = parent;
 
-  m_M2aiaPreferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-
   InitBaselineCorrectionStrategyComboBox();
   InitNormalizationStrategyComboBox();
   InitRangePoolingStrategyComboBox();
@@ -80,11 +76,6 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   connect(UIUtilsObject, SIGNAL(IncreaseTolerance()), this, SLOT(OnIncreaseTolerance()));
   connect(UIUtilsObject, SIGNAL(DecreaseTolerance()), this, SLOT(OnDecreaseTolerance()));
 
-  
-
-
-
-
   // Settings (show hlper objects)
   using namespace mitk;
 
@@ -95,17 +86,18 @@ void m2Data::CreateQtPartControl(QWidget *parent)
     const auto c = TNodePredicateDataType<m2::FsmSpectrumImage>::New();
     const auto predicate = NodePredicateOr::New(a, b, c);
     const auto nodes = this->GetDataStorage()->GetSubset(predicate);
-    for (const auto & node  : *nodes)
+    for (const auto &node : *nodes)
     {
       const auto derivations = this->GetDataStorage()->GetDerivations(node);
-        for (const auto & dNode  : *derivations)
+      for (const auto &dNode : *derivations)
+      {
+        if (dNode->GetName().find(name) != std::string::npos)
         {
-          if(dNode->GetName().find(name) != std::string::npos){
-            dNode->SetVisibility(v != 0);
-            dNode->SetBoolProperty("helper object", v == 0);
-            this->RequestRenderWindowUpdate();
-          }
+          dNode->SetVisibility(v != 0);
+          dNode->SetBoolProperty("helper object", v == 0);
+          this->RequestRenderWindowUpdate();
         }
+      }
     }
   };
 
@@ -128,6 +120,16 @@ void m2Data::CreateQtPartControl(QWidget *parent)
           &QCheckBox::stateChanged,
           this,
           [callback](int v) { callback(v, "CentroidSpectrum"); });
+
+  connect(m2::UIUtils::Instance(),
+          &m2::UIUtils::RequestTolerance,
+          this,
+          [this](float x, float &tol)
+          {
+            tol = m_Controls.spnBxTol->value();
+            if (m_Controls.rbtnTolPPM->isChecked())
+              tol = m2::PartPerMillionToFactor(tol) * x;
+          });
 
   // Make sure, that data nodes added before this view
   // is initialized are handled correctly!!
@@ -181,10 +183,10 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
 void m2Data::InitNormalizationStrategyComboBox()
 {
-  auto preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-  auto defaultValue =
-    preferences->GetInt("NormalizationStrategy", static_cast<unsigned int>(m2::NormalizationStrategyType::None));
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+  auto defaultValue = preferences->GetInt("m2aia.signal.NormalizationStrategy",
+                                          static_cast<unsigned int>(m2::NormalizationStrategyType::None));
   auto cb = Controls()->CBNormalization;
   for (unsigned int i = 0; i < m2::NormalizationStrategyTypeNames.size(); ++i)
     cb->addItem(m2::NormalizationStrategyTypeNames[i].c_str(), {i});
@@ -193,18 +195,18 @@ void m2Data::InitNormalizationStrategyComboBox()
 
 m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
 {
-  auto preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
   auto value = this->Controls()->CBNormalization->currentData().toUInt();
-  preferences->PutInt("NormalizationStrategy", value);
+  preferences->PutInt("m2aia.signal.NormalizationStrategy", value);
   return static_cast<m2::NormalizationStrategyType>(value);
 }
 
 void m2Data::InitIntensityTransformationStrategyComboBox()
 {
-  auto preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-  auto defaultValue = preferences->GetInt("IntensityTransformationStrategy",
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+  auto defaultValue = preferences->GetInt("m2aia.signal.IntensityTransformationStrategy",
                                           static_cast<unsigned int>(m2::IntensityTransformationType::None));
   auto cb = Controls()->CBTransformation;
   for (unsigned int i = 0; i < m2::IntensityTransformationTypeNames.size(); ++i)
@@ -214,19 +216,19 @@ void m2Data::InitIntensityTransformationStrategyComboBox()
 
 m2::IntensityTransformationType m2Data::GuiToIntensityTransformationStrategyType()
 {
-  auto preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
   auto value = this->Controls()->CBTransformation->currentData().toUInt();
-  preferences->PutInt("IntensityTransformationStrategy", value);
+  preferences->PutInt("m2aia.signal.IntensityTransformationStrategy", value);
   return static_cast<m2::IntensityTransformationType>(value);
 }
 
 void m2Data::InitRangePoolingStrategyComboBox()
 {
-  auto preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-  auto defaultValue =
-    preferences->GetInt("RangePoolingStrategy", static_cast<unsigned int>(m2::RangePoolingStrategyType::Maximum));
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+  auto defaultValue = preferences->GetInt("m2aia.signal.RangePoolingStrategy",
+                                          static_cast<unsigned int>(m2::RangePoolingStrategyType::Maximum));
   auto cb = Controls()->CBImagingStrategy;
   for (unsigned int i = 0; i < m2::RangePoolingStrategyTypeNames.size(); ++i)
     cb->addItem(m2::RangePoolingStrategyTypeNames[i].c_str(), {i}); // add i as data
@@ -235,18 +237,19 @@ void m2Data::InitRangePoolingStrategyComboBox()
 
 m2::RangePoolingStrategyType m2Data::GuiToRangePoolingStrategyType()
 {
-  auto preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
   auto value = this->Controls()->CBImagingStrategy->currentData().toUInt();
-  preferences->PutInt("RangePoolingStrategy", value);
+  preferences->PutInt("m2aia.signal.RangePoolingStrategy", value);
   return static_cast<m2::RangePoolingStrategyType>(value);
 }
 
 void m2Data::InitSmoothingStrategyComboBox()
 {
-  auto preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-  auto defaultValue = preferences->GetInt("SmoothingStrategy", static_cast<unsigned int>(m2::SmoothingType::None));
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+  auto defaultValue =
+    preferences->GetInt("m2aia.signal.SmoothingStrategy", static_cast<unsigned int>(m2::SmoothingType::None));
   auto cb = Controls()->CBSmoothing;
   for (unsigned int i = 0; i < m2::SmoothingTypeNames.size(); ++i)
     cb->addItem(m2::SmoothingTypeNames[i].c_str(), {i});
@@ -255,19 +258,19 @@ void m2Data::InitSmoothingStrategyComboBox()
 
 m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
 {
-  auto preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
   auto value = this->Controls()->CBSmoothing->currentData().toUInt();
-  preferences->PutInt("SmoothingStrategy", value);
+  preferences->PutInt("m2aia.signal.SmoothingStrategy", value);
   return static_cast<m2::SmoothingType>(value);
 }
 
 void m2Data::InitBaselineCorrectionStrategyComboBox()
 {
-  auto preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-  auto defaultValue =
-    preferences->GetInt("BaselineCorrectionStrategy", static_cast<unsigned int>(m2::BaselineCorrectionType::None));
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+  auto defaultValue = preferences->GetInt("m2aia.signal.BaselineCorrectionStrategy",
+                                          static_cast<unsigned int>(m2::BaselineCorrectionType::None));
   auto cb = Controls()->CBBaselineCorrection;
   for (unsigned int i = 0; i < m2::BaselineCorrectionTypeNames.size(); ++i)
     cb->addItem(m2::BaselineCorrectionTypeNames[i].c_str(), {i});
@@ -276,10 +279,10 @@ void m2Data::InitBaselineCorrectionStrategyComboBox()
 
 m2::BaselineCorrectionType m2Data::GuiToBaselineCorrectionStrategyType()
 {
-  auto preferences =
-    berry::Platform::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
   auto value = this->Controls()->CBBaselineCorrection->currentData().toUInt();
-  preferences->PutInt("BaselineCorrectionStrategy", value);
+  preferences->PutInt("m2aia.signal.BaselineCorrectionStrategy", value);
   return static_cast<m2::BaselineCorrectionType>(value);
 }
 
@@ -344,11 +347,6 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
     data->SetSmoothingHalfWindowSize(m_Controls.spnBxSmoothing->value());
     data->SetBaseLineCorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
     data->SetUseToleranceInPPM(m_Controls.rbtnTolPPM->isChecked());
-
-    auto preferences =
-      mitk::CoreServices::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-
-    data->SetNumberOfBins(std::stoi(preferences->Get("bins", "10000")));
 
     // data->SetBinningTolerance(m_Controls.spnBxPeakBinning->value());
   }
@@ -681,8 +679,8 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   // add nodes to data storage (default: helper objects)
   if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-      // -------------- add data interactor --------------
-    
+    // -------------- add data interactor --------------
+
     auto interactor = m2::SpectrumImageDataInteractor::New();
     interactor->LoadStateMachine("PointSet.xml");
     interactor->SetEventConfig("PointSetConfig.xml");
@@ -724,16 +722,13 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
 
     // -------------- add Spectra to datastorage --------------
-     // color for plots in spectrum view
-    
+    // color for plots in spectrum view
 
-
-
-    const auto AddSpectrum = [&node, this](std::string name, 
+    const auto AddSpectrum = [&node, this](std::string name,
                                            m2::SpectrumFormat type,
-                                           std::string info, 
-                                           const std::vector<double> xs, 
-                                           const std::vector<double> ys, 
+                                           std::string info,
+                                           const std::vector<double> xs,
+                                           const std::vector<double> ys,
                                            bool checkState,
                                            float alpha = 1.0)
     {
@@ -743,9 +738,8 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
       intervals->SetInfo(info);
       intervals->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(xs.size()));
 
-      if(auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+      if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
         intervals->SetProperty("spectrum.pixel.count", mitk::IntProperty::New(image->GetNumberOfValidPixels()));
-      
 
       using namespace std;
       auto &i = intervals->GetIntervals();
@@ -756,27 +750,53 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
       intervalsNode->SetVisibility(checkState);
       intervalsNode->SetBoolProperty("helper object", !checkState);
       m2::CopyNodeProperties(node, intervalsNode);
-      if((unsigned int)(type) & (unsigned int)(m2::SpectrumFormat::Centroid))
-        intervalsNode->SetOpacity(1-alpha);
+      if ((unsigned int)(type) & (unsigned int)(m2::SpectrumFormat::Centroid))
+        intervalsNode->SetOpacity(1 - alpha);
 
-      
       this->GetDataStorage()->Add(intervalsNode, const_cast<mitk::DataNode *>(node));
       intervalsNode->Modified();
     };
 
     const auto &xs = spectrumImage->GetXAxis();
-    
+
     if (spectrumImage->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousProfile ||
         spectrumImage->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedProfile)
     {
-      AddSpectrum("MaxSpectrum ("+node->GetName()+")", m2::SpectrumFormat::Profile, "overview.max", xs, spectrumImage->SkylineSpectrum(), m_Controls.showMaxSpectrum->isChecked());
-      AddSpectrum("MeanSpectrum ("+node->GetName()+")", m2::SpectrumFormat::Profile, "overview.mean", xs, spectrumImage->MeanSpectrum(), m_Controls.showMeanSpectrum->isChecked());
-      AddSpectrum("SingleSpectrum ("+node->GetName()+")", m2::SpectrumFormat::Profile, "overview.single", {}, {}, m_Controls.showSingleSpectrum->isChecked());
+      AddSpectrum("MaxSpectrum (" + node->GetName() + ")",
+                  m2::SpectrumFormat::Profile,
+                  "overview.max",
+                  xs,
+                  spectrumImage->SkylineSpectrum(),
+                  m_Controls.showMaxSpectrum->isChecked());
+      AddSpectrum("MeanSpectrum (" + node->GetName() + ")",
+                  m2::SpectrumFormat::Profile,
+                  "overview.mean",
+                  xs,
+                  spectrumImage->MeanSpectrum(),
+                  m_Controls.showMeanSpectrum->isChecked());
+      AddSpectrum("SingleSpectrum (" + node->GetName() + ")",
+                  m2::SpectrumFormat::Profile,
+                  "overview.single",
+                  {},
+                  {},
+                  m_Controls.showSingleSpectrum->isChecked());
     }
     else
     {
-      AddSpectrum("CentroidSpectrum ("+node->GetName()+")", m2::SpectrumFormat::Centroid, "overview.centroids", xs, spectrumImage->MeanSpectrum(), m_Controls.showCentroidSpectrum->isChecked(), 0.5);
-      AddSpectrum("SingleSpectrum ("+node->GetName()+")", m2::SpectrumFormat::Centroid, "overview.single",  {}, {}, m_Controls.showSingleSpectrum->isChecked(), 0.5);
+      AddSpectrum("CentroidSpectrum (" + node->GetName() + ")",
+                  m2::SpectrumFormat::Centroid,
+                  "overview.centroids",
+                  xs,
+                  spectrumImage->MeanSpectrum(),
+                  m_Controls.showCentroidSpectrum->isChecked(),
+                  0.5);
+      AddSpectrum("SingleSpectrum (" + node->GetName() + ")",
+                  m2::SpectrumFormat::Centroid,
+                  "overview.single",
+                  {},
+                  {},
+                  m_Controls.showSingleSpectrum->isChecked(),
+                  0.5);
     }
   }
 }
