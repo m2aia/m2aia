@@ -45,6 +45,8 @@ Examples of different use cases ([I: meta-data](https://github.com/m2aia/pym2aia
 [V](https://github.com/m2aia/pym2aia-examples/blob/main/Example_V.ipynb),
 [VI](https://github.com/m2aia/pym2aia-examples/blob/main/Example_VI.ipynb): pyM²aia's use in various unsupervised deep learning scenarios) can be found in a separate repository: [pyM²aia-examples](https://github.com/m2aia/pym2aia-examples)
 
+[pym2aia documentation](https://data.jtfc.de/pym2aia/sphinx-build/html/m2aia.html#module-m2aia.ImageIO)
+
 Multi-modal 3D mouse brain data
 ------------------------------
 
