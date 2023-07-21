@@ -39,7 +39,6 @@ namespace m2
     using SpectrumArtifactDataType = double;
     using SpectrumArtifactVectorType = std::vector<SpectrumArtifactDataType>;
     using SpectrumArtifactMapType = std::map<m2::SpectrumType, SpectrumArtifactVectorType>;
-    using IntervalVectorType = std::vector<m2::Interval>;
     using TransformParameterVectorType = std::vector<std::string>;
 
     mitkClassMacro(SpectrumImageBase, mitk::Image);
@@ -84,11 +83,11 @@ namespace m2
     itkSetMacro(SmoothingHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(SmoothingHalfWindowSize, unsigned int);
 
-    itkSetMacro(BinningTolerance, double);
-    itkGetConstReferenceMacro(BinningTolerance, double);
+    // itkSetMacro(BinningTolerance, double);
+    // itkGetConstReferenceMacro(BinningTolerance, double);
 
-    itkSetMacro(NumberOfBins, int);
-    itkGetConstReferenceMacro(NumberOfBins, int);
+    // itkSetMacro(NumberOfBins, int);
+    // itkGetConstReferenceMacro(NumberOfBins, int);
 
     itkSetMacro(Tolerance, double);
     itkGetConstReferenceMacro(Tolerance, double);
@@ -97,9 +96,6 @@ namespace m2
 
     itkSetMacro(UseToleranceInPPM, bool);
     itkGetConstReferenceMacro(UseToleranceInPPM, bool);
-
-    itkGetMacro(Intervals, IntervalVectorType &);
-    itkGetConstReferenceMacro(Intervals, IntervalVectorType);
 
     itkGetConstReferenceMacro(NumberOfThreads, unsigned int);
     itkSetMacro(NumberOfThreads, unsigned int);
@@ -115,6 +111,7 @@ namespace m2
     mitk::Image::Pointer GetNormalizationImage();
     mitk::Image::Pointer GetMaskImage();
     mitk::Image::Pointer GetIndexImage();
+
     mitk::Image::Pointer GetNormalizationImage() const;
     mitk::Image::Pointer GetMaskImage() const;
     mitk::Image::Pointer GetIndexImage() const;
@@ -137,9 +134,9 @@ namespace m2
     virtual void InitializeGeometry() = 0;
     virtual void InitializeProcessor() = 0;
 
-    SpectrumArtifactVectorType &SkylineSpectrum();
-    SpectrumArtifactVectorType &SumSpectrum();
-    SpectrumArtifactVectorType &MeanSpectrum();
+    SpectrumArtifactVectorType &GetSkylineSpectrum();
+    SpectrumArtifactVectorType &GetSumSpectrum();
+    SpectrumArtifactVectorType &GetMeanSpectrum();
     SpectrumArtifactVectorType &GetXAxis();
     const SpectrumArtifactVectorType &GetXAxis() const;
 
@@ -168,8 +165,6 @@ namespace m2
     SpectrumInfo &GetExportSpectrumType() { return m_ExportSpectrumType; }
     const SpectrumInfo &GetExportSpectrumType() const { return m_ExportSpectrumType; }
     void SetExportSpectrumType(const SpectrumInfo &other) { m_ExportSpectrumType = other; }
-
-    virtual void PeakListModified();
 
     /**
      * @brief Get the Intensity Data representing a matrix of shape [#intervals, #pixels] as a contiguous array of
@@ -209,18 +204,15 @@ namespace m2
     unsigned int m_NumberOfThreads = itk::MultiThreaderBase::GetGlobalMaximumNumberOfThreads();
     // unsigned int m_NumberOfThreads = 2;
 
-    //
-    IntervalVectorType m_Intervals;
-
     ImageArtifactMapType m_ImageArtifacts;
     SpectrumArtifactMapType m_SpectraArtifacts;
+
+    SpectrumInfo m_SpectrumType;
+    SpectrumInfo m_ExportSpectrumType;
 
     BaselineCorrectionType m_BaselineCorrectionStrategy = m2::BaselineCorrectionType::None;
     SmoothingType m_SmoothingStrategy = m2::SmoothingType::None;
     IntensityTransformationType m_IntensityTransformationStrategy = m2::IntensityTransformationType::None;
-
-    SpectrumInfo m_SpectrumType;
-    SpectrumInfo m_ExportSpectrumType;
 
     NormalizationStrategyType m_NormalizationStrategy = NormalizationStrategyType::TIC;
     RangePoolingStrategyType m_RangePoolingStrategy = RangePoolingStrategyType::Sum;
@@ -231,7 +223,6 @@ namespace m2
     SpectrumArtifactVectorType m_XAxis;
   };
 
-  itkEventMacroDeclaration(PeakListModifiedEvent, itk::AnyEvent);
   itkEventMacroDeclaration(InitializationFinishedEvent, itk::AnyEvent);
 
   /**

@@ -95,9 +95,9 @@ namespace m2
       // Transformations are applied if available using elastix transformix
       std::vector<std::string> m_Transformations;
     };
-    using SourceListType = std::vector<ImzMLImageSource>;
     
-    SourceListType &GetImzMLSpectrumImageSourceList() noexcept { return m_SourcesList; }
+    using SourceListType = std::vector<ImzMLImageSource>;
+        SourceListType &GetImzMLSpectrumImageSourceList() noexcept { return m_SourcesList; }
     const SourceListType &GetImzMLSpectrumImageSourceList() const noexcept { return m_SourcesList; }
     ImzMLImageSource &GetImzMLSpectrumImageSource(unsigned int i = 0);
     const ImzMLImageSource &GetImzMLSpectrumImageSource(unsigned int i = 0) const;
@@ -139,9 +139,9 @@ namespace m2
       m_Processor->GetYValues(id, ys, source);
     }
 
-    static m2::ImzMLSpectrumImage::Pointer Combine(const m2::ImzMLSpectrumImage *A,
-                                                   const m2::ImzMLSpectrumImage *B,
-                                                   const char stackAxis = 'x');
+    // static m2::ImzMLSpectrumImage::Pointer Combine(const m2::ImzMLSpectrumImage *A,
+    //                                                const m2::ImzMLSpectrumImage *B,
+    //                                                const char stackAxis = 'x');
 
   private:
     friend class Processor;

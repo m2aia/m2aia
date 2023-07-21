@@ -298,140 +298,140 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
   SetExportSpectrumType(GetSpectrumType());
 }
 
-m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLSpectrumImage *A,
-                                                                const m2::ImzMLSpectrumImage *B,
-                                                                const char stackAxis)
-{
-  auto C = m2::ImzMLSpectrumImage::New();
-  C->SetSpectrumType(A->GetSpectrumType());
-  {
-    auto A_mzGroup = A->GetPropertyValue<std::string>("mzGroupName");
-    auto A_mzValueType = A->GetPropertyValue<std::string>(A_mzGroup + " value type");
-    auto B_mzGroup = B->GetPropertyValue<std::string>("mzGroupName");
-    auto B_mzValueType = B->GetPropertyValue<std::string>(B_mzGroup + " value type");
-    if (A_mzValueType.compare(B_mzValueType) != 0)
-      mitkThrow() << "m/z value types must the same!";
+// m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLSpectrumImage *A,
+//                                                                 const m2::ImzMLSpectrumImage *B,
+//                                                                 const char stackAxis)
+// {
+//   auto C = m2::ImzMLSpectrumImage::New();
+//   C->SetSpectrumType(A->GetSpectrumType());
+//   {
+//     auto A_mzGroup = A->GetPropertyValue<std::string>("mzGroupName");
+//     auto A_mzValueType = A->GetPropertyValue<std::string>(A_mzGroup + " value type");
+//     auto B_mzGroup = B->GetPropertyValue<std::string>("mzGroupName");
+//     auto B_mzValueType = B->GetPropertyValue<std::string>(B_mzGroup + " value type");
+//     if (A_mzValueType.compare(B_mzValueType) != 0)
+//       mitkThrow() << "m/z value types must the same!";
 
-    auto typeSizeInBytes = A->GetPropertyValue<unsigned>(A_mzGroup + " value type (bytes)");
-    auto refGroupID = A->GetPropertyValue<std::string>(A_mzGroup);
+//     auto typeSizeInBytes = A->GetPropertyValue<unsigned>(A_mzGroup + " value type (bytes)");
+//     auto refGroupID = A->GetPropertyValue<std::string>(A_mzGroup);
 
-    C->SetPropertyValue<std::string>(A_mzGroup, refGroupID);
-    C->SetPropertyValue<unsigned>(A_mzGroup + " value type (bytes)", typeSizeInBytes);
-    C->SetPropertyValue<std::string>(A_mzGroup + " value type", A_mzValueType);
-    C->SetPropertyValue<std::string>("mzGroupName", A_mzGroup);
-  }
+//     C->SetPropertyValue<std::string>(A_mzGroup, refGroupID);
+//     C->SetPropertyValue<unsigned>(A_mzGroup + " value type (bytes)", typeSizeInBytes);
+//     C->SetPropertyValue<std::string>(A_mzGroup + " value type", A_mzValueType);
+//     C->SetPropertyValue<std::string>("mzGroupName", A_mzGroup);
+//   }
 
-  {
-    auto A_intensityGroup = A->GetPropertyValue<std::string>("intensityGroupName");
-    auto A_intensityValueType = A->GetPropertyValue<std::string>(A_intensityGroup + " value type");
-    auto B_intensityGroup = B->GetPropertyValue<std::string>("intensityGroupName");
-    auto B_intensityValueType = B->GetPropertyValue<std::string>(B_intensityGroup + " value type");
-    if (B_intensityValueType.compare(A_intensityValueType) != 0)
-      mitkThrow() << "Intensity value types must the same!";
+//   {
+//     auto A_intensityGroup = A->GetPropertyValue<std::string>("intensityGroupName");
+//     auto A_intensityValueType = A->GetPropertyValue<std::string>(A_intensityGroup + " value type");
+//     auto B_intensityGroup = B->GetPropertyValue<std::string>("intensityGroupName");
+//     auto B_intensityValueType = B->GetPropertyValue<std::string>(B_intensityGroup + " value type");
+//     if (B_intensityValueType.compare(A_intensityValueType) != 0)
+//       mitkThrow() << "Intensity value types must the same!";
 
-    auto typeSizeInBytes = A->GetPropertyValue<unsigned>(A_intensityGroup + " value type (bytes)");
-    auto refGroupID = A->GetPropertyValue<std::string>(A_intensityGroup);
+//     auto typeSizeInBytes = A->GetPropertyValue<unsigned>(A_intensityGroup + " value type (bytes)");
+//     auto refGroupID = A->GetPropertyValue<std::string>(A_intensityGroup);
 
-    C->SetPropertyValue<std::string>(A_intensityGroup, refGroupID);
-    C->SetPropertyValue<unsigned>(A_intensityGroup + " value type (bytes)", typeSizeInBytes);
-    C->SetPropertyValue<std::string>(A_intensityGroup + " value type", A_intensityValueType);
-    C->SetPropertyValue<std::string>("intensityGroupName", A_intensityGroup);
-  }
+//     C->SetPropertyValue<std::string>(A_intensityGroup, refGroupID);
+//     C->SetPropertyValue<unsigned>(A_intensityGroup + " value type (bytes)", typeSizeInBytes);
+//     C->SetPropertyValue<std::string>(A_intensityGroup + " value type", A_intensityValueType);
+//     C->SetPropertyValue<std::string>("intensityGroupName", A_intensityGroup);
+//   }
 
-  {
-    auto A_mass = A->GetXAxis();
-    auto B_mass = B->GetXAxis();
-    auto isMassEqual = std::equal(std::begin(A_mass), std::end(A_mass), std::begin(B_mass));
-    if (!isMassEqual)
-      mitkThrow() << "Mass axis must be the same!";
-  }
+//   {
+//     auto A_mass = A->GetXAxis();
+//     auto B_mass = B->GetXAxis();
+//     auto isMassEqual = std::equal(std::begin(A_mass), std::end(A_mass), std::begin(B_mass));
+//     if (!isMassEqual)
+//       mitkThrow() << "Mass axis must be the same!";
+//   }
 
-  {
-    auto A_x = A->GetPropertyValue<double>("pixel size x");
-    auto A_y = A->GetPropertyValue<double>("pixel size y");
-    auto A_z = A->GetPropertyValue<double>("pixel size z");
+//   {
+//     auto A_x = A->GetPropertyValue<double>("pixel size x");
+//     auto A_y = A->GetPropertyValue<double>("pixel size y");
+//     auto A_z = A->GetPropertyValue<double>("pixel size z");
 
-    auto B_x = B->GetPropertyValue<double>("pixel size x");
-    auto B_y = B->GetPropertyValue<double>("pixel size y");
-    auto B_z = B->GetPropertyValue<double>("pixel size z");
+//     auto B_x = B->GetPropertyValue<double>("pixel size x");
+//     auto B_y = B->GetPropertyValue<double>("pixel size y");
+//     auto B_z = B->GetPropertyValue<double>("pixel size z");
 
-    if ((std::abs(A_x - B_x) > 10e-5 && std::abs(A_y - B_y) > 10e-5) || std::abs(A_z - B_z) > 10e-5)
-      mitkThrow() << "Pixel size must be the same!";
+//     if ((std::abs(A_x - B_x) > 10e-5 && std::abs(A_y - B_y) > 10e-5) || std::abs(A_z - B_z) > 10e-5)
+//       mitkThrow() << "Pixel size must be the same!";
 
-    C->SetPropertyValue<double>("pixel size x", A_x);
-    C->SetPropertyValue<double>("pixel size y", A_y);
-    C->SetPropertyValue<double>("pixel size z", A_z);
-  }
+//     C->SetPropertyValue<double>("pixel size x", A_x);
+//     C->SetPropertyValue<double>("pixel size y", A_y);
+//     C->SetPropertyValue<double>("pixel size z", A_z);
+//   }
 
-  unsigned A_x, A_y, A_z;
-  unsigned B_x, B_y, B_z;
-  A_x = A->GetPropertyValue<unsigned>("max count of pixels x");
-  B_x = B->GetPropertyValue<unsigned>("max count of pixels x");
-  A_y = A->GetPropertyValue<unsigned>("max count of pixels y");
-  B_y = B->GetPropertyValue<unsigned>("max count of pixels y");
-  A_z = A->GetPropertyValue<unsigned>("max count of pixels z");
-  B_z = B->GetPropertyValue<unsigned>("max count of pixels z");
+//   unsigned A_x, A_y, A_z;
+//   unsigned B_x, B_y, B_z;
+//   A_x = A->GetPropertyValue<unsigned>("max count of pixels x");
+//   B_x = B->GetPropertyValue<unsigned>("max count of pixels x");
+//   A_y = A->GetPropertyValue<unsigned>("max count of pixels y");
+//   B_y = B->GetPropertyValue<unsigned>("max count of pixels y");
+//   A_z = A->GetPropertyValue<unsigned>("max count of pixels z");
+//   B_z = B->GetPropertyValue<unsigned>("max count of pixels z");
 
-  switch (stackAxis)
-  {
-    case 'x':
-    {
-      // Images are stacked along the x axis
-      C->SetPropertyValue<unsigned>("max count of pixels x", A_x + B_x);
-      C->SetPropertyValue<unsigned>("max count of pixels y", std::max(A_y, B_y));
-      C->SetPropertyValue<unsigned>("max count of pixels z", std::max(A_z, B_z));
-    }
-    break;
-    case 'y':
-    {
-      C->SetPropertyValue<unsigned>("max count of pixels x", std::max(A_x, B_x));
-      C->SetPropertyValue<unsigned>("max count of pixels y", A_y + B_y);
-      C->SetPropertyValue<unsigned>("max count of pixels z", std::max(A_z, B_z));
-    }
-    break;
-    case 'z':
-    {
-      C->SetPropertyValue<unsigned>("max count of pixels x", std::max(A_x, B_x));
-      C->SetPropertyValue<unsigned>("max count of pixels y", std::max(A_y, B_y));
-      C->SetPropertyValue<unsigned>("max count of pixels z", A_z + B_z);
-    }
-    break;
-  }
+//   switch (stackAxis)
+//   {
+//     case 'x':
+//     {
+//       // Images are stacked along the x axis
+//       C->SetPropertyValue<unsigned>("max count of pixels x", A_x + B_x);
+//       C->SetPropertyValue<unsigned>("max count of pixels y", std::max(A_y, B_y));
+//       C->SetPropertyValue<unsigned>("max count of pixels z", std::max(A_z, B_z));
+//     }
+//     break;
+//     case 'y':
+//     {
+//       C->SetPropertyValue<unsigned>("max count of pixels x", std::max(A_x, B_x));
+//       C->SetPropertyValue<unsigned>("max count of pixels y", A_y + B_y);
+//       C->SetPropertyValue<unsigned>("max count of pixels z", std::max(A_z, B_z));
+//     }
+//     break;
+//     case 'z':
+//     {
+//       C->SetPropertyValue<unsigned>("max count of pixels x", std::max(A_x, B_x));
+//       C->SetPropertyValue<unsigned>("max count of pixels y", std::max(A_y, B_y));
+//       C->SetPropertyValue<unsigned>("max count of pixels z", A_z + B_z);
+//     }
+//     break;
+//   }
 
-  {
-    C->SetPropertyValue<double>("absolute position offset x", 0.0);
-    C->SetPropertyValue<double>("absolute position offset y", 0.0);
-    C->SetPropertyValue<double>("absolute position offset z", 0.0);
-  }
+//   {
+//     C->SetPropertyValue<double>("absolute position offset x", 0.0);
+//     C->SetPropertyValue<double>("absolute position offset y", 0.0);
+//     C->SetPropertyValue<double>("absolute position offset z", 0.0);
+//   }
 
-  C->SetPropertyValue<bool>("continuous", true);
+//   C->SetPropertyValue<bool>("continuous", true);
 
-  auto &C_sources = C->GetImzMLSpectrumImageSourceList();
+//   auto &C_sources = C->GetImzMLSpectrumImageSourceList();
 
-  const auto &A_sources = A->GetImzMLSpectrumImageSourceList();
-  const auto &B_sources = B->GetImzMLSpectrumImageSourceList();
+//   const auto &A_sources = A->GetImzMLSpectrumImageSourceList();
+//   const auto &B_sources = B->GetImzMLSpectrumImageSourceList();
 
-  C_sources = A_sources;
-  // MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << "Merge sources";
+//   C_sources = A_sources;
+//   // MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << "Merge sources";
 
-  std::transform(std::begin(B_sources), std::end(B_sources), std::back_inserter(C_sources), [&](ImzMLImageSource s) {
-    if (stackAxis == 'x')
-      s.m_Offset[0] += A_x; // shift along x-axis
-    if (stackAxis == 'y')
-      s.m_Offset[1] += A_y; // shift along y-axis
-    if (stackAxis == 'z')
-      s.m_Offset[2] += A_z; // shift along z-axis
-    return s;
-  });
+//   std::transform(std::begin(B_sources), std::end(B_sources), std::back_inserter(C_sources), [&](ImzMLImageSource s) {
+//     if (stackAxis == 'x')
+//       s.m_Offset[0] += A_x; // shift along x-axis
+//     if (stackAxis == 'y')
+//       s.m_Offset[1] += A_y; // shift along y-axis
+//     if (stackAxis == 'z')
+//       s.m_Offset[2] += A_z; // shift along z-axis
+//     return s;
+//   });
 
-  C->InitializeGeometry();
-  std::set<m2::Interval> set;
-  set.insert(std::begin(A->GetIntervals()), std::end(A->GetIntervals()));
-  set.insert(std::begin(B->GetIntervals()), std::end(B->GetIntervals()));
+//   C->InitializeGeometry();
+//   std::set<m2::Interval> set;
+//   set.insert(std::begin(A->GetIntervals()), std::end(A->GetIntervals()));
+//   set.insert(std::begin(B->GetIntervals()), std::end(B->GetIntervals()));
 
-  C->GetIntervals().insert(std::end(C->GetIntervals()), std::begin(set), std::end(set));
-  return C;
-}
+//   C->GetIntervals().insert(std::end(C->GetIntervals()), std::begin(set), std::end(set));
+//   return C;
+// }
 
 template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeGeometry()
@@ -691,15 +691,15 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
       });
   }
 
-  auto &skyline = p->SkylineSpectrum();
+  auto &skyline = p->GetSkylineSpectrum();
   skyline.resize(mzs.size(), 0);
   for (unsigned int t = 0; t < p->GetNumberOfThreads(); ++t)
     std::transform(skylineT[t].begin(), skylineT[t].end(), skyline.begin(), skyline.begin(), [](auto &a, auto &b) {
       return a > b ? a : b;
     });
 
-  auto &mean = p->MeanSpectrum();
-  auto &sum = p->SumSpectrum();
+  auto &mean = p->GetMeanSpectrum();
+  auto &sum = p->GetSumSpectrum();
 
   mean.resize(mzs.size(), 0);
   sum.resize(mzs.size(), 0);
@@ -789,9 +789,9 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
       f.close();
     });
 
-    auto &skyline = p->SkylineSpectrum();
-    auto &sum = p->SumSpectrum();
-    auto &mean = p->MeanSpectrum();
+    auto &skyline = p->GetSkylineSpectrum();
+    auto &sum = p->GetSumSpectrum();
+    auto &mean = p->GetMeanSpectrum();
     skyline.clear();
     sum.clear();
     mean.clear();
@@ -946,9 +946,9 @@ void m2::ImzMLSpectrumImage::Processor<MassAxisType, IntensityType>::InitializeI
     // }
 
     auto &mzAxis = p->GetXAxis();
-    auto &sum = p->SumSpectrum();
-    auto &mean = p->MeanSpectrum();
-    auto &skyline = p->SkylineSpectrum();
+    auto &sum = p->GetSumSpectrum();
+    auto &mean = p->GetMeanSpectrum();
+    auto &skyline = p->GetSkylineSpectrum();
 
     mzAxis.clear();
     sum.clear();

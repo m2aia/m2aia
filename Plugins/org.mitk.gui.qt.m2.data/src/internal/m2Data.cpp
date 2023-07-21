@@ -94,7 +94,10 @@ void m2Data::CreateQtPartControl(QWidget *parent)
         if (dNode->GetName().find(name) != std::string::npos)
         {
           dNode->SetVisibility(v != 0);
-          dNode->SetBoolProperty("helper object", v == 0);
+          if(v == 0)
+            dNode->SetBoolProperty("helper object", true);
+          else
+            dNode->RemoveProperty("helper object");
           this->RequestRenderWindowUpdate();
         }
       }
@@ -562,11 +565,7 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
   }
   else if (auto data = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
   {
-    //    if (dynamic_cast<m2::ImzMLSpectrumImage *>(data))
-    //      ImzMLImageNodeAdded(node);
-    //    else if (dynamic_cast<m2::FsmSpectrumImage *>(data))
-    //      FsmImageNodeAdded(node);
-
+    // !! Primary initialization !!
     this->ApplySettingsToImage(data);
     data->InitializeImageAccess();
     this->RequestRenderWindowUpdate();
@@ -766,13 +765,13 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
                   m2::SpectrumFormat::Profile,
                   "overview.max",
                   xs,
-                  spectrumImage->SkylineSpectrum(),
+                  spectrumImage->GetSkylineSpectrum(),
                   m_Controls.showMaxSpectrum->isChecked());
       AddSpectrum("MeanSpectrum (" + node->GetName() + ")",
                   m2::SpectrumFormat::Profile,
                   "overview.mean",
                   xs,
-                  spectrumImage->MeanSpectrum(),
+                  spectrumImage->GetMeanSpectrum(),
                   m_Controls.showMeanSpectrum->isChecked());
       AddSpectrum("SingleSpectrum (" + node->GetName() + ")",
                   m2::SpectrumFormat::Profile,
@@ -787,7 +786,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
                   m2::SpectrumFormat::Centroid,
                   "overview.centroids",
                   xs,
-                  spectrumImage->MeanSpectrum(),
+                  spectrumImage->GetMeanSpectrum(),
                   m_Controls.showCentroidSpectrum->isChecked(),
                   0.5);
       AddSpectrum("SingleSpectrum (" + node->GetName() + ")",

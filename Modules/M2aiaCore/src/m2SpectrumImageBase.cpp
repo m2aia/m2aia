@@ -23,14 +23,8 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  itkEventMacroDefinition(PeakListModifiedEvent, itk::AnyEvent);
   itkEventMacroDefinition(InitializationFinishedEvent, itk::AnyEvent);
 } // namespace m2
-
-void m2::SpectrumImageBase::PeakListModified()
-{
-  InvokeEvent(m2::PeakListModifiedEvent());
-}
 
 double m2::SpectrumImageBase::ApplyTolerance(double xValue) const
 {
@@ -137,17 +131,17 @@ void m2::SpectrumImageBase::ApplyGeometryOperation(mitk::Operation *op)
   }
 }
 
-m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::SkylineSpectrum()
+m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetSkylineSpectrum()
 {
   return m_SpectraArtifacts[(SpectrumType::Maximum)];
 }
 
-m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::MeanSpectrum()
+m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetMeanSpectrum()
 {
   return m_SpectraArtifacts[(SpectrumType::Mean)];
 }
 
-m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::SumSpectrum()
+m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetSumSpectrum()
 {
   return m_SpectraArtifacts[(SpectrumType::Sum)];
 }

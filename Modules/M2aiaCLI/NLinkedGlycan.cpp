@@ -63,7 +63,7 @@ int main(int /*argc*/, char *argv[])
     I->InitializeImageAccess();
 
     // peak picking on overview spectrum
-    auto &overviewSpectrum = I->MeanSpectrum();
+    auto &overviewSpectrum = I->GetMeanSpectrum();
     auto SNR = m2::Signal::mad(overviewSpectrum);
     std::vector<m2::Peak> peaks;
     m2::Signal::localMaxima(std::begin(overviewSpectrum),

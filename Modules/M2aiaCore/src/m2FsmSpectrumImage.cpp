@@ -317,7 +317,7 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
                      }
                    });
 
-  auto &skyline = p->SkylineSpectrum();
+  auto &skyline = p->GetSkylineSpectrum();
   skyline.resize(xs.size(), 0);
   for (unsigned int t = 0; t < p->GetNumberOfThreads(); ++t)
     std::transform(skylineT[t].begin(),
@@ -326,8 +326,8 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
                    skyline.begin(),
                    [](auto &a, auto &b) { return a > b ? a : b; });
 
-  auto &mean = p->MeanSpectrum();
-  auto &sum = p->SumSpectrum();
+  auto &mean = p->GetMeanSpectrum();
+  auto &sum = p->GetSumSpectrum();
 
   mean.resize(xs.size(), 0);
   sum.resize(xs.size(), 0);

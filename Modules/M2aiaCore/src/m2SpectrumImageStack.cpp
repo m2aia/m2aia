@@ -29,6 +29,10 @@ See LICENSE.txt for details.
 #include <mitkProgressBar.h>
 #include <signal/m2PeakDetection.h>
 
+#include <mitkCoreServices.h>
+#include <mitkIPreferencesService.h>
+#include <mitkIPreferences.h>
+
 namespace m2
 {
   void SpectrumImageStack::Insert(unsigned int sliceId, std::shared_ptr<m2::ElxRegistrationHelper> transformer)
@@ -132,7 +136,9 @@ namespace m2
   void SpectrumImageStack::InitializeImageAccess()
   {
     std::list<m2::Interval> peaks;
-    const auto &bins = GetNumberOfBins();
+    auto* preferencesService = mitk::CoreServices::GetPreferencesService();
+    auto* preferences = preferencesService->GetSystemPreferences();
+    const auto bins = preferences->GetInt("m2aia.view.spectrum.bins", 1500);
     //    const auto normalizationStrategy = GetNormalizationStrategy();
 
     double max = 0;
@@ -153,11 +159,11 @@ namespace m2
     SpectrumVector xSumVec(bins);
     SpectrumVector hits(bins);
 
-    SpectrumVector ySumVec = SumSpectrum();
+    SpectrumVector ySumVec = GetSumSpectrum();
     ySumVec.resize(bins, 0);
-    SpectrumVector yMeanVec = MeanSpectrum();
+    SpectrumVector yMeanVec = GetMeanSpectrum();
     yMeanVec.resize(bins, 0);
-    SpectrumVector yMaxVec = SkylineSpectrum();
+    SpectrumVector yMaxVec = GetSkylineSpectrum();
     yMaxVec.resize(bins, 0);
 
     for (auto &kv : m_SliceTransformers)
@@ -165,9 +171,9 @@ namespace m2
       const auto &transformer = kv.second;
       auto specImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer());
       auto sliceXAxis = specImage->GetXAxis();
-      auto sliceSumVec = specImage->SumSpectrum();
-      auto sliceMaxVec = specImage->SkylineSpectrum();
-      auto sliceMeanVec = specImage->MeanSpectrum();
+      auto sliceSumVec = specImage->GetSumSpectrum();
+      auto sliceMaxVec = specImage->GetSkylineSpectrum();
+      auto sliceMeanVec = specImage->GetMeanSpectrum();
 
       for (unsigned int k = 0; k < sliceXAxis.size(); ++k)
       {
@@ -188,11 +194,11 @@ namespace m2
 
     SpectrumVector &xVecFinal = GetXAxis();
     xVecFinal.clear();
-    SpectrumVector &ySumVecFinal = SumSpectrum();
+    SpectrumVector &ySumVecFinal = GetSumSpectrum();
     ySumVecFinal.clear();
-    SpectrumVector &yMeanVecFinal = MeanSpectrum();
+    SpectrumVector &yMeanVecFinal = GetMeanSpectrum();
     yMeanVecFinal.clear();
-    SpectrumVector &yMaxVecFinal = SkylineSpectrum();
+    SpectrumVector &yMaxVecFinal = GetSkylineSpectrum();
     yMaxVecFinal.clear();
 
     for (int k = 0; k < bins; ++k)

@@ -166,13 +166,13 @@ extern "C"
 
   M2AIACOREIO_EXPORT void GetMeanSpectrum(m2::sys::ImageHandle *handle, double *data)
   {
-    auto &yMean = handle->m_Image->MeanSpectrum();
+    auto &yMean = handle->m_Image->GetMeanSpectrum();
     std::copy(yMean.begin(), yMean.end(), data);
   }
 
   M2AIACOREIO_EXPORT void GetMaxSpectrum(m2::sys::ImageHandle *handle, double *data)
   {
-    auto &yMean = handle->m_Image->SkylineSpectrum();
+    auto &yMean = handle->m_Image->GetSkylineSpectrum();
     std::copy(yMean.begin(), yMean.end(), data);
   }
 
