@@ -134,7 +134,6 @@ namespace m2
       yStr = Strip(yStr);
       auto x = std::stod(xStr);
       auto y = std::stod(yStr);
-      MITK_INFO << x << " " << y; 
       m2::Interval I(x,y);
       return I;
     });
