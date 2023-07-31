@@ -48,9 +48,6 @@ protected:
 
   Ui::m2ImzMLExportViewControls m_Controls;
 
-protected slots:
-  void UpdateExportSettingsAllNodes();
-  void UpdateExportSettings(const mitk::DataNode *node);
 };
 
 #endif // m2ImzMLExportView_h
