@@ -25,7 +25,7 @@ set(target_libraries
   org_mitk_gui_qt_m2_data
   # org_mitk_gui_qt_m2_CombineImages
   org_mitk_gui_qt_m2_Spectrum
-  org_mitk_gui_qt_m2_PeakPicking
+  org_mitk_gui_qt_m2_peakpicking
   org_mitk_gui_qt_m2_ImzMLExport
   org_mitk_gui_qt_m2_Reconstruction3D
   org_mitk_gui_qt_m2_Position

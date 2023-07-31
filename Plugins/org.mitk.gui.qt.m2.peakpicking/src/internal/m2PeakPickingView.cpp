@@ -58,7 +58,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkProgressBar.h>
 #include <mitkProperties.h>
 
-const std::string m2PeakPickingView::VIEW_ID = "org.mitk.views.m2.PeakPicking";
+const std::string m2PeakPickingView::VIEW_ID = "org.mitk.views.m2.peakpicking";
 
 void m2PeakPickingView::SetFocus()
 {
@@ -240,7 +240,11 @@ void m2PeakPickingView::OnStartExportImages() {
         auto ionImage = mitk::Image::New();
         ionImage->Initialize(dynamic_cast<mitk::Image *>(image));
         image->GetImage(i.x.mean(), tol, nullptr, ionImage );
-        mitk::IOUtil::Save(ionImage, "/tmp/" +imageNode->GetName() + "_" + std::to_string(i.x.mean()) + ".nrrd");
+        auto node = mitk::DataNode::New();
+        node->SetData(ionImage);
+        node->SetName(imageNode->GetName() + "_" + std::to_string(i.x.mean()));
+        GetDataStorage()->Add(node, const_cast<mitk::DataNode *>(centroidNode.GetPointer()));
+        // mitk::IOUtil::Save(ionImage, "/tmp/" +imageNode->GetName() + "_" + std::to_string(i.x.mean()) + ".nrrd");
       }
     }
   }

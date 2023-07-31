@@ -22,7 +22,10 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkAbstractView.h>
 #include <QmitkSingleNodeSelectionWidget.h>
 #include <berryISelectionListener.h>
+
 #include <m2SpectrumImageBase.h>
+#include <m2IntervalVector.h>
+
 #include <m2UIUtils.h>
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateFunction.h>

@@ -1,4 +1,4 @@
-set(Plugin-Name "M2aia Peak Picking")
+set(Plugin-Name "Peak Picking")
 set(Plugin-Version "0.1")
 set(Plugin-Vendor "Mannheim University of Applied Sciences")
 set(Plugin-ContactAddress "j.cordes@hs-mannheim.de")

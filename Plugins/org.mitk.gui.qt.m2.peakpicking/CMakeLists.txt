@@ -1,4 +1,4 @@
-project(org_mitk_gui_qt_m2_PeakPicking)
+project(org_mitk_gui_qt_m2_peakpicking)
 
 mitk_create_plugin(
   EXPORT_DIRECTIVE M2PEAKPICKING_EXPORT

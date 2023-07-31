@@ -1,5 +1,5 @@
 /**
-\page org_mitk_views_m2_Data The M²aia Data View
+\page org_mitk_views_m2_data The M²aia Data View
 
 \imageMacro{icon_data.svg, "Icon of the M²aia Data View", 3}
 
@@ -44,6 +44,7 @@ You can choose between pixel-wise normalization strategies:\n
     <li>Sum: Sum of intensities.</li>
     <li>Mean: Mean of intensities.</li>
     <li>Max: Max of intensities.</li>
+    <li>RMS: Root Mean Square.</li>
 </ul>
 
 \remark Normalization maps are gray scale images and by default added to the Data Manager.

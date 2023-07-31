@@ -491,7 +491,7 @@ Combines all  peaks to a single list and apply binning.</string>
        <item>
         <widget class="QLabel" name="label_5">
          <property name="text">
-          <string>Select and combine multiple lists centroids.</string>
+          <string>Select and combine multiple lists of centroids.</string>
          </property>
         </widget>
        </item>
