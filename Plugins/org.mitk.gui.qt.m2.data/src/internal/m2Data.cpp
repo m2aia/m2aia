@@ -20,6 +20,7 @@ See LICENSE.txt for details.
 #include "Qm2OpenSlideImageIOHelperDialog.h"
 #include <QColorDialog>
 #include <QInputDialog>
+#include <QComboBox>
 #include <QmitkRenderWindow.h>
 #include <QtConcurrent>
 #include <boost/format.hpp>
@@ -55,11 +56,11 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   m_Controls.setupUi(parent);
   m_Parent = parent;
 
-  InitBaselineCorrectionStrategyComboBox();
-  InitNormalizationStrategyComboBox();
-  InitRangePoolingStrategyComboBox();
-  InitSmoothingStrategyComboBox();
-  InitIntensityTransformationStrategyComboBox();
+  InitBaselineCorrectionControls();
+  InitNormalizationControls();
+  InitRangePoolingControls();
+  InitSmoothingControls();
+  InitIntensityTransformationControls();
 
   auto serviceRef = m2::UIUtils::Instance();
   connect(serviceRef, SIGNAL(UpdateImage(qreal, qreal)), this, SLOT(OnGenerateImageData(qreal, qreal)));
@@ -95,7 +96,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
         if (dNode->GetName().find(name) != std::string::npos)
         {
           dNode->SetVisibility(v != 0);
-          if(v == 0)
+          if (v == 0)
             dNode->SetBoolProperty("helper object", true);
           else
             dNode->RemoveProperty("helper object");
@@ -185,108 +186,188 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   }
 }
 
-void m2Data::InitNormalizationStrategyComboBox()
+
+void m2Data::InitToleranceControls(){
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+  auto defaultValue = preferences->GetFloat("m2aia.signal.Tolerance", 75.0);
+  m_Controls.spnBxTol->setValue(defaultValue);
+  connect(m_Controls.spnBxTol,
+          qOverload<double>(&QDoubleSpinBox::valueChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = m_Controls.spnBxTol->value();
+            preferences->PutFloat("m2aia.signal.Tolerance", value);
+          });
+}
+
+void m2Data::InitNormalizationControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-  auto defaultValue = preferences->GetInt("m2aia.signal.NormalizationStrategy",
-                                          static_cast<unsigned int>(m2::NormalizationStrategyType::None));
+  auto defaultValue =
+    preferences->GetInt("m2aia.signal.NormalizationStrategy", to_underlying(m2::NormalizationStrategyType::None));
   auto cb = Controls()->CBNormalization;
   for (unsigned int i = 0; i < m2::NormalizationStrategyTypeNames.size(); ++i)
     cb->addItem(m2::NormalizationStrategyTypeNames[i].c_str(), {i});
   cb->setCurrentIndex(defaultValue);
+
+  connect(m_Controls.CBNormalization,
+          qOverload<int>(&QComboBox::currentIndexChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = this->Controls()->CBNormalization->currentData().toUInt();
+            preferences->PutInt("m2aia.signal.NormalizationStrategy", value);
+          });
 }
 
 m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-  auto value = this->Controls()->CBNormalization->currentData().toUInt();
-  preferences->PutInt("m2aia.signal.NormalizationStrategy", value);
+  auto value =
+    preferences->GetInt("m2aia.signal.NormalizationStrategy", to_underlying(m2::NormalizationStrategyType::None));
   return static_cast<m2::NormalizationStrategyType>(value);
 }
 
-void m2Data::InitIntensityTransformationStrategyComboBox()
+void m2Data::InitIntensityTransformationControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
   auto defaultValue = preferences->GetInt("m2aia.signal.IntensityTransformationStrategy",
-                                          static_cast<unsigned int>(m2::IntensityTransformationType::None));
+                                          to_underlying(m2::IntensityTransformationType::None));
+  // Combo Box
   auto cb = Controls()->CBTransformation;
   for (unsigned int i = 0; i < m2::IntensityTransformationTypeNames.size(); ++i)
     cb->addItem(m2::IntensityTransformationTypeNames[i].c_str(), {i});
   cb->setCurrentIndex(defaultValue);
+
+  connect(m_Controls.CBTransformation,
+          qOverload<int>(&QComboBox::currentIndexChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = this->Controls()->CBTransformation->currentData().toUInt();
+            preferences->PutInt("m2aia.signal.IntensityTransformationStrategy", value);
+          });
 }
 
 m2::IntensityTransformationType m2Data::GuiToIntensityTransformationStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-  auto value = this->Controls()->CBTransformation->currentData().toUInt();
-  preferences->PutInt("m2aia.signal.IntensityTransformationStrategy", value);
+  auto value = preferences->GetInt("m2aia.signal.IntensityTransformationStrategy",
+                                   to_underlying(m2::IntensityTransformationType::None));
   return static_cast<m2::IntensityTransformationType>(value);
 }
 
-void m2Data::InitRangePoolingStrategyComboBox()
+void m2Data::InitRangePoolingControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-  auto defaultValue = preferences->GetInt("m2aia.signal.RangePoolingStrategy",
-                                          static_cast<unsigned int>(m2::RangePoolingStrategyType::Maximum));
+  auto defaultValue =
+    preferences->GetInt("m2aia.signal.RangePoolingStrategy", to_underlying(m2::RangePoolingStrategyType::Maximum));
   auto cb = Controls()->CBImagingStrategy;
   for (unsigned int i = 0; i < m2::RangePoolingStrategyTypeNames.size(); ++i)
     cb->addItem(m2::RangePoolingStrategyTypeNames[i].c_str(), {i}); // add i as data
   cb->setCurrentIndex(defaultValue);
+
+  connect(m_Controls.CBImagingStrategy,
+          qOverload<int>(&QComboBox::currentIndexChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = this->Controls()->CBImagingStrategy->currentData().toUInt();
+            preferences->PutInt("m2aia.signal.RangePoolingStrategy", value);
+          });
 }
 
 m2::RangePoolingStrategyType m2Data::GuiToRangePoolingStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-  auto value = this->Controls()->CBImagingStrategy->currentData().toUInt();
-  preferences->PutInt("m2aia.signal.RangePoolingStrategy", value);
+  auto value =
+    preferences->GetInt("m2aia.signal.RangePoolingStrategy", to_underlying(m2::RangePoolingStrategyType::None));
   return static_cast<m2::RangePoolingStrategyType>(value);
 }
 
-void m2Data::InitSmoothingStrategyComboBox()
+void m2Data::InitSmoothingControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-  auto defaultValue =
-    preferences->GetInt("m2aia.signal.SmoothingStrategy", static_cast<unsigned int>(m2::SmoothingType::None));
+  auto defaultValue = preferences->GetInt("m2aia.signal.SmoothingStrategy", to_underlying(m2::SmoothingType::None));
   auto cb = Controls()->CBSmoothing;
   for (unsigned int i = 0; i < m2::SmoothingTypeNames.size(); ++i)
     cb->addItem(m2::SmoothingTypeNames[i].c_str(), {i});
   cb->setCurrentIndex(defaultValue);
+
+  connect(m_Controls.CBSmoothing,
+          qOverload<int>(&QComboBox::currentIndexChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = this->Controls()->CBSmoothing->currentData().toUInt();
+            preferences->PutInt("m2aia.signal.SmoothingStrategy", value);
+          });
+
+  // Spin Box
+  m_Controls.spnBxSmoothing->setValue(preferences->GetInt("m2aia.signal.SmoothingValue", 2));
+  connect(m_Controls.spnBxSmoothing,
+          qOverload<int>(&QSpinBox::valueChanged),
+          this,
+          [this, preferences](int)
+          {
+            preferences->PutInt("m2aia.signal.SmoothingValue", m_Controls.spnBxSmoothing->value());
+          });
 }
 
 m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-  auto value = this->Controls()->CBSmoothing->currentData().toUInt();
-  preferences->PutInt("m2aia.signal.SmoothingStrategy", value);
+  auto value = preferences->GetInt("m2aia.signal.SmoothingStrategy", to_underlying(m2::SmoothingType::None));
   return static_cast<m2::SmoothingType>(value);
 }
 
-void m2Data::InitBaselineCorrectionStrategyComboBox()
+void m2Data::InitBaselineCorrectionControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-  auto defaultValue = preferences->GetInt("m2aia.signal.BaselineCorrectionStrategy",
-                                          static_cast<unsigned int>(m2::BaselineCorrectionType::None));
+  auto defaultValue =
+    preferences->GetInt("m2aia.signal.BaselineCorrectionStrategy", to_underlying(m2::BaselineCorrectionType::None));
   auto cb = Controls()->CBBaselineCorrection;
   for (unsigned int i = 0; i < m2::BaselineCorrectionTypeNames.size(); ++i)
     cb->addItem(m2::BaselineCorrectionTypeNames[i].c_str(), {i});
   cb->setCurrentIndex(defaultValue);
+
+  connect(m_Controls.CBBaselineCorrection,
+          qOverload<int>(&QComboBox::currentIndexChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = this->Controls()->CBBaselineCorrection->currentData().toUInt();
+            preferences->PutInt("m2aia.signal.BaselineCorrectionStrategy", value);
+          });
+
+  // Spin Box
+  m_Controls.spnBxBaseline->setValue(preferences->GetInt("m2aia.signal.BaselineCorrectionValue", 50));
+  connect(m_Controls.spnBxBaseline,
+          qOverload<int>(&QSpinBox::valueChanged),
+          this,
+          [this, preferences](int)
+          {
+            preferences->PutInt("m2aia.signal.BaselineCorrectionValue", m_Controls.spnBxBaseline->value());
+          });
 }
 
 m2::BaselineCorrectionType m2Data::GuiToBaselineCorrectionStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-  auto value = this->Controls()->CBBaselineCorrection->currentData().toUInt();
-  preferences->PutInt("m2aia.signal.BaselineCorrectionStrategy", value);
+  auto value =
+    preferences->GetInt("m2aia.signal.BaselineCorrectionStrategy", to_underlying(m2::BaselineCorrectionType::None));
   return static_cast<m2::BaselineCorrectionType>(value);
 }
 

@@ -82,17 +82,14 @@ public:
    */
   void ApplySettingsToImage(m2::SpectrumImageBase *image);
 
-  void InitNormalizationStrategyComboBox();
-  void InitIntensityTransformationStrategyComboBox();
-  void InitRangePoolingStrategyComboBox();
-  void InitSmoothingStrategyComboBox();
-  void InitBaselineCorrectionStrategyComboBox();
+  void InitNormalizationControls();
+  void InitIntensityTransformationControls();
+  void InitRangePoolingControls();
+  void InitSmoothingControls();
+  void InitToleranceControls();
+  void InitBaselineCorrectionControls();
   
-  m2::NormalizationStrategyType GuiToNormalizationStrategyType();
-  m2::IntensityTransformationType GuiToIntensityTransformationStrategyType();
-  m2::RangePoolingStrategyType GuiToRangePoolingStrategyType();  
-  m2::SmoothingType GuiToSmoothingStrategyType();  
-  m2::BaselineCorrectionType GuiToBaselineCorrectionStrategyType();
+  
 
 public slots:
   void OnCreateNextImage();
@@ -101,6 +98,12 @@ public slots:
   void OnDecreaseTolerance();
   void OnRenderSpectrumImages(double min, double max);
   void OnGenerateImageData(qreal mz, qreal tol);
+  
+  m2::NormalizationStrategyType GuiToNormalizationStrategyType();
+  m2::IntensityTransformationType GuiToIntensityTransformationStrategyType();
+  m2::RangePoolingStrategyType GuiToRangePoolingStrategyType();  
+  m2::SmoothingType GuiToSmoothingStrategyType();  
+  m2::BaselineCorrectionType GuiToBaselineCorrectionStrategyType();
   
 
 signals:
