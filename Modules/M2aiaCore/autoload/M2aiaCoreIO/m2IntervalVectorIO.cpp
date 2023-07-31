@@ -51,7 +51,7 @@ namespace m2
         return;
     }
 
-    file << "mz,max,min,mean\n";
+    file << "center,max,min,mean\n";
     for(const m2::Interval & i: input->GetIntervals()){
       file << i.x.mean() << "," << i.y.max() << "," << i.y.min() << "," << i.y.mean() << "\n";
     }
@@ -137,6 +137,32 @@ namespace m2
       m2::Interval I(x,y);
       return I;
     });
+
+    // check for labels. If labels exist split into multiple lists
+    auto labelIt = std::find(std::begin(header), std::end(header), "label");
+    if(labelIt != std::end(header)){
+      auto colIdx = std::distance(std::begin(header), labelIt);
+      
+      auto uniqueLabels = columns[colIdx];
+      auto eraseIt = std::unique(std::begin(uniqueLabels), std::end(uniqueLabels));
+      uniqueLabels.erase(eraseIt, std::end(uniqueLabels));
+      
+      std::map<std::string, m2::IntervalVector::Pointer> labeldResults;
+      auto intervalIt = std::begin(targetData->GetIntervals());
+        
+      for(std::string l : columns[colIdx]){
+        if(labeldResults[l].IsNull()){
+          labeldResults[l] = m2::IntervalVector::New();
+        }
+        labeldResults[l]->GetIntervals().push_back(*intervalIt);
+        ++intervalIt;
+      }
+
+      std::vector<mitk::BaseData::Pointer> res;
+      for(auto kv : labeldResults)
+        res.push_back(kv.second);
+      return res;
+    }
 
     
 

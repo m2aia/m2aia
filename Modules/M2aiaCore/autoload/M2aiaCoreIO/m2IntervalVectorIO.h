@@ -44,7 +44,7 @@ namespace m2
     {
       mitk::CustomMimeType mimeType(INTERVALVECTOR_MIMETYPE_NAME());
       mimeType.AddExtension("csv");
-      mimeType.AddExtension("xs");
+      mimeType.AddExtension("centroids");
       mimeType.SetCategory("Centroids");
       mimeType.SetComment("Spectrum or list of centroids");
       return mimeType;
