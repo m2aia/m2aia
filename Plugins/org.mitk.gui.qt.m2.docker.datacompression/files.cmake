@@ -16,7 +16,7 @@ set(MOC_H_FILES
 # the actual plugin. For example, the icon that is typically displayed in the
 # plugin view menu at the top of the application window.
 set(CACHED_RESOURCE_FILES
-  resources/ExampleIcon.svg
+  resources/logo.svg
   plugin.xml
 )
 

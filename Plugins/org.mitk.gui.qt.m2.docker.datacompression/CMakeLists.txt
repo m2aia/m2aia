@@ -5,3 +5,4 @@ mitk_create_plugin(
   EXPORTED_INCLUDE_SUFFIXES src
   MODULE_DEPENDS PRIVATE MitkQtWidgetsExt M2aiaCore MitkDocker M2aiaDimensionReduction
 )
+

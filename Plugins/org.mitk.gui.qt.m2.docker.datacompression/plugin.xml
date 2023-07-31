@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <plugin>
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.docker.datacompression"
+    <view id="org.mitk.views.m2.docker.datacompression"
           name="Data Compression"
           class="QmitkDataCompressionView"
-          category="Spectrum imaging"
-          icon="resources/ExampleIcon.svg" />
+          category="Spectrum imaging (Docker)"
+          icon="resources/logo.svg" />
   </extension>
 </plugin>

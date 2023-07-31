@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 26.458333 26.458334"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="logo.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     units="px"
+     width="100px"
+     inkscape:zoom="8.7988368"
+     inkscape:cx="36.823049"
+     inkscape:cy="54.950445"
+     inkscape:window-width="3366"
+     inkscape:window-height="1376"
+     inkscape:window-x="74"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g4077" />
+  <defs
+     id="defs2">
+    <clipPath
+       id="clip0">
+      <rect
+         x="927"
+         y="475"
+         width="1776"
+         height="309"
+         id="rect9" />
+    </clipPath>
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <g
+       id="g4077"
+       transform="translate(0.14705746,-0.96510784)">
+      <g
+         aria-label="&lt;   &gt;"
+         transform="scale(1.8095937,0.55261023)"
+         id="text462"
+         style="font-weight:bold;font-size:18.0975px;font-family:'DejaVu Sans';-inkscape-font-specification:'DejaVu Sans Bold';writing-mode:tb-rl;opacity:1;fill:#00ff00;stroke-width:2.35054">
+        <path
+           d="M 10.442773,14.165295 7.5089986,5.6467452 4.5928975,14.165295 H 2.38373 l 4.0913782,-11.3286108 2.0854541,0 4.0913777,11.3286108 z"
+           id="path26204" />
+        <path
+           d="M 10.442773,36.902045 H 12.65194 L 8.5605623,48.230656 H 6.4751082 L 2.38373,36.902045 h 2.2091675 l 2.9161011,8.527387 z"
+           id="path26206" />
+      </g>
+      <circle
+         style="fill:#ff00ff;stroke-width:0.963979"
+         id="path26437"
+         cx="13.602992"
+         cy="14.1459"
+         r="5.6653652" />
+    </g>
+  </g>
+</svg>
