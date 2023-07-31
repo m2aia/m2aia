@@ -74,6 +74,9 @@ namespace m2
      */
     void Write() override;
     void SetIntervalVector(m2::IntervalVector::Pointer data);
+    void SetDataTypeXAxis(m2::NumericType type){m_DataTypeXAxis = type;}
+    void SetDataTypeYAxis(m2::NumericType type){m_DataTypeYAxis = type;}
+    void SetSpectrumFormat(m2::SpectrumFormat type){m_SpectrumFormat = type;}
 
     ConfidenceLevel GetWriterConfidenceLevel() const override;
     std::string GetIBDOutputPath() const;
@@ -89,6 +92,10 @@ namespace m2
     ImzMLImageIO *IOClone() const override;
 
     m2::IntervalVector::Pointer m_Intervals;
+    m2::NumericType m_DataTypeXAxis = m2::NumericType::Float;
+    m2::NumericType m_DataTypeYAxis = m2::NumericType::Float;
+    m2::SpectrumFormat m_SpectrumFormat = m2::SpectrumFormat::None;
+
   
     std::map<std::string, std::string> TextToCodeMap = {{"16-bit float"s, "1000520"s},
                                                         {"32-bit integer"s, "1000519"s},

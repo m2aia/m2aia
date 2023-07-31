@@ -16,18 +16,21 @@ See LICENSE.txt for details.
 
 #include <M2aiaCoreExports.h>
 #include <itkMetaDataObject.h>
-#include <itkMultiThreaderBase.h>
+
 #include <m2CoreCommon.h>
-#include <m2ElxRegistrationHelper.h>
-#include <m2ISpectrumDataAccess.h>
-#include <m2IntervalVector.h>
-#include <m2SpectrumInfo.h>
-#include <mitkBaseData.h>
-#include <mitkImage.h>
-#include <mitkImageStatisticsHolder.h>
-#include <mitkProperties.h>
-#include <random>
 #include <signal/m2SignalCommon.h>
+#include <m2ISpectrumDataAccess.h>
+#include <m2SpectrumInfo.h>
+#include <m2ElxRegistrationHelper.h>
+
+#include <mitkImage.h>
+#include <mitkProperties.h>
+
+#include <random>
+
+#include <itkMultiThreaderBase.h>
+
+
 
 namespace m2
 {
@@ -161,27 +164,6 @@ namespace m2
     const SpectrumInfo &GetSpectrumType() const { return m_SpectrumType; }
     SpectrumInfo &GetSpectrumType() { return m_SpectrumType; }
     void SetSpectrumType(const SpectrumInfo &other) { m_SpectrumType = other; }
-
-    SpectrumInfo &GetExportSpectrumType() { return m_ExportSpectrumType; }
-    const SpectrumInfo &GetExportSpectrumType() const { return m_ExportSpectrumType; }
-    void SetExportSpectrumType(const SpectrumInfo &other) { m_ExportSpectrumType = other; }
-
-    /**
-     * @brief Get the Intensity Data representing a matrix of shape [#intervals, #pixels] as a contiguous array of
-     * floats.
-     *
-     * @param intervals: list of intervals (e.g. a peak center).
-     * @return std::vector<float>
-     */
-    virtual std::vector<float> GetIntensityData(const std::vector<m2::Interval> &intervals) const;
-
-    /**
-     * @brief Get the shape of the assumed data matrix generated with GetIntensityData(...)
-     *
-     * @param intervals: list of intervals (e.g. a peak center). Same as used in GetIntensityData(...).
-     * @return std::vector<unsigned long>
-     */
-    virtual std::vector<unsigned long> GetIntensityDataShape(const std::vector<m2::Interval> &intervals) const;
 
   protected:
     bool mutable m_InSaveMode = false;

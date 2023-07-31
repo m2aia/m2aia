@@ -292,10 +292,7 @@ void m2::ImzMLSpectrumImage::InitializeGeometry()
 void m2::ImzMLSpectrumImage::InitializeImageAccess()
 {
   this->m_Processor->InitializeImageAccess();
-  this->SetImageAccessInitialized(true);
-
-  // by default set the export type to import type.
-  SetExportSpectrumType(GetSpectrumType());
+  this->SetImageAccessInitialized(true);  
 }
 
 // m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLSpectrumImage *A,

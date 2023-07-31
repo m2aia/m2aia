@@ -162,7 +162,7 @@ namespace m2
 
       auto start = std::begin(mzs);
       auto end = std::end(mzs);
-      switch (input->GetExportSpectrumType().XAxisType)
+      switch (m_DataTypeXAxis)
       {
         case m2::NumericType::Float:
           // input->GetProcessor()
@@ -173,6 +173,8 @@ namespace m2
           writeData<double>(start, end, b);
           offsetDelta = mzs.size() * sizeof(double);
           break;
+        case m2::NumericType::None:
+          mitkThrow() << "m2::NumericType of yAxisOutput not set";
       }
       offset += offsetDelta;
       ++show_progress;
@@ -199,7 +201,7 @@ namespace m2
           auto start = std::begin(ints);
           auto end = std::end(ints);
 
-          switch (input->GetExportSpectrumType().YAxisType)
+          switch (m_DataTypeYAxis)
           {
             case m2::NumericType::Float:
               writeData<float>(start, end, b);
@@ -209,6 +211,8 @@ namespace m2
               writeData<double>(start, end, b);
               offsetDelta = ints.size() * sizeof(double);
               break;
+            case m2::NumericType::None:
+              mitkThrow() << "m2::NumericType of yAxisOutput not set";
           }
 
           offset += offsetDelta;
@@ -258,7 +262,7 @@ namespace m2
       source.m_Spectra[0].mzOffset = 16;
       source.m_Spectra[0].mzLength = mzsMasked.size();
 
-      switch (input->GetExportSpectrumType().XAxisType)
+      switch (m_DataTypeXAxis)
       {
         case NumericType::Float:
           writeData<float>(std::begin(mzsMasked), std::end(mzsMasked), b);
@@ -268,6 +272,8 @@ namespace m2
           writeData<double>(std::begin(mzsMasked), std::end(mzsMasked), b);
           offsetDelta = source.m_Spectra[0].mzLength * sizeof(double);
           break;
+        case NumericType::None:
+          mitkThrow() << "m2::NumericType of xAxisOutput not set";
       }
       offset += offsetDelta;
       ++show_progress;
@@ -305,7 +311,7 @@ namespace m2
           s.intOffset = offset;
           s.intLength = intsMasked.size();
 
-          switch (input->GetExportSpectrumType().YAxisType)
+          switch (m_DataTypeYAxis)
           {
             case m2::NumericType::Float:
               writeData<float>(std::begin(intsMasked), std::end(intsMasked), b);
@@ -315,6 +321,8 @@ namespace m2
               writeData<double>(std::begin(intsMasked), std::end(intsMasked), b);
               offsetDelta = s.intLength * sizeof(double);
               break;
+            case m2::NumericType::None:
+              mitkThrow() << "m2::NumericType of yAxisOutput not set";
           }
 
           offset += offsetDelta;
@@ -385,7 +393,7 @@ namespace m2
     //         }
     //       }
 
-    //       switch (input->GetExportSpectrumType().XAxisType)
+    //       switch (m_DataTypeXAxis)
     //       {
     //         case m2::NumericType::Float:
     //           writeData<float>(begin(xs), end(xs), b);
@@ -400,7 +408,7 @@ namespace m2
     //       source.m_Spectra[spectrumId].intOffset = offset;
     //       source.m_Spectra[spectrumId].intLength = peaks.size();
 
-    //       switch (input->GetExportSpectrumType().YAxisType)
+    //       switch (m_DataTypeYAxis)
     //       {
     //         case m2::NumericType::Float:
     //           writeData<float>(begin(ys), end(ys), b);
@@ -453,7 +461,7 @@ namespace m2
       // copy of sources is discared after writing
       m2::ImzMLSpectrumImage::SourceListType sourceCopy(input->GetImzMLSpectrumImageSourceList());
       std::string sha1;
-      switch (input->GetExportSpectrumType().Format)
+      switch (m_SpectrumFormat)
       {
         case SpectrumFormat::ContinuousProfile:
           this->WriteContinuousProfile(sourceCopy);
@@ -487,12 +495,13 @@ namespace m2
 
       std::map<std::string, std::string> context;
 
-      switch (input->GetExportSpectrumType().Format)
+      switch (m_SpectrumFormat)
       {
         case SpectrumFormat::None:
           mitkThrow() << "SpectrumFormatType::None type is not supported!";
           break;
         case SpectrumFormat::ContinuousCentroid:
+        case SpectrumFormat::Centroid:
           context["spectrumtype"] = "centroid spectrum";
           context["mode"] = "continuous";
           break;
@@ -520,7 +529,7 @@ namespace m2
       unsigned mzBytes = 0;
       unsigned intBytes = 0;
 
-      switch (input->GetExportSpectrumType().XAxisType)
+      switch (m_DataTypeXAxis)
       {
         case m2::NumericType::Double:
           context["mz_data_type"] = "64-bit float";
@@ -530,9 +539,11 @@ namespace m2
           context["mz_data_type"] = "32-bit float";
           mzBytes = 4;
           break;
+        case m2::NumericType::None:
+          mitkThrow() << "m2::NumericType of xAxisOutput not set";
       }
 
-      switch (input->GetExportSpectrumType().YAxisType)
+      switch (m_DataTypeYAxis)
       {
         case m2::NumericType::Double:
           context["int_data_type"] = "64-bit float";
@@ -542,6 +553,8 @@ namespace m2
           context["int_data_type"] = "32-bit float";
           intBytes = 4;
           break;
+        case m2::NumericType::None:
+          mitkThrow() << "m2::NumericType of yAxisOutput not set";
       }
 
       context["mz_data_type_code"] = TextToCodeMap[context["mz_data_type"]];
