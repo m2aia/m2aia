@@ -20,7 +20,7 @@ parser.add_argument("--tolerance", default=75, type=np.float32)
 parser.add_argument("-c", "--centroids", required=True)
 parser.add_argument("-o", "--out", required=True)
 
-parser.add_argument("-e","--n_epochs", default=None, type=np.int32)
+parser.add_argument("-e","--n_epochs", default=None, type=int)
 parser.add_argument("-nn","--n_neighbors", default=15, type=np.int32)
 parser.add_argument("-nc","--n_components", default=2, type=np.int32)
 parser.add_argument("-j","--n_jobs", default=-1, type=np.int32)
@@ -60,6 +60,8 @@ parser.add_argument("-do","--output_dens", default=False, action="store_true")
 parser.add_argument("--disconnection_distance", default=None, type=np.float32)
 
 args = parser.parse_args()
+
+print(args, type(args.n_epochs))
 
 import m2aia as m2
 import umap

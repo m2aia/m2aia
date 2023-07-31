@@ -13,12 +13,12 @@ found in the LICENSE file.
 #include "QmitkUMAPView.h"
 
 #include <QMessageBox>
+#include <m2IntervalVector.h>
 #include <m2SpectrumImageBase.h>
 #include <m2SpectrumImageHelper.h>
 #include <mitkDockerHelper.h>
 #include <mitkNodePredicateFunction.h>
 #include <mitkProgressBar.h>
-#include <m2IntervalVector.h>
 
 // Don't forget to initialize the VIEW_ID.
 const std::string QmitkUMAPView::VIEW_ID = "org.mitk.views.m2.docker.umap";
@@ -33,10 +33,7 @@ void QmitkUMAPView::CreateQtPartControl(QWidget *parent)
     {
       if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
       {
-        if (image->GetIsDataAccessInitialized())
-        {
-          return ((unsigned int)(image->GetSpectrumType().Format)) & ((unsigned int)(m2::SpectrumFormat::Continuous));
-        }
+        return image->GetIsDataAccessInitialized();
       }
       return false;
     });
@@ -82,9 +79,8 @@ void QmitkUMAPView::OnStartDockerProcessing()
       {
         try
         {
-
           mitk::ProgressBar::GetInstance()->AddStepsToDo(3);
-          
+
           mitk::DockerHelper helper("ghcr.io/m2aia/umap:latest");
           m2::SpectrumImageHelper::AddArguments(helper);
 
@@ -94,6 +90,47 @@ void QmitkUMAPView::OnStartDockerProcessing()
           helper.AddAutoSaveData(imageNode->GetData(), "--imzml", "processData.imzML");
           helper.AddAutoSaveData(centroidNode->GetData(), "--centroids", "input.centroids");
           helper.AddAutoLoadOutput("--out", "umap.nrrd");
+
+          helper.AddApplicationArgument("--n_neighbors", m_Controls.n_neighbors->text().toStdString());
+          helper.AddApplicationArgument("--n_components", m_Controls.n_components->text().toStdString());
+          helper.AddApplicationArgument("--metric", m_Controls.metric->currentText().toStdString());
+          // helper.AddApplicationArgument("--output_metric", m_Controls.output_metric->text().toStdString());
+          MITK_INFO << "m_Controls.n_epochs->text().toStdString() " << m_Controls.n_epochs->text().toStdString();
+          helper.AddApplicationArgument("--n_epochs", m_Controls.n_epochs->text().toStdString());
+          helper.AddApplicationArgument("--learning_rate", m_Controls.learning_rate->text().toStdString());
+          helper.AddApplicationArgument("--min_dist", m_Controls.min_dist->text().toStdString());
+          helper.AddApplicationArgument("--spread", m_Controls.spread->text().toStdString());
+          helper.AddApplicationArgument("--local_connectivity", m_Controls.local_connectivity->text().toStdString());
+          // helper.AddApplicationArgument("--random_state", m_Controls.random_state->text().toStdString());
+
+          // metric_kwds
+          // output_metric_kwds
+          // init=args.init,
+          // low_memory=args.low_memory,
+          // n_jobs=args.n_jobs,
+          // set_op_mix_ratio=args.set_op
+          // repulsion_strength
+          // negative_sample_rate=args.ne
+          // transform_queue_size=args.tr
+          // a=args.a,
+          // b=args.b,
+          // angular_rp_forest=args.angul
+          // target_n_neighbors=args.targ
+          // target_metric=args.target_me
+          // target_metric_kwds=args.targ
+          // target_weight=args.target_we
+          // transform_seed=args.transfor
+          // transform_mode=args.transfor
+          // force_approximation_algorith
+          // verbose=args.verbose,
+          // tqdm_kwds=args.tqdm_kwds,
+          // unique=args.unique,
+          // densmap
+          // dens_lambda
+          // dens_frac
+          // dens_var_shift
+          // output_dens
+          // disconnection_distance=args.
 
           // from data view?
           // helper.AddAutoLoadOutputFolder("--")
