@@ -140,7 +140,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
     }
   }
 
-  const std::vector<QString> viewCategories = {"Spectrum imaging", "Segmentation" /*, "Registration"*/};
+  const std::vector<QString> viewCategories = {"Spectrum imaging", "Segmentation", "Spectrum imaging (Docker)"};
 
   {
     auto prefService = berry::WorkbenchPlugin::GetDefault()->GetPreferencesService();
@@ -200,7 +200,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
         {
           auto categoryButton = new QToolButton;
           categoryButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
-          categoryButton->setText(category);
+          categoryButton->setText("");
           categoryButton->setStyleSheet("background: transparent; margin: 0; padding: 0;");
           toolbar->addWidget(categoryButton);
 
