@@ -11,4 +11,7 @@ org.mitk.gui.qt.m2.Reconstruction3D:ON
 # org.mitk.gui.qt.m2.CombineImages:ON
 org.mitk.gui.qt.m2.docker.datacompression:ON
 org.mitk.gui.qt.m2.docker.molecular:ON
+org.mitk.gui.qt.m2.docker.peaklearning:ON
+org.mitk.gui.qt.m2.docker.simclr:ON
+org.mitk.gui.qt.m2.docker.umap:ON
 )
