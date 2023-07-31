@@ -8,7 +8,7 @@ org.mitk.gui.qt.m2.peakpicking:ON
 org.mitk.gui.qt.m2.ImzMLExport:ON
 org.mitk.gui.qt.m2.Spectrum:ON
 org.mitk.gui.qt.m2.Reconstruction3D:ON
-org.mitk.gui.qt.m2.CombineImages:ON
+# org.mitk.gui.qt.m2.CombineImages:ON
 org.mitk.gui.qt.m2.docker.datacompression:ON
 org.mitk.gui.qt.m2.docker.molecular:ON
 )
