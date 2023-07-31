@@ -167,10 +167,24 @@ namespace m2
      */
     std::string GetInfo() const { return m_Info; }
 
+
+    /**
+     * @brief Check whether object contains data (at
+     * least at one point in time), e.g., a set of points
+     * may be empty
+    */
+    
+    //## \warning Returns IsInitialized()==false by default for
+    //## compatibility reasons. Override in sub-classes that
+    //## support distinction between empty/non-empty state.
+    virtual bool IsEmpty() const{
+      return m_Data.empty();
+    }
+
   private:
     std::vector<Interval> m_Data;
-    std::string m_Info;
-    SpectrumFormat m_Type;
+    std::string m_Info = "Not Set!";
+    SpectrumFormat m_Type = SpectrumFormat::Centroid;
   };
 
 } // namespace m2
