@@ -27,10 +27,12 @@ namespace m2
     None = 1,
     Profile = 2,
     Centroid = 4,
-    ContinuousProfile = 8 + 2,
-    ProcessedProfile = 16 + 2,
-    ContinuousCentroid = 32 + 4,
-    ProcessedCentroid = 64 + 4
+    Continuous = 8,
+    Processed = 16,
+    ContinuousProfile = 32 + 8 + 2,
+    ProcessedProfile = 64 + 16 + 2,
+    ContinuousCentroid = 128 + 8 + 4,
+    ProcessedCentroid = 256 + 16 + 4
   };
 
   enum class ImzMLFormat : unsigned int
@@ -49,6 +51,10 @@ namespace m2
         return "Centroid";
       case SpectrumFormat::Profile:
         return "Profile";
+      case SpectrumFormat::Continuous:
+        return "Continuous";
+      case SpectrumFormat::Processed:
+        return "Processed";
       case SpectrumFormat::ContinuousProfile:
         return "ContinuousProfile";
       case SpectrumFormat::ProcessedProfile:
@@ -95,14 +101,17 @@ namespace m2
 
   enum class NumericType : unsigned int
   {
-    Float = 0,
-    Double = 1
+    None = 0,
+    Float = 1,
+    Double = 2
   };
 
   inline std::string to_string(const NumericType &type) noexcept
   {
     switch (type)
     {
+      case NumericType::None:
+        return "None";
       case NumericType::Float:
         return "Float";
       case NumericType::Double:
@@ -115,6 +124,8 @@ namespace m2
   {
     switch (type)
     {
+      case NumericType::None:
+        return 0;
       case NumericType::Float:
         return sizeof(float);
       case NumericType::Double:
