@@ -27,6 +27,7 @@ See LICENSE.txt for details.
 #include <itksys/SystemTools.hxx>
 #include <m2FsmSpectrumImage.h>
 #include <m2ImzMLSpectrumImage.h>
+#include <m2IntervalVector.h>
 #include <m2SpectrumImageBase.h>
 #include <m2SpectrumImageDataInteractor.h>
 #include <m2SpectrumImageStack.h>

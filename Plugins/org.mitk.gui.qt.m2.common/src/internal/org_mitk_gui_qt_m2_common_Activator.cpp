@@ -19,7 +19,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "m2BrowserPreferencesPage.h"
 #include <QmitkNodeDescriptorManager.h>
 
-#include <m2UIUtils.h>
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateOr.h>
@@ -32,6 +31,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "QmitkDataNodeExportComponentAction.h"
 #include "QmitkDataNodeConvertPixelTypeAction.h"
 
+#include <m2UIUtils.h>
+#include <m2IntervalVector.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2SpectrumImageStack.h>
 
