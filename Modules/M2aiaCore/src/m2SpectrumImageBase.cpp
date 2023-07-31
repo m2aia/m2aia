@@ -66,43 +66,6 @@ void m2::SpectrumImageBase::InsertImageArtifact(const std::string &key, mitk::Im
   img->SetClonedTimeGeometry(this->GetTimeGeometry());
 }
 
-std::vector<unsigned long> m2::SpectrumImageBase::GetIntensityDataShape(
-  const std::vector<m2::Interval> &intervals) const
-{
-  using namespace std;
-  // pixels in image
-  unsigned int N = accumulate(this->GetDimensions(), this->GetDimensions() + 3, 1, multiplies<unsigned int>());
-  std::vector<unsigned long> v;
-  v.push_back(intervals.size());
-  v.push_back(N);
-  return v;
-}
-
-std::vector<float> m2::SpectrumImageBase::GetIntensityData(const std::vector<m2::Interval> &intervals) const
-{
-  using namespace std;
-  // pixels in image
-  unsigned int N = accumulate(this->GetDimensions(), this->GetDimensions() + 3, 1, multiplies<unsigned int>());
-  auto maskImage = GetMaskImage();
-
-  auto tmpImage = mitk::Image::New();
-  tmpImage->Initialize(this);
-  mitk::ImagePixelReadAccessor<m2::DisplayImagePixelType, 3> tAcc(tmpImage);
-
-  vector<float> values;
-  values.reserve(N * intervals.size());
-  auto inserter = back_inserter(values);
-  MITK_INFO << "Generate intensity values for #intervals (" << intervals.size()
-            << ") using interval centers and a tolerance of " << this->GetTolerance()
-            << " isUsingPPM=" << (GetUseToleranceInPPM() ? "True" : "False");
-  for (const auto &p : intervals)
-  {
-    GetImage(p.x.mean(), ApplyTolerance(p.x.mean()), maskImage, tmpImage);
-    copy(tAcc.GetData(), tAcc.GetData() + N, inserter);
-  }
-  return values;
-}
-
 void m2::SpectrumImageBase::ApplyMoveOriginOperation(const mitk::Vector3D &v)
 {
   auto geometry = this->GetGeometry();

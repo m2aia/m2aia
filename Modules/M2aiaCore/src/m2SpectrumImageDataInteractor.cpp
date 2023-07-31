@@ -22,6 +22,7 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateDataType.h>
 #include <mitkPointOperation.h>
 #include <mitkRenderingManager.h>
+#include <m2IntervalVector.h>
 
 m2::SpectrumImageDataInteractor::SpectrumImageDataInteractor() {}
 m2::SpectrumImageDataInteractor::~SpectrumImageDataInteractor() {}
