@@ -166,6 +166,10 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
         continue;
       if ((*iter)->GetId() == "org.mitk.views.viewnavigatorview")
         continue;
+      if ((*iter)->GetId() == "org.mitk.views.m2.data")
+        continue;
+      if ((*iter)->GetId() == "org.mitk.views.m2.Spectrum")
+        continue;
 
       std::pair<QString, berry::IViewDescriptor::Pointer> p((*iter)->GetLabel(), (*iter));
       VDMap.insert(p);
