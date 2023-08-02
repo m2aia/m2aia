@@ -18,7 +18,7 @@ found in the LICENSE file.
 class PluginActivator : public QObject, public ctkPluginActivator
 {
   Q_OBJECT
-  Q_PLUGIN_METADATA(IID "org_mitk_gui_qt_m2_docker_datacompression")
+  Q_PLUGIN_METADATA(IID "org_mitk_gui_qt_m2_datacompression")
   Q_INTERFACES(ctkPluginActivator)
 
 public:

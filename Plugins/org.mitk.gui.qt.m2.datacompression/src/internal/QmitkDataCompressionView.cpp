@@ -56,7 +56,7 @@ found in the LICENSE file.
 #include <boost/algorithm/string.hpp>
 
 // Don't forget to initialize the VIEW_ID.
-const std::string QmitkDataCompressionView::VIEW_ID = "org.mitk.views.m2.docker.datacompression";
+const std::string QmitkDataCompressionView::VIEW_ID = "org.mitk.views.m2.datacompression";
 using DisplayImageType = itk::Image<m2::DisplayImagePixelType, 3>;
 using VectorImageAdaptorType = itk::VectorImageToImageAdaptor<m2::DisplayImagePixelType, 3>;
 using VectorImageType = itk::VectorImage<m2::DisplayImagePixelType, 3>;
@@ -94,15 +94,15 @@ void QmitkDataCompressionView::CreateQtPartControl(QWidget *parent)
   m_Controls.peakListSelection->SetPopUpTitel(QString("PeakList"));
 
   // Wire up the UI widgets with our functionality.
-  connect(m_Controls.imageSelection,
-          &QmitkSingleNodeSelectionWidget::CurrentSelectionChanged,
-          this,
-          &QmitkDataCompressionView::OnImageChanged);
+  // connect(m_Controls.imageSelection,
+  //         &QmitkSingleNodeSelectionWidget::CurrentSelectionChanged,
+  //         this,
+  //         &QmitkDataCompressionView::OnImageChanged);
 
   connect(m_Controls.btnRunPCA, SIGNAL(clicked()), this, SLOT(OnStartPCA()));
   connect(m_Controls.btnRunTSNE, SIGNAL(clicked()), this, SLOT(OnStartTSNE()));
-  connect(m_Controls.btnRunSparsePCA, SIGNAL(clicked()), this, SLOT(OnStartSparsePCA()));
-  connect(m_Controls.btnRunUmap, SIGNAL(clicked()), this, SLOT(OnStartUMAP()));
+  // connect(m_Controls.btnRunSparsePCA, SIGNAL(clicked()), this, SLOT(OnStartSparsePCA()));
+  // connect(m_Controls.btnRunUmap, SIGNAL(clicked()), this, SLOT(OnStartUMAP()));
 
   // connect(m_Controls.btnExport,
   //         &QPushButton::clicked,
@@ -123,112 +123,41 @@ void QmitkDataCompressionView::CreateQtPartControl(QWidget *parent)
   //           }
   //         });
 
-  connect(m_Controls.btnPicking,
-          &QPushButton::clicked,
-          this,
-          []()
-          {
-            try
-            {
-              if (auto platform = berry::PlatformUI::GetWorkbench())
-                if (auto workbench = platform->GetActiveWorkbenchWindow())
-                  if (auto page = workbench->GetActivePage())
-                    if (page.IsNotNull())
-                      page->ShowView("org.mitk.views.m2.peakpicking", "", 1);
-            }
-            catch (berry::PartInitException &e)
-            {
-              BERRY_ERROR << "Error: " << e.what() << std::endl;
-            }
-          });
+  // connect(m_Controls.btnPicking,
+  //         &QPushButton::clicked,
+  //         this,
+  //         []()
+  //         {
+  //           try
+  //           {
+  //             if (auto platform = berry::PlatformUI::GetWorkbench())
+  //               if (auto workbench = platform->GetActiveWorkbenchWindow())
+  //                 if (auto page = workbench->GetActivePage())
+  //                   if (page.IsNotNull())
+  //                     page->ShowView("org.mitk.views.m2.peakpicking", "", 1);
+  //           }
+  //           catch (berry::PartInitException &e)
+  //           {
+  //             BERRY_ERROR << "Error: " << e.what() << std::endl;
+  //           }
+  //         });
 
   // Make sure to have a consistent UI state at the very beginning.
-  this->OnImageChanged(m_Controls.imageSelection->GetSelectedNodes());
+  // this->OnImageChanged(m_Controls.imageSelection->GetSelectedNodes());
 
-  m_Controls.lassoLabelImageSelection->SetDataStorage(GetDataStorage());
-  m_Controls.lassoLabelImageSelection->SetAutoSelectNewNodes(true);
-  m_Controls.lassoLabelImageSelection->SetNodePredicate(
-    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::LabelSetImage>::New(),
-                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
-  m_Controls.lassoLabelImageSelection->SetSelectionIsOptional(true);
-  m_Controls.lassoLabelImageSelection->SetEmptyInfo(QString("LabelImage selection"));
-  m_Controls.lassoLabelImageSelection->SetPopUpTitel(QString("LabelImage"));
+  // m_Controls.lassoLabelImageSelection->SetDataStorage(GetDataStorage());
+  // m_Controls.lassoLabelImageSelection->SetAutoSelectNewNodes(true);
+  // m_Controls.lassoLabelImageSelection->SetNodePredicate(
+  //   mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<mitk::LabelSetImage>::New(),
+  //                               mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+  // m_Controls.lassoLabelImageSelection->SetSelectionIsOptional(true);
+  // m_Controls.lassoLabelImageSelection->SetEmptyInfo(QString("LabelImage selection"));
+  // m_Controls.lassoLabelImageSelection->SetPopUpTitel(QString("LabelImage"));
 
-  connect(m_Controls.btnExport,
-          &QPushButton::clicked,
-          this,
-          [this, parent]()
-          {
-            for (auto imageNode : this->m_Controls.imageSelection->GetSelectedNodesStdVector())
-            {
-              auto image = dynamic_cast<m2::SpectrumImageBase *>(imageNode->GetData());
-                
-              for (auto peakListNode : this->m_Controls.peakListSelection->GetSelectedNodesStdVector())
-              {
-                auto centroids = dynamic_cast<m2::IntervalVector *>(peakListNode->GetData());
-                auto name = QFileDialog::getSaveFileName(parent);
-                m2::ImzMLImageIO io;             
-                io.mitk::AbstractFileIOWriter::SetInput(imageNode->GetData());
-                io.SetIntervalVector(centroids);
-                io.SetSpectrumFormat(m2::SpectrumFormat::ContinuousCentroid);
-                io.SetDataTypeXAxis(image->GetSpectrumType().XAxisType);
-                io.SetDataTypeYAxis(image->GetSpectrumType().YAxisType);
-                io.SetOutputLocation(name.toStdString());
-                io.Write();
-              }
-            }
-          });
-
-  QPalette palette_green;
-  palette_green.setColor(QPalette::WindowText, Qt::green);
-
-  QPalette palette_red;
-  palette_red.setColor(QPalette::WindowText, Qt::red);
-  Red(m_Controls.labelDocker);
-  Red(m_Controls.labelData);
-
-  if (mitk::DockerHelper::CheckDocker())
-  {
-    Green(m_Controls.labelDocker);
-  }
 }
 
 void QmitkDataCompressionView::SetFocus() {}
 
-void QmitkDataCompressionView::OnImageChanged(const QmitkSingleNodeSelectionWidget::NodeList &)
-{
-  this->EnableWidgets(!m_Controls.imageSelection->GetSelectedNodesStdVector().empty());
-  for (auto node : m_Controls.imageSelection->GetSelectedNodesStdVector())
-  {
-    if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
-    {
-      std::string path;
-      node->GetStringProperty("MITK.IO.reader.inputlocation", path);
-      if (itksys::SystemTools::FileExists(path) &&
-          image->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousCentroid)
-      {
-        Green(m_Controls.labelData);
-        m_Controls.btnExport->hide();
-        m_Controls.labelExportInfo->hide();
-      }
-      else
-      {
-        Red(m_Controls.labelData);
-        m_Controls.btnExport->show();
-        m_Controls.labelExportInfo->show();
-      }
-    }
-  }
-
-  if (mitk::DockerHelper::CheckDocker())
-  {
-    Green(m_Controls.labelDocker);
-  }
-  else
-  {
-    Red(m_Controls.labelDocker);
-  }
-}
 
 void QmitkDataCompressionView::OnPeakListChanged(const QmitkSingleNodeSelectionWidget::NodeList &)
 {
@@ -240,137 +169,90 @@ void QmitkDataCompressionView::EnableWidgets(bool /*enable*/)
   // m_Controls
 }
 
-void QmitkDataCompressionView::OnStartUMAP()
-{
-  for (auto node : m_Controls.imageSelection->GetSelectedNodesStdVector())
-  {
-    if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
-    {
-      if (!image->GetIsDataAccessInitialized())
-        return;
-      if (image->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousCentroid)
-      {
-        if (mitk::DockerHelper::CheckDocker())
-        {
-          mitk::DockerHelper helper("ghcr.io/m2aia/extensions:umap");
-          m2::SpectrumImageHelper::AddArguments(helper);
-          helper.AddAutoSaveData(image, "--imzml", "*.imzML");
-          helper.AddAutoSaveData(image, "--centroids", "*.centroids");
-          helper.AddApplicationArgument("--num_comp", std::to_string(m_Controls.spnBxComponents->value()));
-          helper.AddApplicationArgument("--num_neighbors", std::to_string(m_Controls.spnBxNeighbors->value()));
-          helper.AddApplicationArgument("--min_dist", std::to_string(m_Controls.spnBxMinDistance->value()));
-          helper.AddApplicationArgument("--metric", m_Controls.cmbBxMetric->currentText().toStdString());
-          helper.AddAutoLoadOutput("--image", "umap_image.nrrd");
-          const auto results = helper.GetResults();
+// void QmitkDataCompressionView::OnStartSparsePCA()
+// {
+//   for (auto node : m_Controls.imageSelection->GetSelectedNodesStdVector())
+//   {
+//     if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+//     {
+//       if (!image->GetIsDataAccessInitialized())
+//         return;
+//       if (image->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousCentroid)
+//       {
+//         if (mitk::DockerHelper::CheckDocker())
+//         {
+//           mitk::DockerHelper helper("ghcr.io/m2aia/extensions:sparse_pca");
+//           m2::SpectrumImageHelper::AddArguments(helper);
+//           helper.AddAutoSaveData(image, "--imzml", "*.imzML");
 
-          // convert 3D image to 3D vector image
-          const auto image = dynamic_cast<mitk::Image *>(results[0].GetPointer());
-          const auto dims = image->GetDimensions();
-          const auto components = dims[2];
-          auto vimage = mitk::HelperUtils::GetVectorImage3D({dims[0], dims[1], 1}, components);
-          mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> outAcc(vimage);
-          mitk::ImagePixelReadAccessor<float, 3> inAcc(image);
+//           auto iter = helper.AddLoadLaterOutput("--csv", "pca_data.csv");
+//           helper.AddAutoLoadOutput("--image", "pca_data.nrrd");
+//           auto results = helper.GetResults();
 
-          for (unsigned int pixelInSlice = 0; pixelInSlice < dims[0] * dims[1]; ++pixelInSlice)
-            for (unsigned int i = 0; i < components; ++i)
-              outAcc.GetData()[pixelInSlice * components + i] = inAcc.GetData()[i * dims[0] * dims[1] + pixelInSlice];
+//           // convert 3D image to 3D vector image
+//           const auto image = dynamic_cast<mitk::Image *>(results[0].GetPointer());
+//           const auto dims = image->GetDimensions();
+//           const auto components = dims[2];
+//           auto vimage = mitk::HelperUtils::GetVectorImage3D({dims[0], dims[1], 1}, components);
+//           mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> outAcc(vimage);
+//           mitk::ImagePixelReadAccessor<float, 3> inAcc(image);
+//           auto targetGeom = vimage->GetGeometry();
+//           auto sourceGeom = image->GetGeometry();
+//           targetGeom->SetSpacing(sourceGeom->GetSpacing());
+//           targetGeom->SetOrigin(sourceGeom->GetOrigin());
 
-          vimage->SetTimeGeometry(image->GetTimeGeometry()->Clone());
+//           for (unsigned int pixelInSlice = 0; pixelInSlice < dims[0] * dims[1]; ++pixelInSlice)
+//             for (unsigned int i = 0; i < components; ++i)
+//               outAcc.GetData()[pixelInSlice * components + i] = inAcc.GetData()[i * dims[0] * dims[1] + pixelInSlice];
 
-          auto newNode = mitk::DataNode::New();
-          newNode->SetData(vimage);
-          newNode->SetName(node->GetName() + "_umap");
-          GetDataStorage()->Add(newNode, const_cast<mitk::DataNode *>(node.GetPointer()));
-        }
-      }
-    }
-  }
-}
+//           // load csv
+//           const auto filePath = helper.GetFilePath(iter->path);
+//           std::ifstream t(filePath);
+//           if (t.good())
+//           {
+//             std::string text((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
+//             std::vector<std::string> lines;
+//             boost::split(lines, text, [](char c) { return c == '\n'; });
+//             lines.erase(lines.begin());
+//             lines.erase(lines.rbegin().base());
 
-void QmitkDataCompressionView::OnStartSparsePCA()
-{
-  for (auto node : m_Controls.imageSelection->GetSelectedNodesStdVector())
-  {
-    if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
-    {
-      if (!image->GetIsDataAccessInitialized())
-        return;
-      if (image->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousCentroid)
-      {
-        if (mitk::DockerHelper::CheckDocker())
-        {
-          mitk::DockerHelper helper("ghcr.io/m2aia/extensions:sparse_pca");
-          m2::SpectrumImageHelper::AddArguments(helper);
-          helper.AddAutoSaveData(image, "--imzml", "*.imzML");
+//             auto *table = m_Controls.sparsePcaTable;
+//             table->clearContents();
+//             table->setRowCount(lines.size());
+//             table->setColumnCount(3);
+//             unsigned int row = 0;
+//             table->blockSignals(true);
+//             table->setHorizontalHeaderLabels({"m/z", "pc", "value"});
 
-          auto iter = helper.AddLoadLaterOutput("--csv", "pca_data.csv");
-          helper.AddAutoLoadOutput("--image", "pca_data.nrrd");
-          auto results = helper.GetResults();
+//             for (std::string line : lines)
+//             {
+//               boost::erase_all(line, "\"");
+//               std::vector<std::string> words;
+//               boost::split(words, line, [](char c) { return c == ','; });
 
-          // convert 3D image to 3D vector image
-          const auto image = dynamic_cast<mitk::Image *>(results[0].GetPointer());
-          const auto dims = image->GetDimensions();
-          const auto components = dims[2];
-          auto vimage = mitk::HelperUtils::GetVectorImage3D({dims[0], dims[1], 1}, components);
-          mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> outAcc(vimage);
-          mitk::ImagePixelReadAccessor<float, 3> inAcc(image);
-          auto targetGeom = vimage->GetGeometry();
-          auto sourceGeom = image->GetGeometry();
-          targetGeom->SetSpacing(sourceGeom->GetSpacing());
-          targetGeom->SetOrigin(sourceGeom->GetOrigin());
+//               auto item = new QTableWidgetItem(words[1].c_str());
+//               table->setItem(row, 0, item);
 
-          for (unsigned int pixelInSlice = 0; pixelInSlice < dims[0] * dims[1]; ++pixelInSlice)
-            for (unsigned int i = 0; i < components; ++i)
-              outAcc.GetData()[pixelInSlice * components + i] = inAcc.GetData()[i * dims[0] * dims[1] + pixelInSlice];
+//               item = new QTableWidgetItem(words[2].c_str());
+//               table->setItem(row, 1, item);
 
-          // load csv
-          const auto filePath = helper.GetFilePath(iter->path);
-          std::ifstream t(filePath);
-          if (t.good())
-          {
-            std::string text((std::istreambuf_iterator<char>(t)), std::istreambuf_iterator<char>());
-            std::vector<std::string> lines;
-            boost::split(lines, text, [](char c) { return c == '\n'; });
-            lines.erase(lines.begin());
-            lines.erase(lines.rbegin().base());
+//               item = new QTableWidgetItem(words[3].c_str());
+//               table->setItem(row, 2, item);
+//               ++row;
+//             }
+//             table->sortByColumn(1);
+//             table->blockSignals(false);
+//           }
 
-            auto *table = m_Controls.sparsePcaTable;
-            table->clearContents();
-            table->setRowCount(lines.size());
-            table->setColumnCount(3);
-            unsigned int row = 0;
-            table->blockSignals(true);
-            table->setHorizontalHeaderLabels({"m/z", "pc", "value"});
-
-            for (std::string line : lines)
-            {
-              boost::erase_all(line, "\"");
-              std::vector<std::string> words;
-              boost::split(words, line, [](char c) { return c == ','; });
-
-              auto item = new QTableWidgetItem(words[1].c_str());
-              table->setItem(row, 0, item);
-
-              item = new QTableWidgetItem(words[2].c_str());
-              table->setItem(row, 1, item);
-
-              item = new QTableWidgetItem(words[3].c_str());
-              table->setItem(row, 2, item);
-              ++row;
-            }
-            table->sortByColumn(1);
-            table->blockSignals(false);
-          }
-
-          auto newNode = mitk::DataNode::New();
-          newNode->SetData(vimage);
-          newNode->SetName(node->GetName() + "_sparse_pca");
-          GetDataStorage()->Add(newNode, const_cast<mitk::DataNode *>(node.GetPointer()));
-        }
-      }
-    }
-  }
-}
+//           auto newNode = mitk::DataNode::New();
+//           newNode->SetData(vimage);
+//           newNode->SetName(node->GetName() + "_sparse_pca");
+//           GetDataStorage()->Add(newNode, const_cast<mitk::DataNode *>(node.GetPointer()));
+//         }
+//       }
+//     }
+//   }
+// }
 
 void QmitkDataCompressionView::OnStartPCA()
 {
@@ -441,21 +323,12 @@ void QmitkDataCompressionView::OnStartTSNE()
   {
     if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
     {
-      auto p = node->GetProperty("name")->Clone();
-      static_cast<mitk::StringProperty *>(p.GetPointer())->SetValue("PCA");
-      auto derivations = this->GetDataStorage()->GetDerivations(node, mitk::NodePredicateProperty::New("name", p));
-      if (derivations->size() == 0)
-      {
-        QMessageBox::warning(nullptr,
-                             "PCA required!",
-                             "The t-SNE uses the top five features of the PCA transformed images! Start a PCA"
-                             "first.",
-                             QMessageBox::StandardButton::NoButton,
-                             QMessageBox::StandardButton::Ok);
+      
+      auto child = this->GetDataStorage()->GetNamedDerivedNode("PCA", node);
+      if (!child)
         return;
-      }
 
-      auto pcaImage = dynamic_cast<mitk::Image *>(derivations->front()->GetData());
+      auto pcaImage = dynamic_cast<mitk::Image *>(child->GetData());
       const auto pcaComponents = pcaImage->GetPixelType().GetNumberOfComponents();
 
       auto filter = m2::TSNEImageFilter::New();

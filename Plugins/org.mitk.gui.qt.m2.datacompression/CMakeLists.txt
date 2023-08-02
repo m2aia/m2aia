@@ -1,4 +1,4 @@
-project(org_mitk_gui_qt_m2_docker_datacompression)
+project(org_mitk_gui_qt_m2_datacompression)
 
 mitk_create_plugin(
   EXPORT_DIRECTIVE EXAMPLE_EXPORT
