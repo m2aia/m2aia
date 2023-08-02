@@ -1,2 +1,6 @@
 .vscode/c_cpp_properties.json
 Applications/M2aiaWorkbench/CPackConfig.cmake
+*.ibd
+*.imzML
+*.png
+devcontainer.json
