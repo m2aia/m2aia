@@ -922,7 +922,7 @@ void m2Spectrum::OnRangeChangedAxisX(qreal xMin, qreal xMax)
 
   if (xMin < m_GlobalMinimumX)
   {
-    MITK_INFO("OnRangeChangedAxisX") << xMin << " > " << m_GlobalMinimumX;
+    // MITK_INFO("OnRangeChangedAxisX") << xMin << " > " << m_GlobalMinimumX;
     this->m_MouseDragLowerDelta = std::abs(m_GlobalMinimumX - this->m_MouseDragCenterPos);
     axis->blockSignals(true);
     axis->setMin(m_GlobalMinimumX);
