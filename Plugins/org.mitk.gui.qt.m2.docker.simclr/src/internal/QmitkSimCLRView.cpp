@@ -28,15 +28,12 @@ void QmitkSimCLRView::CreateQtPartControl(QWidget *parent)
   // Setting up the UI is a true pleasure when using .ui files, isn't it?
   m_Controls.setupUi(parent);
 
-  auto NodePredicateIsContinuousSpectrumImage = mitk::NodePredicateFunction::New(
+  auto NodePredicateSpectrumImage = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) -> bool
     {
       if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
       {
-        if (image->GetIsDataAccessInitialized())
-        {
-          return ((unsigned int)(image->GetSpectrumType().Format)) & ((unsigned int)(m2::SpectrumFormat::Continuous));
-        }
+        return image->GetIsDataAccessInitialized();
       }
       return false;
     });
@@ -45,7 +42,7 @@ void QmitkSimCLRView::CreateQtPartControl(QWidget *parent)
   m_Controls.imageSelection->SetDataStorage(this->GetDataStorage());
   m_Controls.imageSelection->SetSelectionIsOptional(true);
   m_Controls.imageSelection->SetEmptyInfo(QStringLiteral("Select an image"));
-  m_Controls.imageSelection->SetNodePredicate(NodePredicateIsContinuousSpectrumImage);
+  m_Controls.imageSelection->SetNodePredicate(NodePredicateSpectrumImage);
 
   auto NodePredicateIsCentroidList = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) -> bool
@@ -97,7 +94,6 @@ void QmitkSimCLRView::OnStartDockerProcessing()
           helper.AddApplicationArgument("--model", "/tmp/model.simclr");
           helper.AddApplicationArgument("--epochs", m_Controls.epochs->text().toStdString());
           helper.AddApplicationArgument("--batch_size", m_Controls.batch_size->text().toStdString());
-          helper.AddApplicationArgument("--tolerance", m_Controls.tolerance->text().toStdString());
           helper.AddApplicationArgument("--num_clusters", m_Controls.num_clusters->text().toStdString());
           helper.AddApplicationArgument("--num_neighbors", m_Controls.num_neighbors->text().toStdString());
           helper.AddAutoLoadOutput("--umap", "clusters_umap.png");
