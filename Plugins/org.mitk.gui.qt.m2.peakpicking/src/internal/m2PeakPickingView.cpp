@@ -114,9 +114,9 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.sourceProfileImageSelector->SetDataStorage(GetDataStorage());
   m_Controls.sourceProfileImageSelector->SetSelectionIsOptional(true);
   m_Controls.sourceProfileImageSelector->SetAutoSelectNewNodes(true);
-  m_Controls.sourceProfileImageSelector->SetEmptyInfo(QString("Select Source Profile Spectrum Image"));
-  m_Controls.sourceProfileImageSelector->SetPopUpTitel(QString("Select Source Profile Spectrum Image"));
-  m_Controls.sourceProfileImageSelector->SetNodePredicate(NodePredicateIsProfileSpectrumImage);
+  m_Controls.sourceProfileImageSelector->SetEmptyInfo(QString("Select Source Profile or Processed Centroid Spectrum Image"));
+  m_Controls.sourceProfileImageSelector->SetPopUpTitel(QString("Select Source Profile or Processed Centroid Spectrum Image"));
+  m_Controls.sourceProfileImageSelector->SetNodePredicate(NodePredicateIsProfileOrProcessedCentroidSpectrumImage);
 
   m_Controls.imageExportSelector->SetDataStorage(GetDataStorage());
   m_Controls.imageExportSelector->SetSelectionIsOptional(true);
@@ -475,11 +475,7 @@ void m2PeakPickingView::OnStartPeakPickingImage()
         copy(begin(ys), end(ys), ysAllIt);
         fill_n(ssAllIt, xs.size(), i);
       }
-      else
-      {
-        MITK_INFO << "Invalid SpectrumFormat for pixel wise peak picking.";
-        return;
-      }
+ 
       mitk::ProgressBar::GetInstance()->Progress();
     }
 

@@ -72,12 +72,14 @@ protected:
   void SetGroupProcessCentroidSpectraEnabled(bool v);
   mitk::DataNode *GetParent(mitk::DataNode *) const;
 
-  mitk::NodePredicateFunction::Pointer NodePredicateIsProfileSpectrumImage = mitk::NodePredicateFunction::New(
+  mitk::NodePredicateFunction::Pointer NodePredicateIsProfileOrProcessedCentroidSpectrumImage = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) -> bool
     {
       if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
         return ((unsigned int)(spectrumImage->GetSpectrumType().Format)) &
-               ((unsigned int)(m2::SpectrumFormat::Profile));
+               ((unsigned int)(m2::SpectrumFormat::Profile)) || 
+               ((unsigned int)(spectrumImage->GetSpectrumType().Format)) &
+               ((unsigned int)(m2::SpectrumFormat::ProcessedCentroid));
       return false;
     });
 
