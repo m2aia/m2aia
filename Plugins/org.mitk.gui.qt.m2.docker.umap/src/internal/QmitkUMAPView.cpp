@@ -28,7 +28,7 @@ void QmitkUMAPView::CreateQtPartControl(QWidget *parent)
   // Setting up the UI is a true pleasure when using .ui files, isn't it?
   m_Controls.setupUi(parent);
 
-  auto NodePredicateIsContinuousSpectrumImage = mitk::NodePredicateFunction::New(
+  auto NodePredicateSpectrumImage = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) -> bool
     {
       if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
@@ -42,7 +42,7 @@ void QmitkUMAPView::CreateQtPartControl(QWidget *parent)
   m_Controls.imageSelection->SetDataStorage(this->GetDataStorage());
   m_Controls.imageSelection->SetSelectionIsOptional(true);
   m_Controls.imageSelection->SetEmptyInfo(QStringLiteral("Select an image"));
-  m_Controls.imageSelection->SetNodePredicate(NodePredicateIsContinuousSpectrumImage);
+  m_Controls.imageSelection->SetNodePredicate(NodePredicateSpectrumImage);
 
   auto NodePredicateIsCentroidList = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) -> bool

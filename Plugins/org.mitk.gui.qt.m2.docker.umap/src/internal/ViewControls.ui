@@ -168,11 +168,6 @@
        </item>
        <item>
         <property name="text">
-         <string>mahalanobis</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
          <string>wminkowski</string>
         </property>
        </item>
@@ -199,11 +194,6 @@
        <item>
         <property name="text">
          <string>jaccard</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>russelrao</string>
         </property>
        </item>
        <item>
