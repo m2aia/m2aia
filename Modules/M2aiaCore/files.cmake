@@ -3,6 +3,7 @@ set(H_FILES
   include/m2Process.hpp 
   include/m2ISpectrumDataAccess.h
   include/m2SpectrumImageBase.h
+  include/m2SpectrumImageHelper.h
   include/m2SpectrumImageStack.h
   include/m2SpectrumImageDataInteractor.h
 
@@ -35,10 +36,12 @@ set(H_FILES
   include/signal/m2SignalCommon.h
   include/signal/m2Smoothing.h
   include/signal/m2Transformer.h
+
 )
 
 set(CPP_FILES
   m2SpectrumImageBase.cpp
+  m2SpectrumImageHelper.cpp
   m2SpectrumImageStack.cpp
   m2CoreObjectFactory.cpp 
   m2ImzMLParser.cpp
