@@ -1,30 +1,24 @@
 set(SRC_CPP_FILES
   Qm2OpenSlideImageIOHelperDialog.cpp
-  Qm2PeakListStatisitcsWidget.cpp
 )
 
 set(INTERNAL_CPP_FILES
   org_mitk_gui_qt_m2_data_Activator.cpp
   m2Data.cpp
   m2DataTools.cpp
-  m2DataStatistics.cpp
 )
 
 set(UI_FILES
   src/internal/m2Data.ui
-  src/internal/m2DataTools.ui
-  src/internal/m2DataStatistics.ui
+  src/internal/m2DataTools.ui  
   src/Qm2OpenSlideImageIOHelperDialog.ui
-  src/Qm2PeakListStatisitcsWidget.ui
 )
 
 set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_data_Activator.h
   src/internal/m2Data.h
   src/internal/m2DataTools.h
-  src/internal/m2DataStatistics.h
   src/Qm2OpenSlideImageIOHelperDialog.h
-  src/Qm2PeakListStatisitcsWidget.h
 )
 
 # list of resource files which can be used by the plug-in
