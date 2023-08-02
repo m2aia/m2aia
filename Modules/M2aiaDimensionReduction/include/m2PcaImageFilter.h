@@ -43,10 +43,10 @@ namespace m2
     PcaImageFilter()
     {
       OutputImageType::Pointer output0 = static_cast<OutputImageType *>(this->MakeOutput(0).GetPointer());
-      OutputImageType::Pointer output1 = static_cast<OutputImageType *>(this->MakeOutput(1).GetPointer());
-      Superclass::SetNumberOfRequiredOutputs(2);
+      // OutputImageType::Pointer output1 = static_cast<OutputImageType *>(this->MakeOutput(1).GetPointer());
+      Superclass::SetNumberOfRequiredOutputs(1);
       Superclass::SetNthOutput(0, output0.GetPointer());
-      Superclass::SetNthOutput(1, output1.GetPointer());
+      // Superclass::SetNthOutput(1, output1.GetPointer());
     };
     void GenerateData() override;
 
