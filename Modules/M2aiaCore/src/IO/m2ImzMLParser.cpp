@@ -583,8 +583,17 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
           data->SetPropertyValue<unsigned>("max count of pixels z", uniques.size());
           // is set to 10 micrometers fix (can be changed in app)
           data->SetPropertyValue<double>("pixel size z", m2::MicroMeterToMilliMeter(10));
+        }else if(uniques.size() == 1 && *(uniques.begin()) == 0){
+          // index counting usually starts by 1.
+          // m2aia crashes of unintentionally setting the z coordinate to 0 
+          // (which often is a programming language's default integer value).
+          // https://github.com/m2aia/m2aia/issues/45
+          for (auto &s : spectra)
+            s.index[2] = 1;
         }
       }
     }
   }
 }
+
+        <cvParam accession="IMS:1000052" cvRef="IMS" name="position z" value="0"/>
