@@ -14,7 +14,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 ===================================================================*/
 
-#include <M2aiaCoreIOExports.h>
+#include <M2aiaCoreExports.h>
 #include <itksys/SystemTools.hxx>
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLSpectrumImage.h>
@@ -37,7 +37,7 @@ namespace m2
 
 extern "C"
 {
-  M2AIACOREIO_EXPORT void GetImageArrayFloat32(m2::sys::ImageHandle *handle, double mz, double tol, float *data)
+  M2AIACORE_EXPORT void GetImageArrayFloat32(m2::sys::ImageHandle *handle, double mz, double tol, float *data)
   {
     handle->m_Image->GetImage(mz, tol, nullptr, handle->m_Image);
     auto w = handle->m_Image->GetDimension(0);
@@ -48,7 +48,7 @@ extern "C"
               data);
   }
 
-  M2AIACOREIO_EXPORT void GetImageArrayFloat64(m2::sys::ImageHandle *handle, double mz, double tol, double *data)
+  M2AIACORE_EXPORT void GetImageArrayFloat64(m2::sys::ImageHandle *handle, double mz, double tol, double *data)
   {
     handle->m_Image->GetImage(mz, tol, nullptr, handle->m_Image);
     auto w = handle->m_Image->GetDimension(0);
@@ -60,7 +60,7 @@ extern "C"
   }
 
 
-  M2AIACOREIO_EXPORT void GetMaskArray(m2::sys::ImageHandle *handle, mitk::Label::PixelType *data)
+  M2AIACORE_EXPORT void GetMaskArray(m2::sys::ImageHandle *handle, mitk::Label::PixelType *data)
   {
     auto mask = handle->m_Image->GetMaskImage();
     auto w = handle->m_Image->GetDimension(0);
@@ -71,7 +71,7 @@ extern "C"
               data);
   }
 
-  M2AIACOREIO_EXPORT void GetIndexArray(m2::sys::ImageHandle *handle, unsigned int *data)
+  M2AIACORE_EXPORT void GetIndexArray(m2::sys::ImageHandle *handle, unsigned int *data)
   {
     auto indexImage = handle->m_Image->GetIndexImage();
     auto w = handle->m_Image->GetDimension(0);
@@ -83,29 +83,39 @@ extern "C"
   }
 
 
-  M2AIACOREIO_EXPORT unsigned int GetSpectrumType(m2::sys::ImageHandle *handle)
+  M2AIACORE_EXPORT unsigned int GetSpectrumType(m2::sys::ImageHandle *handle)
   {
     return (unsigned int)(handle->m_Image->GetSpectrumType().Format);
   }
 
-  M2AIACOREIO_EXPORT unsigned int GetSizeInBytesOfYAxisType(m2::sys::ImageHandle *handle)
+  M2AIACORE_EXPORT unsigned int GetSizeInBytesOfYAxisType(m2::sys::ImageHandle *handle)
   {
     return m2::to_bytes(handle->m_Image->GetSpectrumType().YAxisType);
   }
 
-  M2AIACOREIO_EXPORT void GetXAxis(m2::sys::ImageHandle *handle, double *data)
+  M2AIACORE_EXPORT void GetXAxis(m2::sys::ImageHandle *handle, double *data)
   {
     auto &xAxis = handle->m_Image->GetXAxis();
     std::copy(xAxis.begin(), xAxis.end(), data);
   }
 
-  M2AIACOREIO_EXPORT unsigned int GetXAxisDepth(m2::sys::ImageHandle *handle)
+  M2AIACORE_EXPORT unsigned int GetXAxisDepth(m2::sys::ImageHandle *handle)
   {
     auto &xAxis = handle->m_Image->GetXAxis();
     return xAxis.size();
   }
 
-  M2AIACOREIO_EXPORT unsigned int GetYDataTypeSizeInBytes(m2::sys::ImageHandle *handle)
+  M2AIACORE_EXPORT float GetTolerance(m2::sys::ImageHandle *handle)
+  {
+    return handle->m_Image->GetTolerance();
+  }
+
+  M2AIACORE_EXPORT void SetTolerance(m2::sys::ImageHandle *handle, float tol)
+  {
+    handle->m_Image->SetTolerance(tol);
+  }
+
+  M2AIACORE_EXPORT unsigned int GetYDataTypeSizeInBytes(m2::sys::ImageHandle *handle)
   {
     auto id = handle->m_Image->GetSpectrumType().YAxisType;
     if (id == m2::NumericType::Float)
@@ -122,7 +132,7 @@ extern "C"
     }
   }
 
-  M2AIACOREIO_EXPORT void GetSpectrum(m2::sys::ImageHandle *handle, unsigned int id, float *xd, float *yd)
+  M2AIACORE_EXPORT void GetSpectrum(m2::sys::ImageHandle *handle, unsigned int id, float *xd, float *yd)
   {
     std::vector<float> xs, ys;
     handle->m_Image->GetSpectrumFloat(id, xs, ys);
@@ -130,7 +140,7 @@ extern "C"
     std::copy(ys.begin(), ys.end(), yd);
   }
 
-  M2AIACOREIO_EXPORT void GetSpectra(m2::sys::ImageHandle *handle, unsigned int * id, unsigned int N, float *yd)
+  M2AIACORE_EXPORT void GetSpectra(m2::sys::ImageHandle *handle, unsigned int * id, unsigned int N, float *yd)
   {
     std::vector<float> ys;
     for(unsigned int i = 0 ; i < N; ++i){
@@ -139,65 +149,64 @@ extern "C"
     }
   }
 
-  M2AIACOREIO_EXPORT void GetIntensities(m2::sys::ImageHandle *handle, unsigned int id, float *yd)
+  M2AIACORE_EXPORT void GetIntensities(m2::sys::ImageHandle *handle, unsigned int id, float *yd)
   {
     std::vector<float> ys;
     handle->m_Image->GetIntensitiesFloat(id, ys);
     std::copy(ys.begin(), ys.end(), yd);
   }
 
-  M2AIACOREIO_EXPORT unsigned int  GetSpectrumDepth(m2::sys::ImageHandle *handle, unsigned int id)
+  M2AIACORE_EXPORT unsigned int  GetSpectrumDepth(m2::sys::ImageHandle *handle, unsigned int id)
   {
     const auto & spectrum = handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra[id];
     return spectrum.mzLength;
   }
 
-  M2AIACOREIO_EXPORT void GetSpectrumPosition(m2::sys::ImageHandle *handle, unsigned int spectrumId, unsigned int *pixelPosition)
+  M2AIACORE_EXPORT void GetSpectrumPosition(m2::sys::ImageHandle *handle, unsigned int spectrumId, unsigned int *pixelPosition)
   {
     auto &spectrum = handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra[spectrumId];
     auto *p = spectrum.index.GetIndex();
     std::copy(p, p + 3, pixelPosition);
   }
 
-  M2AIACOREIO_EXPORT unsigned int GetNumberOfSpectra(m2::sys::ImageHandle *handle)
+  M2AIACORE_EXPORT unsigned int GetNumberOfSpectra(m2::sys::ImageHandle *handle)
   {
     return handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra.size();
   }
 
-  M2AIACOREIO_EXPORT void GetMeanSpectrum(m2::sys::ImageHandle *handle, double *data)
+  M2AIACORE_EXPORT void GetMeanSpectrum(m2::sys::ImageHandle *handle, double *data)
   {
     auto &yMean = handle->m_Image->GetMeanSpectrum();
     std::copy(yMean.begin(), yMean.end(), data);
   }
 
-  M2AIACOREIO_EXPORT void GetMaxSpectrum(m2::sys::ImageHandle *handle, double *data)
+  M2AIACORE_EXPORT void GetMaxSpectrum(m2::sys::ImageHandle *handle, double *data)
   {
     auto &yMean = handle->m_Image->GetSkylineSpectrum();
     std::copy(yMean.begin(), yMean.end(), data);
   }
 
-  M2AIACOREIO_EXPORT void GetSize(m2::sys::ImageHandle *handle, uint32_t *data)
+  M2AIACORE_EXPORT void GetSize(m2::sys::ImageHandle *handle, uint32_t *data)
   {
     auto p = handle->m_Image->GetDimensions();
     std::copy(p, p + 3, data);
   }
 
-  M2AIACOREIO_EXPORT void GetSpacing(m2::sys::ImageHandle *handle, double *data)
+  M2AIACORE_EXPORT void GetSpacing(m2::sys::ImageHandle *handle, double *data)
   {
     auto v = handle->m_Image->GetGeometry()->GetSpacing();
     auto p = v.GetDataPointer();
     std::copy(p, p + 3, data);
   }
 
-  M2AIACOREIO_EXPORT void GetOrigin(m2::sys::ImageHandle *handle, double *data)
+  M2AIACORE_EXPORT void GetOrigin(m2::sys::ImageHandle *handle, double *data)
   {
     auto v = handle->m_Image->GetGeometry()->GetOrigin();
     auto p = v.GetDataPointer();
     std::copy(p, p + 3, data);
   }
 
-
-  M2AIACOREIO_EXPORT char * GetMetaDataDictionary(m2::sys::ImageHandle *handle)
+  M2AIACORE_EXPORT char * GetMetaDataDictionary(m2::sys::ImageHandle *handle)
   {
     
     auto v = handle->m_Image->GetPropertyList();
@@ -218,14 +227,29 @@ extern "C"
     return data;
   }
 
-  M2AIACOREIO_EXPORT void DestroyCharBuffer(std::string * p)
+  M2AIACORE_EXPORT void DestroyCharBuffer(std::string * p)
   {
     delete p;
   }
 
-  
+  M2AIACORE_EXPORT void WriteContinuousCentroidImzML(m2::sys::ImageHandle *handle, const char *s, double *centroids, int n){
+    m2::ImzMLImageIO io;
+    mitk::AbstractFileWriter *writer = &io;
+    auto intervals = m2::IntervalVector::New();
 
-  M2AIACOREIO_EXPORT m2::sys::ImageHandle *CreateImageHandle(const char *path, const char *s)
+    MITK_INFO << "BLABLABLABL : " << std::string(s);
+
+    for(int i = 0 ; i < n; ++i)
+      intervals->GetIntervals().push_back(m2::Interval(centroids[i],0));
+    
+    writer->SetInput(handle->m_Image);
+    writer->SetOutputLocation(std::string(s));
+    io.SetIntervalVector(intervals);
+    io.SetSpectrumFormat(m2::SpectrumFormat::ContinuousCentroid);
+    io.Write();
+  }
+
+  M2AIACORE_EXPORT m2::sys::ImageHandle *CreateImageHandle(const char *path, const char *s)
   {
 
     if(!itksys::SystemTools::FileExists(path)){
@@ -283,5 +307,5 @@ extern "C"
     return storage;
   }
 
-  M2AIACOREIO_EXPORT void DestroyImageHandle(m2::sys::ImageHandle *p) { delete p; }
+  M2AIACORE_EXPORT void DestroyImageHandle(m2::sys::ImageHandle *p) { delete p; }
 }

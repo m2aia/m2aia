@@ -44,13 +44,13 @@ set(CPP_FILES
   m2SpectrumImageHelper.cpp
   m2SpectrumImageStack.cpp
   m2CoreObjectFactory.cpp 
-  m2ImzMLParser.cpp
   m2ImzMLSpectrumImage.cpp
   m2FsmSpectrumImage.cpp
   m2SubdivideImage2DFilter.cpp
   m2SpectrumImageDataInteractor.cpp
   m2IntervalVector.cpp
-
+  
+  IO/m2ImzMLParser.cpp
   IO/m2ImzMLImageIO.cpp
   IO/m2ImzMLEngine.cpp
 )
