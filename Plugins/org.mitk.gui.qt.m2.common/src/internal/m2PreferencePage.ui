@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>504</width>
+    <width>774</width>
     <height>554</height>
    </rect>
   </property>
@@ -14,6 +14,32 @@
    <string>External Programs</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <widget class="QLabel" name="label_6">
+     <property name="text">
+      <string>ImzML Image loading behavior
+If checked: Based on valid spectrum indices the minimum image is defined.
+Otherwise: The image size is defined by the tag &quot;maximum number of pixels (x,y,z)&quot; in the input data.</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="minimalImagingArea">
+     <property name="text">
+      <string>Use the minimal imaging area</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="Line" name="line_3">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
    <item>
     <widget class="QLabel" name="label_5">
      <property name="text">
