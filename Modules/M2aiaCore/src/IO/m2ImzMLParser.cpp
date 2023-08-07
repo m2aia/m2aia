@@ -18,6 +18,9 @@ See LICENSE.txt for details.
 #include <m2ImzMLParser.h>
 #include <m2Timer.h>
 #include <math.h>
+#include <mitkCoreServices.h>
+#include <mitkIPreferences.h>
+#include <mitkIPreferencesService.h>
 #include <numeric>
 #include <unordered_map>
 
@@ -572,28 +575,62 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
           data->SetPropertyValue<double>("pixel size z", m2::MicroMeterToMilliMeter(zSpacing));
         }
       }
-      else
-      { // check index z uniques
-        uniques.clear();
-        for (auto &s : spectra)
-          uniques.insert(s.index[2]);
 
-        if (uniques.size() > 1)
+      auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+      auto *preferences = preferencesService->GetSystemPreferences();
+      if (preferences->GetBool("m2aia.view.image.minimal_area", true))
+      {
+        // Load only minimal area where valid spectra exist.
+        // https://github.com/m2aia/m2aia/issues/45
+        std::set<int> xs, ys, zs;
+        for (auto &s : spectra)
         {
-          data->SetPropertyValue<unsigned>("max count of pixels z", uniques.size());
-          // is set to 10 micrometers fix (can be changed in app)
-          data->SetPropertyValue<double>("pixel size z", m2::MicroMeterToMilliMeter(10));
-        }else if(uniques.size() == 1 && *(uniques.begin()) == 0){
-          // index counting usually starts by 1.
-          // m2aia crashes of unintentionally setting the z coordinate to 0 
-          // (which often is a programming language's default integer value).
-          // https://github.com/m2aia/m2aia/issues/45
-          for (auto &s : spectra)
-            s.index[2] = 1;
+          xs.insert(s.index[0]);
+          ys.insert(s.index[1]);
+          zs.insert(s.index[2]);
         }
+
+          for (auto &s : spectra)
+        {
+          s.index[0] -= *(xs.begin());
+          s.index[1] -= *(ys.begin());
+          s.index[2] -= *(zs.begin());
+        }
+
+        bool requireCorrectionX = *(xs.begin());
+        bool requireCorrectionY = *(ys.begin());
+        bool requireCorrectionZ = *(zs.begin());
+
+        auto imzMLSizeX = data->GetPropertyValue<unsigned>("max count of pixels x");
+        auto imzMLSizeY = data->GetPropertyValue<unsigned>("max count of pixels y");
+        auto imzMLSizeZ = data->GetPropertyValue<unsigned>("max count of pixels z");
+
+        auto newSizeX = unsigned(*(xs.rbegin()) - *(xs.begin()) + 1);
+        auto newSizeY = unsigned(*(ys.rbegin()) - *(ys.begin()) + 1);
+        auto newSizeZ = unsigned(*(zs.rbegin()) - *(zs.begin()) + 1);
+
+        data->SetPropertyValue<unsigned>("(original imzML value) max count of pixels x", imzMLSizeX);
+        data->SetPropertyValue<unsigned>("(original imzML value) max count of pixels y", imzMLSizeY);
+        data->SetPropertyValue<unsigned>("(original imzML value) max count of pixels z", imzMLSizeZ);
+
+        data->SetPropertyValue<unsigned>("max count of pixels x", newSizeX);
+        data->SetPropertyValue<unsigned>("max count of pixels y", newSizeY);
+        data->SetPropertyValue<unsigned>("max count of pixels z", newSizeZ);
+
+        MITK_WARN << "Area Correction!";
+        if (requireCorrectionX)
+          MITK_WARN << "The x coordinate index was shifted by " << *(xs.begin()) << " towards 0.";
+        if (requireCorrectionY)
+          MITK_WARN << "The y coordinate index was shifted by " << *(ys.begin()) << " towards 0.";
+        if (requireCorrectionZ)
+          MITK_WARN << "The z coordinate index was shifted by " << *(zs.begin()) << " towards 0.";
+        if (imzMLSizeX != newSizeX)
+          MITK_WARN << "The max count of pixels x was adjusted from " << imzMLSizeX << " to " << newSizeX << "";
+        if (imzMLSizeX != newSizeX)
+          MITK_WARN << "The max count of pixels y was adjusted from " << imzMLSizeY << " to " << newSizeY << "";
+        if (imzMLSizeX != newSizeX)
+          MITK_WARN << "The max count of pixels z was adjusted from " << imzMLSizeZ << " to " << newSizeZ << "";
       }
     }
   }
 }
-
-        <cvParam accession="IMS:1000052" cvRef="IMS" name="position z" value="0"/>
