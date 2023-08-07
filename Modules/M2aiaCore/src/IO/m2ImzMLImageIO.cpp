@@ -23,6 +23,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLParser.h>
 #include <m2Timer.h>
+#include <m2CoreCommon.h>
 #include <mitkIOUtil.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
@@ -687,22 +688,8 @@ namespace m2
       m2::ImzMLParser::ReadImageSpectrumMetaData(object);
     }
 
-    auto dx = object->GetPropertyValue<double>("max dimension x");
-    auto dy = object->GetPropertyValue<double>("max dimension y");
+    
 
-    auto sx = object->GetPropertyValue<unsigned>("max count of pixels x");
-    auto sy = object->GetPropertyValue<unsigned>("max count of pixels y");
-
-    auto px = object->GetPropertyValue<double>("pixel size x");
-    auto py = object->GetPropertyValue<double>("pixel size y");
-
-    px = m2::MilliMeterToMicroMeter(px);
-    py = m2::MilliMeterToMicroMeter(py);
-
-    MITK_INFO << "[imzML]: " + source.m_ImzMLDataPath +
-               "\n\t[pixel size]: " + std::to_string(px)  + "x" + std::to_string(py) +
-               "\n\t[image area]: " + std::to_string(sx) + "x" +std::to_string(sy) +
-               "\n\t[image dims]: " + std::to_string(dx) + "x" +std::to_string(dy);
 
     // if(!itk::Math::AlmostEquals(sx*px, dx) ||
     //    !itk::Math::AlmostEquals(sy*py, dy)){
@@ -723,7 +710,8 @@ namespace m2
       EvaluateSpectrumFormatType(object);
       LoadAssociatedData(object);
     }
-
+    
+    
     return {object.GetPointer()};
   }
 

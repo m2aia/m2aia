@@ -292,7 +292,21 @@ void m2::ImzMLSpectrumImage::InitializeGeometry()
 void m2::ImzMLSpectrumImage::InitializeImageAccess()
 {
   this->m_Processor->InitializeImageAccess();
-  this->SetImageAccessInitialized(true);  
+  this->SetImageAccessInitialized(true); 
+
+  auto sx = this->GetPropertyValue<unsigned>("max count of pixels x");
+  auto sy = this->GetPropertyValue<unsigned>("max count of pixels y");
+
+  auto px = this->GetPropertyValue<double>("pixel size x");
+  auto py = this->GetPropertyValue<double>("pixel size y");
+
+  px = m2::MilliMeterToMicroMeter(px);
+  py = m2::MilliMeterToMicroMeter(py);
+  MITK_INFO << "[imzML]: " + this->GetImzMLSpectrumImageSource().m_ImzMLDataPath +
+              "\n\t[pixel size ]: " + std::to_string(px)  + "x" + std::to_string(py) +
+              "\n\t[image size ]: " + std::to_string(sx) + "x" +std::to_string(sy) +
+              "\n\t[num spectra]: " + std::to_string(this->GetNumberOfValidPixels()) +
+              "\n\t[spec. type ]: " + to_string(this->GetSpectrumType().Format);
 }
 
 // m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLSpectrumImage *A,
