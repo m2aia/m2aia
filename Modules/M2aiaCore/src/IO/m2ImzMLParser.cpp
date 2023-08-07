@@ -522,7 +522,9 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
         }
       }
 
-      std::set<unsigned int> uniques;
+      data->SetPropertyValue<double>("pixel size z", m2::MicroMeterToMilliMeter(10));
+
+      std::set<int> uniques;
       if (_ScilsTag3DCoordinateUsed)
       { // check z world uniques
         // MITK_INFO << "SciLs 3D tag found";
