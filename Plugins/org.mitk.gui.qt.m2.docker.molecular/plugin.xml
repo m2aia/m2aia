@@ -4,7 +4,7 @@
     <view id="org.mitk.views.docker.molecular"
           name="MoleculaR View"
           class="QmitkMoleculaRView"
-          category="Spectrum imaging"
+          category="Spectrum imaging (Docker)"
           icon="resources/MoleculaRIcon.svg" />
   </extension>
 </plugin>

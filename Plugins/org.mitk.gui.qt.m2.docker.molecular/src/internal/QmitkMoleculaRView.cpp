@@ -13,21 +13,18 @@ found in the LICENSE file.
 #include "QmitkMoleculaRView.h"
 
 #include <QMessageBox>
-#include <berryISelectionService.h>
-#include <berryIWorkbenchWindow.h>
+#include <m2IntervalVector.h>
 #include <m2SpectrumImageBase.h>
+#include <mitkCoreServices.h>
 #include <mitkDockerHelper.h>
+#include <mitkIPreferences.h>
+#include <mitkIPreferencesService.h>
 #include <mitkImage.h>
-#include <mitkImagePixelReadAccessor.h>
-#include <mitkImagePixelWriteAccessor.h>
-#include <mitkLabelSetImage.h>
-#include <mitkNodePredicateAnd.h>
-#include <mitkNodePredicateDataType.h>
-#include <mitkNodePredicateNot.h>
-#include <mitkNodePredicateOr.h>
-#include <mitkNodePredicateProperty.h>
+#include <mitkNodePredicateFunction.h>
 #include <mitkProgressBar.h>
 #include <usModuleRegistry.h>
+#include <mitkImagePixelReadAccessor.h>
+#include <mitkImagePixelWriteAccessor.h>
 
 // Don't forget to initialize the VIEW_ID.
 const std::string QmitkMoleculaRView::VIEW_ID = "org.mitk.views.m2.docker.molecular";
@@ -37,14 +34,31 @@ void QmitkMoleculaRView::CreateQtPartControl(QWidget *parent)
   // Setting up the UI is a true pleasure when using .ui files, isn't it?
   m_Controls.setupUi(parent);
 
+  auto NodePredicateIsSpectrumImage = mitk::NodePredicateFunction::New(
+    [this](const mitk::DataNode *node) -> bool
+    {
+      if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+        return image->GetIsDataAccessInitialized();
+      return false;
+    });
+
   // m_Controls.imageSelection->SetAutoSelectNewNodes(true);
   m_Controls.imageSelection->SetDataStorage(this->GetDataStorage());
   m_Controls.imageSelection->SetSelectionIsOptional(true);
   m_Controls.imageSelection->SetEmptyInfo(QStringLiteral("Select an image"));
-  m_Controls.imageSelection->SetNodePredicate(mitk::NodePredicateAnd::New(
-    mitk::TNodePredicateDataType<mitk::Image>::New(),
-    mitk::NodePredicateNot::New(mitk::NodePredicateOr::New(mitk::NodePredicateProperty::New("helper object"),
-                                                           mitk::NodePredicateProperty::New("hidden object")))));
+  m_Controls.imageSelection->SetNodePredicate(NodePredicateIsSpectrumImage);
+
+  auto NodePredicateIsCentroidList = mitk::NodePredicateFunction::New(
+    [this](const mitk::DataNode *node) -> bool
+    {
+      if (auto centroidList = dynamic_cast<m2::IntervalVector *>(node->GetData()))
+        return ((unsigned int)(centroidList->GetType())) & ((unsigned int)(m2::SpectrumFormat::Centroid));
+      return false;
+    });
+  m_Controls.centroidsSelection->SetDataStorage(this->GetDataStorage());
+  m_Controls.centroidsSelection->SetSelectionIsOptional(true);
+  m_Controls.centroidsSelection->SetEmptyInfo(QStringLiteral("Select an centroid list"));
+  m_Controls.centroidsSelection->SetNodePredicate(NodePredicateIsCentroidList);
 
   // Wire up the UI widgets with our functionality.
   connect(m_Controls.btnRunMoleculaR, SIGNAL(clicked()), this, SLOT(OnStartMoleculaR()));
@@ -68,18 +82,49 @@ void QmitkMoleculaRView::OnStartMoleculaR()
     {
       if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
       {
-        if (!image->GetIsDataAccessInitialized())
-          return;
-
         try
         {
           mitk::ProgressBar::GetInstance()->AddStepsToDo(4);
-          auto newImage = image->Clone();
-          newImage->GetPropertyList()->RemoveProperty("MITK.IO.reader.inputlocation");
-          mitk::DockerHelper helper("ghcr.io/m2aia/extensions:mpm");
+          std::vector<mitk::BaseData::Pointer> data;
+
+          auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+          auto *preferences = preferencesService->GetSystemPreferences();
+          auto tolerance = preferences->GetFloat("m2aia.signal.Tolerance", 75.0);
+          auto centroidNodes = m_Controls.centroidsSelection->GetSelectedNodesStdVector();
+          // get current shown image as ion image
+          if (centroidNodes.empty())
+          {
+            auto newImage = mitk::Image::New();
+            newImage->Initialize(image);
+            mitk::ImagePixelReadAccessor<m2::DisplayImagePixelType, 3> racc(image);
+            mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> wacc(newImage);
+            auto d = image->GetDimensions();
+            std::copy(racc.GetData(), racc.GetData() + (d[0]*d[1]*d[2]), wacc.GetData());
+            data.push_back(newImage);
+          }
+          // create ion image for list of centroids
+          else
+          {
+            for (auto centroidNode : centroidNodes)
+            {
+              if (auto centroids = dynamic_cast<m2::IntervalVector *>(centroidNode->GetData()))
+              {
+                for (auto i : centroids->GetIntervals())
+                {
+                  auto newImage = mitk::Image::New();
+                  newImage->Initialize(image);
+                  image->GetImage(i.x.mean(), tolerance, nullptr, newImage);
+                  data.push_back(newImage);
+                }
+              }
+            }
+            MITK_INFO << "Size of ionimage vector " << data.size();
+          }
+
+          mitk::DockerHelper helper("ghcr.io/m2aia/molecular");
           helper.EnableAutoRemoveContainer(true);
-          helper.AddAutoSaveData(newImage, "--ionimage", "ionimage.nrrd");
-          helper.AddAutoSaveData(image->GetMaskImage(), "--mask", "mask.nrrd");
+          helper.AddAutoSaveData(data, "--ionimage", "ionimages/image%1%", ".nrrd");
+          helper.AddAutoSaveData(image->GetMaskImage(), "--mask", "mask", ".nrrd");
           helper.AddApplicationArgument("--pval", std::to_string(m_Controls.spnBxMPMPValue->value()));
           helper.AddAutoLoadOutput("--out", "mpm.nrrd");
           mitk::ProgressBar::GetInstance()->Progress();
@@ -94,8 +139,8 @@ void QmitkMoleculaRView::OnStartMoleculaR()
           //   mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType> mAcc(image->GetMaskImage());
           //   mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType> lsAcc(lsImage);
           //   auto N = accumulate(lsImage->GetDimensions(), lsImage->GetDimensions() + 3, 1, multiplies<unsigned
-          //   long>()); transform(mAcc.GetData(), mAcc.GetData() + N, lsAcc.GetData(), lsAcc.GetData(), [](auto a, auto
-          //   b) {
+          //   long>()); transform(mAcc.GetData(), mAcc.GetData() + N, lsAcc.GetData(), lsAcc.GetData(), [](auto a,
+          //   auto b) {
           //     return a > 0 ? b : 0;
           //   });
           // }

@@ -18,6 +18,9 @@
     <widget class="QmitkMultiNodeSelectionWidget" name="imageSelection" native="true"/>
    </item>
    <item>
+    <widget class="QmitkMultiNodeSelectionWidget" name="centroidsSelection" native="true"/>
+   </item>
+   <item>
     <layout class="QHBoxLayout" name="horizontalLayout_14">
      <item>
       <widget class="QLabel" name="label_19">
