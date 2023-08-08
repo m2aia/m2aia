@@ -9,6 +9,7 @@ set(INTERNAL_CPP_FILES
   m2BrowserPreferencesPage.cpp
   QmitkDataNodeConvertPixelTypeAction.cpp
   QmitkDataNodeExportComponentAction.cpp
+  QmitkDataNodeSliceWiseNormalization.cpp
   QmitkDataNodePlotColorAction.cpp
 )
 
@@ -27,6 +28,7 @@ set(MOC_H_FILES
   src/m2NameDialog.h
   src/internal/QmitkDataNodeConvertPixelTypeAction.h
   src/internal/QmitkDataNodeExportComponentAction.h
+  src/internal/QmitkDataNodeSliceWiseNormalization.h
   src/internal/QmitkDataNodePlotColorAction.h
 )
 
