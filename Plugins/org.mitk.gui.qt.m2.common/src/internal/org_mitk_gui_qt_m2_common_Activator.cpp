@@ -30,6 +30,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "QmitkDataNodeTextureInterpolationAction.h"
 #include "QmitkDataNodeExportComponentAction.h"
 #include "QmitkDataNodeConvertPixelTypeAction.h"
+#include "QmitkDataNodeSliceWiseNormalization.h"
 
 #include <m2UIUtils.h>
 #include <m2IntervalVector.h>
@@ -58,13 +59,21 @@ void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)
   auto b = mitk::TNodePredicateDataType<m2::ImzMLSpectrumImage>::New();
   auto spectrumImageDataType = mitk::NodePredicateOr::New(a, b);
   auto spectrumImageDescriptorPredicate = mitk::NodePredicateAnd::New(spectrumImageDataType, imageDataType);
+  auto spectrumImageStackDescriptorPredicate = mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageStack>::New(), imageDataType);
   
   descriptorManager->AddDescriptor(new QmitkNodeDescriptor(
     tr("SpectrumImage"), QString(":/QmitkM2aiaCore/SpectrumImage_48.png"), spectrumImageDescriptorPredicate, this));
 
+  descriptorManager->AddDescriptor(new QmitkNodeDescriptor(
+    tr("SpectrumImageStack"), QString(":/QmitkM2aiaCore/SpectrumImage_48.png"), spectrumImageStackDescriptorPredicate, this));
+
   auto desc = descriptorManager->GetDescriptor("SpectrumImage");
-    desc->AddAction(new QmitkDataNodeConvertPixelTypeAction(), false);
-    desc->AddAction(new QmitkDataNodePlotColorAction(), false);
+  desc->AddAction(new QmitkDataNodeConvertPixelTypeAction(), false);
+  desc->AddAction(new QmitkDataNodePlotColorAction(), false);
+
+  desc = descriptorManager->GetDescriptor("SpectrumImageStack");
+  desc->AddAction(new QmitkDataNodeSliceWiseNormalization(), false);
+  
 
   desc = descriptorManager->GetDescriptor("MultiComponentImage");
   desc->AddAction(new QmitkDataNodeExportComponentAction(), false);

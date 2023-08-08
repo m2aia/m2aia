@@ -39,6 +39,7 @@ namespace m2
     explicit SpectrumImageStack(double spacingZ);
     SpectrumImageStack() = delete;
     double m_SpacingZ = 0;
+    bool m_UseSliceWiseMaximumNormalization = true;
 
   public:
     void Insert(unsigned int sliceId ,std::shared_ptr<m2::ElxRegistrationHelper> transformer);
@@ -51,7 +52,8 @@ namespace m2
     void InitializeProcessor() override;
     void InitializeImageAccess() override;
 
-    
+    bool GetUseSliceWiseMaximumNormalization(){return m_UseSliceWiseMaximumNormalization;}
+    void SetUseSliceWiseMaximumNormalization(bool v){m_UseSliceWiseMaximumNormalization = v;}
 
     virtual void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
     virtual void GetSpectrumFloat(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int) const override{}

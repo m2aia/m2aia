@@ -233,6 +233,18 @@ namespace m2
     mitk::ImageWriteAccessor stackAccess(stack);
     auto stackData = static_cast<m2::DisplayImagePixelType *>(stackAccess.GetData());
 
+    if(m_UseSliceWiseMaximumNormalization){
+      AccessByItk(warped,
+                (
+                  [&](auto itkImg)
+                  {
+                    auto warpedData = itkImg->GetBufferPointer();
+                    auto max = *(std::max_element(warpedData, warpedData + stackN));
+                    std::transform(warpedData, warpedData + stackN, stackData + (i * stackN), [max](auto v){return v/max;});
+                  }));
+    }else{
+
+
     AccessByItk(warped,
                 (
                   [&](auto itkImg)
@@ -240,6 +252,7 @@ namespace m2
                     auto warpedData = itkImg->GetBufferPointer();
                     std::copy(warpedData, warpedData + stackN, stackData + (i * stackN));
                   }));
+    }
   }
 
   void SpectrumImageStack::GetImage(double center, double tol, const mitk::Image * /*mask*/, mitk::Image *img) const
