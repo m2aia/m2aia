@@ -46,6 +46,8 @@ private:
       case m2::SpectrumFormat::ProcessedProfile:
       case m2::SpectrumFormat::Profile:
       case m2::SpectrumFormat::Centroid:
+      case m2::SpectrumFormat::Continuous:
+      case m2::SpectrumFormat::Processed:
       case m2::SpectrumFormat::None:
         // add your new case here
         {
@@ -111,6 +113,7 @@ private:
 #endif
     switch (e)
     {
+      case m2::NumericType::None:
       case m2::NumericType::Float:
       case m2::NumericType::Double:
 

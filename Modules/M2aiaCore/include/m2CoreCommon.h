@@ -24,15 +24,15 @@ namespace m2
 
   enum class SpectrumFormat : unsigned int
   {
-    None = 1,
-    Profile = 2,
-    Centroid = 4,
-    Continuous = 8,
-    Processed = 16,
-    ContinuousProfile = 32 + 8 + 2,
-    ProcessedProfile = 64 + 16 + 2,
-    ContinuousCentroid = 128 + 8 + 4,
-    ProcessedCentroid = 256 + 16 + 4
+    None = 0,
+    Profile = 1,
+    Centroid = 2,
+    Continuous = 4,
+    Processed = 8,
+    ContinuousProfile = 16 + 4 + 1,
+    ProcessedProfile = 32 + 8 + 1,
+    ContinuousCentroid = 64 + 4 + 2,
+    ProcessedCentroid = 128 + 8 + 2
   };
 
   enum class ImzMLFormat : unsigned int
