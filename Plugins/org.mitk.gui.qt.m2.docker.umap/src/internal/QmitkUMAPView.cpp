@@ -51,10 +51,10 @@ void QmitkUMAPView::CreateQtPartControl(QWidget *parent)
         return ((unsigned int)(centroidList->GetType())) & ((unsigned int)(m2::SpectrumFormat::Centroid));
       return false;
     });
-  m_Controls.centroidsSeceltion->SetDataStorage(this->GetDataStorage());
-  m_Controls.centroidsSeceltion->SetSelectionIsOptional(true);
-  m_Controls.centroidsSeceltion->SetEmptyInfo(QStringLiteral("Select an centroid list"));
-  m_Controls.centroidsSeceltion->SetNodePredicate(NodePredicateIsCentroidList);
+  m_Controls.centroidsSelection->SetDataStorage(this->GetDataStorage());
+  m_Controls.centroidsSelection->SetSelectionIsOptional(true);
+  m_Controls.centroidsSelection->SetEmptyInfo(QStringLiteral("Select an centroid list"));
+  m_Controls.centroidsSelection->SetNodePredicate(NodePredicateIsCentroidList);
 
   // Wire up the UI widgets with our functionality.
   connect(m_Controls.btnRun, SIGNAL(clicked()), this, SLOT(OnStartDockerProcessing()));
@@ -74,7 +74,7 @@ void QmitkUMAPView::OnStartDockerProcessing()
 {
   if (mitk::DockerHelper::CheckDocker())
   {
-    for (auto centroidNode : m_Controls.centroidsSeceltion->GetSelectedNodesStdVector())
+    for (auto centroidNode : m_Controls.centroidsSelection->GetSelectedNodesStdVector())
       for (auto imageNode : m_Controls.imageSelection->GetSelectedNodesStdVector())
       {
         try
@@ -87,8 +87,8 @@ void QmitkUMAPView::OnStartDockerProcessing()
           helper.EnableAutoRemoveContainer(true);
           helper.EnableGPUs(false);
 
-          helper.AddAutoSaveData(imageNode->GetData(), "--imzml", "processData.imzML");
-          helper.AddAutoSaveData(centroidNode->GetData(), "--centroids", "input.centroids");
+          helper.AddAutoSaveData(imageNode->GetData(), "--imzml", "processData",".imzML");
+          helper.AddAutoSaveData(centroidNode->GetData(), "--centroids", "input",".centroids");
           helper.AddAutoLoadOutput("--out", "umap.nrrd");
 
           helper.AddApplicationArgument("--n_neighbors", m_Controls.n_neighbors->text().toStdString());

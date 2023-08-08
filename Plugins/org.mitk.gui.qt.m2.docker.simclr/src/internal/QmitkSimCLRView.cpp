@@ -89,8 +89,8 @@ void QmitkSimCLRView::OnStartDockerProcessing()
           helper.EnableAutoRemoveContainer(true);
           helper.EnableGPUs(true);
 
-          helper.AddAutoSaveData(imageNode->GetData(), "--imzml", "processData.imzML");
-          helper.AddAutoSaveData(centroidNode->GetData(), "--centroids", "input.centroids");
+          helper.AddAutoSaveData(imageNode->GetData(), "--imzml", "processData",".imzML");
+          helper.AddAutoSaveData(centroidNode->GetData(), "--centroids", "input",".centroids");
           helper.AddApplicationArgument("--model", "/tmp/model.simclr");
           helper.AddApplicationArgument("--epochs", m_Controls.epochs->text().toStdString());
           helper.AddApplicationArgument("--batch_size", m_Controls.batch_size->text().toStdString());

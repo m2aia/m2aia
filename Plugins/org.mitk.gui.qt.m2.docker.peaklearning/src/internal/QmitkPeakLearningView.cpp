@@ -76,7 +76,7 @@ void QmitkPeakLearningView::OnStartDockerProcessing()
           m2::SpectrumImageHelper::AddArguments(helper);
 
           helper.EnableAutoRemoveContainer(true);
-          helper.AddAutoSaveData(image, "--imzml", "processData.imzML");
+          helper.AddAutoSaveData(image, "--imzml", "processData",".imzML");
           helper.AddApplicationArgument("--latent_dim", m_Controls.latent_dim->text().toStdString());
           helper.AddApplicationArgument("--interim_dim", m_Controls.interim_dim->text().toStdString());
           helper.AddApplicationArgument("--beta", m_Controls.beta->text().toStdString());

@@ -28,7 +28,7 @@
     <widget class="QmitkMultiNodeSelectionWidget" name="imageSelection" native="true"/>
    </item>
    <item>
-    <widget class="QmitkSingleNodeSelectionWidget" name="centroidsSeceltion" native="true"/>
+    <widget class="QmitkSingleNodeSelectionWidget" name="centroidsSelection" native="true"/>
    </item>
    <item>
     <layout class="QFormLayout" name="formLayout">

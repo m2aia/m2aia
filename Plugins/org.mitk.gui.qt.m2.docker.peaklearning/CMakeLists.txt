@@ -8,7 +8,7 @@ mitk_create_plugin(
 
 if(MITK_BUILD_DOCKER)
   add_custom_target(docker_msipl
-    COMMAND ${DOCKER} build -f ${CMAKE_CURRENT_LIST_DIR}/docker/Dockerfile -t ghcr.io/m2aia/msipl ${CMAKE_CURRENT_LIST_DIR}/docker
+    COMMAND ${DOCKER} build --quiet  -f ${CMAKE_CURRENT_LIST_DIR}/docker/Dockerfile -t ghcr.io/m2aia/msipl ${CMAKE_CURRENT_LIST_DIR}/docker
   )
   add_dependencies(org_mitk_gui_qt_m2_docker_peaklearning docker_simclr)
 endif()
