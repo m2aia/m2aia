@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
   {
     MITK_INFO << kv.first << " " << kv.second.ToString();
   }
-  if (auto sImage = dynamic_cast<m2::SpectrumImageBase *>(image.GetPointer()))
+  if (auto sImage = dynamic_cast<m2::SpectrumImage *>(image.GetPointer()))
   {
     if (sImage->GetSpectrumType().Format != m2::SpectrumFormat::ContinuousProfile)
     {

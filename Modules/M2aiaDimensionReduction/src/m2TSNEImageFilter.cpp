@@ -21,7 +21,7 @@ See LICENSE.txt for details.
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
 
-#include <m2SpectrumImageBase.h> // should be removed, only used for image types
+#include <m2SpectrumImage.h> // should be removed, only used for image types
 #include <tsne/tsne.h>
 
 m2::TSNEImageFilter::TSNEImageFilter() {}
