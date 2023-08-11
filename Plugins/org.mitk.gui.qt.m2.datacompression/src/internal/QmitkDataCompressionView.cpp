@@ -22,7 +22,7 @@ found in the LICENSE file.
 #include <m2IntervalVector.h>
 #include <m2MultiSliceFilter.h>
 #include <m2PcaImageFilter.h>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <m2SpectrumImageHelper.h>
 #include <m2TSNEImageFilter.h>
 #include <m2ImzMLImageIO.h>
@@ -81,7 +81,7 @@ void QmitkDataCompressionView::CreateQtPartControl(QWidget *parent)
 
   m_Controls.imageSelection->SetDataStorage(GetDataStorage());
   m_Controls.imageSelection->SetNodePredicate(
-    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(), NodePredicateNoActiveHelper));
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImage>::New(), NodePredicateNoActiveHelper));
   m_Controls.imageSelection->SetSelectionIsOptional(true);
   m_Controls.imageSelection->SetEmptyInfo(QString("Image selection"));
   m_Controls.imageSelection->SetPopUpTitel(QString("Image"));
@@ -173,7 +173,7 @@ void QmitkDataCompressionView::EnableWidgets(bool /*enable*/)
 // {
 //   for (auto node : m_Controls.imageSelection->GetSelectedNodesStdVector())
 //   {
-//     if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+//     if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
 //     {
 //       if (!image->GetIsDataAccessInitialized())
 //         return;
@@ -260,11 +260,11 @@ void QmitkDataCompressionView::OnStartPCA()
   {
     for (auto vectorNode : m_Controls.peakListSelection->GetSelectedNodesStdVector())
     {
-      auto image = dynamic_cast<const m2::SpectrumImageBase *>(imageNode->GetData());
+      auto image = dynamic_cast<const m2::SpectrumImage *>(imageNode->GetData());
       auto vector = dynamic_cast<m2::IntervalVector *>(vectorNode->GetData());
       const auto &intervals = vector->GetIntervals();
 
-      if (!image->GetIsDataAccessInitialized())
+      if (!image->GetImageAccessInitialized())
         continue;
 
       auto filter = m2::PcaImageFilter::New();
@@ -321,7 +321,7 @@ void QmitkDataCompressionView::OnStartTSNE()
 {
   for (auto node : m_Controls.imageSelection->GetSelectedNodesStdVector())
   {
-    if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
       
       auto child = this->GetDataStorage()->GetNamedDerivedNode("PCA", node);

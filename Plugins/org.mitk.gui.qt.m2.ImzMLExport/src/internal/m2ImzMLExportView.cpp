@@ -29,7 +29,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 // mitk image
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLSpectrumImage.h>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <QmitkIOUtil.h>
 #include <mitkImage.h>
 #include <mitkNodePredicateAnd.h>
@@ -61,7 +61,7 @@ void m2ImzMLExportView::CreateQtPartControl(QWidget *parent)
   m_Controls.imageSelection->SetDataStorage(GetDataStorage());
   m_Controls.imageSelection->SetAutoSelectNewNodes(true);
   m_Controls.imageSelection->SetNodePredicate(
-    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImage>::New(),
                                 mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
   m_Controls.imageSelection->SetSelectionIsOptional(true);
   m_Controls.imageSelection->SetEmptyInfo(QString("Image selection"));

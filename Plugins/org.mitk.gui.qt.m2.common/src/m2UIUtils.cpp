@@ -26,7 +26,7 @@ m2::UIUtils::NodesVectorType::Pointer m2::UIUtils::AllNodes(const mitk::DataStor
   auto nodesToProcess = itk::VectorContainer<unsigned int, mitk::DataNode::Pointer>::New();
   // is checked: all nodes that fit the predicate are processed
   auto predicate =
-    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
+    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImage>::New(),
                                 mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")));
 
   auto processableNodes = dataStoarage->GetSubset(predicate);

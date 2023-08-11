@@ -28,7 +28,7 @@ void QmitkSpectrumImagingPerspective::CreateInitialLayout(berry::IPageLayout::Po
   folder->AddView("org.mitk.views.m2.data");
   folder->AddView("org.mitk.views.viewnavigator");
 
-  layout->AddStandaloneView("org.mitk.views.m2.Spectrum", false, berry::IPageLayout::BOTTOM, 0.68f, editorArea);
+  layout->AddStandaloneView("org.mitk.views.m2.spectrum", false, berry::IPageLayout::BOTTOM, 0.68f, editorArea);
   
   folder = layout->CreateFolder("left", berry::IPageLayout::LEFT, 0.29f, editorArea);
   folder->AddView("org.mitk.views.datamanager");
@@ -48,7 +48,7 @@ void QmitkSpectrumImagingPerspective::CreateInitialLayout(berry::IPageLayout::Po
   lo = layout->GetViewLayout("org.mitk.views.viewnavigator");
   lo->SetCloseable(false);
 
-  lo = layout->GetViewLayout("org.mitk.views.m2.Spectrum");
+  lo = layout->GetViewLayout("org.mitk.views.m2.spectrum");
   lo->SetCloseable(false);
 
 }

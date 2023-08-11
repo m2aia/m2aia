@@ -45,9 +45,9 @@ See LICENSE.txt for details.
 
 // internal includes
 #include "m2SeriesDataProvider.h"
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 
-const std::string m2Spectrum::VIEW_ID = "org.mitk.views.m2.Spectrum";
+const std::string m2Spectrum::VIEW_ID = "org.mitk.views.m2.spectrum";
 
 void m2Spectrum::DrawSelectedArea()
 {
@@ -216,7 +216,7 @@ void m2Spectrum::OnMassRangeChanged(qreal x, qreal tol)
 }
 
 // void m2Spectrum::OnSpectrumArtifactChanged(const mitk::DataNode * node, m2::SpectrumType type){
-//   if(dynamic_cast<m2::SpectrumImageBase *>(node->GetData())){
+//   if(dynamic_cast<m2::SpectrumImage *>(node->GetData())){
 //     if(type == m2::SpectrumType::None){
 //       if(m_DataProvider[node]->Exists("Peaks")){
 //         m_DataProvider[node]->UpdateGroup(pea)
@@ -785,7 +785,7 @@ void m2Spectrum::OnSeriesFocused(const mitk::DataNode *node)
 
 void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
 {
-  if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()) || dynamic_cast<m2::IntervalVector *>(node->GetData()))
+  if (dynamic_cast<m2::SpectrumImage *>(node->GetData()) || dynamic_cast<m2::IntervalVector *>(node->GetData()))
   {
     if (m_DataProvider.find(node) == m_DataProvider.end())
       return;
@@ -962,7 +962,7 @@ void m2Spectrum::UpdateAxisLabels(const mitk::DataNode *node, bool remove)
 {
   MITK_INFO(GetStaticClassName()) << "Update axis";
 
-  if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
     auto label = image->GetSpectrumType().XAxisLabel;
     if (!m_xAxisTitels.contains(label.c_str()))

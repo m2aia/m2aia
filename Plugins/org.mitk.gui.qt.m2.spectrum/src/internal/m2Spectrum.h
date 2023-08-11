@@ -21,7 +21,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkIPreferences.h>
 
 #include <itkCommand.h>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 
 #include "m2ChartView.h"
 #include "ui_m2Spectrum.h"

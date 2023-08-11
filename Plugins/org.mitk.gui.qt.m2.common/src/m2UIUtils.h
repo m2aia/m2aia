@@ -17,7 +17,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #ifndef _MITK_M2_ABSTRACT_VIEW_H
 #define _MITK_M2_ABSTRACT_VIEW_H
 
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <mitkDataNode.h>
 #include <org_mitk_gui_qt_m2_common_Export.h>
 #include <qobject.h>

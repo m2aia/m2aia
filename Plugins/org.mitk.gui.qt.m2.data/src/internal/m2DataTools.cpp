@@ -19,7 +19,7 @@ See LICENSE.txt for details.
 
 #include <QmitkRenderWindow.h>
 #include <m2ImzMLSpectrumImage.h>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <m2UIUtils.h>
 #include <mitkLayoutAnnotationRenderer.h>
 #include <mitkLookupTableProperty.h>
@@ -39,7 +39,7 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
   {
     m_Controls.ReferenceLevelWindowSelection->SetDataStorage(GetDataStorage());
     m_Controls.ReferenceLevelWindowSelection->SetNodePredicate(
-      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
+      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImage>::New(),
                                   mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
     m_Controls.ReferenceLevelWindowSelection->SetSelectionIsOptional(true);
     m_Controls.ReferenceLevelWindowSelection->SetEmptyInfo(QString("Reference image selection"));
@@ -47,7 +47,7 @@ void m2DataTools::CreateQtPartControl(QWidget *parent)
 
     m_Controls.ReferenceSelectionForScaleBar->SetDataStorage(GetDataStorage());
     m_Controls.ReferenceSelectionForScaleBar->SetNodePredicate(
-      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(),
+      mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImage>::New(),
                                   mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
     m_Controls.ReferenceSelectionForScaleBar->SetSelectionIsOptional(true);
     m_Controls.ReferenceSelectionForScaleBar->SetEmptyInfo(QString("Reference image selection"));
@@ -150,7 +150,7 @@ void m2DataTools::OnResetTiling()
     double initP[] = {0, 0, 0};
     mitk::Point3D origin(initP);
     mitk::Point3D prevOrigin(initP);
-    if (auto *image = dynamic_cast<m2::SpectrumImageBase *>(e->GetData()))
+    if (auto *image = dynamic_cast<m2::SpectrumImage *>(e->GetData()))
     {
       prevOrigin = image->GetGeometry()->GetOrigin();
       origin = image->GetGeometry()->GetOrigin();
@@ -207,7 +207,7 @@ void m2DataTools::OnApplyTiling()
   std::vector<mitk::DataNode::Pointer> nodes;
   auto allNode = GetDataStorage()->GetAll();
   for (auto node : *allNode)
-    if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
       maxWidth = std::max(maxWidth, image->GetDimensions()[0]);
       maxHeight = std::max(maxHeight, image->GetDimensions()[1]);
@@ -228,9 +228,9 @@ void m2DataTools::OnApplyTiling()
   for (auto node : nodes)
   {
 
-    // SpectrumImageBase Nodes
+    // SpectrumImage Nodes
     mitk::Point3D origin, prevOrigin;
-    if (auto *image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    if (auto *image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
       prevOrigin = image->GetGeometry()->GetOrigin();
       origin[0] = maxWidth * int(i % nodesInRow) * image->GetGeometry()->GetSpacing()[0];
@@ -295,7 +295,7 @@ void m2DataTools::UpdateColorBarAndRenderWindows()
 
 void m2DataTools::UpdateLevelWindow(const mitk::DataNode *node)
 {
-  if (auto msImageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  if (auto msImageBase = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
     mitk::LevelWindow lw;
     node->GetLevelWindow(lw);

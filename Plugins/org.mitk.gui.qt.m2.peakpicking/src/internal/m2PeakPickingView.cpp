@@ -35,6 +35,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLSpectrumImage.h>
 #include <m2IntervalVector.h>
 #include <m2UIUtils.h>
+#include <m2DataNodePredicates.h>
 #include <signal/m2Binning.h>
 #include <signal/m2MedianAbsoluteDeviation.h>
 #include <signal/m2PeakDetection.h>
@@ -78,7 +79,7 @@ mitk::DataNode *m2PeakPickingView::GetParent(mitk::DataNode *child) const
 void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
 {
   using namespace std;
-
+  
   m_Controls.setupUi(parent);
   m_Controls.peakPickingControls->setWindowOpacity(1);
 
@@ -87,13 +88,16 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.sliderCOR->setValue(0.95);
   m_Controls.sliderCOR->setSingleStep(0.01);
 
+
   m_Controls.sourceProfileSelector->SetDataStorage(GetDataStorage());
   m_Controls.sourceProfileSelector->SetSelectionIsOptional(true);
   m_Controls.sourceProfileSelector->SetAutoSelectNewNodes(true);
   m_Controls.sourceProfileSelector->SetEmptyInfo(QString("Select Overview Spectrum"));
   m_Controls.sourceProfileSelector->SetPopUpTitel(QString("Select Overview Spectrum"));
   m_Controls.sourceProfileSelector->SetNodePredicate(mitk::NodePredicateAnd::New(
-    NodePredicateNoActiveHelper, NodePredicateIsOverviewSpectrum, NodePredicateIsProfileSpectrum));
+     m2::DataNodePredicates::NoActiveHelper, 
+     m2::DataNodePredicates::IsOverviewSpectrum, 
+     m2::DataNodePredicates::IsProfileSpectrum));
 
   m_Controls.sourceMultipleCenroidsSelector->SetDataStorage(GetDataStorage());
   m_Controls.sourceMultipleCenroidsSelector->SetSelectionIsOptional(true);
@@ -101,7 +105,9 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.sourceMultipleCenroidsSelector->SetEmptyInfo(QString("Select Source Centroid Spectra"));
   m_Controls.sourceMultipleCenroidsSelector->SetPopUpTitel(QString("Select Source Centroid Spectra"));
   m_Controls.sourceMultipleCenroidsSelector->SetNodePredicate(
-    mitk::NodePredicateAnd::New(NodePredicateIsCentroidSpectrum, NodePredicateNoActiveHelper));
+    mitk::NodePredicateAnd::New(
+      m2::DataNodePredicates::IsCentroidSpectrum, 
+      m2::DataNodePredicates::NoActiveHelper));
 
   m_Controls.sourceCentroidsSelector->SetDataStorage(GetDataStorage());
   m_Controls.sourceCentroidsSelector->SetSelectionIsOptional(true);
@@ -109,28 +115,35 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.sourceCentroidsSelector->SetEmptyInfo(QString("Select Source Centroid Spectrum"));
   m_Controls.sourceCentroidsSelector->SetPopUpTitel(QString("Select Source Centroid Spectrum"));
   m_Controls.sourceCentroidsSelector->SetNodePredicate(
-    mitk::NodePredicateAnd::New(NodePredicateIsCentroidSpectrum, NodePredicateNoActiveHelper));
+    mitk::NodePredicateAnd::New(
+      m2::DataNodePredicates::IsCentroidSpectrum, 
+      m2::DataNodePredicates::NoActiveHelper));
 
   m_Controls.sourceProfileImageSelector->SetDataStorage(GetDataStorage());
   m_Controls.sourceProfileImageSelector->SetSelectionIsOptional(true);
   m_Controls.sourceProfileImageSelector->SetAutoSelectNewNodes(true);
   m_Controls.sourceProfileImageSelector->SetEmptyInfo(QString("Select Source Profile or Processed Centroid Spectrum Image"));
   m_Controls.sourceProfileImageSelector->SetPopUpTitel(QString("Select Source Profile or Processed Centroid Spectrum Image"));
-  m_Controls.sourceProfileImageSelector->SetNodePredicate(NodePredicateIsProfileOrProcessedCentroidSpectrumImage);
+  m_Controls.sourceProfileImageSelector->SetNodePredicate(
+    m2::DataNodePredicates::IsProfileOrProcessedCentroidSpectrumImage);
 
   m_Controls.imageExportSelector->SetDataStorage(GetDataStorage());
   m_Controls.imageExportSelector->SetSelectionIsOptional(true);
   m_Controls.imageExportSelector->SetEmptyInfo(QString("Select Spectrum Image(s)"));
   m_Controls.imageExportSelector->SetPopUpTitel(QString("Select Spectrum Image(s)"));
   m_Controls.imageExportSelector->SetNodePredicate(mitk::NodePredicateAnd::New(
-    mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New(), NodePredicateNoActiveHelper, NodePredicateIsVisible));
+    mitk::TNodePredicateDataType<m2::SpectrumImage>::New(), 
+    m2::DataNodePredicates::NoActiveHelper, 
+    m2::DataNodePredicates::IsVisible));
 
   m_Controls.centroidExportSelector->SetDataStorage(GetDataStorage());
   m_Controls.centroidExportSelector->SetSelectionIsOptional(true);
   m_Controls.centroidExportSelector->SetEmptyInfo(QString("Select Centroids"));
   m_Controls.centroidExportSelector->SetPopUpTitel(QString("Select Centroids"));
   m_Controls.centroidExportSelector->SetNodePredicate(
-    mitk::NodePredicateAnd::New(NodePredicateIsCentroidSpectrum, NodePredicateNoActiveHelper));
+    mitk::NodePredicateAnd::New(
+      m2::DataNodePredicates::IsCentroidSpectrum, 
+      m2::DataNodePredicates::NoActiveHelper));
 
   connect(m_Controls.sbTolerance, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
   connect(m_Controls.sbDistance, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
@@ -232,7 +245,7 @@ void m2PeakPickingView::OnStartExportImages() {
   float tol = 1;
 
   for(auto imageNode : imageNodes){
-    auto image = dynamic_cast<m2::SpectrumImageBase *>(imageNode->GetData());
+    auto image = dynamic_cast<m2::SpectrumImage *>(imageNode->GetData());
     for(auto centroidNode : centroidNodes){
       auto centroids = dynamic_cast<m2::IntervalVector *>(centroidNode->GetData());
       for(const m2::Interval & i: centroids->GetIntervals()){
@@ -421,7 +434,7 @@ void m2PeakPickingView::OnStartPeakPickingOverview()
     xs = sourceData->GetXMean();
 
     targetData->GetIntervals() = PeakPicking(xs, ys);
-    auto image = dynamic_cast<m2::SpectrumImageBase *>(parentNode->GetData());
+    auto image = dynamic_cast<m2::SpectrumImage *>(parentNode->GetData());
 
     targetData->SetProperty("spectrum.pixel.count", mitk::IntProperty::New(image->GetNumberOfValidPixels()));
     targetData->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(targetData->GetIntervals().size()));

@@ -21,14 +21,14 @@ found in the LICENSE file.
 #include <QWidgetAction>
 
 
-class QmitkDataNodeSliceWiseNormalization : public QWidgetAction, public QmitkAbstractDataNodeAction
+class QmitkDataNodeSliceWiseNormalizationAction : public QWidgetAction, public QmitkAbstractDataNodeAction
 {
   Q_OBJECT
 
 public:
 
-  QmitkDataNodeSliceWiseNormalization(QWidget* parent, berry::IWorkbenchPartSite::Pointer workbenchPartSite);
-  QmitkDataNodeSliceWiseNormalization(QWidget* parent = nullptr, berry::IWorkbenchPartSite* workbenchPartSite = nullptr);
+  QmitkDataNodeSliceWiseNormalizationAction(QWidget* parent, berry::IWorkbenchPartSite::Pointer workbenchPartSite);
+  QmitkDataNodeSliceWiseNormalizationAction(QWidget* parent = nullptr, berry::IWorkbenchPartSite* workbenchPartSite = nullptr);
   
 protected:
 

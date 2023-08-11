@@ -13,7 +13,7 @@ found in the LICENSE file.
 #include "QmitkPeakLearningView.h"
 
 #include <QMessageBox>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <m2SpectrumImageHelper.h>
 #include <mitkDockerHelper.h>
 #include <mitkNodePredicateFunction.h>
@@ -31,7 +31,7 @@ void QmitkPeakLearningView::CreateQtPartControl(QWidget *parent)
    auto NodePredicateIsContinuousSpectrumImage = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) -> bool
     {
-      if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+      if (auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
         return ((unsigned int)(spectrumImage->GetSpectrumType().Format)) &
                ((unsigned int)(m2::SpectrumFormat::Continuous));
       return false;
@@ -63,9 +63,9 @@ void QmitkPeakLearningView::OnStartDockerProcessing()
   {
     for (auto node : m_Controls.imageSelection->GetSelectedNodes())
     {
-      if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+      if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
       {
-        if (!image->GetIsDataAccessInitialized())
+        if (!image->GetImageAccessInitialized())
           return;
 
         try

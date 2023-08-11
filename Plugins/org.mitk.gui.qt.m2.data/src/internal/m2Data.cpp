@@ -29,7 +29,7 @@ See LICENSE.txt for details.
 #include <m2FsmSpectrumImage.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2IntervalVector.h>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <m2SpectrumImageDataInteractor.h>
 #include <m2SpectrumImageStack.h>
 #include <m2SubdivideImage2DFilter.h>
@@ -172,7 +172,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
               {
                 if (n->GetProperty("UpdateRequired"))
                 {
-                  auto I = dynamic_cast<m2::SpectrumImageBase *>(n->GetData());
+                  auto I = dynamic_cast<m2::SpectrumImage *>(n->GetData());
                   this->ApplySettingsToImage(I);
                   this->GetDataStorage()->Remove(n);
                   this->GetDataStorage()->Add(n);
@@ -409,12 +409,12 @@ void m2Data::ApplySettingsToNodes(m2::UIUtils::NodesVectorType::Pointer v)
 {
   for (auto dataNode : *v)
   {
-    if (auto data = dynamic_cast<m2::SpectrumImageBase *>(dataNode->GetData()))
+    if (auto data = dynamic_cast<m2::SpectrumImage *>(dataNode->GetData()))
       ApplySettingsToImage(data); // ImzML
   }
 }
 
-void m2Data::ApplySettingsToImage(m2::SpectrumImageBase *data)
+void m2Data::ApplySettingsToImage(m2::SpectrumImage *data)
 {
   if (data)
   {
@@ -458,7 +458,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
   {
     auto node = nodesToProcess->front();
 
-    if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
       std::string xLabel = image->GetSpectrumType().XAxisLabel;
       labelText = "[" + QString(xLabel.c_str()) + "]" + labelText;
@@ -475,7 +475,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
 
   for (mitk::DataNode::Pointer dataNode : *nodesToProcess)
   {
-    if (m2::SpectrumImageBase::Pointer data = dynamic_cast<m2::SpectrumImageBase *>(dataNode->GetData()))
+    if (m2::SpectrumImage::Pointer data = dynamic_cast<m2::SpectrumImage *>(dataNode->GetData()))
     {
       if (!data->IsInitialized())
         mitkThrow() << "Trying to grab an ion image but data access was not initialized properly!";
@@ -537,7 +537,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
 
 void m2Data::UpdateSpectrumImageTable(const mitk::DataNode *node)
 {
-  if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  if (dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
     // auto widgets = m_Parent->findChildren<Qm2ImageColorWidget *>("Qm2ImageColorWidget");
     // MITK_INFO << widgets.count();
@@ -613,7 +613,7 @@ void m2Data::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/, const Q
   if (!nodes.empty())
   {
     auto node = nodes.front();
-    if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
       QString labelText = str(boost::format("%.2f +/- %.2f Da") % image->GetCurrentX() % image->GetTolerance()).c_str();
 
@@ -628,7 +628,7 @@ void m2Data::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/, const Q
 
 void m2Data::UpdateLevelWindow(const mitk::DataNode *node)
 {
-  if (auto msImageBase = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  if (auto msImageBase = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
     mitk::LevelWindow lw;
     node->GetLevelWindow(lw);
@@ -645,7 +645,7 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
   {
     OpenSlideImageNodeAdded(node);
   }
-  else if (auto data = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  else if (auto data = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
     // !! Primary initialization !!
     this->ApplySettingsToImage(data);
@@ -758,7 +758,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   const_cast<mitk::DataNode *>(node)->SetBoolProperty("binary", false);
 
   // add nodes to data storage (default: helper objects)
-  if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  if (auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
     // -------------- add data interactor --------------
 
@@ -819,7 +819,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
       intervals->SetInfo(info);
       intervals->SetProperty("spectrum.xaxis.count", mitk::IntProperty::New(xs.size()));
 
-      if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+      if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
         intervals->SetProperty("spectrum.pixel.count", mitk::IntProperty::New(image->GetNumberOfValidPixels()));
 
       using namespace std;
@@ -884,7 +884,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
 
 void m2Data::NodeRemoved(const mitk::DataNode *node)
 {
-  if (dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+  if (dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
     auto derivations = this->GetDataStorage()->GetDerivations(node);
     for (auto &&d : *derivations)

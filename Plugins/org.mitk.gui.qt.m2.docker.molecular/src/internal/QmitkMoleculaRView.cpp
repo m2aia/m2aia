@@ -14,7 +14,7 @@ found in the LICENSE file.
 
 #include <QMessageBox>
 #include <m2IntervalVector.h>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <mitkCoreServices.h>
 #include <mitkDockerHelper.h>
 #include <mitkIPreferences.h>
@@ -37,8 +37,8 @@ void QmitkMoleculaRView::CreateQtPartControl(QWidget *parent)
   auto NodePredicateIsSpectrumImage = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) -> bool
     {
-      if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
-        return image->GetIsDataAccessInitialized();
+      if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
+        return image->GetImageAccessInitialized();
       return false;
     });
 
@@ -80,7 +80,7 @@ void QmitkMoleculaRView::OnStartMoleculaR()
   {
     for (auto node : m_Controls.imageSelection->GetSelectedNodes())
     {
-      if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+      if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
       {
         try
         {

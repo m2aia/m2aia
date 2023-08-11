@@ -1,4 +1,4 @@
-project(org_mitk_gui_qt_m2_Spectrum)
+project(org_mitk_gui_qt_m2_spectrum)
 
 mitk_create_plugin(
   EXPORT_DIRECTIVE M2_SPECTRUM_EXPORT

@@ -32,6 +32,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ElxUtil.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2NameDialog.h>
+#include <m2DataNodePredicates.h>
 
 const std::string m2Reconstruction3D::VIEW_ID = "org.mitk.views.m2.Reconstruction3D";
 
@@ -40,6 +41,17 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
   // create GUI widgets from the Qt Designer's .ui file
   m_Parent = parent;
   m_Controls.setupUi(parent);
+
+  m_Controls.centroidListSelector->SetDataStorage(GetDataStorage());
+  m_Controls.centroidListSelector->SetSelectionIsOptional(true);
+  m_Controls.centroidListSelector->SetAutoSelectNewNodes(true);
+  m_Controls.centroidListSelector->SetEmptyInfo(QString("Centroid Spectrum"));
+  m_Controls.centroidListSelector->SetPopUpTitel(QString("Centroid Spectrum"));
+  m_Controls.centroidListSelector->SetNodePredicate(mitk::NodePredicateAnd::New(
+    m2::DataNodePredicates::NoActiveHelper, 
+    m2::DataNodePredicates::IsOverviewSpectrum, 
+    m2::DataNodePredicates::IsCentroidSpectrum));
+
   connect(m_Controls.btnUpdateList, &QPushButton::clicked, this, &m2Reconstruction3D::OnUpdateList);
 
   connect(m_Controls.btnStartStacking, SIGNAL(clicked()), this, SLOT(OnStartStacking()));
@@ -137,7 +149,7 @@ void m2Reconstruction3D::OnStartStacking()
 {
   // check input data
   const auto numItems = m_List1->count();
-  const bool PerformMultimodalSteps = m_List1->count() == m_List2->count();
+  const bool doMultiModalImageRegistration = m_List1->count() == m_List2->count();
   
   if (!numItems)
   {
@@ -148,7 +160,7 @@ void m2Reconstruction3D::OnStartStacking()
   // name of the result stack
   std::array<std::string, 2> stackNames;
   std::array<QListWidget *, 2> lists = {m_List1, m_List2};
-  for(int i = 0 ; i <  1 + PerformMultimodalSteps; ++i){
+  for(int i = 0 ; i <  1 + doMultiModalImageRegistration; ++i){
     auto d = GetImageDataById(0, lists[i]);
 
     m2NameDialog dialog(m_Parent);
@@ -167,12 +179,13 @@ void m2Reconstruction3D::OnStartStacking()
       return;
     }
   }
-
+  auto stackSize = m_List1->count();
+  double spacingZ = m2::MicroMeterToMilliMeter(m_Controls.spinBoxZSpacing->value());
   // prepare stacks
   auto spectrumImageStack1 =
-    m2::SpectrumImageStack::New(m2::MicroMeterToMilliMeter(m_Controls.spinBoxZSpacing->value()));
+    m2::SpectrumImageStack::New(stackSize, spacingZ);
   auto spectrumImageStack2 =
-    m2::SpectrumImageStack::New(m2::MicroMeterToMilliMeter(m_Controls.spinBoxZSpacing->value()));
+    m2::SpectrumImageStack::New(stackSize, spacingZ);
   /*
    * Two modalities
    * M2 is optional
@@ -194,7 +207,7 @@ void m2Reconstruction3D::OnStartStacking()
   // prepare workbench
   mitk::ProgressBar::GetInstance()->AddStepsToDo(numItems - 1);
   
-  const bool UseSubsequentOrdering = m_Controls.chkBxUseConsecutiveSequence->isChecked();
+  const bool UseSubsequentOrdering = !m_Controls.chkBxCoRegistrationToSelected->isChecked();
   const auto currentRow = m_List1->currentRow() < 0 ? numItems / 2 : m_List1->currentRow();
 
   // Initialize by fixed image of stack 1
@@ -208,7 +221,7 @@ void m2Reconstruction3D::OnStartStacking()
   }
 
   // Initialize stack 2
-  if(PerformMultimodalSteps){
+  if(doMultiModalImageRegistration){
     auto elxHelper = RegistrationStep(currentRow, m_List1, nullptr, currentRow, m_List2);
     spectrumImageStack2->Insert(currentRow, elxHelper);
     mitk::ProgressBar::GetInstance()->Progress();
@@ -223,7 +236,7 @@ void m2Reconstruction3D::OnStartStacking()
     spectrumImageStack1->Insert(movingId, elxHelper);
 
     // stack 2
-    if(PerformMultimodalSteps){
+    if(doMultiModalImageRegistration){
       elxHelper = RegistrationStep(movingId, m_List1, elxHelper, movingId, m_List2);
       spectrumImageStack2->Insert(movingId, elxHelper);
     }
@@ -239,7 +252,7 @@ void m2Reconstruction3D::OnStartStacking()
     spectrumImageStack1->Insert(movingId, elxHelper);
 
     // stack 2
-    if(PerformMultimodalSteps){
+    if(doMultiModalImageRegistration){
       elxHelper = RegistrationStep(movingId, m_List1, elxHelper, movingId, m_List2);
       spectrumImageStack2->Insert(movingId, elxHelper);
     }
@@ -254,7 +267,7 @@ void m2Reconstruction3D::OnStartStacking()
   node->SetName(stackNames[0]);
   GetDataStorage()->Add(node);
   
-  if(PerformMultimodalSteps){
+  if(doMultiModalImageRegistration){
     spectrumImageStack2->InitializeProcessor();
     spectrumImageStack2->InitializeGeometry();
 
@@ -278,7 +291,7 @@ void m2Reconstruction3D::OnUpdateList()
   {
     if (node.IsNull())
       continue;
-    if (auto data = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+    if (auto data = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
       auto res = this->GetDataStorage()->GetDerivations(node, mitk::TNodePredicateDataType<mitk::PointSet>::New());
 

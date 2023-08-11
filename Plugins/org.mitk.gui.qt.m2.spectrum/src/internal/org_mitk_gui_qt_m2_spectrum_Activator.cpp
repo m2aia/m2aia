@@ -15,15 +15,19 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 
-#include "org_mitk_gui_qt_m2_Registration_Activator.h"
-#include "RegistrationView.h"
+#include "org_mitk_gui_qt_m2_spectrum_Activator.h"
+#include "m2Spectrum.h"
+
+#include <usModuleInitialization.h>
+
+US_INITIALIZE_MODULE
 
 namespace mitk
 {
-  void org_mitk_gui_qt_m2_Registration_Activator::start(ctkPluginContext *context)
+  void org_mitk_gui_qt_m2_spectrum_Activator::start(ctkPluginContext *context)
   {
-    BERRY_REGISTER_EXTENSION_CLASS(RegistrationView, context)
+	  BERRY_REGISTER_EXTENSION_CLASS(m2Spectrum, context)   
   }
 
-  void org_mitk_gui_qt_m2_Registration_Activator::stop(ctkPluginContext *context) { Q_UNUSED(context) }
+  void org_mitk_gui_qt_m2_spectrum_Activator::stop(ctkPluginContext *context) { Q_UNUSED(context) }
 }

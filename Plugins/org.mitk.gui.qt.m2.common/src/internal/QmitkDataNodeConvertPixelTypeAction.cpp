@@ -115,7 +115,6 @@ mitk::Image::Pointer QmitkDataNodeConvertPixelTypeAction::OnApplyCastImage(mitk:
   AccessByItk(image, ([&](auto itkSourceImage){
     // using ImagePixelType = typename std::remove_pointer<decltype(itkImage)>::type::PixelType;
     constexpr auto ImageDimension = std::remove_pointer<decltype(itkSourceImage)>::type::ImageDimension;
-    MITK_INFO << "CONVERT " << static_cast<unsigned int>(type);
     switch (type)
     {
       case itk::IOComponentEnum::CHAR:
@@ -155,7 +154,6 @@ mitk::Image::Pointer QmitkDataNodeConvertPixelTypeAction::OnApplyCastImage(mitk:
       }
       break;
       default:
-        MITK_WARN << "Conversion type not in switch-case!";
       break;
     }
    

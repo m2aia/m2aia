@@ -36,7 +36,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 */
 namespace m2
 {
-  class SpectrumImageBase;
+  class SpectrumImage;
   class ImzMLSpectrumImage;
 }
 
@@ -55,7 +55,7 @@ public:
   /**
    * @brief Get the Overview Spectrum Type object
    *
-   * @return SpectrumImageBase::OverviewSpectrumType
+   * @return SpectrumImage::OverviewSpectrumType
    */
   m2::SpectrumType GetOverviewSpectrumType() { return m_CurrentOverviewSpectrumType; }
 
@@ -80,7 +80,7 @@ public:
    * Configures the I/O strategy state of a single MS image.
    * @param image A mass spectrometry image.
    */
-  void ApplySettingsToImage(m2::SpectrumImageBase *image);
+  void ApplySettingsToImage(m2::SpectrumImage *image);
 
   void InitNormalizationControls();
   void InitIntensityTransformationControls();

@@ -10,36 +10,36 @@ found in the LICENSE file.
 
 ============================================================================*/
 
-#include "QmitkDataNodeSliceWiseNormalization.h"
+#include "QmitkDataNodeSliceWiseNormalizationAction.h"
 #include <m2SpectrumImageStack.h>
 
 #include <QCheckBox>
 
 
 
-QmitkDataNodeSliceWiseNormalization::QmitkDataNodeSliceWiseNormalization(QWidget* parent, berry::IWorkbenchPartSite::Pointer workbenchPartSite): 
+QmitkDataNodeSliceWiseNormalizationAction::QmitkDataNodeSliceWiseNormalizationAction(QWidget* parent, berry::IWorkbenchPartSite::Pointer workbenchPartSite): 
   QWidgetAction(parent),
   QmitkAbstractDataNodeAction(workbenchPartSite)
 {
   InitializeAction();
 }
 
-QmitkDataNodeSliceWiseNormalization::QmitkDataNodeSliceWiseNormalization(QWidget* parent, berry::IWorkbenchPartSite* workbenchPartSite): 
+QmitkDataNodeSliceWiseNormalizationAction::QmitkDataNodeSliceWiseNormalizationAction(QWidget* parent, berry::IWorkbenchPartSite* workbenchPartSite): 
   QWidgetAction(parent),
   QmitkAbstractDataNodeAction(berry::IWorkbenchPartSite::Pointer(workbenchPartSite))
 {
   InitializeAction();
 }
 
-void QmitkDataNodeSliceWiseNormalization::InitializeAction()
+void QmitkDataNodeSliceWiseNormalizationAction::InitializeAction()
 {
   auto checkBox = new QCheckBox(static_cast<QWidget*>(this->parent()));
-  checkBox->setText(tr("Slice-wise Maximum Normalization"));
+  setText(tr("Slice-wise Maximum Normalization"));
   checkBox->setToolTip(tr("Rescale intensities by dividing by the maximum of each slice."));
   setDefaultWidget(checkBox);
 }
 
-void QmitkDataNodeSliceWiseNormalization::InitializeWithDataNode(const mitk::DataNode* node){
+void QmitkDataNodeSliceWiseNormalizationAction::InitializeWithDataNode(const mitk::DataNode* node){
   if(auto image = dynamic_cast<m2::SpectrumImageStack *>(node->GetData())){
     auto checkBox = dynamic_cast<QCheckBox *>(defaultWidget());
     checkBox->setChecked(image->GetUseSliceWiseMaximumNormalization());

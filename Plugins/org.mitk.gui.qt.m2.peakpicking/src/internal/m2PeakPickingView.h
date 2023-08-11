@@ -23,13 +23,11 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkSingleNodeSelectionWidget.h>
 #include <berryISelectionListener.h>
 
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <m2IntervalVector.h>
 
 #include <m2UIUtils.h>
-#include <mitkNodePredicateAnd.h>
-#include <mitkNodePredicateFunction.h>
-#include <mitkNodePredicateNot.h>
+
 
 namespace itk
 {
@@ -62,7 +60,7 @@ protected:
   Ui::m2PeakPickingViewControls m_Controls;
 
   m2::UIUtils::NodesVectorType::Pointer m_ReceivedNodes = nullptr;
-  // using PeakVectorType = m2::SpectrumImageBase::IntervalVectorType;
+  // using PeakVectorType = m2::SpectrumImage::IntervalVectorType;
   // PeakVectorType m_PeakList;
   QMetaObject::Connection m_Connection;
   mitk::DataNode::Pointer CreatePeakList(const mitk::DataNode *parent, std::string name);
@@ -72,49 +70,7 @@ protected:
   void SetGroupProcessCentroidSpectraEnabled(bool v);
   mitk::DataNode *GetParent(mitk::DataNode *) const;
 
-  mitk::NodePredicateFunction::Pointer NodePredicateIsProfileOrProcessedCentroidSpectrumImage = mitk::NodePredicateFunction::New(
-    [this](const mitk::DataNode *node) -> bool
-    {
-      if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
-        return ((unsigned int)(spectrumImage->GetSpectrumType().Format)) &
-               ((unsigned int)(m2::SpectrumFormat::Profile)) || 
-               ((unsigned int)(spectrumImage->GetSpectrumType().Format)) &
-               ((unsigned int)(m2::SpectrumFormat::ProcessedCentroid));
-      return false;
-    });
-
-  mitk::NodePredicateFunction::Pointer NodePredicateIsVisible = mitk::NodePredicateFunction::New(
-    [this](const mitk::DataNode *node) { return node->IsVisible(nullptr, "visible", false); });
-
-  mitk::NodePredicateFunction::Pointer NodePredicateIsActiveHelperNode = mitk::NodePredicateFunction::New(
-    [this](const mitk::DataNode *node) { return node->IsOn("helper object", nullptr, false); });
-
-  mitk::NodePredicateFunction::Pointer NodePredicateIsCentroidSpectrum = mitk::NodePredicateFunction::New(
-    [this](const mitk::DataNode *node) -> bool
-    {
-      if (auto intervals = dynamic_cast<m2::IntervalVector *>(node->GetData()))
-        return ((unsigned int)(intervals->GetType())) & ((unsigned int)(m2::SpectrumFormat::Centroid));
-      return false;
-    });
-
-  mitk::NodePredicateFunction::Pointer NodePredicateIsProfileSpectrum = mitk::NodePredicateFunction::New(
-    [this](const mitk::DataNode *node) -> bool
-    {
-      if (auto intervals = dynamic_cast<m2::IntervalVector *>(node->GetData()))
-        return ((unsigned int)(intervals->GetType())) & ((unsigned int)(m2::SpectrumFormat::Profile));
-      return false;
-    });
-
-  mitk::NodePredicateFunction::Pointer NodePredicateIsOverviewSpectrum = mitk::NodePredicateFunction::New(
-    [this](const mitk::DataNode *node)
-    {
-      if (auto intervals = dynamic_cast<m2::IntervalVector *>(node->GetData()))
-        return intervals->GetInfo().find("overview") != std::string::npos;
-      return false;
-    });
-
-  mitk::NodePredicateNot::Pointer NodePredicateNoActiveHelper = mitk::NodePredicateNot::New(NodePredicateIsActiveHelperNode);
-
+ 
   /**
    * Find the parent node of a given node
   */

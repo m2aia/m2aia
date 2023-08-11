@@ -13,7 +13,7 @@ found in the LICENSE file.
 #include "QmitkSimCLRView.h"
 
 #include <QMessageBox>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <m2SpectrumImageHelper.h>
 #include <mitkDockerHelper.h>
 #include <mitkNodePredicateFunction.h>
@@ -31,9 +31,9 @@ void QmitkSimCLRView::CreateQtPartControl(QWidget *parent)
   auto NodePredicateSpectrumImage = mitk::NodePredicateFunction::New(
     [this](const mitk::DataNode *node) -> bool
     {
-      if (auto image = dynamic_cast<m2::SpectrumImageBase *>(node->GetData()))
+      if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
       {
-        return image->GetIsDataAccessInitialized();
+        return image->GetImageAccessInitialized();
       }
       return false;
     });

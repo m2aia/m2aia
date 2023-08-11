@@ -14,7 +14,7 @@ found in the LICENSE file.
 
 // mitk core
 #include <m2IntervalVector.h>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <mitkColorProperty.h>
 #include <mitkRenderingManager.h>
 
@@ -121,7 +121,7 @@ void QmitkDataNodePlotColorAction::OnPlotColorChanged()
     color = QColorDialog::getColor(color, nullptr, QString(tr("Change plot color")));
     dataNode->SetProperty("spectrum.plot.color", mitk::ColorProperty::New(color.redF(), color.greenF(), color.blueF()));
 
-     if (dynamic_cast<m2::SpectrumImageBase *>(dataNode->GetData()))
+     if (dynamic_cast<m2::SpectrumImage *>(dataNode->GetData()))
     {
       auto derivations = m_DataStorage.Lock()->GetDerivations(dataNode);
       for (auto node : *derivations)
@@ -163,7 +163,7 @@ void QmitkDataNodePlotColorAction::OnMarkerColorChanged()
     dataNode->SetProperty("spectrum.marker.color",
                           mitk::ColorProperty::New(color.redF(), color.greenF(), color.blueF()));
 
-    if (dynamic_cast<m2::SpectrumImageBase *>(dataNode->GetData()))
+    if (dynamic_cast<m2::SpectrumImage *>(dataNode->GetData()))
     {
       auto derivations = m_DataStorage.Lock()->GetDerivations(dataNode);
       for (auto node : *derivations)
