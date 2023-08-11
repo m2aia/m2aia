@@ -20,7 +20,7 @@ See LICENSE.txt for details.
 #include <mitkDockerHelper.h>
 
 #include <m2CoreCommon.h>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <m2IntervalVector.h>
 
 namespace m2
@@ -44,7 +44,7 @@ namespace m2
      * @param intervals: list of intervals (e.g. a peak center).
      * @return std::vector<float>
      */
-    static std::vector<float> GetIntensityData(const m2::SpectrumImageBase * image, const std::vector<m2::Interval> &intervals);
+    static std::vector<float> GetIntensityData(const m2::SpectrumImage * image, const std::vector<m2::Interval> &intervals);
 
     /**
      * @brief Get the shape of the assumed data matrix generated with GetIntensityData(...)
@@ -53,7 +53,7 @@ namespace m2
      * @param intervals: list of intervals (e.g. a peak center). Same as used in GetIntensityData(...).
      * @return std::vector<unsigned long>
      */
-    static std::vector<unsigned long> GetIntensityDataShape(const m2::SpectrumImageBase * image, const std::vector<m2::Interval> &intervals);
+    static std::vector<unsigned long> GetIntensityDataShape(const m2::SpectrumImage * image, const std::vector<m2::Interval> &intervals);
 
   };
 }

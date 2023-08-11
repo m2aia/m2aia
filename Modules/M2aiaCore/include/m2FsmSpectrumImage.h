@@ -18,8 +18,8 @@ See LICENSE.txt for details.
 #include <M2aiaCoreExports.h>
 #include <algorithm>
 #include <array>
-#include <m2SpectrumImageBase.h>
-#include <m2SpectrumImageProcessor.h>
+#include <m2SpectrumImage.h>
+#include <m2ISpectrumImageSource.h>
 #include <mitkDataNode.h>
 #include <mitkITKImageImport.h>
 #include <mitkImage.h>
@@ -32,10 +32,10 @@ See LICENSE.txt for details.
 
 namespace m2
 {
-  class M2AIACORE_EXPORT FsmSpectrumImage final : public SpectrumImageBase
+  class M2AIACORE_EXPORT FsmSpectrumImage final : public SpectrumImage
   {
   public:
-    mitkClassMacro(FsmSpectrumImage, SpectrumImageBase);
+    mitkClassMacro(FsmSpectrumImage, SpectrumImage);
     itkNewMacro(Self);
 
     itkSetEnumMacro(ImageGeometryInitialized, bool);
@@ -68,25 +68,25 @@ namespace m2
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
     void InitializeProcessor() override;
-    void GetSpectrum(unsigned int, std::vector<double> &, std::vector<double> &, unsigned int) const override {}
-    void GetIntensities(unsigned int, std::vector<double> &, unsigned int) const override {}
-    void GetSpectrumFloat(unsigned int, std::vector<float> &, std::vector<float> &, unsigned int) const override {}
-    void GetIntensitiesFloat(unsigned int, std::vector<float> &, unsigned int) const override {}
+    void GetSpectrum(unsigned int, std::vector<double> &, std::vector<double> &) const override {}
+    void GetIntensities(unsigned int, std::vector<double> &) const override {}
+    void GetSpectrumFloat(unsigned int, std::vector<float> &, std::vector<float> &) const override {}
+    void GetIntensitiesFloat(unsigned int, std::vector<float> &) const override {}
 
   private:
     SpectrumVectorType m_Spectra;
     m2::SpectrumFormat m_ImportMode = m2::SpectrumFormat::ContinuousProfile;
-    using m2::SpectrumImageBase::InternalClone;
+    using m2::SpectrumImage::InternalClone;
     bool m_ImageAccessInitialized = false;
     bool m_ImageGeometryInitialized = false;
 
     FsmSpectrumImage();
     ~FsmSpectrumImage() override;
     class FsmProcessor;
-    std::unique_ptr<m2::ProcessorBase> m_Processor;
+    std::unique_ptr<m2::ISpectrumImageSource> m_Processor;
   };
 
-  class FsmSpectrumImage::FsmProcessor : public m2::ProcessorBase
+  class FsmSpectrumImage::FsmProcessor : public m2::ISpectrumImageSource
   {
   private:
     friend class FsmSpectrumImage;
@@ -95,26 +95,26 @@ namespace m2
   public:
     explicit FsmProcessor(m2::FsmSpectrumImage *owner) : p(owner) {}
     
-    void GetYValues(unsigned int id, std::vector<float> & data, unsigned int /*source*/ = 0) 
+    void GetYValues(unsigned int id, std::vector<float> & data) 
     {
       data = p->m_Spectra[id].data;
     }
     
-    void GetYValues(unsigned int id, std::vector<double> & data, unsigned int /*source*/ = 0) 
+    void GetYValues(unsigned int id, std::vector<double> & data) 
     {
       const auto & d = p->m_Spectra[id].data;
       data.resize(d.size());
       std::copy(std::begin(d), std::end(d), std::begin(data));
     }
     
-    void GetXValues(unsigned int /*id*/, std::vector<float> & data, unsigned int /*source*/ = 0) 
+    void GetXValues(unsigned int /*id*/, std::vector<float> & data) 
     {
       const auto & d = p->GetXAxis();
       data.resize(d.size());
       std::copy(std::begin(d), std::end(d), std::begin(data));
     }
     
-    void GetXValues(unsigned int /*id*/, std::vector<double> & data, unsigned int /*source*/ = 0) 
+    void GetXValues(unsigned int /*id*/, std::vector<double> & data) 
     {
       data = p->GetXAxis();
     }

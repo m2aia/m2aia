@@ -18,19 +18,19 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <boost/progress.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <itkMath.h>
 #include <itksys/SystemTools.hxx>
+#include <m2CoreCommon.h>
 #include <m2ImzMLEngine.h>
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLParser.h>
 #include <m2Timer.h>
-#include <m2CoreCommon.h>
 #include <mitkIOUtil.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
+#include <mitkLocaleSwitch.h>
 #include <signal/m2PeakDetection.h>
 #include <signal/m2Pooling.h>
-#include <itkMath.h>
-#include <mitkLocaleSwitch.h>
 
 template <class ConversionType, class ItFirst, class ItLast, class OStreamType>
 void writeData(ItFirst itFirst, ItLast itLast, OStreamType &os)
@@ -57,9 +57,13 @@ namespace m2
   {
     if (AbstractFileIO::GetWriterConfidenceLevel() == Unsupported)
       return Unsupported;
-    const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
-    if (input)
+
+    auto input1 = dynamic_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
+    auto input2 = dynamic_cast<const m2::SpectrumImageStack *>(this->GetInput());
+    if (input1 || input2)
+    {
       return Supported;
+    }
     else
       return Unsupported;
   }
@@ -133,33 +137,28 @@ namespace m2
   }
   */
 
-  void ImzMLImageIO::WriteContinuousProfile(m2::ImzMLSpectrumImage::SourceListType &sourceList) const
+  void ImzMLImageIO::WriteContinuousProfile(m2::ImzMLSpectrumImage::SpectrumVectorType &spectra) const
   {
     const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
-    const char * category = "ImzMLImageIO::WriteContinuousProfile";
-    MITK_INFO(category) << "ImzMLImageSource list size " << sourceList.size();
 
     std::vector<float> mzs;
     std::vector<float> ints;
 
-    std::ifstream ibd(input->GetImzMLSpectrumImageSource().m_BinaryDataPath, std::ofstream::binary);
+    std::ifstream ibd(input->GetBinaryDataPath(), std::ofstream::binary);
     std::ofstream b(GetIBDOutputPath(), std::ofstream::binary | std::ofstream::app);
 
     unsigned sourceId = 0;
     unsigned long long offset = 16;
     unsigned long long offsetDelta = 0;
 
-    
-    boost::progress_display show_progress(std::accumulate(std::begin(sourceList),std::end(sourceList),0, [](auto s, m2::ImzMLSpectrumImage::ImzMLImageSource source){
-      return s + source.m_Spectra.size();}) + 1);
+    boost::progress_display show_progress(spectra.size() + 1);
 
     // write mzs
     {
-      auto &source = sourceList.front();
-      input->GetSpectrumFloat(0, mzs, ints, sourceId); // get x axis
+      input->GetSpectrumFloat(0, mzs, ints); // get x axis
 
-      source.m_Spectra[0].mzOffset = 16;
-      source.m_Spectra[0].mzLength = mzs.size();
+      spectra[0].mzOffset = 16;
+      spectra[0].mzLength = mzs.size();
 
       auto start = std::begin(mzs);
       auto end = std::end(mzs);
@@ -183,53 +182,51 @@ namespace m2
 
     MITK_INFO("ImzMLImageIO::WriteContinuousProfile") << "Write x axis done!";
 
-    for (auto &source : sourceList)
+    for (size_t id = 0; id < spectra.size(); ++id)
     {
-      for (size_t id = 0; id < source.m_Spectra.size(); ++id)
+      auto &s = spectra[id];
+      // update mz axis info
+      s.mzLength = spectra[0].mzLength;
+      s.mzOffset = spectra[0].mzOffset;
+
+      // write ints
       {
-        auto &s = source.m_Spectra[id];
-        // update mz axis info
-        s.mzLength = sourceList.front().m_Spectra[0].mzLength;
-        s.mzOffset = sourceList.front().m_Spectra[0].mzOffset;
+        input->GetSpectrumFloat(id, mzs, ints);
 
-        // write ints
+        s.intOffset = offset;
+        s.intLength = ints.size();
+
+        auto start = std::begin(ints);
+        auto end = std::end(ints);
+
+        switch (m_DataTypeYAxis)
         {
-          input->GetSpectrumFloat(id, mzs, ints, sourceId);
-
-          s.intOffset = offset;
-          s.intLength = ints.size();
-
-          auto start = std::begin(ints);
-          auto end = std::end(ints);
-
-          switch (m_DataTypeYAxis)
-          {
-            case m2::NumericType::Float:
-              writeData<float>(start, end, b);
-              offsetDelta = ints.size() * sizeof(float);
-              break;
-            case m2::NumericType::Double:
-              writeData<double>(start, end, b);
-              offsetDelta = ints.size() * sizeof(double);
-              break;
-            case m2::NumericType::None:
-              mitkThrow() << "m2::NumericType of yAxisOutput not set";
-          }
-
-          offset += offsetDelta;
+          case m2::NumericType::Float:
+            writeData<float>(start, end, b);
+            offsetDelta = ints.size() * sizeof(float);
+            break;
+          case m2::NumericType::Double:
+            writeData<double>(start, end, b);
+            offsetDelta = ints.size() * sizeof(double);
+            break;
+          case m2::NumericType::None:
+            mitkThrow() << "m2::NumericType of yAxisOutput not set";
         }
-        b.flush();
-        ++show_progress;
+
+        offset += offsetDelta;
       }
-      ++sourceId;
+      b.flush();
+      ++show_progress;
     }
+    ++sourceId;
   }
 
-  void ImzMLImageIO::SetIntervalVector(m2::IntervalVector::Pointer intervals){
+  void ImzMLImageIO::SetIntervalVector(m2::IntervalVector::Pointer intervals)
+  {
     m_Intervals = intervals;
   }
 
-  void ImzMLImageIO::WriteContinuousCentroid(m2::ImzMLSpectrumImage::SourceListType &sourceList) const
+  void ImzMLImageIO::WriteContinuousCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType &spectra) const
   {
     if (m_Intervals.IsNull() || m_Intervals->GetIntervals().empty())
       mitkThrow() << "No intervals provided!";
@@ -238,40 +235,37 @@ namespace m2
     std::vector<float> ints, intsMasked;
 
     // Output file stream for ibd
-    const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());  
+    const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
     std::ofstream b(GetIBDOutputPath(), std::ofstream::binary | std::ofstream::app);
 
-    unsigned sourceId = 0;
     unsigned long long offset = 16;
     unsigned long long offsetDelta = 0;
     b.seekp(offset);
 
-    boost::progress_display show_progress(std::accumulate(std::begin(sourceList),std::end(sourceList),0, [](auto s, m2::ImzMLSpectrumImage::ImzMLImageSource source){
-      return s + source.m_Spectra.size();}) + 1);
+    boost::progress_display show_progress(spectra.size() + 1);
     // write mzs
     {
-      auto &source = sourceList.front();
       // write mass axis
       // input->GetSpectrum(0, mzs, ints, sourceId);
       {
         using namespace std;
-        const auto & xs = m_Intervals->GetXMean();
-        copy(begin(xs), end(xs),back_inserter(mzsMasked));
+        const auto &xs = m_Intervals->GetXMean();
+        copy(begin(xs), end(xs), back_inserter(mzsMasked));
       }
 
       // update source spectra meta data to its actual values
-      source.m_Spectra[0].mzOffset = 16;
-      source.m_Spectra[0].mzLength = mzsMasked.size();
+      spectra[0].mzOffset = 16;
+      spectra[0].mzLength = mzsMasked.size();
 
       switch (m_DataTypeXAxis)
       {
         case NumericType::Float:
           writeData<float>(std::begin(mzsMasked), std::end(mzsMasked), b);
-          offsetDelta = source.m_Spectra[0].mzLength * sizeof(float);
+          offsetDelta = spectra[0].mzLength * sizeof(float);
           break;
         case NumericType::Double:
           writeData<double>(std::begin(mzsMasked), std::end(mzsMasked), b);
-          offsetDelta = source.m_Spectra[0].mzLength * sizeof(double);
+          offsetDelta = spectra[0].mzLength * sizeof(double);
           break;
         case NumericType::None:
           mitkThrow() << "m2::NumericType of xAxisOutput not set";
@@ -282,153 +276,63 @@ namespace m2
 
     MITK_INFO("ImzMLImageIO") << "Write x axis done!";
 
-    for (auto &source : sourceList)
+    for (size_t id = 0; id < spectra.size(); ++id)
     {
-      for (size_t id = 0; id < source.m_Spectra.size(); ++id)
+      auto &s = spectra[id];
+      // update mz axis info
+      s.mzLength = spectra[0].mzLength;
+      s.mzOffset = spectra[0].mzOffset;
+
+      // write ints
       {
-        auto &s = source.m_Spectra[id];
-        // update mz axis info
-        s.mzLength = sourceList.front().m_Spectra[0].mzLength;
-        s.mzOffset = sourceList.front().m_Spectra[0].mzOffset;
+        input->GetSpectrumFloat(id, mzs, ints);
+        intsMasked.clear();
 
-        // write ints
+        for (const Interval &I : m_Intervals->GetIntervals())
         {
-          input->GetSpectrumFloat(id, mzs, ints, sourceId);
-          intsMasked.clear();
+          double val = 0;
+          const auto tol = input->ApplyTolerance(I.x.mean());
+          const auto subRes = m2::Signal::Subrange(mzs, I.x.mean() - tol, I.x.mean() + tol);
+          const auto s = std::next(std::begin(ints), subRes.first);
+          const auto e = std::next(s, subRes.second);
+          val = Signal::RangePooling<double>(s, e, input->GetRangePoolingStrategy());
 
-          for (const Interval & I : m_Intervals->GetIntervals())
-          {
-            
-            double val = 0;
-            const auto tol = input->ApplyTolerance(I.x.mean());
-            const auto subRes = m2::Signal::Subrange(mzs, I.x.mean() - tol, I.x.mean() + tol);
-            const auto s = std::next(std::begin(ints), subRes.first);
-            const auto e = std::next(s, subRes.second);
-            val = Signal::RangePooling<double>(s, e, input->GetRangePoolingStrategy());
-          
-            intsMasked.push_back(val);
-          }
-
-          s.intOffset = offset;
-          s.intLength = intsMasked.size();
-
-          switch (m_DataTypeYAxis)
-          {
-            case m2::NumericType::Float:
-              writeData<float>(std::begin(intsMasked), std::end(intsMasked), b);
-              offsetDelta = s.intLength * sizeof(float);
-              break;
-            case m2::NumericType::Double:
-              writeData<double>(std::begin(intsMasked), std::end(intsMasked), b);
-              offsetDelta = s.intLength * sizeof(double);
-              break;
-            case m2::NumericType::None:
-              mitkThrow() << "m2::NumericType of yAxisOutput not set";
-          }
-
-          offset += offsetDelta;
+          intsMasked.push_back(val);
         }
-        b.flush();
-        ++show_progress;
+
+        s.intOffset = offset;
+        s.intLength = intsMasked.size();
+
+        switch (m_DataTypeYAxis)
+        {
+          case m2::NumericType::Float:
+            writeData<float>(std::begin(intsMasked), std::end(intsMasked), b);
+            offsetDelta = s.intLength * sizeof(float);
+            break;
+          case m2::NumericType::Double:
+            writeData<double>(std::begin(intsMasked), std::end(intsMasked), b);
+            offsetDelta = s.intLength * sizeof(double);
+            break;
+          case m2::NumericType::None:
+            mitkThrow() << "m2::NumericType of yAxisOutput not set";
+        }
+
+        offset += offsetDelta;
       }
-      ++sourceId;
+      b.flush();
+      ++show_progress;
     }
   }
 
-  void ImzMLImageIO::WriteProcessedProfile(m2::ImzMLSpectrumImage::SourceListType & /*sourceList*/) const
+  void ImzMLImageIO::WriteProcessedProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & /*spectra*/) const
   {
     mitkThrow() << "Not implemented";
   }
 
-  void ImzMLImageIO::WriteProcessedCentroid(m2::ImzMLSpectrumImage::SourceListType & /*sourceList*/) const
+  void ImzMLImageIO::WriteProcessedCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & /*spectra*/) const
   {
-    // const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
-
-    // // Output file stream for ibd
-    // std::ofstream b(GetIBDOutputPath(), std::ofstream::binary | std::ofstream::app);
-
-    // // unsigned sourceId = 0;
-    // unsigned long long offset = 16;
-    // unsigned long long offsetDelta = 0;
-    // b.seekp(offset);
-    // // write mzs
-    // {
-    //   using namespace std;
-    //   vector<float> xs, ys, mzs, ints;
-
-    //   // std::vector<unsigned int> xs_index;
-    //   unsigned int sourceId = 0;
-    //   for (auto &source : sourceList)
-    //   {
-    //     MITK_INFO << "Write binary data ...";
-    //     boost::progress_display show_progress(source.m_Spectra.size());
-
-    //     for (unsigned int spectrumId = 0; spectrumId < source.m_Spectra.size(); ++spectrumId)
-    //     {
-    //       const auto &peaks = source.m_Spectra[spectrumId].peaks;
-    //       xs.reserve(peaks.size());
-    //       ys.reserve(peaks.size());
-    //       // update source spectra meta data to its actual values
-    //       source.m_Spectra[spectrumId].mzOffset = offset;
-    //       source.m_Spectra[spectrumId].mzLength = peaks.size();
-    //       xs.clear();
-    //       ys.clear();
-
-    //       input->GetSpectrum(spectrumId, mzs, ints, sourceId);
-
-    //       for (const auto &p : peaks)
-    //       {
-    //         xs.push_back(p.GetX());
-    //         if (input->GetTolerance() == 0)
-    //         {
-    //           ys.push_back(p.GetY());
-    //         }
-    //         else
-    //         {
-    //           const auto tol = input->ApplyTolerance(mzs[p.GetIndex()]);
-    //           const auto subRes = m2::Signal::Subrange(mzs, mzs[p.GetIndex()] - tol, mzs[p.GetIndex()] + tol);
-    //           const auto s = next(begin(ints), subRes.first);
-    //           const auto e = next(s, subRes.second);
-
-    //           ys.push_back(Signal::RangePooling<double>(s, e, input->GetRangePoolingStrategy()));
-    //         }
-    //       }
-
-    //       switch (m_DataTypeXAxis)
-    //       {
-    //         case m2::NumericType::Float:
-    //           writeData<float>(begin(xs), end(xs), b);
-    //           offsetDelta = xs.size() * sizeof(float);
-    //           break;
-    //         case m2::NumericType::Double:
-    //           writeData<double>(begin(xs), end(xs), b);
-    //           offsetDelta = xs.size() * sizeof(double);
-    //           break;
-    //       }
-    //       offset += offsetDelta;
-    //       source.m_Spectra[spectrumId].intOffset = offset;
-    //       source.m_Spectra[spectrumId].intLength = peaks.size();
-
-    //       switch (m_DataTypeYAxis)
-    //       {
-    //         case m2::NumericType::Float:
-    //           writeData<float>(begin(ys), end(ys), b);
-    //           offsetDelta = ys.size() * sizeof(float);
-    //           break;
-    //         case m2::NumericType::Double:
-    //           writeData<double>(begin(ys), end(ys), b);
-    //           offsetDelta = ys.size() * sizeof(double);
-    //           break;
-    //       }
-    //       offset += offsetDelta;
-    //       b.flush();
-    //       ++show_progress;
-    //     }
-    //     ++sourceId;
-    //   }
-    // } // namespace m2
-
-    // MITK_INFO << "File-Size " << offset;
+    mitkThrow() << "Not implemented";
+    
   }
 
   void ImzMLImageIO::Write()
@@ -456,23 +360,23 @@ namespace m2
     {
       using m2::SpectrumFormat;
 
-      // copy the whole source meta data container; spectra information is
+      // copy the whole spectra meta data container; spectra information is
       // updated based on the save mode.
       // mz and ints meta data is manipulated to write a correct imzML xml structure
       // copy of sources is discared after writing
-      m2::ImzMLSpectrumImage::SourceListType sourceCopy(input->GetImzMLSpectrumImageSourceList());
+      m2::ImzMLSpectrumImage::SpectrumVectorType spectraCopy(input->GetSpectra());
       std::string sha1;
       switch (m_SpectrumFormat)
       {
         case SpectrumFormat::ContinuousProfile:
-          this->WriteContinuousProfile(sourceCopy);
+          this->WriteContinuousProfile(spectraCopy);
           break;
         case SpectrumFormat::ProcessedCentroid:
           mitkThrow() << "ProcessedCentroid export type is not supported!";
-          // this->WriteProcessedCentroid(sourceCopy);
+          // this->WriteProcessedCentroid(spectraCopy);
           break;
         case SpectrumFormat::ContinuousCentroid:
-          this->WriteContinuousCentroid(sourceCopy);
+          this->WriteContinuousCentroid(spectraCopy);
           break;
         case SpectrumFormat::ProcessedProfile:
           mitkThrow() << "ProcessedProfile export type is not supported!";
@@ -574,12 +478,9 @@ namespace m2
       auto ys = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetSpacing()[1]);
       auto zs = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetSpacing()[2]);
 
-      context["max dimension x"] =
-        std::to_string(unsigned(input->GetDimensions()[0] * xs));
-      context["max dimension y"] =
-        std::to_string(unsigned(input->GetDimensions()[1] * ys));
-      context["max dimension z"] =
-        std::to_string(unsigned(input->GetDimensions()[2] * zs));
+      context["max dimension x"] = std::to_string(unsigned(input->GetDimensions()[0] * xs));
+      context["max dimension y"] = std::to_string(unsigned(input->GetDimensions()[1] * ys));
+      context["max dimension z"] = std::to_string(unsigned(input->GetDimensions()[2] * zs));
 
       context["pixel size x"] = std::to_string(xs);
       context["pixel size y"] = std::to_string(ys);
@@ -594,9 +495,8 @@ namespace m2
       context["absolute position offset z"] = std::to_string(zo);
 
       context["run_id"] = std::to_string(0);
-      const auto &sources = input->GetImzMLSpectrumImageSourceList();
-      auto N = std::accumulate(
-        std::begin(sources), std::end(sources), unsigned(0), [](auto s, auto v) { return s + v.m_Spectra.size(); });
+      
+      auto N = spectraCopy.size();
       context["num_spectra"] = std::to_string(N);
 
       context["int_compression_code"] = TextToCodeMap[context["int_compression"]];
@@ -610,37 +510,35 @@ namespace m2
 
       view = IMZML_SPECTRUM_TEMPLATE;
       unsigned long id = 0;
-      for (const auto &source : sourceCopy)
+
+      MITK_INFO << "Write imzML data ...";
+      boost::progress_display show_progress(spectraCopy.size());
+      for (auto &s : spectraCopy)
       {
-        MITK_INFO << "Write imzML data ...";
-        boost::progress_display show_progress(source.m_Spectra.size());
-        for (auto &s : source.m_Spectra)
+        auto x = s.index[0] + 1; // start by 1
+        auto y = s.index[1] + 1; // start by 1
+        auto z = s.index[2] + 1; // start by 1
+
+        context = {{"index", std::to_string(id++)},
+                   {"x", std::to_string(x)},
+                   {"y", std::to_string(y)},
+                   {"z", std::to_string(z)},
+                   {"mz_len", std::to_string(s.mzLength)},
+                   {"mz_enc_len", std::to_string(s.mzLength * mzBytes)},
+                   {"mz_offset", std::to_string(s.mzOffset)},
+                   {"int_len", std::to_string(s.intLength)},
+                   {"int_enc_len", std::to_string(s.intLength * intBytes)},
+                   {"int_offset", std::to_string(s.intOffset)}};
+
+        auto nonConst_input = const_cast<m2::ImzMLSpectrumImage *>(input);
+        mitk::ImagePixelReadAccessor<m2::NormImagePixelType> nacc(nonConst_input->GetNormalizationImage());
+        if (nacc.GetPixelByIndex(s.index) != 1)
         {
-          auto x = s.index[0] + source.m_Offset[0] + 1; // start by 1
-          auto y = s.index[1] + source.m_Offset[1] + 1; // start by 1
-          auto z = s.index[2] + source.m_Offset[2] + 1; // start by 1
-
-          context = {{"index", std::to_string(id++)},
-                     {"x", std::to_string(x)},
-                     {"y", std::to_string(y)},
-                     {"z", std::to_string(z)},
-                     {"mz_len", std::to_string(s.mzLength)},
-                     {"mz_enc_len", std::to_string(s.mzLength * mzBytes)},
-                     {"mz_offset", std::to_string(s.mzOffset)},
-                     {"int_len", std::to_string(s.intLength)},
-                     {"int_enc_len", std::to_string(s.intLength * intBytes)},
-                     {"int_offset", std::to_string(s.intOffset)}};
-
-          auto nonConst_input = const_cast<m2::ImzMLSpectrumImage *>(input);
-          mitk::ImagePixelReadAccessor<m2::NormImagePixelType> nacc(nonConst_input->GetNormalizationImage());
-          if (nacc.GetPixelByIndex(s.index + source.m_Offset) != 1)
-          {
-            context["tic"] = std::to_string(nacc.GetPixelByIndex(s.index + source.m_Offset));
-          }
-          f << m2::TemplateEngine::render(view, context);
-          f.flush();
-          ++show_progress;
+          context["tic"] = std::to_string(nacc.GetPixelByIndex(s.index));
         }
+        f << m2::TemplateEngine::render(view, context);
+        f.flush();
+        ++show_progress;
       }
 
       f << IMZML_TEMPLATE_END;
@@ -664,8 +562,6 @@ namespace m2
 
   std::vector<mitk::BaseData::Pointer> ImzMLImageIO::DoRead()
   {
-    
-
     std::string mzGroupId, intGroupId;
     m2::ImzMLSpectrumImage::Pointer object = m2::ImzMLSpectrumImage::New();
 
@@ -675,12 +571,11 @@ namespace m2
     if (!itksys::SystemTools::FileExists(pathWithoutExtension + ".ibd"))
       mitkThrow() << "No such file " << pathWithoutExtension;
 
-    m2::ImzMLSpectrumImage::ImzMLImageSource source;
-    source.m_ImzMLDataPath = this->GetInputLocation();
-    source.m_BinaryDataPath = pathWithoutExtension + ".ibd";
-    object->GetImzMLSpectrumImageSourceList().emplace_back(source);
+    // m2::ImzMLSpectrumImage::ImzMLImageSource source;
+    object->SetImzMLDataPath(this->GetInputLocation());
+    object->SetBinaryDataPath(pathWithoutExtension + ".ibd");
+    // object->GetImzMLSpectrumImageSourceList().emplace_back(source);
     object->GetSpectrumType().Format = SpectrumFormat::None;
-    
 
     {
       // m2::Timer t("Parsing imzML");
@@ -688,18 +583,15 @@ namespace m2
       m2::ImzMLParser::ReadImageSpectrumMetaData(object);
     }
 
-    
-
-
     // if(!itk::Math::AlmostEquals(sx*px, dx) ||
     //    !itk::Math::AlmostEquals(sy*py, dy)){
     //   mitkThrow() << "[ImzML Meta data error]\n" <<
-    //                  "\n\t!! ImzML data should have consistent inputs. This error massage can be turned off in the properties." <<
+    //                  "\n\t!! ImzML data should have consistent inputs. This error massage can be turned off in the
+    //                  properties." <<
     //                  "\n\t[pixel size]: " << std::to_string(px)  << "x" + std::to_string(py) <<
     //                  "\n\t[image area]: " << std::to_string(sx) << "x" + std::to_string(sy) <<
     //                  "\n\t[image dims]: " << std::to_string(dx) << "x" +std::to_string(dy);
     // }
-
 
     {
       // m2::Timer t("Initialize placeholder images and spectra");
@@ -710,12 +602,11 @@ namespace m2
       EvaluateSpectrumFormatType(object);
       LoadAssociatedData(object);
     }
-    
-    
+
     return {object.GetPointer()};
   }
 
-  void ImzMLImageIO::EvaluateSpectrumFormatType(m2::SpectrumImageBase *object)
+  void ImzMLImageIO::EvaluateSpectrumFormatType(m2::SpectrumImage *object)
   {
     if (object->GetProperty("continuous") && object->GetProperty("profile spectrum"))
       object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
@@ -739,24 +630,26 @@ namespace m2
     {
       MITK_ERROR << "Set the profile spectrum (MS:1000127) or centroid spectrum (MS:1000128) property in the ImzML "
                     "fileContent element.";
-      if (object->GetProperty("processed")){
+      if (object->GetProperty("processed"))
+      {
         MITK_ERROR << "Fallback to processed (IMS:1000031) centroid spectrum (MS:1000128)";
         MITK_ERROR << "To prevent this error message, add the following content to your imzML file:"
                       "\n<fileContent>\n\t...\n\t<cvParam cvRef=\"IMS\" accession=\"IMS:1000031\" "
                       "name=\"processed\" value=\"\"/>\n\t<cvParam cvRef=\"MS\" accession=\"MS:1000128\" "
                       "name=\"centroid spectrum\" value=\"\"/>\n\t...\n</fileContent>";
         object->GetSpectrumType().Format = m2::SpectrumFormat::ProcessedCentroid;
-        object->SetPropertyValue("centroid spectrum", std::string()); 
+        object->SetPropertyValue("centroid spectrum", std::string());
       }
-      
-      if(object->GetProperty("continuous")){
+
+      if (object->GetProperty("continuous"))
+      {
         MITK_ERROR << "Fallback to continuos (IMS:1000030) profile spectrum (MS:1000127)";
         MITK_ERROR << "To prevent this error message, add the following content to your imzML file:"
                       "\n<fileContent>\n\t...\n\t<cvParam cvRef=\"IMS\" accession=\"IMS:1000030\" "
                       "name=\"continuous\" value=\"\"/>\n\t<cvParam cvRef=\"MS\" accession=\"MS:1000127\" "
                       "name=\"profile spectrum\" value=\"\"/>\n\t...\n</fileContent>";
         object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
-        object->SetPropertyValue("profile spectrum", std::string()); 
+        object->SetPropertyValue("profile spectrum", std::string());
       }
     }
 
@@ -771,23 +664,23 @@ namespace m2
     auto pathWithoutExtension = this->GetInputLocation();
     itksys::SystemTools::ReplaceString(pathWithoutExtension, ".imzML", "");
 
-    auto source = object->GetImzMLSpectrumImageSource();
-
-    if (itksys::SystemTools::FileExists(pathWithoutExtension + ".nrrd"))
+    auto maskPath = pathWithoutExtension + ".nrrd";
+    if (itksys::SystemTools::FileExists(maskPath))
     {
-      source.m_MaskDataPath = pathWithoutExtension + ".nrrd";
-      auto data = mitk::IOUtil::Load(source.m_MaskDataPath).at(0);
+      auto data = mitk::IOUtil::Load(maskPath).at(0);
       object->GetImageArtifacts()["mask"] = dynamic_cast<mitk::Image *>(data.GetPointer());
       object->UseExternalMaskOn();
     }
-
-    if (itksys::SystemTools::FileExists(pathWithoutExtension + ".mps"))
+    auto pointsPath = pathWithoutExtension + ".mps";
+    if (itksys::SystemTools::FileExists(pointsPath))
     {
-      source.m_PointsDataPath = pathWithoutExtension + ".mps";
-      auto data = mitk::IOUtil::Load(source.m_PointsDataPath).at(0);
+      auto data = mitk::IOUtil::Load(pointsPath).at(0);
       object->GetImageArtifacts()["references"] = dynamic_cast<mitk::PointSet *>(data.GetPointer());
     }
   }
 
-  ImzMLImageIO *ImzMLImageIO::IOClone() const { return new ImzMLImageIO(*this); }
+  ImzMLImageIO *ImzMLImageIO::IOClone() const
+  {
+    return new ImzMLImageIO(*this);
+  }
 } // namespace m2

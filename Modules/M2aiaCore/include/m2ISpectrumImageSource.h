@@ -22,13 +22,13 @@ See LICENSE.txt for details.
 namespace m2
 {
 
-  class M2AIACORE_EXPORT ProcessorBase
+  class M2AIACORE_EXPORT ISpectrumImageSource
   {
     public:
-    virtual void GetYValues(unsigned int /*id*/, std::vector<float> &, unsigned int /*source*/) {};
-    virtual void GetYValues(unsigned int /*id*/, std::vector<double> &, unsigned int /*source*/){};
-    virtual void GetXValues(unsigned int /*id*/, std::vector<float> &, unsigned int /*source*/) {};
-    virtual void GetXValues(unsigned int /*id*/, std::vector<double> &, unsigned int /*source*/) {};
+    virtual void GetYValues(unsigned int /*id*/, std::vector<float> &) {};
+    virtual void GetYValues(unsigned int /*id*/, std::vector<double> &){};
+    virtual void GetXValues(unsigned int /*id*/, std::vector<float> &) {};
+    virtual void GetXValues(unsigned int /*id*/, std::vector<double> &) {};
 
     virtual void InitializeImageAccess() {};
     virtual void InitializeGeometry() {};

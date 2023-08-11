@@ -82,7 +82,7 @@ public:
     CPPUNIT_ASSERT_ASSERTION_PASS(CPPUNIT_ASSERT(fsmImage != nullptr));
 
     std::vector<float> ints, mzs;
-    fsmImage->GetSpectrumFloat(0, mzs, ints, 0);
+    fsmImage->GetSpectrumFloat(0, mzs, ints);
     //WriteVector(ints, "FSMSpectrum.data");
     auto reference = ReadDoubleVector("FSMSpectrum.data");
 

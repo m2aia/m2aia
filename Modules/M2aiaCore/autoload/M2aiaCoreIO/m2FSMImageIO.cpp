@@ -67,7 +67,7 @@ namespace m2
   {
     auto pathWithoutExtension = this->GetInputLocation();
     itksys::SystemTools::ReplaceString(pathWithoutExtension, ".fsm", "");
-    auto image = dynamic_cast<m2::SpectrumImageBase *>(object);
+    auto image = dynamic_cast<m2::SpectrumImage *>(object);
 
     if (itksys::SystemTools::FileExists(pathWithoutExtension + ".nrrd"))
     {

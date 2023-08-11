@@ -18,7 +18,7 @@ See LICENSE.txt for details.
 #include <itkSignedMaurerDistanceMapImageFilter.h>
 #include <itksys/SystemTools.hxx>
 #include <m2ImzMLSpectrumImage.h>
-#include <m2SpectrumImageProcessor.h>
+#include <m2ISpectrumImageSource.h>
 #include <m2SpectrumImageStack.h>
 #include <mitkExtractSliceFilter.h>
 #include <mitkIOUtil.h>
@@ -35,11 +35,19 @@ See LICENSE.txt for details.
 
 namespace m2
 {
+  SpectrumImageStack::SpectrumImageStack(unsigned int stackSize, double spacingZ) : 
+  m_StackSize(stackSize), m_SpacingZ(spacingZ)
+  {
+    SetPropertyValue<double>("x_min", std::numeric_limits<double>::max());
+    SetPropertyValue<double>("x_max", std::numeric_limits<double>::min());
+  }
+
+
   void SpectrumImageStack::Insert(unsigned int sliceId, std::shared_ptr<m2::ElxRegistrationHelper> transformer)
   {
     m_SliceTransformers[sliceId] = transformer;
 
-    if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer()))
+    if (auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer()))
     {
       auto newMin = spectrumImage->GetPropertyValue<double>("x_min");
       auto newMax = spectrumImage->GetPropertyValue<double>("x_max");
@@ -60,18 +68,14 @@ namespace m2
     }
   }
 
-  SpectrumImageStack::SpectrumImageStack(double spacingZ) : m_SpacingZ(spacingZ)
-  {
-    SetPropertyValue<double>("x_min", std::numeric_limits<double>::max());
-    SetPropertyValue<double>("x_max", std::numeric_limits<double>::min());
-  }
+
 
   void SpectrumImageStack::InitializeGeometry()
   {
     unsigned int dims[3];
     mitk::Vector3D spacing;
 
-    auto &transformer = m_SliceTransformers.begin()->second;
+    auto &transformer = m_SliceTransformers.front();
     auto image = transformer->GetMovingImage();
     if (!transformer->GetTransformation().empty())
     {
@@ -86,11 +90,11 @@ namespace m2
     spacing[2] = m_SpacingZ;
     this->GetGeometry()->SetSpacing(spacing);
 
+    unsigned int sliceId = 0;
+
     // fill with data
-    for (auto &kv : m_SliceTransformers)
-    {
-      auto sliceId = kv.first;
-      const auto &transformer = kv.second;
+    for (auto &transformer : m_SliceTransformers)
+    {      
       if (auto movingImage = transformer->GetMovingImage())
       {
         // create temp image and copy requested image range to the stack
@@ -104,6 +108,7 @@ namespace m2
           CopyWarpedImageToStackImage(movingImage, this, sliceId);
         }
       }
+      ++sliceId;
     }
   }
 
@@ -116,15 +121,14 @@ namespace m2
 
     // assign import spectrum type based on first transformer
     // this must be equally for all slices/images
-    auto movingImage = m_SliceTransformers.begin()->second->GetMovingImage().GetPointer();
-    if(auto specImage =dynamic_cast<m2::SpectrumImageBase *>(movingImage))
+    auto movingImage = m_SliceTransformers.front()->GetMovingImage().GetPointer();
+    if(auto specImage =dynamic_cast<m2::SpectrumImage *>(movingImage))
       m_SpectrumType.Format = specImage->GetSpectrumType().Format;
     
     
-    for (auto &kv : m_SliceTransformers)
+    for (auto &transformer : m_SliceTransformers)
     {
-      const auto &transformer = kv.second;
-      auto specImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer());
+      auto specImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer());
       
       if (m_SpectrumType.Format != specImage->GetSpectrumType().Format)
       {
@@ -145,17 +149,16 @@ namespace m2
     double min = std::numeric_limits<double>::max();
     double binSize = 1;
 
-    for (auto &kv : m_SliceTransformers)
+    for (auto &transformer : m_SliceTransformers)
     {
-      const auto &transformer = kv.second;
-      auto specImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer());
+      auto specImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer());
       auto xAxis = specImage->GetXAxis();
       min = std::min(min, xAxis.front());
       max = std::max(max, xAxis.back());
     }
 
     binSize = (max - min) / double(bins);
-    using SpectrumVector = m2::SpectrumImageBase::SpectrumArtifactVectorType;
+    using SpectrumVector = m2::SpectrumImage::SpectrumArtifactVectorType;
     SpectrumVector xSumVec(bins);
     SpectrumVector hits(bins);
 
@@ -166,10 +169,9 @@ namespace m2
     SpectrumVector yMaxVec = GetSkylineSpectrum();
     yMaxVec.resize(bins, 0);
 
-    for (auto &kv : m_SliceTransformers)
+    for (auto &transformer : m_SliceTransformers)
     {
-      const auto &transformer = kv.second;
-      auto specImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer());
+      auto specImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer());
       auto sliceXAxis = specImage->GetXAxis();
       auto sliceSumVec = specImage->GetSumSpectrum();
       auto sliceMaxVec = specImage->GetSkylineSpectrum();
@@ -215,7 +217,7 @@ namespace m2
     SetPropertyValue<double>("x_min", xVecFinal.front());
     SetPropertyValue<double>("x_max", xVecFinal.back());
 
-    m_IsDataAccessInitialized = true;
+    m_ImageAccessInitialized = true;
     
   }
 
@@ -258,12 +260,13 @@ namespace m2
   void SpectrumImageStack::GetImage(double center, double tol, const mitk::Image * /*mask*/, mitk::Image *img) const
   {
     mitk::ProgressBar::GetInstance()->AddStepsToDo(m_SliceTransformers.size());
-    for (auto &kv : m_SliceTransformers)
+    int sliceId = 0;
+    for (auto &transformer : m_SliceTransformers)
     {
       mitk::ProgressBar::GetInstance()->Progress();
-      auto sliceId = kv.first;
-      const auto &transformer = kv.second;
-      if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer()))
+      
+      
+      if (auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer()))
       {
         // create temp image and copy requested image range to the stack
         auto imageTemp = mitk::Image::New();
@@ -279,6 +282,7 @@ namespace m2
           CopyWarpedImageToStackImage(imageTemp, img, sliceId);
         }
       }
+      ++sliceId;
     }
 
     // current->GetImage(mz, tol, current->GetMaskImage(), current);

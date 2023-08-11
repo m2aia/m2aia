@@ -14,7 +14,7 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <m2SpectrumImageDataInteractor.h>
 #include <mitkImageCast.h>
 #include <mitkImagePixelReadAccessor.h>
@@ -61,10 +61,10 @@ bool m2::SpectrumImageDataInteractor::FilterEvents(mitk::InteractionEvent *inter
       auto *positionEvent = static_cast<mitk::InteractionPositionEvent *>(interactionEvent);
       mitk::Point3D pos = positionEvent->GetPositionInWorld();
 
-      auto imageNodes = this->GetDataStorage()->GetSubset(mitk::TNodePredicateDataType<m2::SpectrumImageBase>::New());
+      auto imageNodes = this->GetDataStorage()->GetSubset(mitk::TNodePredicateDataType<m2::SpectrumImage>::New());
       for (auto imageNode : *imageNodes)
       {
-        auto image = dynamic_cast<m2::SpectrumImageBase *>(imageNode->GetData());
+        auto image = dynamic_cast<m2::SpectrumImage *>(imageNode->GetData());
         if (image->GetGeometry()->IsInside(pos))
         {
           itk::Index<3> index;

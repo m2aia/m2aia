@@ -13,7 +13,7 @@ A PARTICULAR PURPOSE.
 See LICENSE.txt for details.
 
 ===================================================================*/
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <mitkDataNode.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkLevelWindowProperty.h>
@@ -26,7 +26,7 @@ namespace m2
   itkEventMacroDefinition(InitializationFinishedEvent, itk::AnyEvent);
 } // namespace m2
 
-double m2::SpectrumImageBase::ApplyTolerance(double xValue) const
+double m2::SpectrumImage::ApplyTolerance(double xValue) const
 {
   if (this->GetUseToleranceInPPM())
     return m2::PartPerMillionToFactor(this->GetTolerance()) * xValue;
@@ -34,7 +34,7 @@ double m2::SpectrumImageBase::ApplyTolerance(double xValue) const
     return this->GetTolerance();
 }
 
-void m2::SpectrumImageBase::InsertImageArtifact(const std::string &key, mitk::Image *img)
+void m2::SpectrumImage::InsertImageArtifact(const std::string &key, mitk::Image *img)
 {
   m_ImageArtifacts[key] = img;
   const unsigned int DIMS = 3;
@@ -66,7 +66,7 @@ void m2::SpectrumImageBase::InsertImageArtifact(const std::string &key, mitk::Im
   img->SetClonedTimeGeometry(this->GetTimeGeometry());
 }
 
-void m2::SpectrumImageBase::ApplyMoveOriginOperation(const mitk::Vector3D &v)
+void m2::SpectrumImage::ApplyMoveOriginOperation(const mitk::Vector3D &v)
 {
   auto geometry = this->GetGeometry();
   geometry->Translate(v);
@@ -78,7 +78,7 @@ void m2::SpectrumImageBase::ApplyMoveOriginOperation(const mitk::Vector3D &v)
   }
 }
 
-void m2::SpectrumImageBase::ApplyGeometryOperation(mitk::Operation *op)
+void m2::SpectrumImage::ApplyGeometryOperation(mitk::Operation *op)
 {
   auto manipulatedGeometry = this->GetGeometry()->Clone();
   manipulatedGeometry->ExecuteOperation(op);
@@ -94,77 +94,77 @@ void m2::SpectrumImageBase::ApplyGeometryOperation(mitk::Operation *op)
   }
 }
 
-m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetSkylineSpectrum()
+m2::SpectrumImage::SpectrumArtifactVectorType &m2::SpectrumImage::GetSkylineSpectrum()
 {
   return m_SpectraArtifacts[(SpectrumType::Maximum)];
 }
 
-m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetMeanSpectrum()
+m2::SpectrumImage::SpectrumArtifactVectorType &m2::SpectrumImage::GetMeanSpectrum()
 {
   return m_SpectraArtifacts[(SpectrumType::Mean)];
 }
 
-m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetSumSpectrum()
+m2::SpectrumImage::SpectrumArtifactVectorType &m2::SpectrumImage::GetSumSpectrum()
 {
   return m_SpectraArtifacts[(SpectrumType::Sum)];
 }
 
-m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetXAxis()
+m2::SpectrumImage::SpectrumArtifactVectorType &m2::SpectrumImage::GetXAxis()
 {
   return m_XAxis;
 }
 
-const m2::SpectrumImageBase::SpectrumArtifactVectorType &m2::SpectrumImageBase::GetXAxis() const
+const m2::SpectrumImage::SpectrumArtifactVectorType &m2::SpectrumImage::GetXAxis() const
 {
   return m_XAxis;
 }
 
-mitk::Image::Pointer m2::SpectrumImageBase::GetNormalizationImage()
+mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage()
 {
   if (m_ImageArtifacts.find("NormalizationImage") != m_ImageArtifacts.end())
     return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("NormalizationImage").GetPointer());
   return nullptr;
 }
 
-mitk::Image::Pointer m2::SpectrumImageBase::GetMaskImage()
+mitk::Image::Pointer m2::SpectrumImage::GetMaskImage()
 {
   if (m_ImageArtifacts.find("mask") != m_ImageArtifacts.end())
     return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("mask").GetPointer());
   return nullptr;
 }
 
-mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage()
+mitk::Image::Pointer m2::SpectrumImage::GetIndexImage()
 {
   if (m_ImageArtifacts.find("index") != m_ImageArtifacts.end())
     return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("index").GetPointer());
   return nullptr;
 }
 
-mitk::Image::Pointer m2::SpectrumImageBase::GetNormalizationImage() const
+mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage() const
 {
   if (m_ImageArtifacts.find("NormalizationImage") != m_ImageArtifacts.end())
     return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("NormalizationImage").GetPointer());
   return nullptr;
 }
 
-mitk::Image::Pointer m2::SpectrumImageBase::GetMaskImage() const
+mitk::Image::Pointer m2::SpectrumImage::GetMaskImage() const
 {
   if (m_ImageArtifacts.find("mask") != m_ImageArtifacts.end())
     return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("mask").GetPointer());
   return nullptr;
 }
 
-mitk::Image::Pointer m2::SpectrumImageBase::GetIndexImage() const
+mitk::Image::Pointer m2::SpectrumImage::GetIndexImage() const
 {
   if (m_ImageArtifacts.find("index") != m_ImageArtifacts.end())
     return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("index").GetPointer());
   return nullptr;
 }
 
-void m2::SpectrumImageBase::GetImage(double, double, const mitk::Image *, mitk::Image *) const
+void m2::SpectrumImage::GetImage(double, double, const mitk::Image *, mitk::Image *) const
 {
-  MITK_WARN("SpectrumImageBase") << "Get image is not implemented in derived class!";
+  MITK_WARN("SpectrumImage") << "Get image is not implemented in derived class!";
 }
 
-m2::SpectrumImageBase::~SpectrumImageBase() {}
-m2::SpectrumImageBase::SpectrumImageBase() : mitk::Image() {}
+m2::SpectrumImage::~SpectrumImage() {}
+m2::SpectrumImage::SpectrumImage() : mitk::Image() {}

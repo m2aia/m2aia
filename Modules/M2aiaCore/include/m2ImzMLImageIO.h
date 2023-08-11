@@ -25,6 +25,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <m2IntervalVector.h>
 #include <m2ImzMLSpectrumImage.h>
+#include <m2SpectrumImageStack.h>
 
 
 namespace m2
@@ -81,13 +82,13 @@ namespace m2
     ConfidenceLevel GetWriterConfidenceLevel() const override;
     std::string GetIBDOutputPath() const;
     std::string GetImzMLOutputPath() const;
-    void WriteContinuousProfile(m2::ImzMLSpectrumImage::SourceListType &sourceList) const;
-    void WriteContinuousCentroid(m2::ImzMLSpectrumImage::SourceListType &sourceList) const;
-    void WriteProcessedProfile(m2::ImzMLSpectrumImage::SourceListType &sourceList) const;
-    void WriteProcessedCentroid(m2::ImzMLSpectrumImage::SourceListType &sourceList) const;
+    void WriteContinuousProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    void WriteContinuousCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    void WriteProcessedProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    void WriteProcessedCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
 
   private:
-    void EvaluateSpectrumFormatType(m2::SpectrumImageBase *);
+    void EvaluateSpectrumFormatType(m2::SpectrumImage *);
     void LoadAssociatedData(m2::ImzMLSpectrumImage *);
     ImzMLImageIO *IOClone() const override;
 

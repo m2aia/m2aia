@@ -69,7 +69,7 @@ void m2::SpectrumImageHelper::AddArguments(mitk::DockerHelper & helper){
 }
 
 std::vector<unsigned long> m2::SpectrumImageHelper::GetIntensityDataShape(
-  const m2::SpectrumImageBase * image,
+  const m2::SpectrumImage * image,
   const std::vector<m2::Interval> &intervals)
 {
   using namespace std;
@@ -82,7 +82,7 @@ std::vector<unsigned long> m2::SpectrumImageHelper::GetIntensityDataShape(
 }
 
 std::vector<float> m2::SpectrumImageHelper::GetIntensityData(
-  const m2::SpectrumImageBase * image,
+  const m2::SpectrumImage * image,
   const std::vector<m2::Interval> &intervals)
 {
   using namespace std;

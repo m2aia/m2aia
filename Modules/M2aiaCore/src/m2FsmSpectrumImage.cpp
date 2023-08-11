@@ -97,7 +97,7 @@ void m2::FsmSpectrumImage::FsmProcessor::GetImagePrivate(double cmInv,
 
 void m2::FsmSpectrumImage::InitializeProcessor()
 {
-  this->m_Processor.reset((m2::ProcessorBase *)new FsmProcessor(this));
+  this->m_Processor.reset((m2::ISpectrumImageSource *)new FsmProcessor(this));
 }
 
 void m2::FsmSpectrumImage::InitializeGeometry()

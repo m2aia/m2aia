@@ -19,7 +19,7 @@ See LICENSE.txt for details.
 
 #include <m2CoreCommon.h>
 #include <signal/m2SignalCommon.h>
-#include <m2ISpectrumDataAccess.h>
+#include <m2ISpectrumImageDataAccess.h>
 #include <m2SpectrumInfo.h>
 #include <m2ElxRegistrationHelper.h>
 
@@ -35,7 +35,7 @@ See LICENSE.txt for details.
 namespace m2
 {
 
-  class M2AIACORE_EXPORT SpectrumImageBase : public ISpectrumDataAccess, public mitk::Image
+  class M2AIACORE_EXPORT SpectrumImage : public ISpectrumImageDataAccess, public mitk::Image
   {
   public:
     using ImageArtifactMapType = std::map<std::string, mitk::BaseData::Pointer>;
@@ -44,7 +44,7 @@ namespace m2
     using SpectrumArtifactMapType = std::map<m2::SpectrumType, SpectrumArtifactVectorType>;
     using TransformParameterVectorType = std::vector<std::string>;
 
-    mitkClassMacro(SpectrumImageBase, mitk::Image);
+    mitkClassMacro(SpectrumImage, mitk::Image);
 
     itkSetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
     itkGetEnumMacro(NormalizationStrategy, NormalizationStrategyType);
@@ -61,36 +61,11 @@ namespace m2
     itkSetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
     itkGetEnumMacro(BaselineCorrectionStrategy, BaselineCorrectionType);
 
-    virtual void GetXValues(unsigned int /*id*/, std::vector<double> & /*xs*/, unsigned int /*source*/ = 0)
-    {
-      MITK_WARN(GetStaticNameOfClass()) << "GetXValues[double] is not implemented!";
-    }
-
-    virtual void GetXValues(unsigned int /*id*/, std::vector<float> & /*xs*/, unsigned int /*source*/ = 0)
-    {
-      MITK_WARN(GetStaticNameOfClass()) << "GetXValues[float] is not implemented!";
-    }
-
-    virtual void GetYValues(unsigned int /*id*/, std::vector<double> & /*ys*/, unsigned int /*source*/ = 0)
-    {
-      MITK_WARN(GetStaticNameOfClass()) << "GetYValues[double] is not implemented!";
-    }
-    virtual void GetYValues(unsigned int /*id*/, std::vector<float> & /*ys*/, unsigned int /*source*/ = 0)
-    {
-      MITK_WARN(GetStaticNameOfClass()) << "GetYValues[float] is not implemented!";
-    }
-
     itkSetMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(BaseLineCorrectionHalfWindowSize, unsigned int);
 
     itkSetMacro(SmoothingHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(SmoothingHalfWindowSize, unsigned int);
-
-    // itkSetMacro(BinningTolerance, double);
-    // itkGetConstReferenceMacro(BinningTolerance, double);
-
-    // itkSetMacro(NumberOfBins, int);
-    // itkGetConstReferenceMacro(NumberOfBins, int);
 
     itkSetMacro(Tolerance, double);
     itkGetConstReferenceMacro(Tolerance, double);
@@ -104,6 +79,7 @@ namespace m2
     itkSetMacro(NumberOfThreads, unsigned int);
 
     itkGetConstReferenceMacro(NumberOfValidPixels, unsigned int);
+    itkSetMacro(NumberOfValidPixels, unsigned int);
 
     itkGetMacro(ImageArtifacts, ImageArtifactMapType &);
     itkGetConstReferenceMacro(ImageArtifacts, ImageArtifactMapType);
@@ -119,6 +95,13 @@ namespace m2
     mitk::Image::Pointer GetMaskImage() const;
     mitk::Image::Pointer GetIndexImage() const;
 
+    SpectrumArtifactVectorType &GetSkylineSpectrum();
+    SpectrumArtifactVectorType &GetSumSpectrum();
+    SpectrumArtifactVectorType &GetMeanSpectrum();
+    SpectrumArtifactVectorType &GetXAxis();
+    const SpectrumArtifactVectorType &GetXAxis() const;
+    
+    
     itkGetConstMacro(UseExternalMask, bool);
     itkSetMacro(UseExternalMask, bool);
     itkBooleanMacro(UseExternalMask);
@@ -131,17 +114,16 @@ namespace m2
     itkSetMacro(UseExternalNormalization, bool);
     itkBooleanMacro(UseExternalNormalization);
 
-    itkGetConstMacro(IsDataAccessInitialized, bool);
+    itkSetEnumMacro(ImageGeometryInitialized, bool);
+    itkGetEnumMacro(ImageGeometryInitialized, bool);
 
+    itkSetEnumMacro(ImageAccessInitialized, bool);
+    itkGetEnumMacro(ImageAccessInitialized, bool);
+
+    
     virtual void InitializeImageAccess() = 0;
     virtual void InitializeGeometry() = 0;
     virtual void InitializeProcessor() = 0;
-
-    SpectrumArtifactVectorType &GetSkylineSpectrum();
-    SpectrumArtifactVectorType &GetSumSpectrum();
-    SpectrumArtifactVectorType &GetMeanSpectrum();
-    SpectrumArtifactVectorType &GetXAxis();
-    const SpectrumArtifactVectorType &GetXAxis() const;
 
     void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
     void InsertImageArtifact(const std::string &key, mitk::Image *img);
@@ -176,7 +158,12 @@ namespace m2
     bool m_UseExternalIndices = false;
     bool m_UseExternalNormalization = false;
     bool m_UseToleranceInPPM = true;
-    bool m_IsDataAccessInitialized = false;
+    
+        /// @brief Image access is only valid if this was set to true from the image source
+    bool m_ImageAccessInitialized = false;
+    
+    /// @brief Image access is only valid if this was set to true from the image I/O
+    bool m_ImageGeometryInitialized = false;
 
     std::shared_ptr<m2::ElxRegistrationHelper> m_ElxRegistrationHelper;
 
@@ -199,8 +186,8 @@ namespace m2
     NormalizationStrategyType m_NormalizationStrategy = NormalizationStrategyType::TIC;
     RangePoolingStrategyType m_RangePoolingStrategy = RangePoolingStrategyType::Sum;
 
-    SpectrumImageBase();
-    ~SpectrumImageBase() override;
+    SpectrumImage();
+    ~SpectrumImage() override;
 
     SpectrumArtifactVectorType m_XAxis;
   };
@@ -249,7 +236,7 @@ namespace m2
 } // namespace m2
 
 template <class T>
-inline void m2::SpectrumImageBase::SetPropertyValue(const std::string &key, const T &value)
+inline void m2::SpectrumImage::SetPropertyValue(const std::string &key, const T &value)
 {
   auto dd = this->GetPropertyList();
   auto prop = dd->GetProperty(key);
@@ -268,7 +255,7 @@ inline void m2::SpectrumImageBase::SetPropertyValue(const std::string &key, cons
 }
 
 template <class T>
-inline const T m2::SpectrumImageBase::GetPropertyValue(const std::string &key, T def) const
+inline const T m2::SpectrumImage::GetPropertyValue(const std::string &key, T def) const
 {
   auto dd = this->GetPropertyList();
   const mitk::GenericProperty<T> *entry = dynamic_cast<mitk::GenericProperty<T> *>(dd->GetProperty(key));
