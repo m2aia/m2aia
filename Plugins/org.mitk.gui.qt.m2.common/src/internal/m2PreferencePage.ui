@@ -186,6 +186,13 @@ Otherwise: The image size is defined by the tag &quot;maximum number of pixels (
     </widget>
    </item>
    <item>
+    <widget class="QCheckBox" name="showSamplingPoints">
+     <property name="text">
+      <string>Show Sampling Points</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>

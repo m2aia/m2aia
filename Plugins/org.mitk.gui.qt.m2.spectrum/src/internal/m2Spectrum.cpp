@@ -102,7 +102,7 @@ void m2Spectrum::DrawSelectedArea()
 
 void m2Spectrum::UpdateSelectedArea()
 {
-  if(m_Chart->series().empty())
+  if (m_Chart->series().empty())
     return;
 
   if (m_SelectedArea[0] && m_SelectedArea[1] && m_SelectedArea[2])
@@ -118,63 +118,67 @@ void m2Spectrum::UpdateSelectedArea()
 
     m_Controls.chartView->repaint();
 
-    using namespace std;
-    double size = 5;
-    for (auto kv : m_DataProvider)
+    bool showSamplingPoints = m_M2aiaPreferences->GetBool("m2aia.view.spectrum.showSamplingPoints", false);
+    if (showSamplingPoints)
     {
-      try
+      using namespace std;
+      double size = 5;
+      for (auto kv : m_DataProvider)
       {
-        
-        for(auto item : m_NodeRealtedGraphicItems[kv.first]->childItems()){
-          m_NodeRealtedGraphicItems[kv.first]->removeFromGroup(item);
-          delete item;
-        }
-        
-        if (kv.first->IsOn("helper object", nullptr)) // if it is On it is not shown in the data manager
-          continue;
-
-        if (!kv.first->IsVisible(nullptr)) // if it is shown in the datamanger make sure it is set to visible
-          continue;
-
-        auto p = kv.second;
-        auto lowerX = lower_bound(begin(p->xs()), end(p->xs()), std::max(m_SelectedAreaX[0], m_xAxis->min()));
-        auto upperX = upper_bound(lowerX, end(p->xs()), std::min(m_SelectedAreaX[1], m_xAxis->max()));
-        auto lowerY = begin(p->ys()) + distance(begin(p->xs()), lowerX);
-
-        for (; lowerX < upperX; ++lowerX, ++lowerY)
+        try
         {
-          auto rect = new QGraphicsRectItem();
-          if (auto prop = kv.first->GetProperty("spectrum.marker.size"))
+          for (auto item : m_NodeRelatedGraphicItems[kv.first]->childItems())
           {
-            if (auto sizeProp = dynamic_cast<mitk::IntProperty *>(prop))
-            {
-              size = sizeProp->GetValue();
-            }
-          }
-          auto itemPos = m_Chart->mapToPosition(QPointF(*lowerX, *lowerY));
-          rect->setRect(itemPos.x() - size / 2.0, itemPos.y() - size / 2.0, size, size);
-
-          if (auto prop = kv.first->GetProperty("spectrum.marker.color"))
-          {
-            if (auto colorProp = dynamic_cast<mitk::ColorProperty *>(prop))
-            {
-              auto mc = colorProp->GetColor();
-              QColor c;
-              c.setRgbF(mc.GetRed(), mc.GetGreen(), mc.GetBlue());
-              rect->setBrush(QBrush(c));
-              rect->setPen(QPen(c));
-            }
+            m_NodeRelatedGraphicItems[kv.first]->removeFromGroup(item);
+            delete item;
           }
 
-          rect->setZValue(20);
-          // m_NodeRealtedGraphicItems[kv.first].push_back(rect);
-          // QGraphicsItemGroup
-          m_NodeRealtedGraphicItems[kv.first]->addToGroup(rect);
+          if (kv.first->IsOn("helper object", nullptr)) // if it is On it is not shown in the data manager
+            continue;
+
+          if (!kv.first->IsVisible(nullptr)) // if it is shown in the DataManger make sure it is set to visible
+            continue;
+
+          auto p = kv.second;
+          auto lowerX = lower_bound(begin(p->xs()), end(p->xs()), std::max(m_SelectedAreaX[0], m_xAxis->min()));
+          auto upperX = upper_bound(lowerX, end(p->xs()), std::min(m_SelectedAreaX[1], m_xAxis->max()));
+          auto lowerY = begin(p->ys()) + distance(begin(p->xs()), lowerX);
+
+          for (; lowerX < upperX; ++lowerX, ++lowerY)
+          {
+            auto rect = new QGraphicsRectItem();
+            if (auto prop = kv.first->GetProperty("spectrum.marker.size"))
+            {
+              if (auto sizeProp = dynamic_cast<mitk::IntProperty *>(prop))
+              {
+                size = sizeProp->GetValue();
+              }
+            }
+            auto itemPos = m_Chart->mapToPosition(QPointF(*lowerX, *lowerY));
+            rect->setRect(itemPos.x() - size / 2.0, itemPos.y() - size / 2.0, size, size);
+
+            if (auto prop = kv.first->GetProperty("spectrum.marker.color"))
+            {
+              if (auto colorProp = dynamic_cast<mitk::ColorProperty *>(prop))
+              {
+                auto mc = colorProp->GetColor();
+                QColor c;
+                c.setRgbF(mc.GetRed(), mc.GetGreen(), mc.GetBlue());
+                rect->setBrush(QBrush(c));
+                rect->setPen(QPen(c));
+              }
+            }
+
+            rect->setZValue(20);
+            // m_NodeRealtedGraphicItems[kv.first].push_back(rect);
+            // QGraphicsItemGroup
+            m_NodeRelatedGraphicItems[kv.first]->addToGroup(rect);
+          }
         }
-      }
-      catch (std::exception &e)
-      {
-        MITK_ERROR << e.what();
+        catch (std::exception &e)
+        {
+          MITK_ERROR << e.what();
+        }
       }
     }
   }
@@ -225,10 +229,12 @@ void m2Spectrum::OnMassRangeChanged(qreal x, qreal tol)
 //   }
 // }
 
-void m2Spectrum::OnDataModified(const itk::Object * caller, const itk::EventObject &)
+void m2Spectrum::OnDataModified(const itk::Object *caller, const itk::EventObject &)
 {
-  if(auto node = dynamic_cast<const mitk::DataNode *>(caller)){
-    if(dynamic_cast<m2::IntervalVector *>(node->GetData())){
+  if (auto node = dynamic_cast<const mitk::DataNode *>(caller))
+  {
+    if (dynamic_cast<m2::IntervalVector *>(node->GetData()))
+    {
       auto provider = m_DataProvider[node];
       provider->Update();
       provider->UpdateBoundaries(m_LocalMinimumX, m_LocalMaximumX);
@@ -237,7 +243,6 @@ void m2Spectrum::OnDataModified(const itk::Object * caller, const itk::EventObje
       DrawSelectedArea();
     }
   }
-
 }
 
 void m2Spectrum::OnPropertyListChanged(const itk::Object *caller, const itk::EventObject &)
@@ -248,12 +253,10 @@ void m2Spectrum::OnPropertyListChanged(const itk::Object *caller, const itk::Eve
     {
       if (auto provider = m_DataProvider[node])
       {
-        
         provider->GetSeries()->setVisible(node->IsVisible(nullptr));
-        
-        if(node->IsOn("helper object", nullptr, false))
+
+        if (node->IsOn("helper object", nullptr, false))
           provider->GetSeries()->setVisible(false);
-        
 
         if (auto genericProperty = node->GetProperty("spectrum.plot.color"))
         {
@@ -263,7 +266,7 @@ void m2Spectrum::OnPropertyListChanged(const itk::Object *caller, const itk::Eve
             float a = 0;
             // MITK_INFO << "opacity " << a;
             node->GetOpacity(a, nullptr);
-            provider->SetColor(c.GetRed(), c.GetGreen(), c.GetBlue(), 1-a);
+            provider->SetColor(c.GetRed(), c.GetGreen(), c.GetBlue(), 1 - a);
           }
         }
 
@@ -279,7 +282,7 @@ void m2Spectrum::OnPropertyListChanged(const itk::Object *caller, const itk::Eve
         {
           auto mc = colorProperty->GetColor();
 
-          for (auto item : m_NodeRealtedGraphicItems[node]->childItems())
+          for (auto item : m_NodeRelatedGraphicItems[node]->childItems())
           {
             QColor c;
             c.setRgbF(mc.GetRed(), mc.GetGreen(), mc.GetBlue());
@@ -295,7 +298,7 @@ void m2Spectrum::OnPropertyListChanged(const itk::Object *caller, const itk::Eve
         if (auto sizeProp = dynamic_cast<mitk::IntProperty *>(prop))
         {
           auto size = sizeProp->GetValue();
-          for (auto item : m_NodeRealtedGraphicItems[node]->childItems())
+          for (auto item : m_NodeRelatedGraphicItems[node]->childItems())
           {
             auto rect = dynamic_cast<QGraphicsRectItem *>(item);
             auto itemPos = rect->rect().center();
@@ -322,10 +325,10 @@ void m2Spectrum::NodeAdded(const mitk::DataNode *node)
     }
 
     bool isVisible;
-    isVisible = node->IsVisible(nullptr);      
-    
-    if(node->IsOn("helper object", nullptr, false))
-      isVisible  = false;
+    isVisible = node->IsVisible(nullptr);
+
+    if (node->IsOn("helper object", nullptr, false))
+      isVisible = false;
 
     auto provider = std::make_shared<m2::SeriesDataProvider>();
     provider->Initialize(intervals);
@@ -333,8 +336,8 @@ void m2Spectrum::NodeAdded(const mitk::DataNode *node)
     provider->GetSeries()->setVisible(isVisible);
 
     m_DataProvider[node] = provider;
-    m_NodeRealtedGraphicItems[node] = new QGraphicsItemGroup();
-    m_Chart->scene()->addItem(m_NodeRealtedGraphicItems[node]);
+    m_NodeRelatedGraphicItems[node] = new QGraphicsItemGroup();
+    m_Chart->scene()->addItem(m_NodeRelatedGraphicItems[node]);
     m_Chart->addSeries(provider->GetSeries());
 
     m_Chart->createDefaultAxes();
@@ -348,7 +351,7 @@ void m2Spectrum::NodeAdded(const mitk::DataNode *node)
     onPropertyListModifiedCommand->SetCallbackFunction(this, &m2Spectrum::OnPropertyListChanged);
     node->GetPropertyList()->AddObserver(itk::ModifiedEvent(), onPropertyListModifiedCommand);
 
-    auto onDataModifiedCommand = itk::MemberCommand<m2Spectrum>::New();    
+    auto onDataModifiedCommand = itk::MemberCommand<m2Spectrum>::New();
     onDataModifiedCommand->SetCallbackFunction(this, &m2Spectrum::OnDataModified);
     node->AddObserver(itk::ModifiedEvent(), onDataModifiedCommand);
 
@@ -357,12 +360,14 @@ void m2Spectrum::NodeAdded(const mitk::DataNode *node)
 
     UpdateAllSeries();
     OnResetView();
-    AutoZoomUseLocalExtremaY();
+    // AutoZoomUseLocalExtremaY();
 
-    m2::DefaultNodeProperties(node, false);
+    // MITK_INFO << "SpectrumView: " << node->GetName();
+    // m2::DefaultNodeProperties(node, false);
     node->GetPropertyList()->Modified();
     node->Modified();
 
+    UpdateAxisLabels(node);
   }
 }
 
@@ -532,8 +537,8 @@ void m2Spectrum::UpdateGlobalMinMaxValues()
     const auto points = kv.second->GetSeries()->points();
     if (points.empty())
       continue;
-    
-    if(kv.second->xs().empty())
+
+    if (kv.second->xs().empty())
       continue;
 
     m_GlobalMinimumX = std::min(m_GlobalMinimumX, kv.second->xs().front());
@@ -588,9 +593,9 @@ void m2Spectrum::CreateQChartViewMenu()
 {
   m_Menu = new QMenu(m_Controls.chartView);
 
-  m_FocusMenu = new QMenu(m_Menu);
-  m_FocusMenu->setTitle("Focus on ...");
-  m_Menu->addMenu(m_FocusMenu);
+  // m_FocusMenu = new QMenu(m_Menu);
+  // m_FocusMenu->setTitle("Focus on ...");
+  // m_Menu->addMenu(m_FocusMenu);
 
   // m_SpectrumSkyline = new QAction("Skyline spectrum", m_Controls.chartView);
   // m_SpectrumSkyline->setCheckable(true);
@@ -601,9 +606,6 @@ void m2Spectrum::CreateQChartViewMenu()
 
   // m_ShowLegend = new QAction("Show legend", m_Controls.chartView);
   // m_ShowLegend->setCheckable(false);
-
-  m_ShowAxesTitles = new QAction("Show axes title", m_Controls.chartView);
-  m_ShowAxesTitles->setCheckable(true);
 
   // m_SpectrumSelectionGroup = new QActionGroup(m_Controls.chartView);
   // m_SpectrumSelectionGroup->setExclusive(true);
@@ -643,6 +645,9 @@ void m2Spectrum::CreateQChartViewMenu()
   //         });
 
   // m_Menu->addAction(m_ShowLegend);
+  m_ShowAxesTitles = new QAction("Show axes title", m_Controls.chartView);
+  m_ShowAxesTitles->setCheckable(true);
+  m_ShowAxesTitles->setChecked(true);
   m_Menu->addAction(m_ShowAxesTitles);
 
   connect(m_ShowAxesTitles,
@@ -656,8 +661,6 @@ void m2Spectrum::CreateQChartViewMenu()
             if (m_xAxis)
               m_xAxis->setTitleVisible(s);
           });
-
-  m_ShowAxesTitles->setChecked(false);
 
   // connect(
   //   m_ShowLegend, &QAction::toggled, this, [this](bool s) { m_Controls.chartView->chart()->legend()->setVisible(s);
@@ -707,20 +710,7 @@ void m2Spectrum::CreateQChartViewMenu()
   connect(m_Controls.chartView,
           &QtCharts::QChartView::customContextMenuRequested,
           this,
-          [&](const QPoint &pos)
-          {
-            m_FocusMenu->clear();
-            for (auto &kv : this->m_DataProvider)
-            {
-              auto action = new QAction(m_FocusMenu);
-              m_FocusMenu->addAction(action);
-              action->setText(kv.first->GetName().c_str());
-              auto node = kv.first;
-              connect(action, &QAction::triggered, this, [node, this]() { OnSeriesFocused(node); });
-            }
-
-            m_Menu->exec(m_Controls.chartView->viewport()->mapToGlobal(pos));
-          });
+          [&](const QPoint &pos) { m_Menu->exec(m_Controls.chartView->viewport()->mapToGlobal(pos)); });
 }
 
 void m2Spectrum::CreateQChartView()
@@ -749,7 +739,8 @@ void m2Spectrum::CreateQChartView()
 
 void m2Spectrum::AutoZoomUseLocalExtremaY()
 {
-  if (m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMaxIntensity", true) || m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMinIntensity", true))
+  if (m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMaxIntensity", true) ||
+      m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMinIntensity", true))
   {
     if (m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMaxIntensity", true))
     {
@@ -780,7 +771,7 @@ void m2Spectrum::OnSeriesFocused(const mitk::DataNode *node)
     xMax = std::max(xMax, provider->xs().back());
   }
   m_xAxis->setRange(xMin, xMax);
-  AutoZoomUseLocalExtremaY();
+  // AutoZoomUseLocalExtremaY();
 }
 
 void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
@@ -795,9 +786,9 @@ void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
     node->GetData()->RemoveAllObservers();
 
     // remove scene
-    m_Chart->scene()->removeItem(m_NodeRealtedGraphicItems[node]);
-    delete m_NodeRealtedGraphicItems[node];
-    m_NodeRealtedGraphicItems.erase(node);
+    m_Chart->scene()->removeItem(m_NodeRelatedGraphicItems[node]);
+    delete m_NodeRelatedGraphicItems[node];
+    m_NodeRelatedGraphicItems.erase(node);
 
     // remove provider
     if (auto provider = m_DataProvider[node])
@@ -807,7 +798,7 @@ void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
     // UpdateAxisLabels(node, true);
   }
 
-  OnResetView();
+  // OnResetView();
 }
 
 void m2Spectrum::SetSeriesVisible(QtCharts::QAbstractSeries *series, bool visibility)
@@ -958,28 +949,19 @@ void m2Spectrum::OnRangeChangedAxisY(qreal min, qreal max)
   UpdateSelectedArea();
 }
 
-void m2Spectrum::UpdateAxisLabels(const mitk::DataNode *node, bool remove)
+void m2Spectrum::UpdateAxisLabels(const mitk::DataNode *node)
 {
-  MITK_INFO(GetStaticClassName()) << "Update axis";
+  if (!m_xAxis || !m_yAxis)
+    return;
 
   if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
-    auto label = image->GetSpectrumType().XAxisLabel;
-    if (!m_xAxisTitels.contains(label.c_str()))
-      m_xAxisTitels.push_back(label.c_str());
-    else if (remove)
-    {
-      m_xAxisTitels.remove(m_xAxisTitels.indexOf(label.c_str()));
-    }
+    auto xlabel = image->GetSpectrumType().XAxisLabel;
+    auto ylabel = image->GetSpectrumType().YAxisLabel;
+    m_xAxis->setTitleText(xlabel.c_str());
+    m_yAxis->setTitleText(ylabel.c_str());
   }
 
-  QString label("");
-  for (const auto &l : m_xAxisTitels)
-  {
-    label.append(l + "; ");
-  }
-
-  m_xAxis->setTitleText(label);
   // switch (m_CurrentOverviewSpectrumType)
   // {
   //   case m2::SpectrumType::Maximum:

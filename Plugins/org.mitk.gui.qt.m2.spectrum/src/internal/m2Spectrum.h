@@ -98,7 +98,7 @@ protected:
   std::array<double, 2> m_SelectedAreaX = {0,0};
   std::array<QtCharts::QLineSeries *, 3> m_SelectedArea = {nullptr,nullptr,nullptr};
 
-   std::map<const mitk::DataNode *, QGraphicsItemGroup *> m_NodeRealtedGraphicItems;
+   std::map<const mitk::DataNode *, QGraphicsItemGroup *> m_NodeRelatedGraphicItems;
   std::map<const mitk::DataNode *, std::vector<unsigned int>> m_NodeObserverTags;
 
   void CreateQChartView();
@@ -107,7 +107,7 @@ protected:
   std::map<const mitk::DataNode *, std::shared_ptr<m2::SeriesDataProvider>> m_DataProvider;
   
   void UpdateLineSeriesWindow(const mitk::DataNode *);
-  void UpdateAxisLabels(const mitk::DataNode *, bool remove = false);
+  void UpdateAxisLabels(const mitk::DataNode *);
   void UpdateZoomLevel(const mitk::DataNode *);
   void UpdateSelectedArea();
   void SetSeriesVisible(QtCharts::QAbstractSeries * series, bool visibility);
