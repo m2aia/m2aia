@@ -34,15 +34,25 @@ void QmitkDataNodeReimportImageAction::InitializeAction()
   setText(tr("Re-import"));
   setToolTip(
     tr("Removes the image from the Data Manager and loads it using the current signal processing selections."));
+  connect(this, &QAction::triggered, this, &QmitkDataNodeReimportImageAction::OnActionChanged);
 }
 
 void QmitkDataNodeReimportImageAction::InitializeWithDataNode(const mitk::DataNode *node)
 {
-  connect(this, &QAction::triggered, this, [this, node](){
-      auto ds = m_DataStorage.Lock();
-      ds->Remove(ds->GetDerivations(node));
-      ds->Remove(node);
-      ds->Add(const_cast<mitk::DataNode *>(node));
+  if (node)
+    m_DataNode = node;
+}
 
-  });
-};
+void QmitkDataNodeReimportImageAction::OnActionChanged()
+{
+  auto ds = m_DataStorage.Lock();
+  ds->Remove(ds->GetDerivations(m_DataNode));
+  ds->Remove(m_DataNode);
+  auto clone = mitk::DataNode::New();
+  clone->SetName(m_DataNode->GetName());
+  clone->SetData(m_DataNode->GetData());
+  ds->Add(clone);
+
+  // MITK_INFO << "Reimport " << dataNode->GetName();
+  // ds->Add(const_cast<mitk::DataNode *>(dataNode.GetPointer()));
+}

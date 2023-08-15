@@ -36,5 +36,11 @@ protected:
   void InitializeAction() override;
   void InitializeWithDataNode(const mitk::DataNode*) override;
 
+  mitk::DataNode::ConstPointer m_DataNode;
+
+
+private Q_SLOTS:
+  void OnActionChanged();
+
 };
 
