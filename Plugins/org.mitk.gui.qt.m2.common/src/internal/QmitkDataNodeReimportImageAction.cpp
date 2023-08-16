@@ -13,7 +13,8 @@ found in the LICENSE file.
 #include "QmitkDataNodeReimportImageAction.h"
 
 #include <QCheckBox>
-#include <m2SpectrumImageStack.h>
+#include <m2ImzMLSpectrumImage.h>
+#include <mitkIOUtil.h>
 
 QmitkDataNodeReimportImageAction::QmitkDataNodeReimportImageAction(QWidget *parent,
                                                                    berry::IWorkbenchPartSite::Pointer workbenchPartSite)
@@ -48,10 +49,17 @@ void QmitkDataNodeReimportImageAction::OnActionChanged()
   auto ds = m_DataStorage.Lock();
   ds->Remove(ds->GetDerivations(m_DataNode));
   ds->Remove(m_DataNode);
-  auto clone = mitk::DataNode::New();
-  clone->SetName(m_DataNode->GetName());
-  clone->SetData(m_DataNode->GetData());
-  ds->Add(clone);
+
+  if (auto sImage = dynamic_cast<m2::ImzMLSpectrumImage*>(m_DataNode->GetData())){
+    auto r = mitk::IOUtil::Load(sImage->GetImzMLDataPath());
+    auto newNode = mitk::DataNode::New();
+    newNode->SetName(m_DataNode->GetName());
+    newNode->SetData(r.at(0));
+    m2::CopyNodeProperties(m_DataNode, newNode);
+    ds->Add(newNode);
+    
+  }
+  
 
   // MITK_INFO << "Reimport " << dataNode->GetName();
   // ds->Add(const_cast<mitk::DataNode *>(dataNode.GetPointer()));

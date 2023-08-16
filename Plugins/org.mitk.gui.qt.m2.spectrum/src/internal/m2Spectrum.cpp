@@ -359,8 +359,15 @@ void m2Spectrum::NodeAdded(const mitk::DataNode *node)
     OnAxisYTicksChanged(m_AxisTicks[1]);
 
     UpdateAllSeries();
-    OnResetView();
+
+    UpdateGlobalMinMaxValues();
+    UpdateCurrentMinMaxY();
+    
+    // OnResetView();
     // AutoZoomUseLocalExtremaY();
+    m_xAxis->setRange(m_LocalMinimumX, m_LocalMaximumX);
+    m_yAxis->setRange(m_LocalMinimumY * 0.9, m_LocalMaximumY * 1.1);
+    m_Controls.chartView->repaint();
 
     // MITK_INFO << "SpectrumView: " << node->GetName();
     // m2::DefaultNodeProperties(node, false);
@@ -854,11 +861,7 @@ void m2Spectrum::OnResetView()
   if (m_DataProvider.empty())
     return;
 
-  UpdateGlobalMinMaxValues();
-  UpdateCurrentMinMaxY();
-  m_xAxis->setRange(m_GlobalMinimumX, m_GlobalMaximumX);
-  m_yAxis->setRange(m_GlobalMinimumY * 0.9, m_GlobalMaximumY * 1.1);
-  m_Controls.chartView->repaint();
+  
 }
 
 void m2Spectrum::OnAxisXTicksChanged(int v)

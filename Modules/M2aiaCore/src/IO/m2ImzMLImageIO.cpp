@@ -576,6 +576,8 @@ namespace m2
     object->SetBinaryDataPath(pathWithoutExtension + ".ibd");
     // object->GetImzMLSpectrumImageSourceList().emplace_back(source);
     object->GetSpectrumType().Format = SpectrumFormat::None;
+    object->GetSpectrumType().XAxisLabel = "m/z";
+    object->GetSpectrumType().YAxisLabel = "Intensity";
 
     {
       // m2::Timer t("Parsing imzML");

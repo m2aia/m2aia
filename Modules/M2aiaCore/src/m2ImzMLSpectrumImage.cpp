@@ -102,16 +102,22 @@ void m2::ImzMLSpectrumImage::InitializeProcessor()
 
 void m2::ImzMLSpectrumImage::InitializeGeometry()
 {
+  this->SetImageGeometryInitialized(false);
+
   if (!m_SpectrumImageSource)
     this->InitializeProcessor();
+
+  GetSpectraArtifacts().clear();
+  GetImageArtifacts().clear();
   this->m_SpectrumImageSource->InitializeGeometry();
+  
   this->SetImageGeometryInitialized(true);
 }
 
 void m2::ImzMLSpectrumImage::InitializeImageAccess()
 {
+  this->SetImageAccessInitialized(false); 
   this->m_SpectrumImageSource->InitializeImageAccess();
-  this->SetImageAccessInitialized(true); 
 
   auto sx = this->GetPropertyValue<unsigned>("max count of pixels x");
   auto sy = this->GetPropertyValue<unsigned>("max count of pixels y");
@@ -126,6 +132,7 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
               "\n\t[image size ]: " + std::to_string(sx) + "x" +std::to_string(sy) +
               "\n\t[num spectra]: " + std::to_string(this->GetNumberOfValidPixels()) +
               "\n\t[spec. type ]: " + to_string(this->GetSpectrumType().Format);
+  this->SetImageAccessInitialized(true); 
 }
 
 // m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLSpectrumImage *A,
