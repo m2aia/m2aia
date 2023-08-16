@@ -24,12 +24,12 @@ set(MITK_CONFIG_PLUGINS
   org.mitk.gui.qt.m2.common
   org.mitk.gui.qt.m2.data
 #  org.mitk.gui.qt.m2.CombineImages
-  org.mitk.gui.qt.m2.Spectrum
+  org.mitk.gui.qt.m2.spectrum
   org.mitk.gui.qt.m2.peakpicking
   org.mitk.gui.qt.m2.ImzMLExport
   org.mitk.gui.qt.m2.Reconstruction3D
   org.mitk.gui.qt.m2.Position
-  org.mitk.gui.qt.m2.Registration
+  org.mitk.gui.qt.m2.registration
   org.mitk.gui.qt.matchpoint.evaluator
   org.mitk.gui.qt.dicombrowser
   org.mitk.gui.qt.dicominspector

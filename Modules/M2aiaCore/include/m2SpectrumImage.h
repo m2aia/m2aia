@@ -170,7 +170,7 @@ namespace m2
     unsigned int m_NumberOfValidPixels = 0;
     unsigned int m_BaseLineCorrectionHalfWindowSize = 100;
     unsigned int m_SmoothingHalfWindowSize = 4;
-    unsigned int m_NumberOfThreads = itk::MultiThreaderBase::GetGlobalMaximumNumberOfThreads();
+    unsigned int m_NumberOfThreads = 24;
     // unsigned int m_NumberOfThreads = 2;
 
     ImageArtifactMapType m_ImageArtifacts;
