@@ -2,7 +2,7 @@
 <plugin>
 
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.m2.Reconstruction3D"
+    <view id="org.mitk.views.m2.reconstruction3D"
           name="Reconstruction 3D"
           category="Spectrum imaging"
           class="m2Reconstruction3D"

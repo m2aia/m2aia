@@ -3,7 +3,7 @@ set(SRC_CPP_FILES
 )
 
 set(INTERNAL_CPP_FILES
-  org_mitk_gui_qt_m2_Reconstruction3D_Activator.cpp
+  org_mitk_gui_qt_m2_reconstruction3D_Activator.cpp
   m2Reconstruction3D.cpp
   m2LandmarkEvaluation.cpp
 )
@@ -13,7 +13,7 @@ set(UI_FILES
 )
 
 set(MOC_H_FILES
-  src/internal/org_mitk_gui_qt_m2_Reconstruction3D_Activator.h
+  src/internal/org_mitk_gui_qt_m2_reconstruction3D_Activator.h
   src/internal/m2Reconstruction3D.h
   src/internal/m2LandmarkEvaluation.h
 )

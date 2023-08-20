@@ -34,7 +34,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2NameDialog.h>
 #include <m2DataNodePredicates.h>
 
-const std::string m2Reconstruction3D::VIEW_ID = "org.mitk.views.m2.Reconstruction3D";
+const std::string m2Reconstruction3D::VIEW_ID = "org.mitk.views.m2.reconstruction3D";
 
 void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
 {

@@ -15,24 +15,24 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 
-#ifndef org_mitk_gui_qt_m2_Reconstruction3D_Activator_h
-#define org_mitk_gui_qt_m2_Reconstruction3D_Activator_h
+#ifndef org_mitk_gui_qt_m2_reconstruction3D_Activator_h
+#define org_mitk_gui_qt_m2_reconstruction3D_Activator_h
 
 #include <ctkPluginActivator.h>
 
 namespace mitk
 {
-  class org_mitk_gui_qt_m2_Reconstruction3D_Activator : public QObject, public ctkPluginActivator
+  class org_mitk_gui_qt_m2_reconstruction3D_Activator : public QObject, public ctkPluginActivator
   {
     Q_OBJECT
-    Q_PLUGIN_METADATA(IID "org_mitk_gui_qt_m2_Reconstruction3D")
+    Q_PLUGIN_METADATA(IID "org_mitk_gui_qt_m2_reconstruction3D")
     Q_INTERFACES(ctkPluginActivator)
 
   public:
     void start(ctkPluginContext *context);
     void stop(ctkPluginContext *context);
 
-  }; // org_mitk_gui_qt_m2_Reconstruction3D_Activator
+  }; // org_mitk_gui_qt_m2_reconstruction3D_Activator
 }
 
-#endif // org_mitk_gui_qt_m2_Reconstruction3D_Activator_h
+#endif // org_mitk_gui_qt_m2_reconstruction3D_Activator_h

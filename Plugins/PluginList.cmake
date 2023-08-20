@@ -9,7 +9,7 @@ org.mitk.gui.qt.m2.peakpicking:ON
 
 org.mitk.gui.qt.m2.Position:ON
 org.mitk.gui.qt.m2.ImzMLExport:ON
-org.mitk.gui.qt.m2.Reconstruction3D:ON
+org.mitk.gui.qt.m2.reconstruction3D:ON
 
 org.mitk.gui.qt.m2.docker.molecular:ON
 org.mitk.gui.qt.m2.docker.peaklearning:ON
