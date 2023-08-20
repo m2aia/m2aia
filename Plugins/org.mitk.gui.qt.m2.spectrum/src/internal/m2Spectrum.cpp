@@ -374,7 +374,7 @@ void m2Spectrum::NodeAdded(const mitk::DataNode *node)
     node->GetPropertyList()->Modified();
     node->Modified();
 
-    UpdateAxisLabels(node);
+    UpdateTitles(node);
   }
 }
 
@@ -649,27 +649,23 @@ void m2Spectrum::CreateQChartViewMenu()
   //           UpdateGlobalMinMaxValues();
   //           UpdateCurrentMinMaxY();
   //           emit m_xAxis->rangeChanged(m_xAxis->min(), m_xAxis->max());
-  //         });
-
+  
   // m_Menu->addAction(m_ShowLegend);
   m_ShowAxesTitles = new QAction("Show axes title", m_Controls.chartView);
   m_ShowAxesTitles->setCheckable(true);
-  m_ShowAxesTitles->setChecked(true);
   m_Menu->addAction(m_ShowAxesTitles);
+  m_ShowAxesTitles->setChecked(false);
 
   connect(m_ShowAxesTitles,
           &QAction::toggled,
           this,
           [this](bool s)
           {
-            MITK_INFO(GetStaticClassName()) << m_yAxis << " " << m_xAxis;
-            if (m_yAxis)
               m_yAxis->setTitleVisible(s);
-            if (m_xAxis)
               m_xAxis->setTitleVisible(s);
           });
 
-  // connect(
+// connect(
   //   m_ShowLegend, &QAction::toggled, this, [this](bool s) { m_Controls.chartView->chart()->legend()->setVisible(s);
   //   });
 
@@ -952,7 +948,7 @@ void m2Spectrum::OnRangeChangedAxisY(qreal min, qreal max)
   UpdateSelectedArea();
 }
 
-void m2Spectrum::UpdateAxisLabels(const mitk::DataNode *node)
+void m2Spectrum::UpdateTitles(const mitk::DataNode *node)
 {
   if (!m_xAxis || !m_yAxis)
     return;

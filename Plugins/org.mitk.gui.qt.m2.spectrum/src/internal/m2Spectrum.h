@@ -107,7 +107,7 @@ protected:
   std::map<const mitk::DataNode *, std::shared_ptr<m2::SeriesDataProvider>> m_DataProvider;
   
   void UpdateLineSeriesWindow(const mitk::DataNode *);
-  void UpdateAxisLabels(const mitk::DataNode *);
+  void UpdateTitles(const mitk::DataNode *);
   void UpdateZoomLevel(const mitk::DataNode *);
   void UpdateSelectedArea();
   void SetSeriesVisible(QtCharts::QAbstractSeries * series, bool visibility);
