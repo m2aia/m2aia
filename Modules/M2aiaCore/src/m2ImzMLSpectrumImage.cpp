@@ -40,8 +40,6 @@ void m2::ImzMLSpectrumImage::GetImage(double mz, double tol, const mitk::Image *
   m_CurrentX = mz;
 }
 
-
-
 void m2::ImzMLSpectrumImage::InitializeProcessor()
 {
   auto intensitiesDataTypeString = GetPropertyValue<std::string>("intensity array value type");
@@ -108,7 +106,6 @@ void m2::ImzMLSpectrumImage::InitializeGeometry()
     this->InitializeProcessor();
 
   GetSpectraArtifacts().clear();
-  GetImageArtifacts().clear();
   this->m_SpectrumImageSource->InitializeGeometry();
   
   this->SetImageGeometryInitialized(true);
@@ -136,7 +133,7 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
   auto py = this->GetPropertyValue<double>("pixel size y");
   auto pz = this->GetPropertyValue<double>("pixel size z");
 
-  MITK_INFO << "[imzML]: " + this->GetImzMLDataPath() +
+    MITK_INFO << "[imzML]: " + this->GetImzMLDataPath() +
               "\n\t[pixel size (mm) ]: " + std::to_string(px)  + "x" + std::to_string(py) +"x" + std::to_string(pz) +
               "\n\t[image size]: " + std::to_string(sx) + "x" +std::to_string(sy) + "x" + std::to_string(sz)  +
               "\n\t[num spectra]: " + std::to_string(this->GetNumberOfValidPixels()) +

@@ -38,7 +38,7 @@ namespace m2
   class M2AIACORE_EXPORT SpectrumImage : public ISpectrumImageDataAccess, public mitk::Image
   {
   public:
-    using ImageArtifactMapType = std::map<std::string, mitk::BaseData::Pointer>;
+    
     using SpectrumArtifactDataType = double;
     using SpectrumArtifactVectorType = std::vector<SpectrumArtifactDataType>;
     using SpectrumArtifactMapType = std::map<m2::SpectrumType, SpectrumArtifactVectorType>;
@@ -81,38 +81,34 @@ namespace m2
     itkGetConstReferenceMacro(NumberOfValidPixels, unsigned int);
     itkSetMacro(NumberOfValidPixels, unsigned int);
 
-    itkGetMacro(ImageArtifacts, ImageArtifactMapType &);
-    itkGetConstReferenceMacro(ImageArtifacts, ImageArtifactMapType);
-
     itkGetMacro(SpectraArtifacts, SpectrumArtifactMapType &);
     itkGetConstReferenceMacro(SpectraArtifacts, SpectrumArtifactMapType);
 
-    mitk::Image::Pointer GetNormalizationImage();
-    mitk::Image::Pointer GetMaskImage();
-    mitk::Image::Pointer GetIndexImage();
+    itkGetMacro(NormalizationImage, mitk::Image::Pointer);
+    itkGetConstMacro(NormalizationImage, mitk::Image::Pointer);
+    itkSetMacro(NormalizationImage, mitk::Image::Pointer);
 
-    mitk::Image::Pointer GetNormalizationImage() const;
-    mitk::Image::Pointer GetMaskImage() const;
-    mitk::Image::Pointer GetIndexImage() const;
+    itkGetMacro(ExternalNormalizationImage, mitk::Image::Pointer);
+    itkGetConstMacro(ExternalNormalizationImage, mitk::Image::Pointer);
+    itkSetMacro(ExternalNormalizationImage, mitk::Image::Pointer);
+
+    itkGetMacro(MaskImage, mitk::Image::Pointer);
+    itkGetConstMacro(MaskImage, mitk::Image::Pointer);
+    itkSetMacro(MaskImage, mitk::Image::Pointer);
+
+    itkGetMacro(IndexImage, mitk::Image::Pointer);
+    itkGetConstMacro(IndexImage, mitk::Image::Pointer);
+    itkSetMacro(IndexImage, mitk::Image::Pointer);
+
+    itkGetMacro(Points, mitk::PointSet::Pointer);
+    itkGetConstMacro(Points, mitk::PointSet::Pointer);
+    itkSetMacro(Points, mitk::PointSet::Pointer);
 
     SpectrumArtifactVectorType &GetSkylineSpectrum();
     SpectrumArtifactVectorType &GetSumSpectrum();
     SpectrumArtifactVectorType &GetMeanSpectrum();
     SpectrumArtifactVectorType &GetXAxis();
     const SpectrumArtifactVectorType &GetXAxis() const;
-    
-    
-    itkGetConstMacro(UseExternalMask, bool);
-    itkSetMacro(UseExternalMask, bool);
-    itkBooleanMacro(UseExternalMask);
-
-    itkGetConstMacro(UseExternalIndices, bool);
-    itkSetMacro(UseExternalIndices, bool);
-    itkBooleanMacro(UseExternalIndices);
-
-    itkGetConstMacro(UseExternalNormalization, bool);
-    itkSetMacro(UseExternalNormalization, bool);
-    itkBooleanMacro(UseExternalNormalization);
 
     itkSetEnumMacro(ImageGeometryInitialized, bool);
     itkGetEnumMacro(ImageGeometryInitialized, bool);
@@ -120,13 +116,12 @@ namespace m2
     itkSetEnumMacro(ImageAccessInitialized, bool);
     itkGetEnumMacro(ImageAccessInitialized, bool);
 
-    
     virtual void InitializeImageAccess() = 0;
     virtual void InitializeGeometry() = 0;
     virtual void InitializeProcessor() = 0;
 
     void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
-    void InsertImageArtifact(const std::string &key, mitk::Image *img);
+    // void InsertImageArtifact(const std::string &key, mitk::Image *img);
 
     template <class T>
     void SetPropertyValue(const std::string &key, const T &value);
@@ -154,9 +149,6 @@ namespace m2
     int m_NumberOfBins = 2000;
     double mutable m_CurrentX = -1;
 
-    bool m_UseExternalMask = false;
-    bool m_UseExternalIndices = false;
-    bool m_UseExternalNormalization = false;
     bool m_UseToleranceInPPM = true;
     
         /// @brief Image access is only valid if this was set to true from the image source
@@ -173,9 +165,14 @@ namespace m2
     unsigned int m_NumberOfThreads = 24;
     // unsigned int m_NumberOfThreads = 2;
 
-    ImageArtifactMapType m_ImageArtifacts;
     SpectrumArtifactMapType m_SpectraArtifacts;
 
+    mitk::Image::Pointer m_NormalizationImage; 
+    mitk::Image::Pointer m_ExternalNormalizationImage;
+    mitk::Image::Pointer m_MaskImage;
+    mitk::Image::Pointer m_IndexImage;
+    mitk::PointSet::Pointer m_Points;
+    
     SpectrumInfo m_SpectrumType;
     SpectrumInfo m_ExportSpectrumType;
 

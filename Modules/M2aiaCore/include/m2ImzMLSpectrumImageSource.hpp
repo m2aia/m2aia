@@ -23,11 +23,11 @@ See LICENSE.txt for details.
 #include <mitkCoreServices.h>
 #include <mitkIPreferences.h>
 #include <mitkIPreferencesService.h>
+#include <mitkImageAccessByItk.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
 #include <mitkLabelSetImage.h>
 #include <mitkProperties.h>
-#include <mitkImageAccessByItk.h>
 #include <mutex>
 #include <signal/m2Baseline.h>
 #include <signal/m2Morphology.h>
@@ -125,25 +125,13 @@ namespace m2
     using XIteratorType = typename std::vector<MassAxisType>::iterator;
     using YIteratorType = typename std::vector<IntensityType>::iterator;
     m2::Signal::SmoothingFunctor<IntensityType> m_Smoother;
-    m2::Signal::BaselineFunctor<IntensityType> m_BaselineSubstractor;
+    m2::Signal::BaselineFunctor<IntensityType> m_BaselineSubtractor;
     m2::Signal::IntensityTransformationFunctor<IntensityType> m_Transformer;
 
-    virtual void GetYValues(unsigned int id, std::vector<float> &yd)
-    {
-      GetYValues<float>(id, yd);
-    }
-    virtual void GetYValues(unsigned int id, std::vector<double> &yd)
-    {
-      GetYValues<double>(id, yd);
-    }
-    virtual void GetXValues(unsigned int id, std::vector<float> &yd)
-    {
-      GetXValues<float>(id, yd);
-    }
-    virtual void GetXValues(unsigned int id, std::vector<double> &yd)
-    {
-      GetXValues<double>(id, yd);
-    }
+    virtual void GetYValues(unsigned int id, std::vector<float> &yd) { GetYValues<float>(id, yd); }
+    virtual void GetYValues(unsigned int id, std::vector<double> &yd) { GetYValues<double>(id, yd); }
+    virtual void GetXValues(unsigned int id, std::vector<float> &yd) { GetXValues<float>(id, yd); }
+    virtual void GetXValues(unsigned int id, std::vector<double> &yd) { GetXValues<double>(id, yd); }
 
   private:
     template <class OutputType>
@@ -160,6 +148,10 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
                                                                                 const mitk::Image *mask,
                                                                                 mitk::Image *destImage)
 {
+  m_Smoother.Initialize(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize());
+  m_BaselineSubtractor.Initialize(p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
+  m_Transformer.Initialize(p->GetIntensityTransformationStrategy());
+
   AccessByItk(destImage, [](auto itkImg) { itkImg->FillBuffer(0); });
   using namespace m2;
   // accessors
@@ -182,7 +174,9 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
   // Profile (continuous) spectrum
   const auto spectrumType = p->GetSpectrumType();
   const unsigned t = p->GetNumberOfThreads();
-  const bool useNormalization = p->GetNormalizationStrategy() != m2::NormalizationStrategyType::None;
+
+  // Check normalization strategy
+  bool useNormalization = to_underlying(p->GetNormalizationStrategy()) > 0;
 
   if (spectrumType.Format == m2::SpectrumFormat::ContinuousProfile)
   {
@@ -191,9 +185,10 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
     const auto _BaselineCorrectionHWS = p->GetBaseLineCorrectionHalfWindowSize();
     const auto _BaseLineCorrectionStrategy = p->GetBaselineCorrectionStrategy();
 
-    // Image generateion is based on range operations on the full spectrum for each pixel.
-    // Since we are not intrested in values outside of the range, read only values of interest
-    // from the *.ibd file. For this we have to manipulate the byte offset position.
+    // Image generation is based on range operations on the full spectrum for each pixel.
+    // We are not interested in values outside of the range.
+    // We can read only values of interest from the *.ibd file.
+    // For this we have to manipulate the byte offset position.
     // 1) This is the full spectrum from start '|' to end '|'
     // |-----------------------------------------------------------------|
 
@@ -258,7 +253,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
                          m_Smoother.operator()(std::begin(ints), std::end(ints));
 
                          // ----- Baseline Substraction
-                         m_BaselineSubstractor(std::begin(ints), std::end(ints), std::begin(baseline));
+                         m_BaselineSubtractor(std::begin(ints), std::end(ints), std::begin(baseline));
 
                          // ----- Intensity Transformation
                          m_Transformer(std::begin(ints), std::end(ints));
@@ -327,8 +322,6 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
 template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeometry()
 {
-  auto &imageArtifacts = p->GetImageArtifacts();
-
   std::array<itk::SizeValueType, 3> imageSize = {p->GetPropertyValue<unsigned int>("max count of pixels x"),
                                                  p->GetPropertyValue<unsigned int>("max count of pixels y"),
                                                  p->GetPropertyValue<unsigned int>("max count of pixels z")};
@@ -378,7 +371,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
     caster->SetInput(itkIonImage);
     caster->Update();
     auto indexImage = mitk::Image::New();
-    imageArtifacts["index"] = indexImage;
+    p->SetIndexImage(indexImage);
     indexImage->InitializeByItk(caster->GetOutput());
 
     mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3> acc(indexImage);
@@ -387,7 +380,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
 
   {
     auto image = mitk::LabelSetImage::New();
-    imageArtifacts["mask"] = image.GetPointer();
+    p->SetMaskImage(image.GetPointer());
     image->Initialize((mitk::Image *)p);
     auto ls = image->GetActiveLabelSet();
 
@@ -395,7 +388,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
     color.Set(0.0, 1, 0.0);
     auto label = mitk::Label::New();
     label->SetColor(color);
-    label->SetName("Valid Spectrum");
+    label->SetName("Valid");
     label->SetOpacity(0.0);
     label->SetLocked(true);
     label->SetValue(1);
@@ -408,7 +401,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
     caster->SetInput(itkIonImage);
     caster->Update();
     auto normImage = mitk::Image::New();
-    imageArtifacts["NormalizationImage"] = normImage;
+    p->SetNormalizationImage(normImage);
     normImage->InitializeByItk(caster->GetOutput());
 
     mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(normImage);
@@ -428,13 +421,7 @@ template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageAccess()
 {
   //////////---------------------------
-  m_Smoother.Initialize(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize());
-  m_BaselineSubstractor.Initialize(p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
-  m_Transformer.Initialize(p->GetIntensityTransformationStrategy());
-
   const auto spectrumType = p->GetSpectrumType();
-
-  // MITK_INFO(m2::ImzMLSpectrumImage::GetStaticNameOfClass()) << m2::to_string(spectrumType);
 
   if (spectrumType.Format == m2::SpectrumFormat::ProcessedProfile)
   {
@@ -468,10 +455,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
                        const auto &spectrum = spectra[i];
 
                        accIndex->SetPixelByIndex(spectrum.index, i);
-
-                       // If mask content is generated elsewhere
-                       if (!p->GetUseExternalMask())
-                         accMask->SetPixelByIndex(spectrum.index, 1);
+                       accMask->SetPixelByIndex(spectrum.index, 1);
 
                        // If it is a processed file, normalization maps are set to 1 - assuming that spectra were
                        // already processed if (any(importMode & (m2::SpectrumFormatType::ProcessedCentroid |
@@ -480,10 +464,6 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
                      }
                    });
   p->SetNumberOfValidPixels(spectra.size());
-
-  // reset prevention flags
-  p->UseExternalMaskOff();
-  p->UseExternalNormalizationOff();
   p->SetImageAccessInitialized(true);
 }
 
@@ -564,18 +544,18 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
           v = accExtNorm->GetPixelByIndex(spectrum.index);
         else
          v = GetNormalizationFactor(normalizationStrategy, std::begin(mzs), std::end(mzs), std::begin(ints), std::end(ints));
-
+        
         accNorm->SetPixelByIndex(spectrum.index, v); 
         spectrum.normalizationFactor = v;
-
-
+       
+        
         std::transform(std::begin(ints),
                        std::end(ints),
                        std::begin(ints),
                        [&spectrum](const auto &a) { return a / spectrum.normalizationFactor; });
 
         m_Smoother(std::begin(ints), std::end(ints));
-        m_BaselineSubstractor(std::begin(ints), std::end(ints), std::begin(baseline));
+        m_BaselineSubtractor(std::begin(ints), std::end(ints), std::begin(baseline));
         m_Transformer(std::begin(ints), std::end(ints));
 
         std::transform(std::begin(ints), std::end(ints), sumT.at(t).begin(), sumT.at(t).begin(), plus);
@@ -664,14 +644,14 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
                         v = accExtNorm->GetPixelByIndex(spectrum.index);
                       else
                         v = GetNormalizationFactor(normalizationStrategy, std::begin(mzs), std::end(mzs), std::begin(ints), std::end(ints));
-
+                      
                       accNorm->SetPixelByIndex(spectrum.index, v); 
                       spectrum.normalizationFactor = v;
 
-                         std::transform(std::begin(ints),
-                                        std::end(ints),
-                                        std::begin(ints),
-                                        [&spectrum](auto &v) { return v / spectrum.normalizationFactor; });
+                      std::transform(std::begin(ints),
+                                    std::end(ints),
+                                    std::begin(ints),
+                                    [&spectrum](auto &v) { return v / spectrum.normalizationFactor; });
                        
 
                        for (size_t i = 0; i < mzs.size(); ++i)
@@ -799,14 +779,14 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
                           v = accExtNorm->GetPixelByIndex(spectrum.index);
                         else
                           v = GetNormalizationFactor(normalizationStrategy, std::begin(mzs), std::end(mzs), std::begin(ints), std::end(ints));
-
+                        
                         accNorm->SetPixelByIndex(spectrum.index, v); 
                         spectrum.normalizationFactor = v;
 
-                         std::transform(std::begin(ints),
-                                        std::end(ints),
-                                        std::begin(ints),
-                                        [&spectrum](auto &v) { return v / spectrum.normalizationFactor; });
+                        std::transform(std::begin(ints),
+                                      std::end(ints),
+                                      std::begin(ints),
+                                      [&spectrum](auto &v) { return v / spectrum.normalizationFactor; });
                        
 
                        for (unsigned int k = 0; k < mzs.size(); ++k)
@@ -881,8 +861,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
 
 template <class MassAxisType, class IntensityType>
 template <class OutputType>
-void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetXValues(unsigned int id,
-                                                                           std::vector<OutputType> &xd)
+void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetXValues(unsigned int id, std::vector<OutputType> &xd)
 {
   std::ifstream f(p->GetBinaryDataPath(), std::ios::binary);
 
@@ -908,8 +887,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetXValues(unsig
 
 template <class MassAxisType, class IntensityType>
 template <class OutputType>
-void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetYValues(unsigned int id,
-                                                                           std::vector<OutputType> &yd)
+void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetYValues(unsigned int id, std::vector<OutputType> &yd)
 {
   std::ifstream f(p->GetBinaryDataPath(), std::ios::binary);
 
@@ -934,7 +912,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetYValues(unsig
 
     // ----- Baseline Substraction
     std::vector<IntensityType> baseline(length);
-    m_BaselineSubstractor(std::begin(ys), std::end(ys), std::begin(baseline));
+    m_BaselineSubtractor(std::begin(ys), std::end(ys), std::begin(baseline));
 
     // ----- Intensity Transformation
     m_Transformer(std::begin(ys), std::end(ys));

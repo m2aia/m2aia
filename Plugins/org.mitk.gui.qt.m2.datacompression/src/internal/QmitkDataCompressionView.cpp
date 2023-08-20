@@ -391,7 +391,7 @@ void QmitkDataCompressionView::OnStartTSNE()
       outputNode->SetData(data);
       outputNode->SetName("tSNE");
       this->GetDataStorage()->Add(outputNode, const_cast<mitk::DataNode *>(node.GetPointer()));
-      image->InsertImageArtifact("tSNE", data);
+
     }
   }
 }

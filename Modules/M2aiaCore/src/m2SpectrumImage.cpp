@@ -34,46 +34,46 @@ double m2::SpectrumImage::ApplyTolerance(double xValue) const
     return this->GetTolerance();
 }
 
-void m2::SpectrumImage::InsertImageArtifact(const std::string &key, mitk::Image *img)
-{
-  m_ImageArtifacts[key] = img;
-  const unsigned int DIMS = 3;
+// void m2::SpectrumImage::Check(const std::string &key, mitk::Image *img)
+// {
+//   m_ImageArtifacts[key] = img;
+//   const unsigned int DIMS = 3;
 
-  if (img->GetDimension() != DIMS)
-  {
-    mitkThrow() << "SpectrumBaseImage related image artifacts require 3 dimensions.";
-  }
-  auto aD = this->GetDimensions();
-  auto bD = img->GetDimensions();
+//   if (img->GetDimension() != DIMS)
+//   {
+//     mitkThrow() << "SpectrumBaseImage related image artifacts require 3 dimensions.";
+//   }
+//   auto aD = this->GetDimensions();
+//   auto bD = img->GetDimensions();
 
-  if (!std::equal(aD, aD + DIMS, bD))
-  {
-    mitkThrow() << "SpectrumBaseImage related image artifacts require identical image dimensions.";
-  }
+//   if (!std::equal(aD, aD + DIMS, bD))
+//   {
+//     mitkThrow() << "SpectrumBaseImage related image artifacts require identical image dimensions.";
+//   }
 
-  auto aS = this->GetGeometry()->GetSpacing();
-  auto bS = img->GetGeometry()->GetSpacing();
+//   auto aS = this->GetGeometry()->GetSpacing();
+//   auto bS = img->GetGeometry()->GetSpacing();
 
-  if (!std::equal(
-        aS.GetDataPointer(), aS.GetDataPointer() + DIMS, bS.GetDataPointer(), [](const auto &a, const auto &b) {
-          return itk::Math::FloatAlmostEqual(a, b);
-        }))
-  {
-    mitkThrow() << "SpectrumBaseImage related image artifacts require identical spacings.";
-  }
+//   if (!std::equal(
+//         aS.GetDataPointer(), aS.GetDataPointer() + DIMS, bS.GetDataPointer(), [](const auto &a, const auto &b) {
+//           return itk::Math::FloatAlmostEqual(a, b);
+//         }))
+//   {
+//     mitkThrow() << "SpectrumBaseImage related image artifacts require identical spacings.";
+//   }
 
-  // if spacing and dimensions are equal, copy origin and vtkMatrix to the new image artifact.
-  img->SetClonedTimeGeometry(this->GetTimeGeometry());
-}
+//   // if spacing and dimensions are equal, copy origin and vtkMatrix to the new image artifact.
+//   img->SetClonedTimeGeometry(this->GetTimeGeometry());
+// }
 
 void m2::SpectrumImage::ApplyMoveOriginOperation(const mitk::Vector3D &v)
 {
   auto geometry = this->GetGeometry();
   geometry->Translate(v);
-
-  for (auto kv : m_ImageArtifacts)
+  std::vector<mitk::BaseData *> imageList{m_IndexImage, m_ExternalNormalizationImage, m_NormalizationImage, m_MaskImage, m_Points};
+  for (auto image : imageList)
   {
-    geometry = kv.second->GetGeometry();
+    geometry = image->GetGeometry();
     geometry->Translate(v);
   }
 }
@@ -85,12 +85,13 @@ void m2::SpectrumImage::ApplyGeometryOperation(mitk::Operation *op)
   this->GetGeometry()->SetIdentity();
   this->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
 
-  for (auto kv : m_ImageArtifacts)
+  std::vector<mitk::BaseData *> imageList{m_IndexImage, m_ExternalNormalizationImage, m_NormalizationImage, m_MaskImage, m_Points};
+  for (auto image : imageList)
   {
-    auto manipulatedGeometry = kv.second->GetGeometry()->Clone();
+    auto manipulatedGeometry = image->GetGeometry()->Clone();
     manipulatedGeometry->ExecuteOperation(op);
-    kv.second->GetGeometry()->SetIdentity();
-    kv.second->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
+    image->GetGeometry()->SetIdentity();
+    image->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
   }
 }
 
@@ -119,47 +120,6 @@ const m2::SpectrumImage::SpectrumArtifactVectorType &m2::SpectrumImage::GetXAxis
   return m_XAxis;
 }
 
-mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage()
-{
-  if (m_ImageArtifacts.find("NormalizationImage") != m_ImageArtifacts.end())
-    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("NormalizationImage").GetPointer());
-  return nullptr;
-}
-
-mitk::Image::Pointer m2::SpectrumImage::GetMaskImage()
-{
-  if (m_ImageArtifacts.find("mask") != m_ImageArtifacts.end())
-    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("mask").GetPointer());
-  return nullptr;
-}
-
-mitk::Image::Pointer m2::SpectrumImage::GetIndexImage()
-{
-  if (m_ImageArtifacts.find("index") != m_ImageArtifacts.end())
-    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("index").GetPointer());
-  return nullptr;
-}
-
-mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage() const
-{
-  if (m_ImageArtifacts.find("NormalizationImage") != m_ImageArtifacts.end())
-    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("NormalizationImage").GetPointer());
-  return nullptr;
-}
-
-mitk::Image::Pointer m2::SpectrumImage::GetMaskImage() const
-{
-  if (m_ImageArtifacts.find("mask") != m_ImageArtifacts.end())
-    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("mask").GetPointer());
-  return nullptr;
-}
-
-mitk::Image::Pointer m2::SpectrumImage::GetIndexImage() const
-{
-  if (m_ImageArtifacts.find("index") != m_ImageArtifacts.end())
-    return dynamic_cast<mitk::Image *>(m_ImageArtifacts.at("index").GetPointer());
-  return nullptr;
-}
 
 void m2::SpectrumImage::GetImage(double, double, const mitk::Image *, mitk::Image *) const
 {
