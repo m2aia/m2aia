@@ -40,6 +40,8 @@ namespace m2
   {
     SetPropertyValue<double>("x_min", std::numeric_limits<double>::max());
     SetPropertyValue<double>("x_max", std::numeric_limits<double>::min());
+
+    m_SliceTransformers.resize(stackSize);
   }
 
 
