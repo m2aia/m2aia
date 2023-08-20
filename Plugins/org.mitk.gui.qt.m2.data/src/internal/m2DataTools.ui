@@ -32,7 +32,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>QmitkTemplate</string>
+   <string>M2aia Data Tools View</string>
   </property>
   <property name="styleSheet">
    <string notr="true"/>
@@ -384,48 +384,6 @@
        <widget class="QPushButton" name="btnOpenPointSetWidget">
         <property name="text">
          <string>Open point set editor view</string>
-        </property>
-       </widget>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item>
-    <widget class="QGroupBox" name="groupBox">
-     <property name="title">
-      <string>Singel spectrum</string>
-     </property>
-     <layout class="QVBoxLayout" name="verticalLayout_5">
-      <item>
-       <widget class="QmitkSingleNodeSelectionWidget" name="ReferenceSelectionForDataInteraction" native="true">
-        <property name="minimumSize">
-         <size>
-          <width>0</width>
-          <height>0</height>
-         </size>
-        </property>
-        <property name="maximumSize">
-         <size>
-          <width>16777215</width>
-          <height>16777215</height>
-         </size>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QPushButton" name="toggleDataInteractor">
-        <property name="text">
-         <string>Activate</string>
-        </property>
-        <property name="checkable">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>Usage: [Shift + left mouse click]</string>
         </property>
        </widget>
       </item>

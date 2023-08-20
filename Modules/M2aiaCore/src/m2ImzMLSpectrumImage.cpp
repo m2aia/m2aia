@@ -116,20 +116,29 @@ void m2::ImzMLSpectrumImage::InitializeGeometry()
 
 void m2::ImzMLSpectrumImage::InitializeImageAccess()
 {
+
+  // Reset Normalization strategy type if set to external but no external image was found
+  if(GetNormalizationStrategy() == m2::NormalizationStrategyType::External && GetExternalNormalizationImage().IsNull()){
+    SetNormalizationStrategy(m2::NormalizationStrategyType::None);
+    MITK_ERROR << "'External' Normalization strategy chosen but no External image exist.\n"
+    "To use external normalization provide an image in the NRRD file format.\n"
+    "This image requires the same name as the imzML file, with file ending *.norm.nrrd, pixel type double, identical pixel spacing, and image dimensions.";
+  }
+
   this->SetImageAccessInitialized(false); 
   this->m_SpectrumImageSource->InitializeImageAccess();
 
   auto sx = this->GetPropertyValue<unsigned>("max count of pixels x");
   auto sy = this->GetPropertyValue<unsigned>("max count of pixels y");
+  auto sz = this->GetPropertyValue<unsigned>("max count of pixels z");
 
   auto px = this->GetPropertyValue<double>("pixel size x");
   auto py = this->GetPropertyValue<double>("pixel size y");
+  auto pz = this->GetPropertyValue<double>("pixel size z");
 
-  px = m2::MilliMeterToMicroMeter(px);
-  py = m2::MilliMeterToMicroMeter(py);
   MITK_INFO << "[imzML]: " + this->GetImzMLDataPath() +
-              "\n\t[pixel size ]: " + std::to_string(px)  + "x" + std::to_string(py) +
-              "\n\t[image size ]: " + std::to_string(sx) + "x" +std::to_string(sy) +
+              "\n\t[pixel size (mm) ]: " + std::to_string(px)  + "x" + std::to_string(py) +"x" + std::to_string(pz) +
+              "\n\t[image size]: " + std::to_string(sx) + "x" +std::to_string(sy) + "x" + std::to_string(sz)  +
               "\n\t[num spectra]: " + std::to_string(this->GetNumberOfValidPixels()) +
               "\n\t[spec. type ]: " + to_string(this->GetSpectrumType().Format);
   this->SetImageAccessInitialized(true); 

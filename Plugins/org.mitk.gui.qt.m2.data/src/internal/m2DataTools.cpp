@@ -155,12 +155,17 @@ void m2DataTools::OnResetTiling()
       prevOrigin = image->GetGeometry()->GetOrigin();
       origin = image->GetGeometry()->GetOrigin();
 
-      origin[0] = image->GetPropertyValue<double>("absolute position offset x");
-      origin[1] = image->GetPropertyValue<double>("absolute position offset y");
-      origin[2] = 0;
+      origin[0] = image->GetPropertyValue<double>("absolute position offset x", 0);
+      origin[1] = image->GetPropertyValue<double>("absolute position offset y", 0);
+      origin[2] = image->GetPropertyValue<double>("absolute position offset z", 0);     
       image->GetGeometry()->SetOrigin(origin);
-      for (auto &&kv : image->GetImageArtifacts())
-        kv.second->GetGeometry()->SetOrigin(origin);
+      std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), 
+                                        image->GetExternalNormalizationImage(), 
+                                        image->GetNormalizationImage(), 
+                                        image->GetMaskImage(), 
+                                        image->GetPoints()};
+      for (auto current : imageList)
+        current->GetGeometry()->SetOrigin(origin);
     }
 
     double dx = origin[0] - prevOrigin[0];
@@ -237,8 +242,13 @@ void m2DataTools::OnApplyTiling()
       origin[1] = maxHeight * int(i / nodesInRow) * image->GetGeometry()->GetSpacing()[1];
       origin[2] = double(0.0);
       image->GetGeometry()->SetOrigin(origin);
-      for (auto &&kv : image->GetImageArtifacts())
-        kv.second->GetGeometry()->SetOrigin(origin);
+      std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), 
+                                              image->GetExternalNormalizationImage(), 
+                                              image->GetNormalizationImage(), 
+                                              image->GetMaskImage(), 
+                                              image->GetPoints()};
+      for (auto current : imageList)
+        current->GetGeometry()->SetOrigin(origin);
     }else{
       continue;
     }

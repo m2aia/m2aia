@@ -666,18 +666,26 @@ namespace m2
     auto pathWithoutExtension = this->GetInputLocation();
     itksys::SystemTools::ReplaceString(pathWithoutExtension, ".imzML", "");
 
-    auto maskPath = pathWithoutExtension + ".nrrd";
+    auto maskPath = pathWithoutExtension + ".mask.nrrd";
     if (itksys::SystemTools::FileExists(maskPath))
     {
       auto data = mitk::IOUtil::Load(maskPath).at(0);
-      object->GetImageArtifacts()["mask"] = dynamic_cast<mitk::Image *>(data.GetPointer());
-      object->UseExternalMaskOn();
+      object->SetMaskImage(dynamic_cast<mitk::Image *>(data.GetPointer()));
     }
+
+    auto normPath = pathWithoutExtension + ".norm.nrrd";
+    if (itksys::SystemTools::FileExists(normPath))
+    {
+      auto data = mitk::IOUtil::Load(normPath).at(0);
+      object->SetExternalNormalizationImage(dynamic_cast<mitk::Image *>(data.GetPointer()));
+    }
+
+
     auto pointsPath = pathWithoutExtension + ".mps";
     if (itksys::SystemTools::FileExists(pointsPath))
     {
       auto data = mitk::IOUtil::Load(pointsPath).at(0);
-      object->GetImageArtifacts()["references"] = dynamic_cast<mitk::PointSet *>(data.GetPointer());
+      object->SetPoints(dynamic_cast<mitk::PointSet *>(data.GetPointer()));
     }
   }
 

@@ -71,17 +71,16 @@ namespace m2
 
     if (itksys::SystemTools::FileExists(pathWithoutExtension + ".nrrd"))
     {
-      auto maskPath = pathWithoutExtension + ".nrrd";
+      auto maskPath = pathWithoutExtension + ".mask.nrrd";
       auto data = mitk::IOUtil::Load(maskPath).at(0);
-      image->GetImageArtifacts()["mask"] = data.GetPointer();
-      image->UseExternalMaskOn();
+      image->SetMaskImage(dynamic_cast<mitk::Image *>(data.GetPointer()));
     }
 
     if (itksys::SystemTools::FileExists(pathWithoutExtension + ".mps"))
     {
       auto pointsDataPath = pathWithoutExtension + ".mps";
       auto data = mitk::IOUtil::Load(pointsDataPath).at(0);
-      image->GetImageArtifacts()["references"] = data.GetPointer();
+      image->SetPoints(dynamic_cast<mitk::PointSet *>(data.GetPointer()));
     }
   }
 

@@ -116,7 +116,7 @@ void m2::FsmSpectrumImage::InitializeImageAccess()
 
 void m2::FsmSpectrumImage::FsmProcessor::InitializeGeometry()
 {
-  auto &imageArtifacts = p->GetImageArtifacts();
+  
 
   std::array<itk::SizeValueType, 3> imageSize = {p->GetPropertyValue<unsigned>("dim_x"), // n_x
                                                  p->GetPropertyValue<unsigned>("dim_y"), // n_y
@@ -175,7 +175,7 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeGeometry()
     caster->SetInput(itkIonImage);
     caster->Update();
     auto indexImage = mitk::Image::New();
-    imageArtifacts["index"] = indexImage;
+    p->SetIndexImage(indexImage);
     indexImage->InitializeByItk(caster->GetOutput());
 
     mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3> acc(indexImage);
@@ -184,7 +184,7 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeGeometry()
 
   {
     mitk::LabelSetImage::Pointer image = mitk::LabelSetImage::New();
-    imageArtifacts["mask"] = image.GetPointer();
+    p->SetMaskImage(image.GetPointer());
 
     image->Initialize((mitk::Image *)p);
     auto ls = image->GetActiveLabelSet();
@@ -206,11 +206,11 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeGeometry()
     caster->SetInput(itkIonImage);
     caster->Update();
     auto normImage = mitk::Image::New();
-    imageArtifacts["NormalizationImage"] = normImage;
     normImage->InitializeByItk(caster->GetOutput());
-
     mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(normImage);
     std::memset(acc.GetData(), 1, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
+
+    p->SetNormalizationImage(normImage);
   }
 
   mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> acc(p);
@@ -256,15 +256,14 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
       m2::Signal::SmoothingFunctor<float> Smoother;
       Smoother.Initialize(p->GetSmoothingStrategy(), p->GetSmoothingHalfWindowSize());
 
-      m2::Signal::BaselineFunctor<float> BaselineSubstractor;
-      BaselineSubstractor.Initialize(p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
+      m2::Signal::BaselineFunctor<float> BaselineSubtractor;
+      BaselineSubtractor.Initialize(p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
 
-      float val = 1;
       std::vector<float> baseline(xs.size());
 
       auto &spectra = p->GetSpectra();
 
-      const auto divides = [&val](const auto &a) { return a / val; };
+      // const auto divides = [&val](const auto &a) { return a / val; };
       const auto maximum = [](const auto &a, const auto &b) { return a > b ? a : b; };
       const auto plus = std::plus<>();
 
@@ -272,30 +271,10 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
       {
         auto &spectrum = spectra[i];
         auto &ys = spectrum.data;
-        if (p->GetUseExternalMask())
-        {
-          auto v = accMask->GetPixelByIndex(spectrum.index);
-          if (v == 0)
-            continue;
-        }
-
-        // std::copy(std::begin(spectra[i].data), std::end(spectra[i].data), std::begin(ys));
-
-        if (p->GetUseExternalNormalization())
-        {
-          // Normalization-image content was set elsewhere
-          val = accNorm->GetPixelByIndex(spectrum.index);
-          std::transform(std::begin(ys), std::end(ys), std::begin(ys), divides);
-        }
-        else
-        {
-          accNorm->SetPixelByIndex(spectrum.index, 1);
-          // val = Normalizor(xs, ys, accNorm->GetPixelByIndex(spectrum.index + source.m_Offset));
-          // accNorm->SetPixelByIndex(spectrum.index + source.m_Offset, val); // Set normalization image pixel value
-        }
+        accNorm->SetPixelByIndex(spectrum.index, 1);
 
         Smoother(std::begin(ys),std::end(ys));
-        BaselineSubstractor(std::begin(ys), std::end(ys), std::begin(baseline));
+        BaselineSubtractor(std::begin(ys), std::end(ys), std::begin(baseline));
 
         std::transform(std::begin(ys), std::end(ys), sumT.at(t).begin(), sumT.at(t).begin(), plus);
         std::transform(std::begin(ys), std::end(ys), skylineT.at(t).begin(), skylineT.at(t).begin(), maximum);
@@ -310,10 +289,8 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
                      for (unsigned int i = a; i < b; i++)
                      {
                        const auto &spectrum = spectra[i];
-
                        accIndex->SetPixelByIndex(spectrum.index, i);
-                       if (!p->GetUseExternalMask())
-                         accMask->SetPixelByIndex(spectrum.index, 1);
+                       accMask->SetPixelByIndex(spectrum.index, 1);
                      }
                    });
 

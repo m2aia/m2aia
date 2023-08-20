@@ -220,6 +220,7 @@ void m2Data::InitNormalizationControls()
           {
             auto value = this->Controls()->CBNormalization->currentData().toUInt();
             preferences->PutInt("m2aia.signal.NormalizationStrategy", value);
+            // MITK_INFO << "selected Method " << value;
           });
 }
 
@@ -653,7 +654,7 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
     this->RequestRenderWindowUpdate();
 
     SpectrumImageNodeAdded(node);
-    emit m2::UIUtils::Instance()->SpectrumImageNodeAdded(node);
+    // emit m2::UIUtils::Instance()->SpectrumImageNodeAdded(node);
   }
   else if (dynamic_cast<m2::IntervalVector *>(node->GetData()))
   {
