@@ -18,10 +18,10 @@ found in the LICENSE file.
 #include <mitkImage.h>
 
 // qt
-#include <QWidgetAction>
+#include <QAction>
 
 
-class QmitkDataNodeSliceWiseNormalizationAction : public QWidgetAction, public QmitkAbstractDataNodeAction
+class QmitkDataNodeSliceWiseNormalizationAction : public QAction, public QmitkAbstractDataNodeAction
 {
   Q_OBJECT
 
