@@ -136,6 +136,62 @@ void m2Data::CreateQtPartControl(QWidget *parent)
               tol = m2::PartPerMillionToFactor(tol) * x;
           });
 
+
+  // Imaging controls
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+
+  // default values
+  m_Controls.spnBxTol->setValue(preferences->GetFloat("m2aia.signal.Tolerance", 75));
+  m_Controls.CBNormalization->setCurrentIndex(preferences->GetInt("m2aia.signal.NormalizationStrategy", to_underlying(m2::NormalizationStrategyType::None)));
+  m_Controls.CBTransformation->setCurrentIndex(preferences->GetInt("m2aia.signal.IntensityTransformationStrategy", to_underlying(m2::NormalizationStrategyType::None)));
+  m_Controls.CBSmoothing->setCurrentIndex(preferences->GetInt("m2aia.signal.SmoothingStrategy", to_underlying(m2::NormalizationStrategyType::None)));
+  m_Controls.CBImagingStrategy->setCurrentIndex(preferences->GetInt("m2aia.signal.RangePoolingStrategy", to_underlying(m2::NormalizationStrategyType::Mean)));
+
+  connect(m_Controls.spnBxTol,
+          qOverload<double>(&QDoubleSpinBox::valueChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = m_Controls.spnBxTol->value();
+            preferences->PutFloat("m2aia.signal.Tolerance", value);
+          });
+  connect(m_Controls.CBNormalization,
+          qOverload<int>(&QComboBox::currentIndexChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = m_Controls.CBNormalization->currentData().toUInt();
+            preferences->PutInt("m2aia.signal.NormalizationStrategy", value);
+            // MITK_INFO << "selected Method " << value;
+          });
+
+  connect(m_Controls.CBTransformation,
+          qOverload<int>(&QComboBox::currentIndexChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = m_Controls.CBTransformation->currentData().toUInt();
+            preferences->PutInt("m2aia.signal.IntensityTransformationStrategy", value);
+          });
+
+  connect(m_Controls.CBImagingStrategy,
+          qOverload<int>(&QComboBox::currentIndexChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = m_Controls.CBImagingStrategy->currentData().toUInt();
+            preferences->PutInt("m2aia.signal.RangePoolingStrategy", value);
+          });
+  connect(m_Controls.CBSmoothing,
+          qOverload<int>(&QComboBox::currentIndexChanged),
+          this,
+          [this, preferences](int)
+          {
+            auto value = m_Controls.CBSmoothing->currentData().toUInt();
+            preferences->PutInt("m2aia.signal.SmoothingStrategy", value);
+          });
+
   // Make sure, that data nodes added before this view
   // is initialized are handled correctly!!
   auto nodes = this->GetDataStorage()->GetAll();
@@ -192,14 +248,6 @@ void m2Data::InitToleranceControls(){
   auto *preferences = preferencesService->GetSystemPreferences();
   auto defaultValue = preferences->GetFloat("m2aia.signal.Tolerance", 75.0);
   m_Controls.spnBxTol->setValue(defaultValue);
-  connect(m_Controls.spnBxTol,
-          qOverload<double>(&QDoubleSpinBox::valueChanged),
-          this,
-          [this, preferences](int)
-          {
-            auto value = m_Controls.spnBxTol->value();
-            preferences->PutFloat("m2aia.signal.Tolerance", value);
-          });
 }
 
 void m2Data::InitNormalizationControls()
@@ -212,16 +260,6 @@ void m2Data::InitNormalizationControls()
   for (unsigned int i = 0; i < m2::NormalizationStrategyTypeNames.size(); ++i)
     cb->addItem(m2::NormalizationStrategyTypeNames[i].c_str(), {i});
   cb->setCurrentIndex(defaultValue);
-
-  connect(m_Controls.CBNormalization,
-          qOverload<int>(&QComboBox::currentIndexChanged),
-          this,
-          [this, preferences](int)
-          {
-            auto value = this->Controls()->CBNormalization->currentData().toUInt();
-            preferences->PutInt("m2aia.signal.NormalizationStrategy", value);
-            // MITK_INFO << "selected Method " << value;
-          });
 }
 
 m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
@@ -243,16 +281,8 @@ void m2Data::InitIntensityTransformationControls()
   auto cb = Controls()->CBTransformation;
   for (unsigned int i = 0; i < m2::IntensityTransformationTypeNames.size(); ++i)
     cb->addItem(m2::IntensityTransformationTypeNames[i].c_str(), {i});
-  cb->setCurrentIndex(defaultValue);
 
-  connect(m_Controls.CBTransformation,
-          qOverload<int>(&QComboBox::currentIndexChanged),
-          this,
-          [this, preferences](int)
-          {
-            auto value = this->Controls()->CBTransformation->currentData().toUInt();
-            preferences->PutInt("m2aia.signal.IntensityTransformationStrategy", value);
-          });
+  cb->setCurrentIndex(defaultValue);
 }
 
 m2::IntensityTransformationType m2Data::GuiToIntensityTransformationStrategyType()
@@ -269,20 +299,12 @@ void m2Data::InitRangePoolingControls()
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
   auto defaultValue =
-    preferences->GetInt("m2aia.signal.RangePoolingStrategy", to_underlying(m2::RangePoolingStrategyType::Maximum));
+    preferences->GetInt("m2aia.signal.RangePoolingStrategy", to_underlying(m2::RangePoolingStrategyType::Mean));
   auto cb = Controls()->CBImagingStrategy;
   for (unsigned int i = 0; i < m2::RangePoolingStrategyTypeNames.size(); ++i)
     cb->addItem(m2::RangePoolingStrategyTypeNames[i].c_str(), {i}); // add i as data
-  cb->setCurrentIndex(defaultValue);
 
-  connect(m_Controls.CBImagingStrategy,
-          qOverload<int>(&QComboBox::currentIndexChanged),
-          this,
-          [this, preferences](int)
-          {
-            auto value = this->Controls()->CBImagingStrategy->currentData().toUInt();
-            preferences->PutInt("m2aia.signal.RangePoolingStrategy", value);
-          });
+  cb->setCurrentIndex(defaultValue);
 }
 
 m2::RangePoolingStrategyType m2Data::GuiToRangePoolingStrategyType()
@@ -303,15 +325,6 @@ void m2Data::InitSmoothingControls()
   for (unsigned int i = 0; i < m2::SmoothingTypeNames.size(); ++i)
     cb->addItem(m2::SmoothingTypeNames[i].c_str(), {i});
   cb->setCurrentIndex(defaultValue);
-
-  connect(m_Controls.CBSmoothing,
-          qOverload<int>(&QComboBox::currentIndexChanged),
-          this,
-          [this, preferences](int)
-          {
-            auto value = this->Controls()->CBSmoothing->currentData().toUInt();
-            preferences->PutInt("m2aia.signal.SmoothingStrategy", value);
-          });
 
   // Spin Box
   m_Controls.spnBxSmoothing->setValue(preferences->GetInt("m2aia.signal.SmoothingValue", 2));
@@ -348,7 +361,7 @@ void m2Data::InitBaselineCorrectionControls()
           this,
           [this, preferences](int)
           {
-            auto value = this->Controls()->CBBaselineCorrection->currentData().toUInt();
+            auto value = m_Controls.CBBaselineCorrection->currentData().toUInt();
             preferences->PutInt("m2aia.signal.BaselineCorrectionStrategy", value);
           });
 
