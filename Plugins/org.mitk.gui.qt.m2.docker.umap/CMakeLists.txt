@@ -7,7 +7,7 @@ mitk_create_plugin(
 )
 
 
-if(MITK_BUILD_DOCKER)
+if(if(DOCKER))
   add_custom_target(docker_umap
     COMMAND ${DOCKER} build --quiet  -f ${CMAKE_CURRENT_LIST_DIR}/docker/Dockerfile -t ghcr.io/m2aia/umap ${CMAKE_CURRENT_LIST_DIR}/docker
   )

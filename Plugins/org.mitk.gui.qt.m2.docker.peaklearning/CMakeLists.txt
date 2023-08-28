@@ -6,7 +6,7 @@ mitk_create_plugin(
   MODULE_DEPENDS PRIVATE MitkQtWidgetsExt M2aiaCore MitkDocker
 )
 
-if(MITK_BUILD_DOCKER)
+if(if(DOCKER))
   add_custom_target(docker_msipl
     COMMAND ${DOCKER} build --quiet  -f ${CMAKE_CURRENT_LIST_DIR}/docker/Dockerfile -t ghcr.io/m2aia/msipl ${CMAKE_CURRENT_LIST_DIR}/docker
   )

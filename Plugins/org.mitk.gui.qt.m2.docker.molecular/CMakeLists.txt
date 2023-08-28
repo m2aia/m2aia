@@ -6,7 +6,7 @@ mitk_create_plugin(
   MODULE_DEPENDS PRIVATE MitkQtWidgetsExt M2aiaCore MitkDocker
 )
 
-if(MITK_BUILD_DOCKER)
+if(DOCKER)
 add_custom_target(docker_molecular
     COMMAND ${DOCKER} build --quiet  -f ${CMAKE_CURRENT_LIST_DIR}/docker/Dockerfile -t ghcr.io/m2aia/molecular ${CMAKE_CURRENT_LIST_DIR}/docker
   )
