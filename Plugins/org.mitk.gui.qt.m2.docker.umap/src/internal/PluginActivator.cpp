@@ -12,6 +12,9 @@ found in the LICENSE file.
 
 #include "PluginActivator.h"
 #include "QmitkUMAPView.h"
+#include <usModuleInitialization.h>
+
+US_INITIALIZE_MODULE
 
 void PluginActivator::start(ctkPluginContext* context)
 {
