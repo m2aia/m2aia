@@ -60,6 +60,7 @@ set(CPP_FILES
   IO/m2ImzMLParser.cpp
   IO/m2ImzMLImageIO.cpp
   IO/m2ImzMLEngine.cpp
+  IO/m2PythonWrapper.cpp
 )
 
 set(RESOURCE_FILES

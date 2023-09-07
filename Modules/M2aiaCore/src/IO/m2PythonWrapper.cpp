@@ -158,20 +158,20 @@ extern "C"
 
   M2AIACORE_EXPORT unsigned int  GetSpectrumDepth(m2::sys::ImageHandle *handle, unsigned int id)
   {
-    const auto & spectrum = handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra[id];
+    const auto & spectrum = handle->m_Image->GetSpectra()[id];
     return spectrum.mzLength;
   }
 
   M2AIACORE_EXPORT void GetSpectrumPosition(m2::sys::ImageHandle *handle, unsigned int spectrumId, unsigned int *pixelPosition)
   {
-    auto &spectrum = handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra[spectrumId];
+    auto &spectrum = handle->m_Image->GetSpectra()[spectrumId];
     auto *p = spectrum.index.GetIndex();
     std::copy(p, p + 3, pixelPosition);
   }
 
   M2AIACORE_EXPORT unsigned int GetNumberOfSpectra(m2::sys::ImageHandle *handle)
   {
-    return handle->m_Image->GetImzMLSpectrumImageSource().m_Spectra.size();
+    return handle->m_Image->GetSpectra().size();
   }
 
   M2AIACORE_EXPORT void GetMeanSpectrum(m2::sys::ImageHandle *handle, double *data)
