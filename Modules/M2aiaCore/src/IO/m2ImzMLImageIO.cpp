@@ -580,27 +580,13 @@ namespace m2
     object->GetSpectrumType().YAxisLabel = "Intensity";
 
     {
-      // m2::Timer t("Parsing imzML");
       m2::ImzMLParser::ReadImageMetaData(object);
       m2::ImzMLParser::ReadImageSpectrumMetaData(object);
     }
-
-    // if(!itk::Math::AlmostEquals(sx*px, dx) ||
-    //    !itk::Math::AlmostEquals(sy*py, dy)){
-    //   mitkThrow() << "[ImzML Meta data error]\n" <<
-    //                  "\n\t!! ImzML data should have consistent inputs. This error massage can be turned off in the
-    //                  properties." <<
-    //                  "\n\t[pixel size]: " << std::to_string(px)  << "x" + std::to_string(py) <<
-    //                  "\n\t[image area]: " << std::to_string(sx) << "x" + std::to_string(sy) <<
-    //                  "\n\t[image dims]: " << std::to_string(dx) << "x" +std::to_string(dy);
-    // }
-
     {
-      // m2::Timer t("Initialize placeholder images and spectra");
       object->InitializeGeometry();
     }
     {
-      // m2::Timer t("Load external data");
       EvaluateSpectrumFormatType(object);
       LoadAssociatedData(object);
     }

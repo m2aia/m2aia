@@ -584,9 +584,12 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
       }
     }
 
-    auto *preferencesService = mitk::CoreServices::GetPreferencesService();
-    auto *preferences = preferencesService->GetSystemPreferences();
-    if (preferences->GetBool("m2aia.view.image.minimal_area", true))
+    bool minimalArea = true;  
+    if(auto *preferencesService = mitk::CoreServices::GetPreferencesService())
+      if(auto *preferences = preferencesService->GetSystemPreferences())
+        minimalArea = preferences->GetBool("m2aia.view.image.minimal_area", true);
+
+    if (minimalArea)
     {
       // Load only minimal area where valid spectra exist.
       // https://github.com/m2aia/m2aia/issues/45

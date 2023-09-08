@@ -19,6 +19,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <mitkImageReadAccessor.h>
+#include <mitkIPreferencesService.h>
+#include <mitkCoreServices.h>
+
 // PYTHON EXPORT
 namespace m2
 {
@@ -251,6 +254,13 @@ extern "C"
 
   M2AIACORE_EXPORT m2::sys::ImageHandle *CreateImageHandle(const char *path, const char *s)
   {
+    
+    if(auto *preferencesService = mitk::CoreServices::GetPreferencesService())
+      if(!preferencesService->GetSystemPreferences()){
+        mitk::CoreServicePointer preferencesService(mitk::CoreServices::GetPreferencesService());
+        preferencesService->InitializeStorage(".pym2aia/data/3/prefs.xml");
+      }
+      
 
     if(!itksys::SystemTools::FileExists(path)){
       MITK_ERROR << "The given path does not exist!\n\t" << std::string(path);
@@ -276,20 +286,21 @@ extern "C"
     const auto tol = m2::Find(parameters, "tolerance", double(0), pMap);
     const auto intTransform = m2::Find(parameters, "transform", "None"s, pMap);
     const auto threads = m2::Find(parameters, "threads", int(itk::MultiThreaderBase::GetGlobalDefaultNumberOfThreads()), pMap);
-
+    
     // MITK_INFO << "---------------------";
     // MITK_INFO << "Image initialization:";
     // MITK_INFO << "---------------------";
     // for (auto &p : pMap)
-    //   MITK_INFO << "\t" << p.first << " " << p.second;
+    //    MITK_INFO << "\t" << p.first << " " << p.second;
 
     m2::ImzMLImageIO io;
     mitk::AbstractFileReader *reader = &io;
     reader->SetInput(std::string(path));
+    // MITK_INFO << "ImzML Path " << path;
     auto data = io.DoRead();
     auto storage = new m2::sys::ImageHandle();
     auto sImage = storage->m_Image = dynamic_cast<m2::ImzMLSpectrumImage *>(data.front().GetPointer());
-
+    // MITK_INFO << "ImzML Read ok";
     sImage->SetBaselineCorrectionStrategy(static_cast<m2::BaselineCorrectionType>(m2::BASECOR_MAPPINGS.at(bsc_s)));
     sImage->SetBaseLineCorrectionHalfWindowSize(bsc_hw);
     sImage->SetSmoothingStrategy(static_cast<m2::SmoothingType>(m2::SMOOTHING_MAPPINGS.at(sm_s)));
@@ -301,6 +312,8 @@ extern "C"
     sImage->SetNumberOfThreads(threads);
     sImage->InitializeImageAccess();
     sImage->SetTolerance(tol);
+
+    // MITK_INFO << "Init OK ";
     // const auto &source = sImage->GetImzMLSpectrumImageSourceList().front();
     // storage->m_SpectrumIOFileHandle.open(source.m_BinaryDataPath, std::ios::binary);
 

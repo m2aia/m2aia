@@ -88,7 +88,8 @@ namespace m2
   const std::map<const std::string, unsigned int> BASECOR_MAPPINGS{{"None", 0}, {"TopHat", 1}, {"Median", 2}};
 
   const std::map<const std::string, unsigned int> NORMALIZATION_MAPPINGS{
-    {"None", 0}, {"TIC", 1}, {"Median", 2}, {"InFile", 3}, {"Sum", 4}, {"RMS", 7}};
+     {"None", 0}, {"TIC", 1}, {"Sum", 2}, {"Mean", 3}, {"Max",4}, {"RMS",5}, {"Internal",6}, {"External", 7}};
+    
 
   const std::map<const std::string, unsigned int> POOLING_MAPPINGS{
     {"None", 0}, {"Mean", 1}, {"Median", 2}, {"Maximum", 3}, {"Sum", 4}};

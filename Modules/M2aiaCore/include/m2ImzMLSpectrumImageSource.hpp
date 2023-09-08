@@ -700,9 +700,11 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
 {
   std::vector<std::list<m2::Interval>> peaksT(p->GetNumberOfThreads());
 
-  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
-  auto *preferences = preferencesService->GetSystemPreferences();
-  const auto binsN = preferences->GetInt("m2aia.view.spectrum.bins", 1500);
+  auto binsN = 1500;
+
+  if(auto *preferencesService = mitk::CoreServices::GetPreferencesService())
+    if(auto *preferences = preferencesService->GetSystemPreferences())
+      binsN = preferences->GetInt("m2aia.view.spectrum.bins", 1500);
 
   auto &spectra = p->GetSpectra();
   const auto &T = p->GetNumberOfThreads();
