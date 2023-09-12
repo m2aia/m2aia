@@ -54,7 +54,7 @@ mitk::Image::Pointer QmitkDataNodeExportComponentAction::ExportComponentImage(co
 
   auto output = mitk::Image::New();
   
-  AccessByItk(img, ([&](auto itkImage){
+  AccessVectorPixelTypeByItk(img, ([&](auto itkImage){
     using SourceImageType = typename std::remove_pointer<decltype(itkImage)>::type;
     mitk::PixelType newPixelType = mitk::MakePixelType<SourceImageType>(1);
     output->Initialize(newPixelType, 3, img->GetDimensions());
