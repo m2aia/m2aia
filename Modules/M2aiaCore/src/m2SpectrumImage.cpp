@@ -70,11 +70,15 @@ void m2::SpectrumImage::ApplyMoveOriginOperation(const mitk::Vector3D &v)
 {
   auto geometry = this->GetGeometry();
   geometry->Translate(v);
-  std::vector<mitk::BaseData *> imageList{m_IndexImage, m_ExternalNormalizationImage, m_NormalizationImage, m_MaskImage, m_Points};
+  std::vector<mitk::BaseData *> imageList{
+    m_IndexImage, m_ExternalNormalizationImage, m_NormalizationImage, m_MaskImage, m_Points};
   for (auto image : imageList)
   {
-    geometry = image->GetGeometry();
-    geometry->Translate(v);
+    if (image)
+    {
+      geometry = image->GetGeometry();
+      geometry->Translate(v);
+    }
   }
 }
 
@@ -85,13 +89,17 @@ void m2::SpectrumImage::ApplyGeometryOperation(mitk::Operation *op)
   this->GetGeometry()->SetIdentity();
   this->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
 
-  std::vector<mitk::BaseData *> imageList{m_IndexImage, m_ExternalNormalizationImage, m_NormalizationImage, m_MaskImage, m_Points};
+  std::vector<mitk::BaseData *> imageList{
+    m_IndexImage, m_ExternalNormalizationImage, m_NormalizationImage, m_MaskImage, m_Points};
   for (auto image : imageList)
   {
-    auto manipulatedGeometry = image->GetGeometry()->Clone();
-    manipulatedGeometry->ExecuteOperation(op);
-    image->GetGeometry()->SetIdentity();
-    image->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
+    if (image)
+    {
+      auto manipulatedGeometry = image->GetGeometry()->Clone();
+      manipulatedGeometry->ExecuteOperation(op);
+      image->GetGeometry()->SetIdentity();
+      image->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
+    }
   }
 }
 
@@ -119,7 +127,6 @@ const m2::SpectrumImage::SpectrumArtifactVectorType &m2::SpectrumImage::GetXAxis
 {
   return m_XAxis;
 }
-
 
 void m2::SpectrumImage::GetImage(double, double, const mitk::Image *, mitk::Image *) const
 {

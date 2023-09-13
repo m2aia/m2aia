@@ -141,12 +141,6 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
 
-  // default values
-  m_Controls.spnBxTol->setValue(preferences->GetFloat("m2aia.signal.Tolerance", 75));
-  m_Controls.CBNormalization->setCurrentIndex(preferences->GetInt("m2aia.signal.NormalizationStrategy", to_underlying(m2::NormalizationStrategyType::None)));
-  m_Controls.CBTransformation->setCurrentIndex(preferences->GetInt("m2aia.signal.IntensityTransformationStrategy", to_underlying(m2::NormalizationStrategyType::None)));
-  m_Controls.CBSmoothing->setCurrentIndex(preferences->GetInt("m2aia.signal.SmoothingStrategy", to_underlying(m2::NormalizationStrategyType::None)));
-  m_Controls.CBImagingStrategy->setCurrentIndex(preferences->GetInt("m2aia.signal.RangePoolingStrategy", to_underlying(m2::NormalizationStrategyType::Mean)));
 
   connect(m_Controls.spnBxTol,
           qOverload<double>(&QDoubleSpinBox::valueChanged),
@@ -191,6 +185,13 @@ void m2Data::CreateQtPartControl(QWidget *parent)
             auto value = m_Controls.CBSmoothing->currentData().toUInt();
             preferences->PutInt("m2aia.signal.SmoothingStrategy", value);
           });
+  
+  // default values
+  m_Controls.spnBxTol->setValue(preferences->GetFloat("m2aia.signal.Tolerance", 75));
+  m_Controls.CBNormalization->setCurrentIndex(preferences->GetInt("m2aia.signal.NormalizationStrategy", to_underlying(m2::NormalizationStrategyType::None)));
+  m_Controls.CBTransformation->setCurrentIndex(preferences->GetInt("m2aia.signal.IntensityTransformationStrategy", to_underlying(m2::NormalizationStrategyType::None)));
+  m_Controls.CBSmoothing->setCurrentIndex(preferences->GetInt("m2aia.signal.SmoothingStrategy", to_underlying(m2::NormalizationStrategyType::None)));
+  m_Controls.CBImagingStrategy->setCurrentIndex(preferences->GetInt("m2aia.signal.RangePoolingStrategy", to_underlying(m2::NormalizationStrategyType::Mean)));
 
   // Make sure, that data nodes added before this view
   // is initialized are handled correctly!!

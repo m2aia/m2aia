@@ -20,6 +20,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 // Qmitk
 #include "m2ImzMLExportView.h"
+#include "m2DataNodePredicates.h"
 
 // Qt
 #include <QFileDialog>
@@ -60,29 +61,13 @@ void m2ImzMLExportView::CreateQtPartControl(QWidget *parent)
 
   m_Controls.imageSelection->SetDataStorage(GetDataStorage());
   m_Controls.imageSelection->SetAutoSelectNewNodes(true);
-  m_Controls.imageSelection->SetNodePredicate(
-    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImage>::New(),
-                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object"))));
+  m_Controls.imageSelection->SetNodePredicate(m2::DataNodePredicates::IsSpectrumImage);
   m_Controls.imageSelection->SetSelectionIsOptional(true);
   m_Controls.imageSelection->SetEmptyInfo(QString("Image selection"));
   m_Controls.imageSelection->SetPopUpTitel(QString("Image"));
 
-  auto isChildOfImageNode = [this](const mitk::DataNode *node)
-  {
-    if (auto imageNode = m_Controls.imageSelection->GetSelectedNode())
-    {
-      auto childNodes = GetDataStorage()->GetDerivations(imageNode);
-      using namespace std;
-      return find(begin(*childNodes), end(*childNodes), node) != end(*childNodes);
-    }
-    return false;
-  };
-
   m_Controls.listSelection->SetDataStorage(GetDataStorage());
-  m_Controls.listSelection->SetNodePredicate(
-    mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::IntervalVector>::New(),
-                                mitk::NodePredicateNot::New(mitk::NodePredicateProperty::New("helper object")),
-                                mitk::NodePredicateFunction::New(isChildOfImageNode)));
+  m_Controls.listSelection->SetNodePredicate(m2::DataNodePredicates::IsCentroidSpectrum);
 
   m_Controls.listSelection->SetAutoSelectNewNodes(true);
   m_Controls.listSelection->SetSelectionIsOptional(true);

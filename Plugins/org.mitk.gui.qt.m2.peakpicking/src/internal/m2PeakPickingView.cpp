@@ -256,6 +256,7 @@ void m2PeakPickingView::OnStartExportImages() {
         auto node = mitk::DataNode::New();
         node->SetData(ionImage);
         node->SetName(imageNode->GetName() + "_" + std::to_string(i.x.mean()));
+        node->SetVisibility(false);
         GetDataStorage()->Add(node, const_cast<mitk::DataNode *>(centroidNode.GetPointer()));
         // mitk::IOUtil::Save(ionImage, "/tmp/" +imageNode->GetName() + "_" + std::to_string(i.x.mean()) + ".nrrd");
       }

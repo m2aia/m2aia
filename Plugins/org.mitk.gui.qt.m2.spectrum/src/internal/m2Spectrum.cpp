@@ -241,6 +241,7 @@ void m2Spectrum::OnDataModified(const itk::Object *caller, const itk::EventObjec
       UpdateCurrentMinMaxY();
       UpdateGlobalMinMaxValues();
       DrawSelectedArea();
+      AutoZoomUseLocalExtremaY();
     }
   }
 }
@@ -272,39 +273,40 @@ void m2Spectrum::OnPropertyListChanged(const itk::Object *caller, const itk::Eve
 
         // UpdateCurrentMinMaxY();
         // UpdateGlobalMinMaxValues();
-        // AutoZoomUseLocalExtremaY();
+
         // UpdateSelectedArea();
-      }
 
-      if (auto genericProperty = node->GetProperty("spectrum.marker.color"))
-      {
-        if (auto colorProperty = dynamic_cast<mitk::ColorProperty *>(genericProperty))
+        if (auto genericProperty = node->GetProperty("spectrum.marker.color"))
         {
-          auto mc = colorProperty->GetColor();
-
-          for (auto item : m_NodeRelatedGraphicItems[node]->childItems())
+          if (auto colorProperty = dynamic_cast<mitk::ColorProperty *>(genericProperty))
           {
-            QColor c;
-            c.setRgbF(mc.GetRed(), mc.GetGreen(), mc.GetBlue());
-            auto rect = dynamic_cast<QGraphicsRectItem *>(item);
-            rect->setBrush(QBrush(c));
-            rect->setPen(QPen(c));
+            auto mc = colorProperty->GetColor();
+
+            for (auto item : m_NodeRelatedGraphicItems[node]->childItems())
+            {
+              QColor c;
+              c.setRgbF(mc.GetRed(), mc.GetGreen(), mc.GetBlue());
+              auto rect = dynamic_cast<QGraphicsRectItem *>(item);
+              rect->setBrush(QBrush(c));
+              rect->setPen(QPen(c));
+            }
           }
         }
-      }
 
-      if (auto prop = node->GetProperty("spectrum.marker.size"))
-      {
-        if (auto sizeProp = dynamic_cast<mitk::IntProperty *>(prop))
+        if (auto prop = node->GetProperty("spectrum.marker.size"))
         {
-          auto size = sizeProp->GetValue();
-          for (auto item : m_NodeRelatedGraphicItems[node]->childItems())
+          if (auto sizeProp = dynamic_cast<mitk::IntProperty *>(prop))
           {
-            auto rect = dynamic_cast<QGraphicsRectItem *>(item);
-            auto itemPos = rect->rect().center();
-            rect->setRect(itemPos.x() - size / 2.0, itemPos.y() - size / 2.0, size, size);
+            auto size = sizeProp->GetValue();
+            for (auto item : m_NodeRelatedGraphicItems[node]->childItems())
+            {
+              auto rect = dynamic_cast<QGraphicsRectItem *>(item);
+              auto itemPos = rect->rect().center();
+              rect->setRect(itemPos.x() - size / 2.0, itemPos.y() - size / 2.0, size, size);
+            }
           }
         }
+
       }
     }
   }
@@ -362,7 +364,7 @@ void m2Spectrum::NodeAdded(const mitk::DataNode *node)
 
     UpdateGlobalMinMaxValues();
     UpdateCurrentMinMaxY();
-    
+
     // OnResetView();
     // AutoZoomUseLocalExtremaY();
     m_xAxis->setRange(m_LocalMinimumX, m_LocalMaximumX);
@@ -649,7 +651,7 @@ void m2Spectrum::CreateQChartViewMenu()
   //           UpdateGlobalMinMaxValues();
   //           UpdateCurrentMinMaxY();
   //           emit m_xAxis->rangeChanged(m_xAxis->min(), m_xAxis->max());
-  
+
   // m_Menu->addAction(m_ShowLegend);
   m_ShowAxesTitles = new QAction("Show axes title", m_Controls.chartView);
   m_ShowAxesTitles->setCheckable(true);
@@ -661,11 +663,11 @@ void m2Spectrum::CreateQChartViewMenu()
           this,
           [this](bool s)
           {
-              m_yAxis->setTitleVisible(s);
-              m_xAxis->setTitleVisible(s);
+            m_yAxis->setTitleVisible(s);
+            m_xAxis->setTitleVisible(s);
           });
 
-// connect(
+  // connect(
   //   m_ShowLegend, &QAction::toggled, this, [this](bool s) { m_Controls.chartView->chart()->legend()->setVisible(s);
   //   });
 
@@ -856,8 +858,6 @@ void m2Spectrum::OnResetView()
 {
   if (m_DataProvider.empty())
     return;
-
-  
 }
 
 void m2Spectrum::OnAxisXTicksChanged(int v)

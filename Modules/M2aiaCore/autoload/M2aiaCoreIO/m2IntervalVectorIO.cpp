@@ -18,6 +18,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkIOUtil.h>
 #include <mitkLocaleSwitch.h>
 #include <itksys/SystemTools.hxx>
+#include <boost/algorithm/string/join.hpp>
 
 namespace m2
 {
@@ -51,6 +52,15 @@ namespace m2
         return;
     }
 
+    std::array<std::string, 3> position;
+    if(auto prop = input->GetProperty("m2aia.spectrum.position.x"))
+      position[0] = prop->GetValueAsString();
+    if(auto prop = input->GetProperty("m2aia.spectrum.position.y"))
+      position[1] = prop->GetValueAsString();
+    if(auto prop = input->GetProperty("m2aia.spectrum.position.z"))
+      position[2] = prop->GetValueAsString();
+
+    file << "[spectrum position] " << boost::algorithm::join(position, " ") << "\n"; 
     file << "center,max,min,mean\n";
     for(const m2::Interval & i: input->GetIntervals()){
       file << i.x.mean() << "," << i.y.max() << "," << i.y.min() << "," << i.y.mean() << "\n";
@@ -71,7 +81,6 @@ namespace m2
     auto path = this->GetInputLocation();
 
     std::ifstream file(path);
-    std::vector<std::vector<std::string>> columns;
 
     if (!file.is_open()) {
         std::cout << "Failed to open file: " << path << std::endl;
@@ -89,16 +98,24 @@ namespace m2
         }
     }
 
-    columns.resize(header.size());
+    
+    std::vector<std::vector<std::string>> data;
+
+    MITK_INFO << "Read centroid list [" << path << "] with " << header.size() << " columns";
+    std::cout << boost::algorithm::join(header," ,") << std::endl;
+    int row = 0;
 
     while (std::getline(file, line)) {
         std::stringstream ss(line);
         std::string cell;
-        int i = 0;
+        std::cout << "[" << std::to_string(row) << "] ";
+        data.push_back({});
+
         while (std::getline(ss, cell, ',')) {
-            columns[i].push_back(cell);
-            ++i;
+            data[row].push_back(cell);
         }
+        std::cout << boost::algorithm::join(data[row]," ,") << std::endl;
+        ++row;
     }
 
     file.close();
@@ -129,11 +146,9 @@ namespace m2
     auto targetData = m2::IntervalVector::New();
     targetData->SetType(m2::SpectrumFormat::Centroid);
     targetData->SetInfo("Load from file: " + path);
-    std::transform(std::begin(columns[0]), std::end(columns[0]), std::begin(columns[1]), std::back_inserter(targetData->GetIntervals()), [Strip](std::string xStr, std::string yStr){
-      xStr = Strip(xStr);
-      yStr = Strip(yStr);
-      auto x = std::stod(xStr);
-      auto y = std::stod(yStr);
+    std::transform(std::begin(data), std::end(data), std::back_inserter(targetData->GetIntervals()), [Strip](const std::vector<std::string> & row){
+      auto x = std::stod(Strip(row[0]));
+      auto y = std::stod(Strip(row[1]));
       m2::Interval I(x,y);
       return I;
     });
@@ -142,25 +157,28 @@ namespace m2
     auto labelIt = std::find(std::begin(header), std::end(header), "label");
     if(labelIt != std::end(header)){
       auto colIdx = std::distance(std::begin(header), labelIt);
+
+      std::vector<unsigned int> labels;
+      std::transform(std::begin(data), std::end(data), std::back_inserter(labels), [colIdx](std::vector<std::string> & v){return std::stoul(v[colIdx]);}); 
       
-      auto uniqueLabels = columns[colIdx];
-      auto eraseIt = std::unique(std::begin(uniqueLabels), std::end(uniqueLabels));
-      uniqueLabels.erase(eraseIt, std::end(uniqueLabels));
+      auto eraseIt = std::unique(std::begin(labels), std::end(labels));
+      labels.erase(eraseIt, std::end(labels));
       
-      std::map<std::string, m2::IntervalVector::Pointer> labeldResults;
+      std::map<std::string, m2::IntervalVector::Pointer> labeledResults;
       auto intervalIt = std::begin(targetData->GetIntervals());
         
-      for(std::string l : columns[colIdx]){
-        if(labeldResults[l].IsNull()){
-          labeldResults[l] = m2::IntervalVector::New();
+      for(const std::vector<std::string> &row : data){
+        if(labeledResults[row[colIdx]].IsNull()){
+          labeledResults[row[colIdx]] = m2::IntervalVector::New();
         }
-        labeldResults[l]->GetIntervals().push_back(*intervalIt);
+        labeledResults[row[colIdx]]->GetIntervals().push_back(*intervalIt);
         ++intervalIt;
       }
 
       std::vector<mitk::BaseData::Pointer> res;
-      for(auto kv : labeldResults)
+      for(auto kv : labeledResults)
         res.push_back(kv.second);
+
       return res;
     }
 

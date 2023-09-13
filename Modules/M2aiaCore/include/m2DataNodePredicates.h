@@ -39,6 +39,12 @@ namespace m2{
       return false;
     });
 
+    mitk::NodePredicateFunction::Pointer IsSpectrumImage = mitk::NodePredicateFunction::New(
+    [](const mitk::DataNode *node) -> bool
+    {
+      return dynamic_cast<m2::SpectrumImage *>(node->GetData());
+    });
+
   mitk::NodePredicateFunction::Pointer IsVisible = mitk::NodePredicateFunction::New(
     [](const mitk::DataNode *node) { return node->IsVisible(nullptr, "visible", false); });
 

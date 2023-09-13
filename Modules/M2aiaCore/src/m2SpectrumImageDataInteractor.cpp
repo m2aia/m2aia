@@ -78,6 +78,9 @@ bool m2::SpectrumImageDataInteractor::FilterEvents(mitk::InteractionEvent *inter
             continue;
 
           auto singleSpectrum = dynamic_cast<m2::IntervalVector *>(singleSpectrumNode->GetData());
+          singleSpectrum->SetProperty("m2aia.spectrum.position.x", mitk::IntProperty::New(index[0]));
+          singleSpectrum->SetProperty("m2aia.spectrum.position.y", mitk::IntProperty::New(index[1]));
+          singleSpectrum->SetProperty("m2aia.spectrum.position.z", mitk::IntProperty::New(index[2]));
           std::vector<double> xs, ys;
           image->GetSpectrum(id, xs, ys);
           singleSpectrum->GetIntervals().clear();

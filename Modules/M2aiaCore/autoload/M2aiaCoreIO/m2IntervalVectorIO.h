@@ -26,6 +26,19 @@ namespace m2
 {
   /**
    * Writes/Reads spectrum artifacts (interval vector)
+   * 
+   * To read centroid data you can create a .csv file with at least two columns.
+   * The first two columns have to be set to the centroid m/z value and the intensity.
+   * Additional a column "label" ca be specified to split a single csv file in multiple interval vectors.
+   * 
+   * example.csv:
+   * 
+   * m/z, intensity, ..., label, ...
+   * 400, 100, ..., 1, ...
+   * 412, 100, ..., 1, ...
+   * 444, 100, ..., 2, ...
+   * 422, 100, ..., 2, ...
+   * 
    */
 
   
