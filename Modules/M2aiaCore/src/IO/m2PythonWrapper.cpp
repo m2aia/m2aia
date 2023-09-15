@@ -258,7 +258,7 @@ extern "C"
     if(auto *preferencesService = mitk::CoreServices::GetPreferencesService())
       if(!preferencesService->GetSystemPreferences()){
         mitk::CoreServicePointer preferencesService(mitk::CoreServices::GetPreferencesService());
-        preferencesService->InitializeStorage(".pym2aia/data/3/prefs.xml");
+        preferencesService->InitializeStorage(".pym2aia_prefs.xml");
       }
       
 
