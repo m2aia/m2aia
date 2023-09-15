@@ -143,12 +143,21 @@ namespace m2
      */
     void GetIntensities(unsigned int id, std::vector<double> &xs) const override;
 
+    std::string GetMzGroupID() const {return m_MzGroupID;}
+    std::string GetIntensityGroupID() const {return m_IntensityGroupID;}
+
   private:
     /// @brief path to the imzML file
     std::string m_ImzMLDataPath;
 
     /// @brief path to the ibd file
     std::string m_BinaryDataPath;
+
+    /// @brief referenceableParameterGroupName
+    std::string m_MzGroupID;
+    
+    /// @brief referenceableParameterGroupName
+    std::string m_IntensityGroupID;
 
     /// @brief the source object is used to read/process data from the disk
     std::unique_ptr<m2::ISpectrumImageSource> m_SpectrumImageSource;

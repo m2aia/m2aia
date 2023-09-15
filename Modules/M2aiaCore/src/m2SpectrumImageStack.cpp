@@ -38,8 +38,8 @@ namespace m2
   SpectrumImageStack::SpectrumImageStack(unsigned int stackSize, double spacingZ) : 
   m_StackSize(stackSize), m_SpacingZ(spacingZ)
   {
-    SetPropertyValue<double>("x_min", std::numeric_limits<double>::max());
-    SetPropertyValue<double>("x_max", std::numeric_limits<double>::min());
+    SetPropertyValue<double>("m2aia.xs.min", std::numeric_limits<double>::max());
+    SetPropertyValue<double>("m2aia.xs.max", std::numeric_limits<double>::min());
 
     m_SliceTransformers.resize(stackSize);
   }
@@ -51,16 +51,16 @@ namespace m2
 
     if (auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer()))
     {
-      auto newMin = spectrumImage->GetPropertyValue<double>("x_min");
-      auto newMax = spectrumImage->GetPropertyValue<double>("x_max");
+      auto newMin = spectrumImage->GetPropertyValue<double>("m2aia.xs.min");
+      auto newMax = spectrumImage->GetPropertyValue<double>("m2aia.xs.max");
       auto xLabel = spectrumImage->GetSpectrumType().XAxisLabel;
       
-      auto currentMax = GetPropertyValue<double>("x_max");
-      auto currentMin = GetPropertyValue<double>("x_min");
+      auto currentMin = GetPropertyValue<double>("m2aia.xs.min");
+      auto currentMax = GetPropertyValue<double>("m2aia.xs.max");
       if (newMin < currentMin)
-        SetPropertyValue<double>("x_min", newMin);
+        SetPropertyValue<double>("m2aia.xs.min", newMin);
       if (newMax > currentMax)
-        SetPropertyValue<double>("x_max", newMax);
+        SetPropertyValue<double>("m2aia.xs.max", newMax);
 
       this->GetSpectrumType().XAxisLabel = xLabel;
     }
@@ -216,8 +216,9 @@ namespace m2
       }
     }
 
-    SetPropertyValue<double>("x_min", xVecFinal.front());
-    SetPropertyValue<double>("x_max", xVecFinal.back());
+
+    SetPropertyValue<double>("m2aia.xs.min", xVecFinal.front());
+    SetPropertyValue<double>("m2aia.xs.max", xVecFinal.back());
 
     m_ImageAccessInitialized = true;
     

@@ -42,8 +42,12 @@ void m2::ImzMLSpectrumImage::GetImage(double mz, double tol, const mitk::Image *
 
 void m2::ImzMLSpectrumImage::InitializeProcessor()
 {
-  auto intensitiesDataTypeString = GetPropertyValue<std::string>("intensity array value type");
-  auto mzValueTypeString = GetPropertyValue<std::string>("m/z array value type");
+  m_MzGroupID = GetPropertyValue<std::string>("m2aia.imzml.mzGroupID");
+  m_IntensityGroupID = GetPropertyValue<std::string>("m2aia.imzml.intensityGroupID");
+  
+  auto intensitiesDataTypeString = GetPropertyValue<std::string>("m2aia.imzml." + m_IntensityGroupID + ".value_type");
+  auto mzValueTypeString = GetPropertyValue<std::string>("m2aia.imzml." + m_MzGroupID + ".value_type");
+
   if (mzValueTypeString.compare("32-bit float") == 0)
   {
     m_SpectrumType.XAxisType = m2::NumericType::Float;
@@ -106,7 +110,7 @@ void m2::ImzMLSpectrumImage::InitializeGeometry()
     this->InitializeProcessor();
 
   GetSpectraArtifacts().clear();
-  this->m_SpectrumImageSource->InitializeGeometry();
+ this->m_SpectrumImageSource->InitializeGeometry();
   
   this->SetImageGeometryInitialized(true);
 }
@@ -125,12 +129,12 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
   this->SetImageAccessInitialized(false); 
   this->m_SpectrumImageSource->InitializeImageAccess();
 
-  auto sx = this->GetPropertyValue<unsigned>("max count of pixels x");
-  auto sy = this->GetPropertyValue<unsigned>("max count of pixels y");
+  auto sx = this->GetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x");
+  auto sy = this->GetPropertyValue<unsigned>("[IMS:1000043] max count of pixels y");
   auto sz = this->GetPropertyValue<unsigned>("max count of pixels z");
 
-  auto px = this->GetPropertyValue<double>("pixel size x");
-  auto py = this->GetPropertyValue<double>("pixel size y");
+  auto px = this->GetPropertyValue<double>("[IMS:1000046] pixel size x");
+  auto py = this->GetPropertyValue<double>("[IMS:1000047] pixel size y");
   auto pz = this->GetPropertyValue<double>("pixel size z");
 
     MITK_INFO << "[imzML]: " + this->GetImzMLDataPath() +
@@ -190,28 +194,28 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
 //   }
 
 //   {
-//     auto A_x = A->GetPropertyValue<double>("pixel size x");
-//     auto A_y = A->GetPropertyValue<double>("pixel size y");
+//     auto A_x = A->GetPropertyValue<double>("[IMS:1000046] pixel size x");
+//     auto A_y = A->GetPropertyValue<double>("[IMS:1000047] pixel size y");
 //     auto A_z = A->GetPropertyValue<double>("pixel size z");
 
-//     auto B_x = B->GetPropertyValue<double>("pixel size x");
-//     auto B_y = B->GetPropertyValue<double>("pixel size y");
+//     auto B_x = B->GetPropertyValue<double>("[IMS:1000046] pixel size x");
+//     auto B_y = B->GetPropertyValue<double>("[IMS:1000047] pixel size y");
 //     auto B_z = B->GetPropertyValue<double>("pixel size z");
 
 //     if ((std::abs(A_x - B_x) > 10e-5 && std::abs(A_y - B_y) > 10e-5) || std::abs(A_z - B_z) > 10e-5)
 //       mitkThrow() << "Pixel size must be the same!";
 
-//     C->SetPropertyValue<double>("pixel size x", A_x);
-//     C->SetPropertyValue<double>("pixel size y", A_y);
+//     C->SetPropertyValue<double>("[IMS:1000046] pixel size x", A_x);
+//     C->SetPropertyValue<double>("[IMS:1000047] pixel size y", A_y);
 //     C->SetPropertyValue<double>("pixel size z", A_z);
 //   }
 
 //   unsigned A_x, A_y, A_z;
 //   unsigned B_x, B_y, B_z;
-//   A_x = A->GetPropertyValue<unsigned>("max count of pixels x");
-//   B_x = B->GetPropertyValue<unsigned>("max count of pixels x");
-//   A_y = A->GetPropertyValue<unsigned>("max count of pixels y");
-//   B_y = B->GetPropertyValue<unsigned>("max count of pixels y");
+//   A_x = A->GetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x");
+//   B_x = B->GetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x");
+//   A_y = A->GetPropertyValue<unsigned>("[IMS:1000043] max count of pixels y");
+//   B_y = B->GetPropertyValue<unsigned>("[IMS:1000043] max count of pixels y");
 //   A_z = A->GetPropertyValue<unsigned>("max count of pixels z");
 //   B_z = B->GetPropertyValue<unsigned>("max count of pixels z");
 
@@ -220,30 +224,30 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
 //     case 'x':
 //     {
 //       // Images are stacked along the x axis
-//       C->SetPropertyValue<unsigned>("max count of pixels x", A_x + B_x);
-//       C->SetPropertyValue<unsigned>("max count of pixels y", std::max(A_y, B_y));
+//       C->SetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x", A_x + B_x);
+//       C->SetPropertyValue<unsigned>("[IMS:1000043] max count of pixels y", std::max(A_y, B_y));
 //       C->SetPropertyValue<unsigned>("max count of pixels z", std::max(A_z, B_z));
 //     }
 //     break;
 //     case 'y':
 //     {
-//       C->SetPropertyValue<unsigned>("max count of pixels x", std::max(A_x, B_x));
-//       C->SetPropertyValue<unsigned>("max count of pixels y", A_y + B_y);
+//       C->SetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x", std::max(A_x, B_x));
+//       C->SetPropertyValue<unsigned>("[IMS:1000043] max count of pixels y", A_y + B_y);
 //       C->SetPropertyValue<unsigned>("max count of pixels z", std::max(A_z, B_z));
 //     }
 //     break;
 //     case 'z':
 //     {
-//       C->SetPropertyValue<unsigned>("max count of pixels x", std::max(A_x, B_x));
-//       C->SetPropertyValue<unsigned>("max count of pixels y", std::max(A_y, B_y));
+//       C->SetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x", std::max(A_x, B_x));
+//       C->SetPropertyValue<unsigned>("[IMS:1000043] max count of pixels y", std::max(A_y, B_y));
 //       C->SetPropertyValue<unsigned>("max count of pixels z", A_z + B_z);
 //     }
 //     break;
 //   }
 
 //   {
-//     C->SetPropertyValue<double>("absolute position offset x", 0.0);
-//     C->SetPropertyValue<double>("absolute position offset y", 0.0);
+//     C->SetPropertyValue<double>("[IMS:1000053] absolute position offset x", 0.0);
+//     C->SetPropertyValue<double>("[IMS:1000054] absolute position offset y", 0.0);
 //     C->SetPropertyValue<double>("absolute position offset z", 0.0);
 //   }
 

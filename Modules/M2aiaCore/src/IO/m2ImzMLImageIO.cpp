@@ -407,20 +407,20 @@ namespace m2
           break;
         case SpectrumFormat::ContinuousCentroid:
         case SpectrumFormat::Centroid:
-          context["spectrumtype"] = "centroid spectrum";
-          context["mode"] = "continuous";
+          context["spectrumtype"] = "[MS:1000127] centroid spectrum";
+          context["mode"] = "[IMS:1000030] continuous";
           break;
         case SpectrumFormat::ContinuousProfile:
-          context["spectrumtype"] = "profile spectrum";
-          context["mode"] = "continuous";
+          context["spectrumtype"] = "[MS:1000128] profile spectrum";
+          context["mode"] = "[IMS:1000030] continuous";
           break;
         case SpectrumFormat::ProcessedCentroid:
-          context["spectrumtype"] = "centroid spectrum";
-          context["mode"] = "processed";
+          context["spectrumtype"] = "[MS:1000127] centroid spectrum";
+          context["mode"] = "[IMS:1000031] processed";
           break;
         case SpectrumFormat::ProcessedProfile:
-          context["spectrumtype"] = "profile spectrum";
-          context["mode"] = "processed";
+          context["spectrumtype"] = "[MS:1000128] profile spectrum";
+          context["mode"] = "[IMS:1000031] processed";
           break;
         default:
           break;
@@ -428,7 +428,7 @@ namespace m2
       std::string sha1string = Poco::SHA1Engine::digestToHex(generator.digest());
       MITK_INFO << "[ibd SHA1] " << sha1string << "\n";
       MITK_INFO << "[uuid] " << uuidString << "\n";
-      // context["mode"] = "continuous";
+      // context["mode"] = "[IMS:1000030] continuous";
       context["uuid"] = uuidString;
       context["sha1sum"] = sha1string;
       unsigned mzBytes = 0;
@@ -596,55 +596,71 @@ namespace m2
 
   void ImzMLImageIO::EvaluateSpectrumFormatType(m2::SpectrumImage *object)
   {
-    if (object->GetProperty("continuous") && object->GetProperty("profile spectrum"))
-      object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
-    else if (object->GetProperty("processed") && object->GetProperty("profile spectrum"))
-      object->GetSpectrumType().Format = m2::SpectrumFormat::ProcessedProfile;
-    else if (object->GetProperty("continuous") && object->GetProperty("centroid spectrum"))
-      object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousCentroid;
-    else if (object->GetProperty("processed") && object->GetProperty("centroid spectrum"))
-      object->GetSpectrumType().Format = m2::SpectrumFormat::ProcessedCentroid;
+    auto formatTypeProp = object->GetProperty("m2aia.imzml.format_type");
+    auto spectrumTypeProp = object->GetProperty("m2aia.imzml.spectrum_type");
+    
+    
+    auto formatType = formatTypeProp ? formatTypeProp->GetValueAsString() : "";
+    auto spectrumType = spectrumTypeProp ? spectrumTypeProp->GetValueAsString() : "";
+    bool isProcessedSpectrum = formatType == "processed";
+    bool isContinuousSpectrum = formatType == "continuous";
+    bool isProfileSpectrum = spectrumType == "profile spectrum";
+    bool isCentroidSpectrum = spectrumType == "centroid spectrum";
 
-    if (!object->GetProperty("processed") && !object->GetProperty("continuous"))
+    if (!isProcessedSpectrum && !isContinuousSpectrum)
     {
-      MITK_ERROR << "Set the continuos (IMS:1000030) or processed (IMS:1000031) property in the ImzML "
+      MITK_ERROR << "Set the continuos IMS:1000030) or processed (IMS:1000031) property in the ImzML "
                     "fileContent element.";
-      MITK_ERROR << "Fallback to continuos (MS:1000030)";
+      MITK_ERROR << "Fallback to continuos (IMS:1000030)";
 
       object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
     }
 
-    if (!object->GetProperty("centroid spectrum") && !object->GetProperty("profile spectrum"))
+    if (!isCentroidSpectrum && !isProfileSpectrum)
     {
       MITK_ERROR << "Set the profile spectrum (MS:1000127) or centroid spectrum (MS:1000128) property in the ImzML "
                     "fileContent element.";
-      if (object->GetProperty("processed"))
+      if (isProcessedSpectrum)
       {
-        MITK_ERROR << "Fallback to processed (IMS:1000031) centroid spectrum (MS:1000128)";
+        MITK_ERROR << "Fallback to processed (IMS:1000031) centroid spectrum (MS:1000127)";
         MITK_ERROR << "To prevent this error message, add the following content to your imzML file:"
                       "\n<fileContent>\n\t...\n\t<cvParam cvRef=\"IMS\" accession=\"IMS:1000031\" "
-                      "name=\"processed\" value=\"\"/>\n\t<cvParam cvRef=\"MS\" accession=\"MS:1000128\" "
+                      "name=\"processed\" value=\"\"/>\n\t<cvParam cvRef=\"MS\" accession=\"MS:1000127\" "
                       "name=\"centroid spectrum\" value=\"\"/>\n\t...\n</fileContent>";
         object->GetSpectrumType().Format = m2::SpectrumFormat::ProcessedCentroid;
-        object->SetPropertyValue("centroid spectrum", std::string());
+        object->SetPropertyValue("[MS:1000127] centroid spectrum", std::string());
+        object->SetPropertyValue("m2aia.imzml.spectrum_type", "centroid spectrum"s);
+
       }
 
-      if (object->GetProperty("continuous"))
+      if (isContinuousSpectrum)
       {
-        MITK_ERROR << "Fallback to continuos (IMS:1000030) profile spectrum (MS:1000127)";
+        MITK_ERROR << "Fallback to continuos (IMS:1000030) profile spectrum (MS:1000128)";
         MITK_ERROR << "To prevent this error message, add the following content to your imzML file:"
                       "\n<fileContent>\n\t...\n\t<cvParam cvRef=\"IMS\" accession=\"IMS:1000030\" "
-                      "name=\"continuous\" value=\"\"/>\n\t<cvParam cvRef=\"MS\" accession=\"MS:1000127\" "
+                      "name=\"continuous\" value=\"\"/>\n\t<cvParam cvRef=\"MS\" accession=\"MS:1000128\" "
                       "name=\"profile spectrum\" value=\"\"/>\n\t...\n</fileContent>";
         object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
-        object->SetPropertyValue("profile spectrum", std::string());
+        object->SetPropertyValue("[MS:1000128] profile spectrum", std::string());
+        object->SetPropertyValue("m2aia.imzml.spectrum_type", "profile spectrum"s);
       }
     }
 
-    if (object->GetProperty("profile spectrum") && object->GetProperty("processed"))
+    if (object->GetProperty("[MS:1000128] profile spectrum") && object->GetProperty("[IMS:1000031] processed"))
     {
       MITK_WARN << "Processed profile spectrum is not fully supported! Check the ImzML file.";
     }
+
+
+    if (isContinuousSpectrum && isProfileSpectrum)
+      object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousProfile;
+    else if (isProcessedSpectrum && isProfileSpectrum)
+      object->GetSpectrumType().Format = m2::SpectrumFormat::ProcessedProfile;
+    else if (isContinuousSpectrum && isCentroidSpectrum)
+      object->GetSpectrumType().Format = m2::SpectrumFormat::ContinuousCentroid;
+    else if (isProcessedSpectrum && isCentroidSpectrum)
+      object->GetSpectrumType().Format = m2::SpectrumFormat::ProcessedCentroid;
+
   }
 
   void ImzMLImageIO::LoadAssociatedData(m2::ImzMLSpectrumImage *object)

@@ -98,10 +98,17 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
   {
     attributeValue(line, "name", name);
     attributeValue(line, "value", value);
-    if (!context.empty())
-      data->SetPropertyValue(context + "." + name, value);
-    else
-      data->SetPropertyValue(name, value);
+    attributeValue(line, "accession", accession);
+
+    if(value.empty())
+      value = "true";
+
+    if (!context.empty()){
+      data->SetPropertyValue("["+accession+"] " + context + "." + name, value);
+    }
+    else{
+      data->SetPropertyValue("["+accession+"] " + name, value);
+    }
   };
 
   // const auto ValueToUnsignedIntProperty = [&](const std::string &line, auto converter, const std::string &
@@ -121,17 +128,18 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
   {
     try
     {
+      attributeValue(line, "accession", accession);
       attributeValue(line, "value", value);
       auto converted_value = converter(value);
       using PropertyType = decltype(converted_value);
       if (default_name.empty())
       {
         attributeValue(line, "name", name);
-        data->SetPropertyValue<PropertyType>(name, converted_value);
+        data->SetPropertyValue<PropertyType>("["+accession+"] " + name, converted_value);
       }
       else
       {
-        data->SetPropertyValue<PropertyType>(default_name, converted_value);
+        data->SetPropertyValue<PropertyType>("["+accession+"] " + default_name, converted_value);
       }
     }
     catch (std::exception &e)
@@ -142,59 +150,61 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
   {
     // ------ Process a referenceableParameter Group
-    context_map["referenceableParamGroup"] = [&](const std::string &line)
+    context_map["referenceableParamGroup"] = [&](std::string line)
     {
-      std::string refGroupID = "";
-      std::string refGroupName = "";
-      std::string targetKey = "";
-      attributeValue(line, "id", refGroupID);
-      std::string gLine;
+      std::string id, dataType, spectrumType, spectrumTypeAccession;
+      id.reserve(60);
+      attributeValue(line, "id", id);
+
       const auto npos = std::string::npos;
       while (!f.eof())
       {
-        std::getline(f, gLine); // read the next line
+        std::getline(f, line); // read the next line
 
-        if (gLine.find("</") != std::string::npos)
+        if (line.find("</") != std::string::npos)
           break;
 
-        if (gLine.find("MS:1000521") !=
-              npos // 32-bit float https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L3752
-            || gLine.find("MS:1000523") !=
-                 npos) // 64-bit float https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L3764
-          attributeValue(gLine, "name", name);
+        attributeValue(line, "accession", accession);
+        attributeValue(line, "name", name);
+        attributeValue(line, "value", value);
 
-        if (gLine.find("MS:1000514") !=
-            npos) // m/z array https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L3695
-        {
-          attributeValue(gLine, "name", refGroupName);
-          targetKey = "mzGroupName";
+        if(value.empty()) value = "true";
+
+        data->SetPropertyValue<std::string>("["+accession+"] "+id+"."+name, value);
+        
+        if(line.find("MS:1000520") != npos ||
+           line.find("MS:1000521") != npos ||
+           line.find("MS:1000522") != npos ||
+           line.find("MS:1000523") != npos){
+          dataType = name;
+           }
+        
+        if(line.find("MS:1000127") != npos || 
+           line.find("MS:1000128") != npos){
+          spectrumType = name;
+          spectrumTypeAccession = accession;
         }
 
-        if (gLine.find("MS:1000515") !=
-            npos) // intensity array https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L3704
-        {
-          attributeValue(gLine, "name", refGroupName);
-          targetKey = "intensityGroupName";
+        if (line.find("MS:1000514") != npos){ 
+          // m/z array https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L3695
+          data->SetPropertyValue<std::string>("m2aia.imzml.mzGroupID", id);
         }
 
-        if (gLine.find("MS:1000127") !=
-              npos // centroid spectrum https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L1052
-            || gLine.find("MS:1000128") !=
-                 npos) // profile spectrum https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L1059
-        {
-          std::string spectype;
-          attributeValue(gLine, "name", spectype);
-          data->SetPropertyValue<std::string>(spectype, "");
+        if (line.find("MS:1000515") != npos){
+            // intensity array https://github.com/m2aia/psi-ms-CV/blob/master/psi-ms.obo#L3704
+          data->SetPropertyValue<std::string>("m2aia.imzml.intensityGroupID", id);
         }
       }
-      if (!targetKey.empty())
-      {
-        data->SetPropertyValue<std::string>(targetKey, refGroupName);
-        data->SetPropertyValue<std::string>(refGroupName, refGroupID);
-        data->SetPropertyValue<unsigned>(refGroupName + " value type (bytes)", precisionDict[name]);
-        data->SetPropertyValue<std::string>(refGroupName + " value type", name);
+      
+      if(!dataType.empty()){
+        data->SetPropertyValue<unsigned>("m2aia.imzml." + id + ".value_type_in_bytes", precisionDict[dataType]);
+        data->SetPropertyValue<std::string>("m2aia.imzml." + id + ".value_type", dataType);
       }
-
+      if(!spectrumType.empty()){
+        data->SetPropertyValue<std::string>("m2aia.imzml.spectrum_type", spectrumType);
+        data->SetPropertyValue<std::string>("["+spectrumTypeAccession+"] "+name, std::string("true"));
+      }
+      
       return "";
     };
 
@@ -226,6 +236,18 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
     // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L160
     accession_map["IMS:1000045"] = [&](auto line) { ValueToProperty(line, stod); }; // "max dimension y"s
 
+    // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L113
+    accession_map["IMS:1000030"] = [&](auto line) { // "continuous"
+      ContextValueToStringProperty(line); 
+    data->SetPropertyValue<std::string>("m2aia.imzml.format_type", name);
+    }; 
+
+    // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L119
+    accession_map["IMS:1000031"] = [&](auto line) { // "processed"
+      ContextValueToStringProperty(line); 
+    data->SetPropertyValue<std::string>("m2aia.imzml.format_type", name);
+    }; 
+
     // Attention: we should not specify a default value, for the name here.
     // Describes the length of a pixel in the x dimension. If no pixel size y (IMS:1000047) is explicitly specified,
     // then this also describes the length of a pixel in the y dimension."
@@ -239,13 +261,13 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
     accession_map["IMS:1000053"] = [&](auto line)
     {
       ValueToProperty(line, std::bind(m2::MicroMeterToMilliMeter, std::bind(stol, _1)));
-    }; //, "absolute position offset x"s
+    }; //, "[IMS:1000053] absolute position offset x"s
 
     // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L228
     accession_map["IMS:1000054"] = [&](auto line)
     {
       ValueToProperty(line, std::bind(m2::MicroMeterToMilliMeter, std::bind(stol, _1)));
-    }; //, "absolute position offset y"s
+    }; //, "[IMS:1000054] absolute position offset y"s
 
     // // Not supported by IMS obo
     // accession_map["IMS:X3"] = accession_map["M2:0000003"] = [&](const std::string &line) { // absolute position
@@ -256,27 +278,29 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
     // origin size z
     // scanSettings
-    context_map["instrumentConfiguration"] = [&](const std::string &line) { attributeValue(line, "id", context); };
 
     context_map["source"] = [&](const std::string &) { context = "source"; };
     context_map["analyzer"] = [&](const std::string &) { context = "analyzer"; };
     context_map["detector"] = [&](const std::string &) { context = "detector"; };
 
+    context_map["instrumentConfiguration"] = [&](const std::string &line) { attributeValue(line, "id", context); };
     context_map["dataProcessing"] = [&](const std::string &line) { attributeValue(line, "id", context); };
+
     context_map["processingMethod"] = [&](const std::string &line)
     {
       attributeValue(line, "order", value);
-      context = context + "processingMethod (" + value + ")";
+      context = context + ".processingMethod (" + value + ")";
     };
 
     // default values
     data->SetPropertyValue<unsigned>("max count of pixels z", 1);
-    data->SetPropertyValue<double>("pixel size x", -1);
-    data->SetPropertyValue<double>("pixel size y", -1);
+    
+    data->SetPropertyValue<double>("[IMS:1000046] pixel size x", -1);
+    data->SetPropertyValue<double>("[IMS:1000047] pixel size y", -1);
     data->SetPropertyValue<double>("pixel size z", -1);
 
-    data->SetPropertyValue<double>("absolute position offset x", 0.0);
-    data->SetPropertyValue<double>("absolute position offset y", 0.0);
+    data->SetPropertyValue<double>("[IMS:1000053] absolute position offset x", 0.0);
+    data->SetPropertyValue<double>("[IMS:1000054] absolute position offset y", 0.0);
     data->SetPropertyValue<double>("absolute position offset z", 0.0);
 
     // -------- PROCESS FILE --------
@@ -343,37 +367,37 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
 
     // }
 
-    if (data->GetProperty("pixel size"))
+    if (data->GetProperty("[IMS:1000046] pixel size"))
     {
-      auto v = data->GetPropertyValue<double>("pixel size");
-      data->SetPropertyValue<double>("pixel size x", v);
+      auto v = data->GetPropertyValue<double>("[IMS:1000046] pixel size");
+      data->SetPropertyValue<double>("[IMS:1000046] pixel size x", v);
     }
 
-    if (data->GetPropertyValue<double>("pixel size y") == -1 && data->GetPropertyValue<double>("pixel size x") > 0)
+    if (data->GetPropertyValue<double>("[IMS:1000047] pixel size y") == -1 && data->GetPropertyValue<double>("[IMS:1000046] pixel size x") > 0)
     {
       // Only IMS:1000046 was set (should be standard)
-      auto v = data->GetPropertyValue<double>("pixel size x");
+      auto v = data->GetPropertyValue<double>("[IMS:1000046] pixel size x");
       double sqs = std::sqrt(v);
-      data->SetPropertyValue<double>("pixel size x", m2::MicroMeterToMilliMeter(sqs));
-      data->SetPropertyValue<double>("pixel size y", m2::MicroMeterToMilliMeter(sqs));
+      data->SetPropertyValue<double>("[IMS:1000046] pixel size x", m2::MicroMeterToMilliMeter(sqs));
+      data->SetPropertyValue<double>("[IMS:1000047] pixel size y", m2::MicroMeterToMilliMeter(sqs));
       data->SetPropertyValue<double>("squared pixel size", v);
     }
-    else if (data->GetPropertyValue<double>("pixel size y") > 0 && data->GetPropertyValue<double>("pixel size x") > 0)
+    else if (data->GetPropertyValue<double>("[IMS:1000047] pixel size y") > 0 && data->GetPropertyValue<double>("[IMS:1000046] pixel size x") > 0)
     {
       // IMS:1000046 and IMS:1000047 was set
       // Note IMS:1000047 is used in a false way
       // -> in this case assumed to take the y value
       // if pixel size y is used > do not sqrt
-      auto pixelSizeXInMilliMetre = m2::MicroMeterToMilliMeter(data->GetPropertyValue<double>("pixel size x"));
-      auto pixelSizeYInMilliMetre = m2::MicroMeterToMilliMeter(data->GetPropertyValue<double>("pixel size y"));
-      data->SetPropertyValue("pixel size x", pixelSizeXInMilliMetre);
-      data->SetPropertyValue("pixel size y", pixelSizeYInMilliMetre);
+      auto pixelSizeXInMilliMetre = m2::MicroMeterToMilliMeter(data->GetPropertyValue<double>("[IMS:1000046] pixel size x"));
+      auto pixelSizeYInMilliMetre = m2::MicroMeterToMilliMeter(data->GetPropertyValue<double>("[IMS:1000047] pixel size y"));
+      data->SetPropertyValue("[IMS:1000046] pixel size x", pixelSizeXInMilliMetre);
+      data->SetPropertyValue("[IMS:1000047] pixel size y", pixelSizeYInMilliMetre);
     }
 
-    if (data->GetPropertyValue<double>("pixel size y") <= 0 && data->GetPropertyValue<double>("pixel size x") <= 0)
+    if (data->GetPropertyValue<double>("[IMS:1000047] pixel size y") <= 0 && data->GetPropertyValue<double>("[IMS:1000046] pixel size x") <= 0)
     {
-      data->SetPropertyValue("pixel size x", m2::MicroMeterToMilliMeter(50));
-      data->SetPropertyValue("pixel size y", m2::MicroMeterToMilliMeter(50));
+      data->SetPropertyValue("[IMS:1000046] pixel size x", m2::MicroMeterToMilliMeter(50));
+      data->SetPropertyValue("[IMS:1000047] pixel size y", m2::MicroMeterToMilliMeter(50));
       data->SetPropertyValue(
         "pixel size info",
         std::string("Pixel size x and y are default values, due to missing imzTags IMS:1000046 and IMS:1000047!"));
@@ -464,7 +488,7 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
 
     context_map["referenceableParamGroupRef"] = [&](auto line) { attributeValue(line, "ref", context); };
 
-    auto mzArrayRefName = data->GetPropertyValue<std::string>("m/z array");
+    auto mzArrayRefName = data->GetPropertyValue<std::string>("m2aia.imzml.mzGroupID");
     // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L303
     accession_map[mzArrayRefName + ".IMS:1000102"] = [&](auto line)
     { spectra[spectrumIndexReference].mzOffset = std::stoull(attributeValue(line, "value", value)); };
@@ -473,7 +497,7 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
     accession_map[mzArrayRefName + ".IMS:1000103"] = [&](auto line)
     { spectra[spectrumIndexReference].mzLength = std::stoull(attributeValue(line, "value", value)); };
 
-    auto intensityArrayRefName = data->GetPropertyValue<std::string>("intensity array");
+    auto intensityArrayRefName = data->GetPropertyValue<std::string>("m2aia.imzml.intensityGroupID");
     // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L303
     accession_map[intensityArrayRefName + ".IMS:1000102"] = [&](auto line)
     { spectra[spectrumIndexReference].intOffset = std::stoull(attributeValue(line, "value", value)); };
@@ -612,8 +636,8 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
       bool requireCorrectionY = *(ys.begin());
       bool requireCorrectionZ = *(zs.begin());
 
-      auto imzMLSizeX = data->GetPropertyValue<unsigned>("max count of pixels x");
-      auto imzMLSizeY = data->GetPropertyValue<unsigned>("max count of pixels y");
+      auto imzMLSizeX = data->GetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x");
+      auto imzMLSizeY = data->GetPropertyValue<unsigned>("[IMS:1000043] max count of pixels y");
       auto imzMLSizeZ = data->GetPropertyValue<unsigned>("max count of pixels z");
 
       auto newSizeX = unsigned(*(xs.rbegin()) - *(xs.begin()) + 1);
@@ -624,8 +648,8 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
       data->SetPropertyValue<unsigned>("(original imzML value) max count of pixels y", imzMLSizeY);
       data->SetPropertyValue<unsigned>("(original imzML value) max count of pixels z", imzMLSizeZ);
 
-      data->SetPropertyValue<unsigned>("max count of pixels x", newSizeX);
-      data->SetPropertyValue<unsigned>("max count of pixels y", newSizeY);
+      data->SetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x", newSizeX);
+      data->SetPropertyValue<unsigned>("[IMS:1000043] max count of pixels y", newSizeY);
       data->SetPropertyValue<unsigned>("max count of pixels z", newSizeZ);
 
       MITK_WARN << "Area Correction!";

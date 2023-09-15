@@ -262,7 +262,11 @@ inline const T m2::SpectrumImage::GetPropertyValue(const std::string &key, T def
   }
   else
   {
-    MITK_WARN << "No meta data object found! " << key;
+    MITK_WARN << "No meta data object found! " << key << " return => " << def;
+    MITK_WARN << "Valid object keys are:";
+    for(std::string k : GetPropertyKeys())
+      std::cout << "\t" << k << " : " << GetProperty(k.c_str())->GetValueAsString() << "\n";
+    
     return def;
   }
 }

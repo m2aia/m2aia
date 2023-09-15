@@ -155,8 +155,8 @@ void m2DataTools::OnResetTiling()
       prevOrigin = image->GetGeometry()->GetOrigin();
       origin = image->GetGeometry()->GetOrigin();
 
-      origin[0] = image->GetPropertyValue<double>("absolute position offset x", 0);
-      origin[1] = image->GetPropertyValue<double>("absolute position offset y", 0);
+      origin[0] = image->GetPropertyValue<double>("[IMS:1000053] absolute position offset x", 0);
+      origin[1] = image->GetPropertyValue<double>("[IMS:1000054] absolute position offset y", 0);
       origin[2] = image->GetPropertyValue<double>("absolute position offset z", 0);     
       image->GetGeometry()->SetOrigin(origin);
       std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), 

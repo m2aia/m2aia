@@ -122,8 +122,8 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeGeometry()
                                                  p->GetPropertyValue<unsigned>("dim_y"), // n_y
                                                  p->GetPropertyValue<unsigned>("dim_z")};
 
-  std::array<double, 3> imageOrigin = {p->GetPropertyValue<double>("absolute position offset x") * 0.001, // x_init
-                                       p->GetPropertyValue<double>("absolute position offset y") * 0.001, // y_init
+  std::array<double, 3> imageOrigin = {p->GetPropertyValue<double>("[IMS:1000053] absolute position offset x") * 0.001, // x_init
+                                       p->GetPropertyValue<double>("[IMS:1000054] absolute position offset y") * 0.001, // y_init
                                        p->GetPropertyValue<double>("absolute position offset z") * 0.001};
 
   using ImageType = itk::Image<m2::DisplayImagePixelType, 3>;
@@ -239,9 +239,9 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
   std::vector<std::vector<double>> skylineT;
   std::vector<std::vector<double>> sumT;
 
-  p->SetPropertyValue<unsigned>("spectral depth", xs.size());
-  p->SetPropertyValue<double>("x_min", xs.front());
-  p->SetPropertyValue<double>("x_max", xs.back());
+  p->SetPropertyValue<unsigned>("m2aia.fsm.xaxis.n", xs.size());
+  p->SetPropertyValue<double>("m2aia.fsm.xaxis.min", xs.front());
+  p->SetPropertyValue<double>("m2aia.fsm.xaxis.max", xs.back());
 
   skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));
   sumT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));

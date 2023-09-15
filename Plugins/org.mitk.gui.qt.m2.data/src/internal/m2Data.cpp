@@ -495,8 +495,8 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
       if (!data->IsInitialized())
         mitkThrow() << "Trying to grab an ion image but data access was not initialized properly!";
 
-      auto xMin = data->GetPropertyValue<double>("x_min");
-      auto xMax = data->GetPropertyValue<double>("x_max");
+      auto xMin = data->GetPropertyValue<double>("m2aia.xs.min");
+      auto xMax = data->GetPropertyValue<double>("m2aia.xs.max");
 
       if (xRangeCenter > xMax || xRangeCenter < xMin)
         continue;

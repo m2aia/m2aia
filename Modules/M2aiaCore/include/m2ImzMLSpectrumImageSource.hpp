@@ -322,12 +322,12 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
 template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeometry()
 {
-  std::array<itk::SizeValueType, 3> imageSize = {p->GetPropertyValue<unsigned int>("max count of pixels x"),
-                                                 p->GetPropertyValue<unsigned int>("max count of pixels y"),
+  std::array<itk::SizeValueType, 3> imageSize = {p->GetPropertyValue<unsigned int>("[IMS:1000042] max count of pixels x"),
+                                                 p->GetPropertyValue<unsigned int>("[IMS:1000043] max count of pixels y"),
                                                  p->GetPropertyValue<unsigned int>("max count of pixels z")};
 
-  std::array<double, 3> imageOrigin = {p->GetPropertyValue<double>("absolute position offset x"),
-                                       p->GetPropertyValue<double>("absolute position offset y"),
+  std::array<double, 3> imageOrigin = {p->GetPropertyValue<double>("[IMS:1000053] absolute position offset x"),
+                                       p->GetPropertyValue<double>("[IMS:1000054] absolute position offset y"),
                                        p->GetPropertyValue<double>("absolute position offset z")};
 
   using ImageType = itk::Image<m2::DisplayImagePixelType, 3>;
@@ -344,8 +344,8 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
   o[2] = imageOrigin[2];
 
   //
-  s[0] = p->GetPropertyValue<double>("pixel size x");
-  s[1] = p->GetPropertyValue<double>("pixel size y");
+  s[0] = p->GetPropertyValue<double>("[IMS:1000046] pixel size x");
+  s[1] = p->GetPropertyValue<double>("[IMS:1000047] pixel size y");
   s[2] = p->GetPropertyValue<double>("pixel size z");
 
   auto d = itkIonImage->GetDirection();
@@ -477,6 +477,10 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
 template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageAccessContinuousProfile()
 {
+  
+  
+
+
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
   std::shared_ptr<mitk::ImagePixelReadAccessor<m2::NormImagePixelType, 3>> accExtNorm;
   if(p->GetExternalNormalizationImage())
@@ -497,9 +501,9 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
     auto &massAxis = p->GetXAxis();
     massAxis.clear();
     std::copy(std::begin(mzs), std::end(mzs), std::back_inserter(massAxis));
-    p->SetPropertyValue<unsigned>("spectral depth", mzs.size());
-    p->SetPropertyValue<double>("x_min", mzs.front());
-    p->SetPropertyValue<double>("x_max", mzs.back());
+    p->SetPropertyValue<unsigned>("m2aia.xs.n", mzs.size());
+    p->SetPropertyValue<double>("m2aia.xs.min", mzs.front());
+    p->SetPropertyValue<double>("m2aia.xs.max", mzs.back());
   }
 
   skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(mzs.size(), 0));
@@ -606,9 +610,9 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
     auto &massAxis = p->GetXAxis();
     massAxis.clear();
     std::copy(std::begin(mzs), std::end(mzs), std::back_inserter(massAxis));
-    p->SetPropertyValue<unsigned>("spectral depth", mzs.size());
-    p->SetPropertyValue<double>("x_min", mzs.front());
-    p->SetPropertyValue<double>("x_max", mzs.back());
+    p->SetPropertyValue<unsigned>("m2aia.xs.n", mzs.size());
+    p->SetPropertyValue<double>("m2aia.xs.min", mzs.front());
+    p->SetPropertyValue<double>("m2aia.xs.max", mzs.back());
   }
 
   // each thread pixelwise accumulate peaks
@@ -856,9 +860,9 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
   yMaxT.clear();
   hT.clear();
 
-  p->SetPropertyValue<double>("x_min", mzAxis.front());
-  p->SetPropertyValue<double>("x_max", mzAxis.back());
-  p->SetPropertyValue<unsigned>("spectral depth (bins of overview spectrum)", mzAxis.size());
+  p->SetPropertyValue<double>("m2aia.xs.min", mzAxis.front());
+  p->SetPropertyValue<double>("m2aia.xs.max", mzAxis.back());
+  p->SetPropertyValue<unsigned>("m2aia.xs.n", mzAxis.size());
 }
 
 template <class MassAxisType, class IntensityType>

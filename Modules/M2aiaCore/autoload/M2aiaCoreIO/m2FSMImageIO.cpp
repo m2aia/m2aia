@@ -256,8 +256,8 @@ namespace m2
     fsmImage->SetPropertyValue<unsigned>("dim_y", dimensions[1]); // n_z
     fsmImage->SetPropertyValue<unsigned>("dim_z", 1);
 
-    fsmImage->SetPropertyValue<double>("absolute position offset x", meta[7]); // x_init
-    fsmImage->SetPropertyValue<double>("absolute position offset y", meta[8]);
+    fsmImage->SetPropertyValue<double>("[IMS:1000053] absolute position offset x", meta[7]); // x_init
+    fsmImage->SetPropertyValue<double>("[IMS:1000054] absolute position offset y", meta[8]);
     fsmImage->SetPropertyValue<double>("absolute position offset z", 0);
 
     fsmImage->SetPropertyValue<double>("spacing_x", m2::MicroMeterToMilliMeter(meta[0])); // x_delta
