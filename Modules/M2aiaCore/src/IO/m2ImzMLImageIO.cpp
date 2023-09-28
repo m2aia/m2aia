@@ -679,7 +679,15 @@ namespace m2
     if (itksys::SystemTools::FileExists(normPath))
     {
       auto data = mitk::IOUtil::Load(normPath).at(0);
-      object->SetExternalNormalizationImage(dynamic_cast<mitk::Image *>(data.GetPointer()));
+
+      if(mitk::Equal(*object->GetGeometry(), *data->GetGeometry())){
+        auto type = m2::NormalizationStrategyType::External;
+        object->SetNormalizationImage(dynamic_cast<mitk::Image *>(data.GetPointer()), type);
+        object->SetNormalizationImageStatus(type, true);
+      }else{
+        MITK_ERROR << "External normalization image geometry is not equal to the loaded data";
+      }
+
     }
 
 

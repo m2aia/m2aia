@@ -81,7 +81,6 @@ namespace m2
         float x, y, z;
       } world;
       // In imzML-file defined normalization constant
-      m2::NormImagePixelType normalizationFactor = 1.0;
       m2::NormImagePixelType inFileNormalizationFactor = 1.0;
       // std::vector<m2::Peak> peaks;
     };
@@ -93,6 +92,9 @@ namespace m2
     itkGetConstReferenceMacro(Spectra, SpectrumVectorType);
 
     void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
+
+    double GetXMin() const;
+    double GetXMax() const;
 
     /**
      * @brief Initialize image access for processing.
@@ -108,6 +110,11 @@ namespace m2
      * @brief Initialize the image processor.
      */
     void InitializeProcessor() override;
+
+    /**
+     *  @brief Initialize a normalization image for the given type
+     */
+    void InitializeNormalizationImage(m2::NormalizationStrategyType type) override;
 
     /**
      * @brief Get the spectrum as float values.

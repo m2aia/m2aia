@@ -46,6 +46,17 @@ namespace m2
     None = 0, TIC ,Sum, Mean, Max, RMS, Internal, External
   };
 
+  const std::array<NormalizationStrategyType, 8> NormalizationStrategyTypeList = {
+    NormalizationStrategyType::None,
+    NormalizationStrategyType::TIC,
+    NormalizationStrategyType::Sum,
+    NormalizationStrategyType::Mean,
+    NormalizationStrategyType::Max,
+    NormalizationStrategyType::RMS,
+    NormalizationStrategyType::Internal,
+    NormalizationStrategyType::External
+  };
+
   const std::array<std::string, 8> NormalizationStrategyTypeNames = {
     "None", "TIC", "Sum", "Mean", "Max", "RMS", "Internal", "External"};
 

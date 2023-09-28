@@ -34,6 +34,46 @@ double m2::SpectrumImage::ApplyTolerance(double xValue) const
     return this->GetTolerance();
 }
 
+mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage()
+{
+    return GetNormalizationImage(m_NormalizationStrategy);
+}
+
+mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage(m2::NormalizationStrategyType type)
+{
+  if (m_NormalizationImages.find(type) != m_NormalizationImages.end())
+    
+      return m_NormalizationImages.at(type).image;
+  return nullptr;
+}
+
+mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage() const
+{
+    return GetNormalizationImage(m_NormalizationStrategy);
+}
+
+mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage(m2::NormalizationStrategyType type) const
+{
+  if (m_NormalizationImages.find(type) != m_NormalizationImages.end())
+      return m_NormalizationImages.at(type).image;
+  return nullptr;
+};
+
+bool m2::SpectrumImage::GetNormalizationImageStatus(m2::NormalizationStrategyType type)
+{
+  return m_NormalizationImages[type].isInitialized;
+};
+
+void m2::SpectrumImage::SetNormalizationImageStatus(m2::NormalizationStrategyType type, bool initialized){
+  m_NormalizationImages[type].isInitialized = initialized;
+}
+
+void m2::SpectrumImage::SetNormalizationImage(mitk::Image::Pointer image, m2::NormalizationStrategyType type)
+{
+  m_NormalizationImages[type].image = image;
+}
+
+
 // void m2::SpectrumImage::Check(const std::string &key, mitk::Image *img)
 // {
 //   m_ImageArtifacts[key] = img;
@@ -70,8 +110,10 @@ void m2::SpectrumImage::ApplyMoveOriginOperation(const mitk::Vector3D &v)
 {
   auto geometry = this->GetGeometry();
   geometry->Translate(v);
-  std::vector<mitk::BaseData *> imageList{
-    m_IndexImage, m_ExternalNormalizationImage, m_NormalizationImage, m_MaskImage, m_Points};
+  std::vector<mitk::BaseData *> imageList{m_IndexImage, m_MaskImage, m_Points};
+  for(auto kv : m_NormalizationImages)
+    imageList.push_back(kv.second.image);
+  
   for (auto image : imageList)
   {
     if (image)
@@ -89,8 +131,11 @@ void m2::SpectrumImage::ApplyGeometryOperation(mitk::Operation *op)
   this->GetGeometry()->SetIdentity();
   this->GetGeometry()->Compose(manipulatedGeometry->GetIndexToWorldTransform());
 
-  std::vector<mitk::BaseData *> imageList{
-    m_IndexImage, m_ExternalNormalizationImage, m_NormalizationImage, m_MaskImage, m_Points};
+  std::vector<mitk::BaseData *> imageList{m_IndexImage, m_MaskImage, m_Points};
+  
+  for(auto kv : m_NormalizationImages)
+    imageList.push_back(kv.second.image);
+  
   for (auto image : imageList)
   {
     if (image)

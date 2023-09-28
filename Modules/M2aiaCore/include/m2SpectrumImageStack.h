@@ -70,6 +70,7 @@ namespace m2
     void InitializeGeometry() override;
     void InitializeProcessor() override;
     void InitializeImageAccess() override;
+    void InitializeNormalizationImage(m2::NormalizationStrategyType /*type*/) override{}
 
     bool GetUseSliceWiseMaximumNormalization(){return m_UseSliceWiseMaximumNormalization;}
     void SetUseSliceWiseMaximumNormalization(bool v){m_UseSliceWiseMaximumNormalization = v;}

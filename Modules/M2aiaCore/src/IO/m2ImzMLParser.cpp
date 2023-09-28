@@ -617,32 +617,41 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
     {
       // Load only minimal area where valid spectra exist.
       // https://github.com/m2aia/m2aia/issues/45
-      std::set<int> xs, ys, zs;
+      itk::IndexValueType xsMin, ysMin, zsMin;
+      itk::IndexValueType xsMax, ysMax, zsMax;
+      xsMin = ysMin = zsMin = std::numeric_limits<itk::IndexValueType>::max();
+      xsMax = ysMax = zsMax = 0;
+
       for (auto &s : spectra)
       {
-        xs.insert(s.index[0]);
-        ys.insert(s.index[1]);
-        zs.insert(s.index[2]);
+        xsMin = std::min(s.index[0], xsMin);
+        xsMax = std::max(s.index[0], xsMax);
+
+        ysMin = std::min(s.index[1], ysMin);
+        ysMax = std::max(s.index[1], ysMax);
+
+        zsMin = std::min(s.index[2], zsMin);
+        zsMax = std::max(s.index[2], zsMax);
       }
 
       for (auto &s : spectra)
       {
-        s.index[0] -= *(xs.begin());
-        s.index[1] -= *(ys.begin());
-        s.index[2] -= *(zs.begin());
+        s.index[0] -= xsMin;
+        s.index[1] -= ysMin;
+        s.index[2] -= zsMin;
       }
 
-      bool requireCorrectionX = *(xs.begin());
-      bool requireCorrectionY = *(ys.begin());
-      bool requireCorrectionZ = *(zs.begin());
+      bool requireCorrectionX = xsMin;
+      bool requireCorrectionY = ysMin;
+      bool requireCorrectionZ = zsMin;
 
       auto imzMLSizeX = data->GetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x");
       auto imzMLSizeY = data->GetPropertyValue<unsigned>("[IMS:1000043] max count of pixels y");
       auto imzMLSizeZ = data->GetPropertyValue<unsigned>("max count of pixels z");
 
-      auto newSizeX = unsigned(*(xs.rbegin()) - *(xs.begin()) + 1);
-      auto newSizeY = unsigned(*(ys.rbegin()) - *(ys.begin()) + 1);
-      auto newSizeZ = unsigned(*(zs.rbegin()) - *(zs.begin()) + 1);
+      auto newSizeX = unsigned(xsMax - xsMin + 1);
+      auto newSizeY = unsigned(ysMax - ysMin + 1);
+      auto newSizeZ = unsigned(zsMax - zsMin + 1);
 
       data->SetPropertyValue<unsigned>("(original imzML value) max count of pixels x", imzMLSizeX);
       data->SetPropertyValue<unsigned>("(original imzML value) max count of pixels y", imzMLSizeY);
@@ -654,11 +663,11 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
 
       MITK_WARN << "Area Correction!";
       if (requireCorrectionX)
-        MITK_WARN << "The x coordinate index was shifted by " << *(xs.begin()) << " towards 0.";
+        MITK_WARN << "The x coordinate index was shifted by " << xsMin << " towards 0.";
       if (requireCorrectionY)
-        MITK_WARN << "The y coordinate index was shifted by " << *(ys.begin()) << " towards 0.";
+        MITK_WARN << "The y coordinate index was shifted by " << ysMin << " towards 0.";
       if (requireCorrectionZ)
-        MITK_WARN << "The z coordinate index was shifted by " << *(zs.begin()) << " towards 0.";
+        MITK_WARN << "The z coordinate index was shifted by " << zsMin << " towards 0.";
       if (imzMLSizeX != newSizeX)
         MITK_WARN << "The max count of pixels x was adjusted from " << imzMLSizeX << " to " << newSizeX << "";
       if (imzMLSizeX != newSizeX)

@@ -239,9 +239,9 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
   std::vector<std::vector<double>> skylineT;
   std::vector<std::vector<double>> sumT;
 
-  p->SetPropertyValue<unsigned>("m2aia.fsm.xaxis.n", xs.size());
-  p->SetPropertyValue<double>("m2aia.fsm.xaxis.min", xs.front());
-  p->SetPropertyValue<double>("m2aia.fsm.xaxis.max", xs.back());
+  p->SetPropertyValue<unsigned>("m2aia.xs.n", xs.size());
+  p->SetPropertyValue<double>("m2aia.xs.min", xs.front());
+  p->SetPropertyValue<double>("m2aia.xs.max", xs.back());
 
   skylineT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));
   sumT.resize(p->GetNumberOfThreads(), std::vector<double>(xs.size(), 0));

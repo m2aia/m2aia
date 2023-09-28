@@ -42,6 +42,10 @@ namespace m2
     using SpectrumArtifactDataType = double;
     using SpectrumArtifactVectorType = std::vector<SpectrumArtifactDataType>;
     using SpectrumArtifactMapType = std::map<m2::SpectrumType, SpectrumArtifactVectorType>;
+
+    struct NormalizationImageData{mitk::Image::Pointer image; bool isInitialized = false;};
+
+    using NormalizationImageMapType = std::map<m2::NormalizationStrategyType, NormalizationImageData>;
     using TransformParameterVectorType = std::vector<std::string>;
 
     mitkClassMacro(SpectrumImage, mitk::Image);
@@ -84,13 +88,31 @@ namespace m2
     itkGetMacro(SpectraArtifacts, SpectrumArtifactMapType &);
     itkGetConstReferenceMacro(SpectraArtifacts, SpectrumArtifactMapType);
 
-    itkGetMacro(NormalizationImage, mitk::Image::Pointer);
-    itkGetConstMacro(NormalizationImage, mitk::Image::Pointer);
-    itkSetMacro(NormalizationImage, mitk::Image::Pointer);
+    /// @brief Return and if necessary prepare the normalization image for the *currently* selected normalization method
+    virtual mitk::Image::Pointer GetNormalizationImage();
 
-    itkGetMacro(ExternalNormalizationImage, mitk::Image::Pointer);
-    itkGetConstMacro(ExternalNormalizationImage, mitk::Image::Pointer);
-    itkSetMacro(ExternalNormalizationImage, mitk::Image::Pointer);
+    /// @brief Return the normalization image for the *currently* selected normalization method
+    virtual mitk::Image::Pointer GetNormalizationImage() const;
+
+    /// @brief Return and if necessary prepare the normalization image
+    virtual mitk::Image::Pointer GetNormalizationImage(m2::NormalizationStrategyType type);
+
+    /// @brief Return the normalization image
+    virtual mitk::Image::Pointer GetNormalizationImage(m2::NormalizationStrategyType type) const;
+
+    /// @brief Set/override the normalization image
+    virtual void SetNormalizationImage(mitk::Image::Pointer, m2::NormalizationStrategyType type);
+
+    /// @brief Set/override the normalization image
+    virtual void SetNormalizationImageStatus(m2::NormalizationStrategyType type, bool initialized);
+
+    /// @brief Get the initialization status of normalization image
+    virtual bool GetNormalizationImageStatus(m2::NormalizationStrategyType type);
+
+    
+
+    itkGetMacro(NormalizationImages, NormalizationImageMapType &);
+    itkGetConstReferenceMacro(NormalizationImages, NormalizationImageMapType);
 
     itkGetMacro(MaskImage, mitk::Image::Pointer);
     itkGetConstMacro(MaskImage, mitk::Image::Pointer);
@@ -119,6 +141,7 @@ namespace m2
     virtual void InitializeImageAccess() = 0;
     virtual void InitializeGeometry() = 0;
     virtual void InitializeProcessor() = 0;
+    virtual void InitializeNormalizationImage(m2::NormalizationStrategyType /*type*/){}
 
     void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
     // void InsertImageArtifact(const std::string &key, mitk::Image *img);
@@ -165,13 +188,12 @@ namespace m2
     unsigned int m_NumberOfThreads = 24;
     // unsigned int m_NumberOfThreads = 2;
 
-    SpectrumArtifactMapType m_SpectraArtifacts;
-
-    mitk::Image::Pointer m_NormalizationImage; 
-    mitk::Image::Pointer m_ExternalNormalizationImage;
+    SpectrumArtifactMapType m_SpectraArtifacts;   
+    
     mitk::Image::Pointer m_MaskImage;
     mitk::Image::Pointer m_IndexImage;
     mitk::PointSet::Pointer m_Points;
+    NormalizationImageMapType m_NormalizationImages;
     
     SpectrumInfo m_SpectrumType;
     SpectrumInfo m_ExportSpectrumType;

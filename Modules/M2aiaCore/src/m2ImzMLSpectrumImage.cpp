@@ -34,10 +34,23 @@ See LICENSE.txt for details.
 #include <signal/m2Smoothing.h>
 #include <signal/m2Transformer.h>
 
+double m2::ImzMLSpectrumImage::GetXMin() const{
+  return GetXAxis().front();
+}
+
+double m2::ImzMLSpectrumImage::GetXMax() const{  
+  return GetXAxis().back();
+}
+
+
 void m2::ImzMLSpectrumImage::GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const
 {
-  m_SpectrumImageSource->GetImagePrivate(mz, tol, mask, img);
-  m_CurrentX = mz;
+  try{
+    m_SpectrumImageSource->GetImagePrivate(mz, tol, mask, img);
+    m_CurrentX = mz;
+  }catch(std::exception & e){
+    MITK_ERROR << "Ion image could not be generated! Queried range is [" << mz-tol << ", " <<mz+tol << "]\n" << e.what();
+  }
 }
 
 void m2::ImzMLSpectrumImage::InitializeProcessor()
@@ -119,7 +132,7 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
 {
 
   // Reset Normalization strategy type if set to external but no external image was found
-  if(GetNormalizationStrategy() == m2::NormalizationStrategyType::External && GetExternalNormalizationImage().IsNull()){
+  if(GetNormalizationStrategy() == m2::NormalizationStrategyType::External && GetNormalizationImage(m2::NormalizationStrategyType::External).IsNull()){
     SetNormalizationStrategy(m2::NormalizationStrategyType::None);
     MITK_ERROR << "'External' Normalization strategy chosen but no External image exist.\n"
     "To use external normalization provide an image in the NRRD file format.\n"
@@ -127,6 +140,9 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
   }
 
   this->SetImageAccessInitialized(false); 
+
+  
+
   this->m_SpectrumImageSource->InitializeImageAccess();
 
   auto sx = this->GetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x");
@@ -137,12 +153,28 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
   auto py = this->GetPropertyValue<double>("[IMS:1000047] pixel size y");
   auto pz = this->GetPropertyValue<double>("pixel size z");
 
+
+
     MITK_INFO << "[imzML]: " + this->GetImzMLDataPath() +
-              "\n\t[pixel size (mm) ]: " + std::to_string(px)  + "x" + std::to_string(py) +"x" + std::to_string(pz) +
-              "\n\t[image size]: " + std::to_string(sx) + "x" +std::to_string(sy) + "x" + std::to_string(sz)  +
+              "\n\t[pixel size (mm)]: " + std::to_string(px)  + "x" + std::to_string(py) +"x" + std::to_string(pz) +
+              "\n\t[image dimension]: " + std::to_string(sx) + "x" +std::to_string(sy) + "x" + std::to_string(sz)  +
               "\n\t[num spectra]: " + std::to_string(this->GetNumberOfValidPixels()) +
-              "\n\t[spec. type ]: " + to_string(this->GetSpectrumType().Format);
+              "\n\t[spec. type]: " + to_string(this->GetSpectrumType().Format) +
+              "\n\t[mass range]: " + std::to_string(GetXMin()) + " to " + std::to_string(GetXMax()) + " with #" + std::to_string(GetXAxis().size()) + " measurements" +
+              ""+(     to_underlying(GetBaselineCorrectionStrategy()) ? ("\n\t[baseline correction]: " + m2::BaselineCorrectionTypeNames.at(to_underlying(GetBaselineCorrectionStrategy())) + "(" + std::to_string(GetBaseLineCorrectionHalfWindowSize()) + ")"):"") +
+              ""+(              to_underlying(GetSmoothingStrategy()) ? ("\n\t[smoothing]: "           + m2::SmoothingTypeNames.at(to_underlying(GetSmoothingStrategy())) + "(" + std::to_string(GetSmoothingHalfWindowSize()) + ")"):"") +
+              ""+(          to_underlying(GetNormalizationStrategy()) ? ("\n\t[normalization]: "       + m2::NormalizationStrategyTypeNames.at(to_underlying(GetNormalizationStrategy()))):"") +
+              ""+(to_underlying(GetIntensityTransformationStrategy()) ? ("\n\t[processing]: "          + m2::IntensityTransformationTypeNames.at(to_underlying(GetIntensityTransformationStrategy()))):"");
+              
   this->SetImageAccessInitialized(true); 
+}
+
+
+void m2::ImzMLSpectrumImage::InitializeNormalizationImage(m2::NormalizationStrategyType type){
+  if(GetNormalizationImageStatus(type) == false){
+   m_SpectrumImageSource->InitializeNormalizationImage(type);
+   SetNormalizationImageStatus(type, true);
+  }
 }
 
 // m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLSpectrumImage *A,

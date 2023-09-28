@@ -142,12 +142,12 @@ namespace m2
     void SetType(SpectrumFormat type)
     {
       m_Type = type;
-      this->SetProperty("spectrum.type", mitk::StringProperty::New(m2::to_string(type)));
+      this->SetProperty("m2aia.spectrum.type", mitk::StringProperty::New(m2::to_string(type)));
     }
     void SetInfo(std::string info)
     {
       m_Info = info;
-      this->SetProperty("spectrum.info", mitk::StringProperty::New(info));
+      this->SetProperty("m2aia.spectrum.info", mitk::StringProperty::New(info));
     }
 
     /**

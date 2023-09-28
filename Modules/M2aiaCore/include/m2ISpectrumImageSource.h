@@ -18,6 +18,7 @@ See LICENSE.txt for details.
 #include <M2aiaCoreExports.h>
 #include <mitkImage.h>
 #include <vector>
+#include <signal/m2SignalCommon.h>
 
 namespace m2
 {
@@ -33,6 +34,7 @@ namespace m2
     virtual void InitializeImageAccess() {};
     virtual void InitializeGeometry() {};
     virtual void GetImagePrivate(double /*x*/ , double  /*tol*/, const mitk::Image * /*mask*/, mitk::Image * /*target*/) {};
+    virtual void InitializeNormalizationImage(m2::NormalizationStrategyType /*type*/){};
   };
 
 } // namespace m2
