@@ -19,6 +19,15 @@ See LICENSE.txt for details.
 #include <map>
 #include <string>
 
+
+#include <type_traits>
+
+template <typename E>
+constexpr auto to_underlying(E e) noexcept
+{
+    return static_cast<std::underlying_type_t<E>>(e);
+}
+
 namespace m2
 {
   enum class SmoothingType : unsigned int
@@ -59,6 +68,10 @@ namespace m2
 
   const std::array<std::string, 8> NormalizationStrategyTypeNames = {
     "None", "TIC", "Sum", "Mean", "Max", "RMS", "Internal", "External"};
+
+  inline std::string to_string(m2::NormalizationStrategyType type){
+    return NormalizationStrategyTypeNames.at(to_underlying(type));
+  }
 
 
   enum class BaselineCorrectionType : unsigned int
@@ -136,11 +149,3 @@ namespace m2
 
 } // namespace m2
 
-
-#include <type_traits>
-
-template <typename E>
-constexpr auto to_underlying(E e) noexcept
-{
-    return static_cast<std::underlying_type_t<E>>(e);
-}

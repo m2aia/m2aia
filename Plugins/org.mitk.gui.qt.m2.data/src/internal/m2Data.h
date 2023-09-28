@@ -97,6 +97,7 @@ public slots:
   void OnIncreaseTolerance();
   void OnDecreaseTolerance();
   void OnRenderSpectrumImages(double min, double max);
+  void OnGenerateImageData(mitk::DataNode::Pointer node, qreal mz, qreal tol, bool emitRangeChanged);
   void OnGenerateImageData(qreal mz, qreal tol);
   
   m2::NormalizationStrategyType GuiToNormalizationStrategyType();

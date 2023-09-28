@@ -19,8 +19,8 @@ See LICENSE.txt for details.
 
 #include "Qm2OpenSlideImageIOHelperDialog.h"
 #include <QColorDialog>
-#include <QInputDialog>
 #include <QComboBox>
+#include <QInputDialog>
 #include <QmitkRenderWindow.h>
 #include <QtConcurrent>
 #include <boost/format.hpp>
@@ -81,7 +81,52 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   // Settings (show hlper objects)
   using namespace mitk;
 
-  const auto callback = [&](int v, const char *name)
+  const auto toggleByType = [&](bool isChecked, m2::NormalizationStrategyType type)
+  {
+    const auto a = TNodePredicateDataType<m2::SpectrumImageStack>::New();
+    const auto b = TNodePredicateDataType<m2::ImzMLSpectrumImage>::New();
+    const auto c = TNodePredicateDataType<m2::FsmSpectrumImage>::New();
+    const auto predicate = NodePredicateOr::New(a, b, c);
+    const auto nodes = this->GetDataStorage()->GetSubset(predicate);
+    for (const auto &node : *nodes)
+    {
+      if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
+      {
+        if (!image->GetNormalizationImageStatus(type))
+          image->InitializeNormalizationImage(type);
+
+        std::string name = "NormalizationImage" + m2::to_string(type);
+
+        const auto derivations = this->GetDataStorage()->GetDerivations(node);
+        for (const auto &dNode : *derivations)
+        {
+          if (dNode->GetName().find(name) != std::string::npos)
+          {
+            dNode->SetVisibility(isChecked);
+
+            if (!isChecked)// to keep the data manger clean hide the DataNode by tagging it as helper object
+              dNode->SetBoolProperty("helper object", true);
+            else
+            {
+              // if it should be visible in the data storage remove the helper object property
+              dNode->RemoveProperty("helper object");
+              
+              // update level window
+              mitk::LevelWindow lw;
+              node->GetLevelWindow(lw);
+              lw.SetAuto(image);
+              const auto max = lw.GetRangeMax();
+              lw.SetWindowBounds(0, max);
+              const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
+            }
+            this->RequestRenderWindowUpdate();
+          }
+        }
+      }
+    }
+  };
+
+  const auto toggleByName = [&](bool isChecked, const char *name)
   {
     const auto a = TNodePredicateDataType<m2::SpectrumImageStack>::New();
     const auto b = TNodePredicateDataType<m2::ImzMLSpectrumImage>::New();
@@ -95,8 +140,9 @@ void m2Data::CreateQtPartControl(QWidget *parent)
       {
         if (dNode->GetName().find(name) != std::string::npos)
         {
-          dNode->SetVisibility(v != 0);
-          if (v == 0)
+          dNode->SetVisibility(isChecked);
+
+          if (!isChecked)
             dNode->SetBoolProperty("helper object", true);
           else
             dNode->RemoveProperty("helper object");
@@ -107,34 +153,44 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   };
 
   // connect checkboxes to handle visibility of helper objects in the DataManager
-  connect(m_Controls.showIndexImages, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "IndexImage"); });
-  
-  for(auto name : m2::NormalizationStrategyTypeNames){
-    if(name == "None")
+
+  for (m2::NormalizationStrategyType type : m2::NormalizationStrategyTypeList)
+  {
+    if (type == m2::NormalizationStrategyType::None)
       continue;
-    auto ckBox = new QCheckBox(("Show " + name + " normalization images").c_str(), m_Controls.settings);
-    QHBoxLayout* layout = (QHBoxLayout*)(m_Controls.settings->layout());
-    layout->insertWidget(layout->indexOf(m_Controls.hLineNormImages)+1,ckBox);
-    ckBox->setObjectName(("ckBoxNormalizationImage" + name).c_str());
-    
-    connect(ckBox, &QCheckBox::stateChanged, this, [callback, name](int v) { callback(v, ("NormalizationImage"+ name).c_str()); });  
+
+    auto ckBox = new QCheckBox(("Show " + m2::to_string(type) + " normalization images").c_str(), m_Controls.settings);
+    QHBoxLayout *layout = (QHBoxLayout *)(m_Controls.settings->layout());
+    layout->insertWidget(layout->indexOf(m_Controls.hLineNormImages) + 1, ckBox);
+    ckBox->setObjectName(("ckBoxNormalizationImage" + m2::to_string(type)).c_str());
+
+    connect(ckBox, &QCheckBox::stateChanged, this, [toggleByType, type](int v) { toggleByType(v, type); });
   }
 
-  
-  
-  connect(m_Controls.showMaskImages, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MaskImage"); });
-  connect(
-    m_Controls.showMeanSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MeanSpectrum"); });
-  connect(
-    m_Controls.showMaxSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MaxSpectrum"); });
+  connect(m_Controls.showIndexImages,
+          &QCheckBox::stateChanged,
+          this,
+          [toggleByName](bool isChecked) { toggleByName(isChecked, "IndexImage"); });
+  connect(m_Controls.showMaskImages,
+          &QCheckBox::toggled,
+          this,
+          [toggleByName](bool isChecked) { toggleByName(isChecked, "MaskImage"); });
+  connect(m_Controls.showMeanSpectrum,
+          &QCheckBox::toggled,
+          this,
+          [toggleByName](bool isChecked) { toggleByName(isChecked, "MeanSpectrum"); });
+  connect(m_Controls.showMaxSpectrum,
+          &QCheckBox::toggled,
+          this,
+          [toggleByName](bool isChecked) { toggleByName(isChecked, "MaxSpectrum"); });
   connect(m_Controls.showSingleSpectrum,
           &QCheckBox::stateChanged,
           this,
-          [callback](int v) { callback(v, "SingleSpectrum"); });
+          [toggleByName](bool isChecked) { toggleByName(isChecked, "SingleSpectrum"); });
   connect(m_Controls.showCentroidSpectrum,
           &QCheckBox::stateChanged,
           this,
-          [callback](int v) { callback(v, "CentroidSpectrum"); });
+          [toggleByName](bool isChecked) { toggleByName(isChecked, "CentroidSpectrum"); });
 
   connect(m2::UIUtils::Instance(),
           &m2::UIUtils::RequestTolerance,
@@ -146,11 +202,9 @@ void m2Data::CreateQtPartControl(QWidget *parent)
               tol = m2::PartPerMillionToFactor(tol) * x;
           });
 
-
   // Imaging controls
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-
 
   connect(m_Controls.spnBxTol,
           qOverload<double>(&QDoubleSpinBox::valueChanged),
@@ -195,13 +249,17 @@ void m2Data::CreateQtPartControl(QWidget *parent)
             auto value = m_Controls.CBSmoothing->currentData().toUInt();
             preferences->PutInt("m2aia.signal.SmoothingStrategy", value);
           });
-  
+
   // default values
   m_Controls.spnBxTol->setValue(preferences->GetFloat("m2aia.signal.Tolerance", 75));
-  m_Controls.CBNormalization->setCurrentIndex(preferences->GetInt("m2aia.signal.NormalizationStrategy", to_underlying(m2::NormalizationStrategyType::None)));
-  m_Controls.CBTransformation->setCurrentIndex(preferences->GetInt("m2aia.signal.IntensityTransformationStrategy", to_underlying(m2::NormalizationStrategyType::None)));
-  m_Controls.CBSmoothing->setCurrentIndex(preferences->GetInt("m2aia.signal.SmoothingStrategy", to_underlying(m2::NormalizationStrategyType::None)));
-  m_Controls.CBImagingStrategy->setCurrentIndex(preferences->GetInt("m2aia.signal.RangePoolingStrategy", to_underlying(m2::NormalizationStrategyType::Mean)));
+  m_Controls.CBNormalization->setCurrentIndex(
+    preferences->GetInt("m2aia.signal.NormalizationStrategy", to_underlying(m2::NormalizationStrategyType::None)));
+  m_Controls.CBTransformation->setCurrentIndex(preferences->GetInt("m2aia.signal.IntensityTransformationStrategy",
+                                                                   to_underlying(m2::NormalizationStrategyType::None)));
+  m_Controls.CBSmoothing->setCurrentIndex(
+    preferences->GetInt("m2aia.signal.SmoothingStrategy", to_underlying(m2::NormalizationStrategyType::None)));
+  m_Controls.CBImagingStrategy->setCurrentIndex(
+    preferences->GetInt("m2aia.signal.RangePoolingStrategy", to_underlying(m2::NormalizationStrategyType::Mean)));
 
   // Make sure, that data nodes added before this view
   // is initialized are handled correctly!!
@@ -253,8 +311,8 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   }
 }
 
-
-void m2Data::InitToleranceControls(){
+void m2Data::InitToleranceControls()
+{
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
   auto defaultValue = preferences->GetFloat("m2aia.signal.Tolerance", 75.0);
@@ -343,9 +401,7 @@ void m2Data::InitSmoothingControls()
           qOverload<int>(&QSpinBox::valueChanged),
           this,
           [this, preferences](int)
-          {
-            preferences->PutInt("m2aia.signal.SmoothingValue", m_Controls.spnBxSmoothing->value());
-          });
+          { preferences->PutInt("m2aia.signal.SmoothingValue", m_Controls.spnBxSmoothing->value()); });
 }
 
 m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
@@ -382,9 +438,7 @@ void m2Data::InitBaselineCorrectionControls()
           qOverload<int>(&QSpinBox::valueChanged),
           this,
           [this, preferences](int)
-          {
-            preferences->PutInt("m2aia.signal.BaselineCorrectionValue", m_Controls.spnBxBaseline->value());
-          });
+          { preferences->PutInt("m2aia.signal.BaselineCorrectionValue", m_Controls.spnBxBaseline->value()); });
 }
 
 m2::BaselineCorrectionType m2Data::GuiToBaselineCorrectionStrategyType()
@@ -435,7 +489,7 @@ void m2Data::ApplySettingsToNodes(m2::UIUtils::NodesVectorType::Pointer v)
   for (auto dataNode : *v)
   {
     if (auto data = dynamic_cast<m2::SpectrumImage *>(dataNode->GetData()))
-      ApplySettingsToImage(data); // ImzML
+      ApplySettingsToImage(data);
   }
 }
 
@@ -462,27 +516,105 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImage *data)
   }
 }
 
-void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
+void m2Data::OnGenerateImageData(mitk::DataNode::Pointer node,
+                                 qreal xRangeCenter,
+                                 qreal xRangeTol,
+                                 bool emitRangeChanged)
 {
-  // get the selection
-  auto nodesToProcess = m2::UIUtils::AllNodes(GetDataStorage());
-  if (nodesToProcess->empty())
-    return;
-
+  // tol < 0 indicates "use gui tol"
   if (xRangeTol < 0)
   {
     xRangeTol = Controls()->spnBxTol->value();
     bool isPpm = Controls()->rbtnTolPPM->isChecked();
     xRangeTol = isPpm ? m2::PartPerMillionToFactor(xRangeTol) * xRangeCenter : xRangeTol;
   }
+
+  if (emitRangeChanged)
+    emit m2::UIUtils::Instance()->RangeChanged(xRangeCenter, xRangeTol);
+
+  this->m_Controls.spnBxMz->setValue(xRangeCenter);
+
+  if (m2::SpectrumImage::Pointer data = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
+  {
+    auto xMin = data->GetPropertyValue<double>("m2aia.xs.min");
+    auto xMax = data->GetPropertyValue<double>("m2aia.xs.max");
+    if (xRangeCenter > xMax || xRangeCenter < xMin)
+      return
+
+        ApplySettingsToImage(data);
+    if (!data->IsInitialized())
+      mitkThrow() << "Trying to grab an ion image but data access was not initialized properly!";
+
+    mitk::Image::Pointer maskImage;
+
+    // The smartpointer will stay alive until all captured copies are relesed. Additional
+    // all connected signals must be disconnected to make sure that the future is not kept
+    // alive after the 'finished-callback' is processed.
+    auto future = std::make_shared<QFutureWatcher<mitk::Image::Pointer>>();
+
+    //*************** Worker Finished Callback ******************//
+    // capture holds a copy of the smartpointer, so it will stay alive. Make the lambda mutable to
+    // allow the manipulation of captured varaibles that are copied by '='.
+    const auto futureFinished = [future, node, this]() mutable
+    {
+      auto image = future->result();
+      UpdateLevelWindow(node);
+      UpdateSpectrumImageTable(node);
+      node->SetProperty("m2aia.xs.selection.center", image->GetProperty("m2aia.xs.selection.center"));
+      node->SetProperty("m2aia.xs.selection.tolerance", image->GetProperty("m2aia.xs.selection.tolerance"));
+      this->RequestRenderWindowUpdate();
+      future->disconnect();
+    };
+
+    //*************** Worker Block******************//
+    const auto futureWorker = [xRangeCenter, xRangeTol, data, maskImage, this]()
+    {
+      // m2::Timer t("Create image @[" + std::to_string(xRangeCenter) + " " + std::to_string(xRangeTol) + "]");
+      if (m_InitializeNewNode)
+      {
+        auto geom = data->GetGeometry()->Clone();
+        auto image = mitk::Image::New();
+        image->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), *geom);
+        data->GetImage(xRangeCenter, xRangeTol, maskImage, image);
+        return image;
+      }
+      else
+      {
+        data->GetImage(xRangeCenter, xRangeTol, maskImage, data);
+        mitk::Image::Pointer imagePtr = data.GetPointer();
+        return imagePtr;
+      }
+    };
+
+    //*************** Start Worker ******************//
+
+    connect(future.get(), &QFutureWatcher<mitk::Image::Pointer>::finished, future.get(), futureFinished);
+    future->setFuture(QtConcurrent::run(&m_pool, futureWorker));
+  }
+}
+
+void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
+{
+  // get the selection
+  auto nodesToProcess = m2::UIUtils::AllNodes(GetDataStorage());
+  if (nodesToProcess->empty())
+    return;
+  if (xRangeTol < 0)
+  {
+    xRangeTol = Controls()->spnBxTol->value();
+    bool isPpm = Controls()->rbtnTolPPM->isChecked();
+    xRangeTol = isPpm ? m2::PartPerMillionToFactor(xRangeTol) * xRangeCenter : xRangeTol;
+  }
+
   emit m2::UIUtils::Instance()->RangeChanged(xRangeCenter, xRangeTol);
 
+  this->m_Controls.spnBxMz->setValue(xRangeCenter);
   auto flag = std::make_shared<std::atomic<bool>>(0);
   QString labelText = str(boost::format("%.4f +/- %.2f") % xRangeCenter % xRangeTol).c_str();
+  this->UpdateTextAnnotations(labelText.toStdString());
   if (nodesToProcess->size() == 1)
   {
     auto node = nodesToProcess->front();
-
     if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
       std::string xLabel = image->GetSpectrumType().XAxisLabel;
@@ -491,73 +623,9 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
     labelText = QString(node->GetName().c_str()) + "\n" + labelText;
   }
 
-  // this->m_Controls.labelIonImageInfo->setWordWrap(true);
-  // this->m_Controls.labelIonImageInfo->setText(labelText);
-  this->m_Controls.spnBxMz->setValue(xRangeCenter);
-
-  this->UpdateTextAnnotations(labelText.toStdString());
-  this->ApplySettingsToNodes(nodesToProcess);
-
   for (mitk::DataNode::Pointer dataNode : *nodesToProcess)
-  {
     if (m2::SpectrumImage::Pointer data = dynamic_cast<m2::SpectrumImage *>(dataNode->GetData()))
-    {
-      if (!data->IsInitialized())
-        mitkThrow() << "Trying to grab an ion image but data access was not initialized properly!";
-
-      auto xMin = data->GetPropertyValue<double>("m2aia.xs.min");
-      auto xMax = data->GetPropertyValue<double>("m2aia.xs.max");
-
-      if (xRangeCenter > xMax || xRangeCenter < xMin)
-        continue;
-
-      mitk::Image::Pointer maskImage;
-
-      // The smartpointer will stay alive until all captured copies are relesed. Additional
-      // all connected signals must be disconnected to make sure that the future is not kept
-      // alive after the 'finished-callback' is processed.
-      auto future = std::make_shared<QFutureWatcher<mitk::Image::Pointer>>();
-
-      //*************** Worker Finished Callback ******************//
-      // capture holds a copy of the smartpointer, so it will stay alive. Make the lambda mutable to
-      // allow the manipulation of captured varaibles that are copied by '='.
-      const auto futureFinished = [future, dataNode, nodesToProcess, labelText, this]() mutable
-      {
-        auto image = future->result();
-        UpdateLevelWindow(dataNode);
-        UpdateSpectrumImageTable(dataNode);
-        dataNode->SetProperty("x_range_center", image->GetProperty("x_range_center"));
-        dataNode->SetProperty("x_range_tol", image->GetProperty("x_range_tol"));
-        this->RequestRenderWindowUpdate();
-        future->disconnect();
-      };
-
-      //*************** Worker Block******************//
-      const auto futureWorker = [xRangeCenter, xRangeTol, data, maskImage, this]()
-      {
-        // m2::Timer t("Create image @[" + std::to_string(xRangeCenter) + " " + std::to_string(xRangeTol) + "]");
-        if (m_InitializeNewNode)
-        {
-          auto geom = data->GetGeometry()->Clone();
-          auto image = mitk::Image::New();
-          image->Initialize(mitk::MakeScalarPixelType<m2::DisplayImagePixelType>(), *geom);
-          data->GetImage(xRangeCenter, xRangeTol, maskImage, image);
-          return image;
-        }
-        else
-        {
-          data->GetImage(xRangeCenter, xRangeTol, maskImage, data);
-          mitk::Image::Pointer imagePtr = data.GetPointer();
-          return imagePtr;
-        }
-      };
-
-      //*************** Start Worker ******************//
-
-      connect(future.get(), &QFutureWatcher<mitk::Image::Pointer>::finished, future.get(), futureFinished);
-      future->setFuture(QtConcurrent::run(&m_pool, futureWorker));
-    }
-  }
+      OnGenerateImageData(dataNode, xRangeCenter, xRangeTol, false); // do not emit
 }
 
 void m2Data::UpdateSpectrumImageTable(const mitk::DataNode *node)
@@ -575,8 +643,8 @@ void m2Data::UpdateSpectrumImageTable(const mitk::DataNode *node)
   }
   //   auto item = m_Controls.tableWidget->item(0, 1);
   //   std::string xLabel = image->GetPropertyValue<std::string>("x_label");
-  //   double center = image->GetPropertyValue<double>("x_range_center");
-  //   double tol = image->GetPropertyValue<double>("x_range_tol");
+  //   double center = image->GetPropertyValue<double>("m2aia.xs.selection.center");
+  //   double tol = image->GetPropertyValue<double>("m2aia.xs.selection.tolerance");
   //   QString labelText = str(boost::format(xLabel + " %.2f +/- %.2f Da") % center % tol).c_str();
   //   item->setText(labelText);
 
@@ -819,12 +887,13 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
 
     // -------------- add Normalization to datastorage --------------
-    for(auto name : m2::NormalizationStrategyTypeNames){
-      if(name == "None")
+    for (auto name : m2::NormalizationStrategyTypeNames)
+    {
+      if (name == "None")
         continue;
       helperNode = mitk::DataNode::New();
-      helperNode->SetName(name + "NormalizationImage"+name);
-      auto checkBox = m_Controls.settings->findChild<QCheckBox*>(("ckBoxNormalizationImage" + name).c_str());
+      helperNode->SetName("NormalizationImage" + name);
+      auto checkBox = m_Controls.settings->findChild<QCheckBox *>(("ckBoxNormalizationImage" + name).c_str());
       helperNode->SetVisibility(checkBox->isChecked());
       auto type = static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(name));
       helperNode->SetData(spectrumImage->GetNormalizationImage(type));

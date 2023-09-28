@@ -226,15 +226,9 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
   if (mask)
     maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>(mask));
 
-  p->SetProperty("x_range_center", mitk::DoubleProperty::New(xRangeCenter));
-  p->SetProperty("x_range_tol", mitk::DoubleProperty::New(xRangeTol));
-  auto mdMz = itk::MetaDataObject<double>::New();
-  mdMz->SetMetaDataObjectValue(xRangeCenter);
-  auto mdTol = itk::MetaDataObject<double>::New();
-  mdTol->SetMetaDataObjectValue(xRangeTol);
-  p->GetMetaDataDictionary()["x_range_center"] = mdMz;
-  p->GetMetaDataDictionary()["x_range_tol"] = mdTol;
-
+  p->SetProperty("m2aia.xs.selection.center", mitk::DoubleProperty::New(xRangeCenter));
+  p->SetProperty("m2aia.xs.selection.tolerance", mitk::DoubleProperty::New(xRangeTol));
+  
   // Profile (continuous) spectrum
   const auto spectrumType = p->GetSpectrumType();
   const unsigned threads = p->GetNumberOfThreads();

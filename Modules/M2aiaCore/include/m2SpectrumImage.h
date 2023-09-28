@@ -141,7 +141,7 @@ namespace m2
     virtual void InitializeImageAccess() = 0;
     virtual void InitializeGeometry() = 0;
     virtual void InitializeProcessor() = 0;
-    virtual void InitializeNormalizationImage(m2::NormalizationStrategyType /*type*/){}
+    virtual void InitializeNormalizationImage(m2::NormalizationStrategyType /*type*/) =0;
 
     void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
     // void InsertImageArtifact(const std::string &key, mitk::Image *img);
