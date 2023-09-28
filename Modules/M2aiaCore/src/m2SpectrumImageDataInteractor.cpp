@@ -16,10 +16,13 @@ See LICENSE.txt for details.
 
 #include <m2SpectrumImage.h>
 #include <m2SpectrumImageDataInteractor.h>
+#include <m2SpectrumImageStack.h>
 #include <mitkImageCast.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkMouseDoubleClickEvent.h>
 #include <mitkNodePredicateDataType.h>
+#include <mitkNodePredicateAnd.h>
+#include <mitkNodePredicateNot.h>
 #include <mitkPointOperation.h>
 #include <mitkRenderingManager.h>
 #include <m2IntervalVector.h>
@@ -61,13 +64,17 @@ bool m2::SpectrumImageDataInteractor::FilterEvents(mitk::InteractionEvent *inter
       auto *positionEvent = static_cast<mitk::InteractionPositionEvent *>(interactionEvent);
       mitk::Point3D pos = positionEvent->GetPositionInWorld();
 
-      auto imageNodes = this->GetDataStorage()->GetSubset(mitk::TNodePredicateDataType<m2::SpectrumImage>::New());
+      auto imageNodes = this->GetDataStorage()->GetSubset(
+        mitk::NodePredicateAnd::New(mitk::TNodePredicateDataType<m2::SpectrumImage>::New(),
+        mitk::NodePredicateNot::New(mitk::TNodePredicateDataType<m2::SpectrumImageStack>::New())));
       for (auto imageNode : *imageNodes)
       {
         auto image = dynamic_cast<m2::SpectrumImage *>(imageNode->GetData());
+        itk::Index<3> index;
+
         if (image->GetGeometry()->IsInside(pos))
         {
-          itk::Index<3> index;
+        
           image->GetGeometry()->WorldToIndex(pos, index);
           auto indexImage = image->GetIndexImage();
           mitk::ImagePixelReadAccessor<m2::IndexImagePixelType, 3> acc(indexImage);
