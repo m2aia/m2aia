@@ -42,7 +42,7 @@ void m2::FsmSpectrumImage::FsmProcessor::GetImagePrivate(double cmInv,
   using namespace m2;
   // accessors
   mitk::ImagePixelWriteAccessor<DisplayImagePixelType, 3> imageAccess(destImage);
-  mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
+  
   std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>> maskAccess;
 
   MITK_INFO("FSM") << "Image generation started!";
@@ -200,19 +200,6 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeGeometry()
     ls->AddLabel(label);
   }
 
-  {
-    using LocalImageType = itk::Image<m2::NormImagePixelType, 3>;
-    auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
-    caster->SetInput(itkIonImage);
-    caster->Update();
-    auto normImage = mitk::Image::New();
-    normImage->InitializeByItk(caster->GetOutput());
-    mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(normImage);
-    std::memset(acc.GetData(), 1, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
-
-    p->SetNormalizationImage(normImage);
-  }
-
   mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> acc(p);
   auto max_dim0 = p->GetDimensions()[0];
   auto max_dim1 = p->GetDimensions()[1];
@@ -225,10 +212,10 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeGeometry()
 void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
 {
   using namespace m2;
-
+  
   auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType, 3>>(p->GetMaskImage());
   auto accIndex = std::make_shared<mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3>>(p->GetIndexImage());
-  auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
+  // auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());
 
   auto &xs = p->GetXAxis();
 
@@ -271,7 +258,6 @@ void m2::FsmSpectrumImage::FsmProcessor::InitializeImageAccess()
       {
         auto &spectrum = spectra[i];
         auto &ys = spectrum.data;
-        accNorm->SetPixelByIndex(spectrum.index, 1);
 
         Smoother(std::begin(ys),std::end(ys));
         BaselineSubtractor(std::begin(ys), std::end(ys), std::begin(baseline));

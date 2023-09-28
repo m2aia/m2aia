@@ -68,6 +68,7 @@ namespace m2
     void InitializeImageAccess() override;
     void InitializeGeometry() override;
     void InitializeProcessor() override;
+    // void InitializeNormalizationImage(m2::NormalizationStrategyType type) override;
     void GetSpectrum(unsigned int, std::vector<double> &, std::vector<double> &) const override {}
     void GetIntensities(unsigned int, std::vector<double> &) const override {}
     void GetSpectrumFloat(unsigned int, std::vector<float> &, std::vector<float> &) const override {}
