@@ -145,6 +145,17 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
       m2::DataNodePredicates::IsCentroidSpectrum, 
       m2::DataNodePredicates::NoActiveHelper));
 
+  m_Controls.maskImageSelector->SetDataStorage(GetDataStorage());
+  m_Controls.maskImageSelector->SetSelectionIsOptional(true);
+  m_Controls.maskImageSelector->SetAutoSelectNewNodes(true);
+  m_Controls.maskImageSelector->SetEmptyInfo(QString("Select Mask"));
+  m_Controls.maskImageSelector->SetPopUpTitel(QString("Select Mask"));
+  m_Controls.maskImageSelector->SetNodePredicate(
+    mitk::NodePredicateAnd::New(
+      mitk::TNodePredicateDataType<mitk::LabelSetImage>::New(), 
+      m2::DataNodePredicates::NoActiveHelper));
+      
+
   connect(m_Controls.sbTolerance, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
   connect(m_Controls.sbDistance, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
   connect(m_Controls.sliderSNR, SIGNAL(valueChanged(double)), this, SLOT(OnStartPeakPickingOverview()));
@@ -453,7 +464,7 @@ void m2PeakPickingView::OnStartPeakPickingImage()
   if (auto image = dynamic_cast<m2::ImzMLSpectrumImage *>(imageNode->GetData()))
   {
     using namespace std;
-    auto N = image->GetXAxis().size() * image->GetNumberOfValidPixels();
+    auto N = image->GetXAxis().size();
     vector<double> xs, ys, xsAll, ysAll;
     vector<int> ssAll;
     xsAll.reserve(N);
@@ -464,12 +475,25 @@ void m2PeakPickingView::OnStartPeakPickingImage()
     auto xsAllIt = back_inserter(xsAll);
     auto ysAllIt = back_inserter(ysAll);
     auto ssAllIt = back_inserter(ssAll);
-    // auto idxAllIt = back_inserter(idxAll);
-
+    // auto idxAllIt = back_inserter(idxAll);z
+    using MaskPixelAccessor = mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType,3>;
+    std::unique_ptr<MaskPixelAccessor> maskAcc;
+    if(auto maskNode = m_Controls.maskImageSelector->GetSelectedNode()){
+      auto mask = dynamic_cast<mitk::Image *>(maskNode->GetData());
+      maskAcc = std::make_unique<MaskPixelAccessor>(mask);
+    }
+    
     mitk::ProgressBar::GetInstance()->AddStepsToDo(image->GetNumberOfValidPixels());
     for (unsigned int i = 0; i < image->GetNumberOfValidPixels(); ++i)
     {
       image->GetSpectrum(i, xs, ys);
+      mitk::ProgressBar::GetInstance()->Progress();
+      
+      const auto & index = image->GetSpectra()[i].index;
+      if(maskAcc && maskAcc->GetPixelByIndex(index) == 0)
+        continue;
+
+
       if (image->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousProfile)
       {
         // Pick peaks
@@ -490,7 +514,6 @@ void m2PeakPickingView::OnStartPeakPickingImage()
         fill_n(ssAllIt, xs.size(), i);
       }
  
-      mitk::ProgressBar::GetInstance()->Progress();
     }
 
     auto indices = m2::argsort(xsAll);

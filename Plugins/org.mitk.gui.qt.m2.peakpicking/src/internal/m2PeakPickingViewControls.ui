@@ -366,7 +366,7 @@ QGroupBox#ckbMonoisotopic::title {
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tabOverviewSpectra">
       <attribute name="title">
@@ -444,6 +444,22 @@ Combines all  peaks to a single list and apply binning.</string>
        </item>
        <item>
         <widget class="QmitkSingleNodeSelectionWidget" name="sourceProfileImageSelector" native="true">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>15</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QmitkSingleNodeSelectionWidget" name="maskImageSelector" native="true">
          <property name="sizePolicy">
           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
            <horstretch>0</horstretch>
