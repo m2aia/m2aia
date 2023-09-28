@@ -108,10 +108,20 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
   // connect checkboxes to handle visibility of helper objects in the DataManager
   connect(m_Controls.showIndexImages, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "IndexImage"); });
-  connect(m_Controls.showNormImages,
-          &QCheckBox::stateChanged,
-          this,
-          [callback](int v) { callback(v, "NormalizationImage"); });
+  
+  for(auto name : m2::NormalizationStrategyTypeNames){
+    if(name == "None")
+      continue;
+    auto ckBox = new QCheckBox(("Show " + name + " normalization images").c_str(), m_Controls.settings);
+    QHBoxLayout* layout = (QHBoxLayout*)(m_Controls.settings->layout());
+    layout->insertWidget(layout->indexOf(m_Controls.hLineNormImages)+1,ckBox);
+    ckBox->setObjectName(("ckBoxNormalizationImage" + name).c_str());
+    
+    connect(ckBox, &QCheckBox::stateChanged, this, [callback, name](int v) { callback(v, ("NormalizationImage"+ name).c_str()); });  
+  }
+
+  
+  
   connect(m_Controls.showMaskImages, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MaskImage"); });
   connect(
     m_Controls.showMeanSpectrum, &QCheckBox::stateChanged, this, [callback](int v) { callback(v, "MeanSpectrum"); });
@@ -439,11 +449,11 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImage *data)
     data->SetRangePoolingStrategy(GuiToRangePoolingStrategyType());
     data->SetIntensityTransformationStrategy(GuiToIntensityTransformationStrategyType());
 
-    if (data->GetSmoothingStrategy() == m2::SmoothingType::Gaussian)
-    {
-      auto d = int(m_Controls.spnBxSigma->value() * 4 + 0.5);
-      m_Controls.spnBxSmoothing->setValue(d);
-    }
+    // if (data->GetSmoothingStrategy() == m2::SmoothingType::Gaussian)
+    // {
+    //   auto d = int(m_Controls.spnBxSigma->value() * 4 + 0.5);
+    //   m_Controls.spnBxSmoothing->setValue(d);
+    // }
     data->SetSmoothingHalfWindowSize(m_Controls.spnBxSmoothing->value());
     data->SetBaseLineCorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
     data->SetUseToleranceInPPM(m_Controls.rbtnTolPPM->isChecked());
@@ -809,13 +819,19 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
 
     // -------------- add Normalization to datastorage --------------
-    helperNode = mitk::DataNode::New();
-    helperNode->SetName("NormalizationImage");
-    helperNode->SetVisibility(m_Controls.showNormImages->isChecked());
-    helperNode->SetData(spectrumImage->GetNormalizationImage());
-    helperNode->SetBoolProperty("helper object", !m_Controls.showNormImages->isChecked());
-    helperNode->SetStringProperty("spectrum.image.type", "normaliztion");
-    this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    for(auto name : m2::NormalizationStrategyTypeNames){
+      if(name == "None")
+        continue;
+      helperNode = mitk::DataNode::New();
+      helperNode->SetName(name + "NormalizationImage"+name);
+      auto checkBox = m_Controls.settings->findChild<QCheckBox*>(("ckBoxNormalizationImage" + name).c_str());
+      helperNode->SetVisibility(checkBox->isChecked());
+      auto type = static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(name));
+      helperNode->SetData(spectrumImage->GetNormalizationImage(type));
+      helperNode->SetBoolProperty("helper object", !checkBox->isChecked());
+      helperNode->SetStringProperty("spectrum.image.type", ("normalization " + name).c_str());
+      this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    }
 
     // -------------- add Spectra to datastorage --------------
     // color for plots in spectrum view

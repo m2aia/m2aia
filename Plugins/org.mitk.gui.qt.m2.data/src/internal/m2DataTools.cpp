@@ -157,15 +157,18 @@ void m2DataTools::OnResetTiling()
 
       origin[0] = image->GetPropertyValue<double>("[IMS:1000053] absolute position offset x", 0);
       origin[1] = image->GetPropertyValue<double>("[IMS:1000054] absolute position offset y", 0);
-      origin[2] = image->GetPropertyValue<double>("absolute position offset z", 0);     
+      origin[2] = image->GetPropertyValue<double>("absolute position offset z", 0);
       image->GetGeometry()->SetOrigin(origin);
-      std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), 
-                                        image->GetExternalNormalizationImage(), 
-                                        image->GetNormalizationImage(), 
-                                        image->GetMaskImage(), 
-                                        image->GetPoints()};
+      std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), image->GetMaskImage(), image->GetPoints()};
+
+      for (auto kv : image->GetNormalizationImages())
+        imageList.push_back(kv.second.image);
+      
+
       for (auto current : imageList)
-        current->GetGeometry()->SetOrigin(origin);
+        if (current && current->GetGeometry())
+
+          current->GetGeometry()->SetOrigin(origin);
     }
 
     double dx = origin[0] - prevOrigin[0];
@@ -204,10 +207,9 @@ void m2DataTools::OnEqualizeLW()
 
 void m2DataTools::OnApplyTiling()
 {
-  
   auto rows = m_Controls.mosaicRows->value();
   unsigned int maxWidth = 0, maxHeight = 0;
-  
+
   // Spectrum Image Base nodes should never be child nodes!
   std::vector<mitk::DataNode::Pointer> nodes;
   auto allNode = GetDataStorage()->GetAll();
@@ -218,7 +220,7 @@ void m2DataTools::OnApplyTiling()
       maxHeight = std::max(maxHeight, image->GetDimensions()[1]);
       nodes.push_back(node);
     }
-  
+
   int nodesInRow = std::ceil(nodes.size() / double(rows));
   MITK_INFO << "NodesInRow: " << nodesInRow;
   if (nodesInRow < 1)
@@ -232,24 +234,25 @@ void m2DataTools::OnApplyTiling()
   int i = 0;
   for (auto node : nodes)
   {
-
     // SpectrumImage Nodes
     mitk::Point3D origin, prevOrigin;
-    if (auto *image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
+    if (m2::SpectrumImage *image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
       prevOrigin = image->GetGeometry()->GetOrigin();
       origin[0] = maxWidth * int(i % nodesInRow) * image->GetGeometry()->GetSpacing()[0];
       origin[1] = maxHeight * int(i / nodesInRow) * image->GetGeometry()->GetSpacing()[1];
       origin[2] = double(0.0);
       image->GetGeometry()->SetOrigin(origin);
-      std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), 
-                                              image->GetExternalNormalizationImage(), 
-                                              image->GetNormalizationImage(), 
-                                              image->GetMaskImage(), 
-                                              image->GetPoints()};
+      std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), image->GetMaskImage(), image->GetPoints()};
+      for (auto kv : image->GetNormalizationImages())
+        imageList.push_back(kv.second.image);
+      
       for (auto current : imageList)
-        current->GetGeometry()->SetOrigin(origin);
-    }else{
+        if (current && current->GetGeometry())
+          current->GetGeometry()->SetOrigin(origin);
+    }
+    else
+    {
       continue;
     }
 
@@ -279,7 +282,6 @@ void m2DataTools::OnApplyTiling()
     }
 
     ++i;
-    
   }
   mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
   // this->RequestRenderWindowUpdate();

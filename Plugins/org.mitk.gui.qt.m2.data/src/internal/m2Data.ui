@@ -70,7 +70,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Normalization (*)</string>
+           <string>Normalization</string>
           </property>
           <property name="indent">
            <number>0</number>
@@ -196,63 +196,6 @@
           </property>
           <property name="value">
            <number>2</number>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_10">
-        <item>
-         <widget class="QLabel" name="label_10">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>1</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>150</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>150</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="text">
-           <string>Sigma</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-          </property>
-          <property name="indent">
-           <number>8</number>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="spnBxSigma">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
-           </size>
-          </property>
-          <property name="toolTip">
-           <string>Window size expressed as required by an gaussian kernel with the given sigma.</string>
-          </property>
-          <property name="value">
-           <double>1.000000000000000</double>
           </property>
          </widget>
         </item>
@@ -400,6 +343,16 @@
          </widget>
         </item>
        </layout>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Changing the smoothing/baseline correction/transformation methods does not necessarily require a reload of the MSI data set. But to reflect the new conditions in the overview spectra, a reload is required.</string>
+        </property>
+        <property name="wordWrap">
+         <bool>true</bool>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -586,8 +539,11 @@
           <property name="decimals">
            <number>4</number>
           </property>
+          <property name="minimum">
+           <double>10.000000000000000</double>
+          </property>
           <property name="maximum">
-           <double>9999.000000000000000</double>
+           <double>10000000000000.000000000000000</double>
           </property>
           <property name="value">
            <double>75.000000000000000</double>
@@ -710,7 +666,7 @@
     </widget>
    </item>
    <item>
-    <widget class="QGroupBox" name="groupBox_3">
+    <widget class="QGroupBox" name="settings">
      <property name="title">
       <string>Settings</string>
      </property>
@@ -733,9 +689,9 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="showNormImages">
+       <widget class="QCheckBox" name="showMaskImages">
         <property name="text">
-         <string>Show normalization images</string>
+         <string>Show mask images</string>
         </property>
         <property name="tristate">
          <bool>false</bool>
@@ -743,12 +699,16 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="showMaskImages">
-        <property name="text">
-         <string>Show mask images</string>
+       <widget class="Line" name="hLineNormImages">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
-        <property name="tristate">
-         <bool>false</bool>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="line_4">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
@@ -792,6 +752,13 @@
         </property>
         <property name="tristate">
          <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="line_5">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
         </property>
        </widget>
       </item>
