@@ -803,6 +803,16 @@ void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
     // UpdateAxisLabels(node, true);
   }
 
+    if(m_DataProvider.empty()){
+      std::setprecision(2);
+      if(m_xAxis) m_xAxis->setRange(0,1);
+      if(m_yAxis) {
+        m_yAxis->setRange(0,1);
+        m_yAxis->setLabelFormat("%.6f");
+      }
+      
+    }
+
   // OnResetView();
 }
 
