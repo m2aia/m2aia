@@ -18,12 +18,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <itksys/SystemTools.hxx>
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLSpectrumImage.h>
-#include <mitkImageReadAccessor.h>
-#include <mitkIPreferencesService.h>
 #include <mitkCoreServices.h>
-
-
-
+#include <mitkIPreferencesService.h>
+#include <mitkImageReadAccessor.h>
 
 // PYTHON EXPORT
 namespace m2
@@ -35,62 +32,68 @@ namespace m2
     {
     public:
       m2::ImzMLSpectrumImage::Pointer Image;
-
     };
 
   } // namespace sys
 
 } // namespace m2
 
-
-
 extern "C"
 {
+  unsigned int GetNumberOfPixelsInImage(m2::sys::ImageHandle *handle)
+  {
+    auto dims = handle->Image->GetDimensions();
+    auto validDims = handle->Image->GetDimension();
+    auto N = std::accumulate(dims, dims + validDims, 1, std::multiplies<>());
+    return N;
+  }
+
   M2AIACORE_EXPORT void GetImageArrayFloat32(m2::sys::ImageHandle *handle, double mz, double tol, float *data)
   {
     handle->Image->GetImage(mz, tol, nullptr, handle->Image);
-    auto w = handle->Image->GetDimension(0);
-    auto h = handle->Image->GetDimension(1);
+    auto N = GetNumberOfPixelsInImage(handle);
     mitk::ImageReadAccessor acc(handle->Image.GetPointer());
-    std::copy((m2::DisplayImagePixelType *)(acc.GetData()),
-              (m2::DisplayImagePixelType *)(acc.GetData()) + w * h,
-              data);
+    std::copy((m2::DisplayImagePixelType *)(acc.GetData()), (m2::DisplayImagePixelType *)(acc.GetData()) + N, data);
   }
 
   M2AIACORE_EXPORT void GetImageArrayFloat64(m2::sys::ImageHandle *handle, double mz, double tol, double *data)
   {
     handle->Image->GetImage(mz, tol, nullptr, handle->Image);
-    auto w = handle->Image->GetDimension(0);
-    auto h = handle->Image->GetDimension(1);
+    auto N = GetNumberOfPixelsInImage(handle);
     mitk::ImageReadAccessor acc(handle->Image.GetPointer());
-    std::copy((m2::DisplayImagePixelType *)(acc.GetData()),
-              (m2::DisplayImagePixelType *)(acc.GetData()) + w * h,
-              data);
+    std::copy((m2::DisplayImagePixelType *)(acc.GetData()), (m2::DisplayImagePixelType *)(acc.GetData()) + N, data);
   }
-
 
   M2AIACORE_EXPORT void GetMaskArray(m2::sys::ImageHandle *handle, mitk::Label::PixelType *data)
   {
     auto mask = handle->Image->GetMaskImage();
-    auto w = handle->Image->GetDimension(0);
-    auto h = handle->Image->GetDimension(1);
+    auto N = GetNumberOfPixelsInImage(handle);
     mitk::ImageReadAccessor acc(mask);
-    std::copy((mitk::Label::PixelType *)(acc.GetData()),
-              (mitk::Label::PixelType *)(acc.GetData()) + w * h,
-              data);
+    std::copy((mitk::Label::PixelType *)(acc.GetData()), (mitk::Label::PixelType *)(acc.GetData()) + N, data);
   }
 
   M2AIACORE_EXPORT void GetIndexArray(m2::sys::ImageHandle *handle, unsigned int *data)
   {
     auto indexImage = handle->Image->GetIndexImage();
-    auto w = handle->Image->GetDimension(0);
-    auto h = handle->Image->GetDimension(1);
+    auto N = GetNumberOfPixelsInImage(handle);
     mitk::ImageReadAccessor acc(indexImage);
-    std::copy((unsigned int *)(acc.GetData()),
-              (unsigned int *)(acc.GetData()) + w * h,
-              data);
+    std::copy((unsigned int *)(acc.GetData()), (unsigned int *)(acc.GetData()) + N, data);
   }
 
+  M2AIACORE_EXPORT void GetNormalizationArray(m2::sys::ImageHandle *handle,
+                                              const char *typeName,
+                                              m2::NormImagePixelType *data)
+  {
+    auto type = static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(typeName));
+
+    if (!handle->Image->GetNormalizationImageStatus(type))
+      handle->Image->InitializeNormalizationImage(type);
+
+    auto normImage = handle->Image->GetNormalizationImage(type);
+    auto N = GetNumberOfPixelsInImage(handle);
+    mitk::ImageReadAccessor acc(normImage);
+    std::copy((m2::NormImagePixelType *)(acc.GetData()), (m2::NormImagePixelType *)(acc.GetData()) + N, data);
+  }
 
   M2AIACORE_EXPORT unsigned int GetSpectrumType(m2::sys::ImageHandle *handle)
   {
@@ -149,12 +152,13 @@ extern "C"
     std::copy(ys.begin(), ys.end(), yd);
   }
 
-  M2AIACORE_EXPORT void GetSpectra(m2::sys::ImageHandle *handle, unsigned int * id, unsigned int N, float *yd)
+  M2AIACORE_EXPORT void GetSpectra(m2::sys::ImageHandle *handle, unsigned int *id, unsigned int N, float *yd)
   {
     std::vector<float> ys;
-    for(unsigned int i = 0 ; i < N; ++i){
+    for (unsigned int i = 0; i < N; ++i)
+    {
       handle->Image->GetIntensitiesFloat(id[i], ys);
-      std::copy(ys.begin(), ys.end(), yd + i*ys.size());
+      std::copy(ys.begin(), ys.end(), yd + i * ys.size());
     }
   }
 
@@ -165,13 +169,15 @@ extern "C"
     std::copy(ys.begin(), ys.end(), yd);
   }
 
-  M2AIACORE_EXPORT unsigned int  GetSpectrumDepth(m2::sys::ImageHandle *handle, unsigned int id)
+  M2AIACORE_EXPORT unsigned int GetSpectrumDepth(m2::sys::ImageHandle *handle, unsigned int id)
   {
-    const auto & spectrum = handle->Image->GetSpectra()[id];
+    const auto &spectrum = handle->Image->GetSpectra()[id];
     return spectrum.mzLength;
   }
 
-  M2AIACORE_EXPORT void GetSpectrumPosition(m2::sys::ImageHandle *handle, unsigned int spectrumId, unsigned int *pixelPosition)
+  M2AIACORE_EXPORT void GetSpectrumPosition(m2::sys::ImageHandle *handle,
+                                            unsigned int spectrumId,
+                                            unsigned int *pixelPosition)
   {
     auto &spectrum = handle->Image->GetSpectra()[spectrumId];
     auto *p = spectrum.index.GetIndex();
@@ -215,72 +221,75 @@ extern "C"
     std::copy(p, p + 3, data);
   }
 
-
-  M2AIACORE_EXPORT void SetSmoothing(m2::sys::ImageHandle *handle, const char * sm_s, unsigned int hws)
+  M2AIACORE_EXPORT void SetSmoothing(m2::sys::ImageHandle *handle, const char *sm_s, unsigned int hws)
   {
-    MITK_INFO << "SetSmoothing " << sm_s << "("<< m2::SMOOTHING_MAPPINGS.at(sm_s) << ")" << " " << hws;
     handle->Image->SetSmoothingStrategy(static_cast<m2::SmoothingType>(m2::SMOOTHING_MAPPINGS.at(sm_s)));
     handle->Image->SetSmoothingHalfWindowSize(hws);
   }
 
-  M2AIACORE_EXPORT void SetBaselineCorrection(m2::sys::ImageHandle *handle, const char * sm_s, unsigned int hws)
-  {
-    MITK_INFO << "SetBaselineCorrection " << sm_s;
-    handle->Image->SetBaselineCorrectionStrategy(static_cast<m2::BaselineCorrectionType>(m2::BASECOR_MAPPINGS.at(sm_s)));
+  M2AIACORE_EXPORT void SetBaselineCorrection(m2::sys::ImageHandle *handle, const char *sm_s, unsigned int hws)
+  {    
+    handle->Image->SetBaselineCorrectionStrategy(
+      static_cast<m2::BaselineCorrectionType>(m2::BASECOR_MAPPINGS.at(sm_s)));
     handle->Image->SetBaseLineCorrectionHalfWindowSize(hws);
   }
 
-  M2AIACORE_EXPORT void SetPooling(m2::sys::ImageHandle *handle, const char * sm_s)
+  M2AIACORE_EXPORT void SetPooling(m2::sys::ImageHandle *handle, const char *sm_s)
   {
-    MITK_INFO << "SetPooling " << " " << sm_s;
+
     handle->Image->SetRangePoolingStrategy(static_cast<m2::RangePoolingStrategyType>(m2::POOLING_MAPPINGS.at(sm_s)));
   }
 
-  M2AIACORE_EXPORT void SetNormalization(m2::sys::ImageHandle *handle, const char * sm_s)
+  M2AIACORE_EXPORT void SetNormalization(m2::sys::ImageHandle *handle, const char *sm_s)
   {
-    MITK_INFO << "SetNormalization " << sm_s;
-    handle->Image->SetNormalizationStrategy(static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(sm_s)));
+
+    handle->Image->SetNormalizationStrategy(
+      static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(sm_s)));
   }
 
-  M2AIACORE_EXPORT void SetIntensityTransformation(m2::sys::ImageHandle *handle, const char * sm_s)
+  M2AIACORE_EXPORT void SetIntensityTransformation(m2::sys::ImageHandle *handle, const char *sm_s)
   {
-    MITK_INFO << "SetIntensityTransformation " << sm_s;
-    handle->Image->SetIntensityTransformationStrategy(static_cast<m2::IntensityTransformationType>(m2::INTENSITYTRANSFORMATION_MAPPINGS.at(sm_s)));
+
+    handle->Image->SetIntensityTransformationStrategy(
+      static_cast<m2::IntensityTransformationType>(m2::INTENSITYTRANSFORMATION_MAPPINGS.at(sm_s)));
   }
 
-  M2AIACORE_EXPORT char * GetMetaDataDictionary(m2::sys::ImageHandle *handle)
+  M2AIACORE_EXPORT char *GetMetaDataDictionary(m2::sys::ImageHandle *handle)
   {
-    
     auto v = handle->Image->GetPropertyList();
     std::string s;
     auto keys = v->GetPropertyKeys();
-    for(auto k : keys){
-      
+    for (auto k : keys)
+    {
       auto prop = v->GetProperty(k.c_str());
       s += k;
       s += "\t" + prop->GetValueAsString();
       s += "\n";
     }
     auto data = new char[s.length() + 1];
-  
-    std::copy(s.begin(),s.end(), data);
+
+    std::copy(s.begin(), s.end(), data);
     data[s.length()] = '\0';
     return data;
   }
 
-  M2AIACORE_EXPORT void DestroyCharBuffer(std::string * p)
+  M2AIACORE_EXPORT void DestroyCharBuffer(std::string *p)
   {
     delete p;
   }
 
-  M2AIACORE_EXPORT void WriteContinuousCentroidImzML(m2::sys::ImageHandle *handle, const char *s, double *centroids, int n){
+  M2AIACORE_EXPORT void WriteContinuousCentroidImzML(m2::sys::ImageHandle *handle,
+                                                     const char *s,
+                                                     double *centroids,
+                                                     int n)
+  {
     m2::ImzMLImageIO io;
     mitk::AbstractFileWriter *writer = &io;
     auto intervals = m2::IntervalVector::New();
 
-    for(int i = 0 ; i < n; ++i)
-      intervals->GetIntervals().push_back(m2::Interval(centroids[i],0));
-    
+    for (int i = 0; i < n; ++i)
+      intervals->GetIntervals().push_back(m2::Interval(centroids[i], 0));
+
     writer->SetInput(handle->Image);
     writer->SetOutputLocation(std::string(s));
     io.SetIntervalVector(intervals);
@@ -297,15 +306,15 @@ extern "C"
 
   M2AIACORE_EXPORT m2::sys::ImageHandle *CreateImageHandle(const char *path)
   {
-    
-    if(auto *preferencesService = mitk::CoreServices::GetPreferencesService())
-      if(!preferencesService->GetSystemPreferences()){
+    if (auto *preferencesService = mitk::CoreServices::GetPreferencesService())
+      if (!preferencesService->GetSystemPreferences())
+      {
         mitk::CoreServicePointer preferencesService(mitk::CoreServices::GetPreferencesService());
         preferencesService->InitializeStorage(".pym2aia_prefs.xml");
       }
-      
 
-    if(!itksys::SystemTools::FileExists(path)){
+    if (!itksys::SystemTools::FileExists(path))
+    {
       MITK_ERROR << "The given path does not exist!\n\t" << std::string(path);
       return nullptr;
     }
@@ -328,8 +337,9 @@ extern "C"
     // const auto pool = m2::Find(parameters, "pooling", "Maximum"s, pMap);
     // const auto tol = m2::Find(parameters, "tolerance", double(0), pMap);
     // const auto intTransform = m2::Find(parameters, "transform", "None"s, pMap);
-    // const auto threads = m2::Find(parameters, "threads", int(itk::MultiThreaderBase::GetGlobalDefaultNumberOfThreads()), pMap);
-    
+    // const auto threads = m2::Find(parameters, "threads",
+    // int(itk::MultiThreaderBase::GetGlobalDefaultNumberOfThreads()), pMap);
+
     // MITK_INFO << "---------------------";
     // MITK_INFO << "Image initialization:";
     // MITK_INFO << "---------------------";
@@ -347,7 +357,8 @@ extern "C"
     return storage;
   }
 
-
-
-  M2AIACORE_EXPORT void DestroyImageHandle(m2::sys::ImageHandle *p) { delete p; }
+  M2AIACORE_EXPORT void DestroyImageHandle(m2::sys::ImageHandle *p)
+  {
+    delete p;
+  }
 }
