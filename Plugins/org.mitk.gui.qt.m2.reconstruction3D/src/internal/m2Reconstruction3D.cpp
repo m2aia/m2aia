@@ -164,7 +164,7 @@ void m2Reconstruction3D::OnStartStacking()
     auto d = GetImageDataById(0, lists[i]);
 
     m2NameDialog dialog(m_Parent);
-    if (auto bp = d.image->GetProperty("x_range_center"))
+    if (auto bp = d.image->GetProperty("m2aia.xs.selection.center"))
     {
       auto center = dynamic_cast<mitk::DoubleProperty *>(bp.GetPointer())->GetValueAsString();
       dialog.SetName(std::string("stack") + " " + center);
