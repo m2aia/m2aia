@@ -653,15 +653,14 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
       auto newSizeY = unsigned(ysMax - ysMin + 1);
       auto newSizeZ = unsigned(zsMax - zsMin + 1);
 
-      data->SetPropertyValue<unsigned>("(original imzML value) max count of pixels x", imzMLSizeX);
-      data->SetPropertyValue<unsigned>("(original imzML value) max count of pixels y", imzMLSizeY);
+      data->SetPropertyValue<unsigned>("(original imzML value) [IMS:1000042] max count of pixels x", imzMLSizeX);
+      data->SetPropertyValue<unsigned>("(original imzML value) [IMS:1000043] max count of pixels y", imzMLSizeY);
       data->SetPropertyValue<unsigned>("(original imzML value) max count of pixels z", imzMLSizeZ);
 
       data->SetPropertyValue<unsigned>("[IMS:1000042] max count of pixels x", newSizeX);
       data->SetPropertyValue<unsigned>("[IMS:1000043] max count of pixels y", newSizeY);
       data->SetPropertyValue<unsigned>("max count of pixels z", newSizeZ);
 
-      MITK_WARN << "Area Correction!";
       if (requireCorrectionX)
         MITK_WARN << "The x coordinate index was shifted by " << xsMin << " towards 0.";
       if (requireCorrectionY)

@@ -306,7 +306,6 @@ void m2Spectrum::OnPropertyListChanged(const itk::Object *caller, const itk::Eve
             }
           }
         }
-
       }
     }
   }
@@ -507,6 +506,9 @@ void m2Spectrum::OnMouseWheel(QPoint pos, qreal x, qreal y, int angle, Qt::Keybo
 
 void m2Spectrum::UpdateCurrentMinMaxY()
 {
+  if (m_DataProvider.empty())
+    return;
+
   m_LocalMinimumY = std::numeric_limits<double>::max();
   m_LocalMaximumY = std::numeric_limits<double>::min();
 
@@ -524,284 +526,288 @@ void m2Spectrum::UpdateCurrentMinMaxY()
 
     m_LocalMinimumY = std::min(m_LocalMinimumY, minmax.first->y());
     m_LocalMaximumY = std::max(m_LocalMaximumY, minmax.second->y());
+
   }
 
   // MITK_INFO("UpdateLocalMinMaxValues") << minX << " " << maxX;
   // MITK_INFO("UpdateLocalMinMaxValues") << "New local minmax Y: " << m_LocalMinimumY << " " << m_LocalMaximumY;
-}
-
-void m2Spectrum::UpdateGlobalMinMaxValues()
-{
-  if (m_DataProvider.empty())
-    return;
-
-  m_GlobalMinimumY = std::numeric_limits<double>::max();
-  m_GlobalMaximumY = std::numeric_limits<double>::min();
-
-  for (auto kv : m_DataProvider)
-  {
-    if (!kv.first->IsVisible(nullptr))
-      continue;
-
-    const auto points = kv.second->GetSeries()->points();
-    if (points.empty())
-      continue;
-
-    if (kv.second->xs().empty())
-      continue;
-
-    m_GlobalMinimumX = std::min(m_GlobalMinimumX, kv.second->xs().front());
-    m_GlobalMaximumX = std::max(m_GlobalMaximumX, kv.second->xs().back());
-
-    const auto cmp = [](const auto &a, const auto &b) { return a.y() < b.y(); };
-    const auto minmaxY = std::minmax_element(std::begin(points), std::end(points), cmp);
-    m_GlobalMinimumY = std::min(m_GlobalMinimumY, minmaxY.first->y());
-    m_GlobalMaximumY = std::max(m_GlobalMaximumY, minmaxY.second->y());
   }
 
-  auto useMinIntensity = m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMinIntensity", true);
-  if (!useMinIntensity)
-    m_GlobalMinimumY = 0;
-
-  // m_LocalMinimumY = m_GlobalMinimumY;
-  // m_LocalMaximumY = m_GlobalMaximumY;
-
-  // MITK_INFO("UpdateGlobalMinMaxValues") << "New global minmax X: " << m_GlobalMinimumX << " " << m_GlobalMaximumX;
-  // MITK_INFO("UpdateGlobalMinMaxValues") << "New global minmax Y: " << m_GlobalMinimumY << " " << m_GlobalMaximumY;
-  // MITK_INFO("UpdateGlobalMinMaxValues") << "New local minmax Y: " << m_LocalMinimumY << " " << m_LocalMaximumY;
-}
-
-void m2Spectrum::CreateQtPartControl(QWidget *parent)
-{
-  // create GUI widgets from the Qt Designer's .ui file
-  m_Controls.setupUi(parent);
-
-  QShortcut *shortcutLeft = new QShortcut(QKeySequence(Qt::Key_Left), parent);
-  QShortcut *shortcutRight = new QShortcut(QKeySequence(Qt::Key_Right), parent);
-  QShortcut *shortcutUp = new QShortcut(QKeySequence(Qt::Key_Up), parent);
-  QShortcut *shortcutDown = new QShortcut(QKeySequence(Qt::Key_Down), parent);
-
-  auto UIUtilsObject = m2::UIUtils::Instance();
-  connect(UIUtilsObject, SIGNAL(RangeChanged(qreal, qreal)), this, SLOT(OnMassRangeChanged(qreal, qreal)));
-
-  connect(shortcutRight, SIGNAL(activated()), UIUtilsObject, SIGNAL(NextImage()));
-  connect(shortcutLeft, SIGNAL(activated()), UIUtilsObject, SIGNAL(PreviousImage()));
-  connect(shortcutUp, SIGNAL(activated()), UIUtilsObject, SIGNAL(IncreaseTolerance()));
-  connect(shortcutDown, SIGNAL(activated()), UIUtilsObject, SIGNAL(DecreaseTolerance()));
-
-  CreateQChartView();
-  CreateQChartViewMenu();
-
-  m_M2aiaPreferences =
-    mitk::CoreServices::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
-
-  m_Controls.chartView->chart()->legend()->setVisible(false);
-}
-
-void m2Spectrum::CreateQChartViewMenu()
-{
-  m_Menu = new QMenu(m_Controls.chartView);
-
-  // m_FocusMenu = new QMenu(m_Menu);
-  // m_FocusMenu->setTitle("Focus on ...");
-  // m_Menu->addMenu(m_FocusMenu);
-
-  // m_SpectrumSkyline = new QAction("Skyline spectrum", m_Controls.chartView);
-  // m_SpectrumSkyline->setCheckable(true);
-
-  // m_SpectrumMean = new QAction("Mean spectrum", m_Controls.chartView);
-  // m_SpectrumMean->setCheckable(true);
-  // m_SpectrumMean->setChecked(true);
-
-  // m_ShowLegend = new QAction("Show legend", m_Controls.chartView);
-  // m_ShowLegend->setCheckable(false);
-
-  // m_SpectrumSelectionGroup = new QActionGroup(m_Controls.chartView);
-  // m_SpectrumSelectionGroup->setExclusive(true);
-  // m_SpectrumSelectionGroup->addAction(m_SpectrumSkyline);
-  // m_SpectrumSelectionGroup->addAction(m_SpectrumMean);
-
-  // connect(m_SpectrumSkyline,
-  //         &QAction::toggled,
-  //         this,
-  //         [&](bool v)
-  //         {
-  //           if (!v)
-  //             return;
-
-  //           for (auto &kv : this->m_DataProvider)
-  //             kv.second->SetActiveProviderTo("Max");
-
-  //           UpdateGlobalMinMaxValues();
-  //           UpdateCurrentMinMaxY();
-  //           emit m_xAxis->rangeChanged(m_xAxis->min(), m_xAxis->max());
-  //         });
-
-  // connect(m_SpectrumMean,
-  //         &QAction::toggled,
-  //         this,
-  //         [&](bool v)
-  //         {
-  //           if (!v)
-  //             return;
-
-  //           for (auto &kv : this->m_DataProvider)
-  //             kv.second->SetActiveProviderTo("Mean");
-
-  //           UpdateGlobalMinMaxValues();
-  //           UpdateCurrentMinMaxY();
-  //           emit m_xAxis->rangeChanged(m_xAxis->min(), m_xAxis->max());
-
-  // m_Menu->addAction(m_ShowLegend);
-  m_ShowAxesTitles = new QAction("Show axes title", m_Controls.chartView);
-  m_ShowAxesTitles->setCheckable(true);
-  m_Menu->addAction(m_ShowAxesTitles);
-  m_ShowAxesTitles->setChecked(false);
-
-  connect(m_ShowAxesTitles,
-          &QAction::toggled,
-          this,
-          [this](bool s)
-          {
-            m_yAxis->setTitleVisible(s);
-            m_xAxis->setTitleVisible(s);
-          });
-
-  // connect(
-  //   m_ShowLegend, &QAction::toggled, this, [this](bool s) { m_Controls.chartView->chart()->legend()->setVisible(s);
-  //   });
-
-  // m_ShowLegend->setChecked(true);
-
-  m_Menu->addSection("Overview spectrum type");
-  // m_Menu->addAction(m_SpectrumSkyline);
-  // m_Menu->addAction(m_SpectrumMean);
-
-  // auto sec = m_Menu->addSection("Tick control");
-  m_TickCountX = new QSlider(m_Controls.chartView);
-  m_TickCountX->setMinimum(3);
-  m_TickCountX->setMaximum(50);
-  m_TickCountX->setValue(9);
-  m_TickCountX->setOrientation(Qt::Horizontal);
-
-  m_TickCountY = new QSlider(m_Controls.chartView);
-  m_TickCountY->setMinimum(3);
-  m_TickCountY->setMaximum(10);
-  m_TickCountY->setValue(4);
-  m_TickCountY->setOrientation(Qt::Horizontal);
-
-  auto wActionX = new QWidgetAction(m_Controls.chartView);
-  wActionX->setDefaultWidget(m_TickCountX);
-  connect(m_TickCountX, &QSlider::valueChanged, this, &m2Spectrum::OnAxisXTicksChanged);
-
-  auto wActionXLabel = new QWidgetAction(m_Controls.chartView);
-  wActionXLabel->setDefaultWidget(new QLabel("X axis ticks", m_Controls.chartView));
-
-  auto wActionY = new QWidgetAction(m_Controls.chartView);
-  wActionY->setDefaultWidget(m_TickCountY);
-  connect(m_TickCountY, &QSlider::valueChanged, this, &m2Spectrum::OnAxisYTicksChanged);
-  auto wActionYLabel = new QWidgetAction(m_Controls.chartView);
-  wActionYLabel->setDefaultWidget(new QLabel("Y axis ticks", m_Controls.chartView));
-
-  wActionY->setDefaultWidget(m_TickCountY);
-
-  m_Menu->addAction(wActionXLabel);
-  m_Menu->addAction(wActionX);
-
-  m_Menu->addAction(wActionYLabel);
-  m_Menu->addAction(wActionY);
-
-  m_Controls.chartView->setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(m_Controls.chartView,
-          &QtCharts::QChartView::customContextMenuRequested,
-          this,
-          [&](const QPoint &pos) { m_Menu->exec(m_Controls.chartView->viewport()->mapToGlobal(pos)); });
-}
-
-void m2Spectrum::CreateQChartView()
-{
-  auto chart = new QtCharts::QChart();
-  m_Controls.chartView->setChart(chart);
-  m_Chart = chart;
-
-  chart->legend()->setAlignment(Qt::AlignRight);
-  chart->legend()->setShowToolTips(true);
-  chart->setAnimationOptions(QtCharts::QChart::NoAnimation);
-  chart->setTheme(QtCharts::QChart::ChartThemeDark);
-
-  m_Crosshair = new QGraphicsSimpleTextItem("", chart);
-  auto b = m_Crosshair->brush();
-  b.setColor(QColor::fromRgbF(1, 1, 1));
-  m_Crosshair->setBrush(b);
-  m_Crosshair->hide();
-
-  connect(m_Controls.chartView, &m2::ChartView::mouseDoubleClick, this, &m2Spectrum::OnMouseDoubleClick);
-  connect(m_Controls.chartView, &m2::ChartView::mousePress, this, &m2Spectrum::OnMousePress);
-  connect(m_Controls.chartView, &m2::ChartView::mouseMove, this, &m2Spectrum::OnMouseMove);
-  connect(m_Controls.chartView, &m2::ChartView::mouseRelease, this, &m2Spectrum::OnMouseRelease);
-  connect(m_Controls.chartView, &m2::ChartView::mouseWheel, this, &m2Spectrum::OnMouseWheel);
-}
-
-void m2Spectrum::AutoZoomUseLocalExtremaY()
-{
-  if (m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMaxIntensity", true) ||
-      m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMinIntensity", true))
+  void m2Spectrum::UpdateGlobalMinMaxValues()
   {
-    if (m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMaxIntensity", true))
-    {
-      m_yAxis->setMax(m_LocalMaximumY * 1.1);
-    } // else use just current zoom, no adaptions.
-
-    if (m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMinIntensity", true))
-    {
-      m_yAxis->setMin(m_LocalMinimumY * 0.9);
-    }
-    else
-    {
-      m_GlobalMinimumY = 0;
-      m_LocalMinimumY = 0;
-      m_yAxis->setMin(0);
-    }
-  }
-}
-
-void m2Spectrum::OnSeriesFocused(const mitk::DataNode *node)
-{
-  double xMin = m_GlobalMaximumX;
-  double xMax = m_GlobalMinimumX;
-
-  if (auto provider = m_DataProvider[node])
-  {
-    xMin = std::min(xMin, provider->xs().front());
-    xMax = std::max(xMax, provider->xs().back());
-  }
-  m_xAxis->setRange(xMin, xMax);
-  // AutoZoomUseLocalExtremaY();
-}
-
-void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
-{
-  if (dynamic_cast<m2::SpectrumImage *>(node->GetData()) || dynamic_cast<m2::IntervalVector *>(node->GetData()))
-  {
-    if (m_DataProvider.find(node) == m_DataProvider.end())
+    if (m_DataProvider.empty())
       return;
 
-    // remove observers
-    const_cast<mitk::DataNode *>(node)->RemoveAllObservers();
-    node->GetData()->RemoveAllObservers();
+    m_GlobalMinimumY = std::numeric_limits<double>::max();
+    m_GlobalMaximumY = std::numeric_limits<double>::min();
 
-    // remove scene
-    m_Chart->scene()->removeItem(m_NodeRelatedGraphicItems[node]);
-    delete m_NodeRelatedGraphicItems[node];
-    m_NodeRelatedGraphicItems.erase(node);
+    for (auto kv : m_DataProvider)
+    {
+      if (!kv.first->IsVisible(nullptr))
+        continue;
 
-    // remove provider
-    if (auto provider = m_DataProvider[node])
-      m_Controls.chartView->chart()->removeSeries(provider->GetSeries());
-    m_DataProvider.erase(node);
+      const auto points = kv.second->GetSeries()->points();
+      if (points.empty())
+        continue;
 
-    // UpdateAxisLabels(node, true);
+      if (kv.second->xs().empty())
+        continue;
+
+      m_GlobalMinimumX = std::min(m_GlobalMinimumX, kv.second->xs().front());
+      m_GlobalMaximumX = std::max(m_GlobalMaximumX, kv.second->xs().back());
+
+      const auto cmp = [](const auto &a, const auto &b) { return a.y() < b.y(); };
+      const auto minmaxY = std::minmax_element(std::begin(points), std::end(points), cmp);
+      m_GlobalMinimumY = std::min(m_GlobalMinimumY, minmaxY.first->y());
+      m_GlobalMaximumY = std::max(m_GlobalMaximumY, minmaxY.second->y());
+    }
+
+    auto useMinIntensity = m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMinIntensity", true);
+    if (!useMinIntensity)
+      m_GlobalMinimumY = 0;
+
+    // m_LocalMinimumY = m_GlobalMinimumY;
+    // m_LocalMaximumY = m_GlobalMaximumY;
+
+    // MITK_INFO("UpdateGlobalMinMaxValues") << "New global minmax X: " << m_GlobalMinimumX << " " << m_GlobalMaximumX;
+    // MITK_INFO("UpdateGlobalMinMaxValues") << "New global minmax Y: " << m_GlobalMinimumY << " " << m_GlobalMaximumY;
+    // MITK_INFO("UpdateGlobalMinMaxValues") << "New local minmax Y: " << m_LocalMinimumY << " " << m_LocalMaximumY;
   }
+
+  void m2Spectrum::CreateQtPartControl(QWidget * parent)
+  {
+    // create GUI widgets from the Qt Designer's .ui file
+    m_Controls.setupUi(parent);
+
+    QShortcut *shortcutLeft = new QShortcut(QKeySequence(Qt::Key_Left), parent);
+    QShortcut *shortcutRight = new QShortcut(QKeySequence(Qt::Key_Right), parent);
+    QShortcut *shortcutUp = new QShortcut(QKeySequence(Qt::Key_Up), parent);
+    QShortcut *shortcutDown = new QShortcut(QKeySequence(Qt::Key_Down), parent);
+
+    auto UIUtilsObject = m2::UIUtils::Instance();
+    connect(UIUtilsObject, SIGNAL(RangeChanged(qreal, qreal)), this, SLOT(OnMassRangeChanged(qreal, qreal)));
+
+    connect(shortcutRight, SIGNAL(activated()), UIUtilsObject, SIGNAL(NextImage()));
+    connect(shortcutLeft, SIGNAL(activated()), UIUtilsObject, SIGNAL(PreviousImage()));
+    connect(shortcutUp, SIGNAL(activated()), UIUtilsObject, SIGNAL(IncreaseTolerance()));
+    connect(shortcutDown, SIGNAL(activated()), UIUtilsObject, SIGNAL(DecreaseTolerance()));
+
+    CreateQChartView();
+    CreateQChartViewMenu();
+
+    m_M2aiaPreferences =
+      mitk::CoreServices::GetPreferencesService()->GetSystemPreferences()->Node("/org.mitk.gui.qt.m2aia.preferences");
+
+    m_Controls.chartView->chart()->legend()->setVisible(false);
+  }
+
+  void m2Spectrum::CreateQChartViewMenu()
+  {
+    m_Menu = new QMenu(m_Controls.chartView);
+
+    // m_FocusMenu = new QMenu(m_Menu);
+    // m_FocusMenu->setTitle("Focus on ...");
+    // m_Menu->addMenu(m_FocusMenu);
+
+    // m_SpectrumSkyline = new QAction("Skyline spectrum", m_Controls.chartView);
+    // m_SpectrumSkyline->setCheckable(true);
+
+    // m_SpectrumMean = new QAction("Mean spectrum", m_Controls.chartView);
+    // m_SpectrumMean->setCheckable(true);
+    // m_SpectrumMean->setChecked(true);
+
+    // m_ShowLegend = new QAction("Show legend", m_Controls.chartView);
+    // m_ShowLegend->setCheckable(false);
+
+    // m_SpectrumSelectionGroup = new QActionGroup(m_Controls.chartView);
+    // m_SpectrumSelectionGroup->setExclusive(true);
+    // m_SpectrumSelectionGroup->addAction(m_SpectrumSkyline);
+    // m_SpectrumSelectionGroup->addAction(m_SpectrumMean);
+
+    // connect(m_SpectrumSkyline,
+    //         &QAction::toggled,
+    //         this,
+    //         [&](bool v)
+    //         {
+    //           if (!v)
+    //             return;
+
+    //           for (auto &kv : this->m_DataProvider)
+    //             kv.second->SetActiveProviderTo("Max");
+
+    //           UpdateGlobalMinMaxValues();
+    //           UpdateCurrentMinMaxY();
+    //           emit m_xAxis->rangeChanged(m_xAxis->min(), m_xAxis->max());
+    //         });
+
+    // connect(m_SpectrumMean,
+    //         &QAction::toggled,
+    //         this,
+    //         [&](bool v)
+    //         {
+    //           if (!v)
+    //             return;
+
+    //           for (auto &kv : this->m_DataProvider)
+    //             kv.second->SetActiveProviderTo("Mean");
+
+    //           UpdateGlobalMinMaxValues();
+    //           UpdateCurrentMinMaxY();
+    //           emit m_xAxis->rangeChanged(m_xAxis->min(), m_xAxis->max());
+
+    // m_Menu->addAction(m_ShowLegend);
+    m_ShowAxesTitles = new QAction("Show axes title", m_Controls.chartView);
+    m_ShowAxesTitles->setCheckable(true);
+    m_Menu->addAction(m_ShowAxesTitles);
+    m_ShowAxesTitles->setChecked(false);
+
+    connect(m_ShowAxesTitles,
+            &QAction::toggled,
+            this,
+            [this](bool s)
+            {
+              m_yAxis->setTitleVisible(s);
+              m_xAxis->setTitleVisible(s);
+            });
+
+    // connect(
+    //   m_ShowLegend, &QAction::toggled, this, [this](bool s) { m_Controls.chartView->chart()->legend()->setVisible(s);
+    //   });
+
+    // m_ShowLegend->setChecked(true);
+
+    m_Menu->addSection("Overview spectrum type");
+    // m_Menu->addAction(m_SpectrumSkyline);
+    // m_Menu->addAction(m_SpectrumMean);
+
+    // auto sec = m_Menu->addSection("Tick control");
+    m_TickCountX = new QSlider(m_Controls.chartView);
+    m_TickCountX->setMinimum(3);
+    m_TickCountX->setMaximum(50);
+    m_TickCountX->setValue(9);
+    m_TickCountX->setOrientation(Qt::Horizontal);
+
+    m_TickCountY = new QSlider(m_Controls.chartView);
+    m_TickCountY->setMinimum(3);
+    m_TickCountY->setMaximum(10);
+    m_TickCountY->setValue(4);
+    m_TickCountY->setOrientation(Qt::Horizontal);
+
+    auto wActionX = new QWidgetAction(m_Controls.chartView);
+    wActionX->setDefaultWidget(m_TickCountX);
+    connect(m_TickCountX, &QSlider::valueChanged, this, &m2Spectrum::OnAxisXTicksChanged);
+
+    auto wActionXLabel = new QWidgetAction(m_Controls.chartView);
+    wActionXLabel->setDefaultWidget(new QLabel("X axis ticks", m_Controls.chartView));
+
+    auto wActionY = new QWidgetAction(m_Controls.chartView);
+    wActionY->setDefaultWidget(m_TickCountY);
+    connect(m_TickCountY, &QSlider::valueChanged, this, &m2Spectrum::OnAxisYTicksChanged);
+    auto wActionYLabel = new QWidgetAction(m_Controls.chartView);
+    wActionYLabel->setDefaultWidget(new QLabel("Y axis ticks", m_Controls.chartView));
+
+    wActionY->setDefaultWidget(m_TickCountY);
+
+    m_Menu->addAction(wActionXLabel);
+    m_Menu->addAction(wActionX);
+
+    m_Menu->addAction(wActionYLabel);
+    m_Menu->addAction(wActionY);
+
+    m_Controls.chartView->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(m_Controls.chartView,
+            &QtCharts::QChartView::customContextMenuRequested,
+            this,
+            [&](const QPoint &pos) { m_Menu->exec(m_Controls.chartView->viewport()->mapToGlobal(pos)); });
+  }
+
+  void m2Spectrum::CreateQChartView()
+  {
+    auto chart = new QtCharts::QChart();
+    m_Controls.chartView->setChart(chart);
+    m_Chart = chart;
+
+    chart->legend()->setAlignment(Qt::AlignRight);
+    chart->legend()->setShowToolTips(true);
+    chart->setAnimationOptions(QtCharts::QChart::NoAnimation);
+    chart->setTheme(QtCharts::QChart::ChartThemeDark);
+
+    m_Crosshair = new QGraphicsSimpleTextItem("", chart);
+    auto b = m_Crosshair->brush();
+    b.setColor(QColor::fromRgbF(1, 1, 1));
+    m_Crosshair->setBrush(b);
+    m_Crosshair->hide();
+
+    connect(m_Controls.chartView, &m2::ChartView::mouseDoubleClick, this, &m2Spectrum::OnMouseDoubleClick);
+    connect(m_Controls.chartView, &m2::ChartView::mousePress, this, &m2Spectrum::OnMousePress);
+    connect(m_Controls.chartView, &m2::ChartView::mouseMove, this, &m2Spectrum::OnMouseMove);
+    connect(m_Controls.chartView, &m2::ChartView::mouseRelease, this, &m2Spectrum::OnMouseRelease);
+    connect(m_Controls.chartView, &m2::ChartView::mouseWheel, this, &m2Spectrum::OnMouseWheel);
+  }
+
+  void m2Spectrum::AutoZoomUseLocalExtremaY()
+  {
+    if(m_DataProvider.empty())
+      return;
+
+    if (m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMaxIntensity", true) ||
+        m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMinIntensity", true))
+    {
+      if (m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMaxIntensity", true))
+      {
+        m_yAxis->setMax(m_LocalMaximumY * 1.1);
+      } // else use just current zoom, no adaptions.
+
+      if (m_M2aiaPreferences->GetBool("m2aia.view.spectrum.useMinIntensity", true))
+      {
+        m_yAxis->setMin(m_LocalMinimumY * 0.9);
+      }
+      else
+      {
+        m_GlobalMinimumY = 0;
+        m_LocalMinimumY = 0;
+        m_yAxis->setMin(0);
+      }
+    }
+  }
+
+  void m2Spectrum::OnSeriesFocused(const mitk::DataNode *node)
+  {
+    double xMin = m_GlobalMaximumX;
+    double xMax = m_GlobalMinimumX;
+
+    if (auto provider = m_DataProvider[node])
+    {
+      xMin = std::min(xMin, provider->xs().front());
+      xMax = std::max(xMax, provider->xs().back());
+    }
+    m_xAxis->setRange(xMin, xMax);
+    // AutoZoomUseLocalExtremaY();
+  }
+
+  void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
+  {
+    if (dynamic_cast<m2::SpectrumImage *>(node->GetData()) || dynamic_cast<m2::IntervalVector *>(node->GetData()))
+    {
+      if (m_DataProvider.find(node) == m_DataProvider.end())
+        return;
+
+      // remove observers
+      const_cast<mitk::DataNode *>(node)->RemoveAllObservers();
+      node->GetData()->RemoveAllObservers();
+
+      // remove scene
+      m_Chart->scene()->removeItem(m_NodeRelatedGraphicItems[node]);
+      delete m_NodeRelatedGraphicItems[node];
+      m_NodeRelatedGraphicItems.erase(node);
+
+      // remove provider
+      if (auto provider = m_DataProvider[node])
+        m_Controls.chartView->chart()->removeSeries(provider->GetSeries());
+      m_DataProvider.erase(node);
+
+      // UpdateAxisLabels(node, true);
+    }
 
     if(m_DataProvider.empty()){
       std::setprecision(2);
@@ -813,176 +819,176 @@ void m2Spectrum::NodeRemoved(const mitk::DataNode *node)
       
     }
 
-  // OnResetView();
-}
+    // OnResetView();
+  }
 
-void m2Spectrum::SetSeriesVisible(QtCharts::QAbstractSeries *series, bool visibility)
-{
-  auto markers = m_Chart->legend()->markers();
-  std::vector<QtCharts::QLegendMarker *> series_marker;
-  for (auto marker : markers)
+  void m2Spectrum::SetSeriesVisible(QtCharts::QAbstractSeries * series, bool visibility)
   {
-    if (marker->series() == series)
+    auto markers = m_Chart->legend()->markers();
+    std::vector<QtCharts::QLegendMarker *> series_marker;
+    for (auto marker : markers)
     {
-      // switch (marker->type())
-      marker->series()->setVisible(visibility);
-      marker->setVisible(true);
+      if (marker->series() == series)
+      {
+        // switch (marker->type())
+        marker->series()->setVisible(visibility);
+        marker->setVisible(true);
 
-      // Dim the marker, if series is not visible
-      qreal alpha = 1.0;
+        // Dim the marker, if series is not visible
+        qreal alpha = 1.0;
 
-      if (!marker->series()->isVisible())
-        alpha = 0.5;
+        if (!marker->series()->isVisible())
+          alpha = 0.5;
 
-      QColor color;
-      QBrush brush = marker->labelBrush();
-      color = brush.color();
-      color.setAlphaF(alpha);
-      brush.setColor(color);
-      marker->setLabelBrush(brush);
+        QColor color;
+        QBrush brush = marker->labelBrush();
+        color = brush.color();
+        color.setAlphaF(alpha);
+        brush.setColor(color);
+        marker->setLabelBrush(brush);
 
-      brush = marker->brush();
-      color = brush.color();
-      color.setAlphaF(alpha);
-      brush.setColor(color);
-      marker->setBrush(brush);
+        brush = marker->brush();
+        color = brush.color();
+        color.setAlphaF(alpha);
+        brush.setColor(color);
+        marker->setBrush(brush);
 
-      QPen pen = marker->pen();
-      color = pen.color();
-      color.setAlphaF(alpha);
-      pen.setColor(color);
-      marker->setPen(pen);
-      return;
+        QPen pen = marker->pen();
+        color = pen.color();
+        color.setAlphaF(alpha);
+        pen.setColor(color);
+        marker->setPen(pen);
+        return;
+      }
     }
   }
-}
 
-void m2Spectrum::OnLegnedHandleMarkerClicked()
-{
-  auto *marker = qobject_cast<QtCharts::QLegendMarker *>(sender());
-  Q_ASSERT(marker);
-  SetSeriesVisible(marker->series(), !marker->series()->isVisible());
-}
-
-void m2Spectrum::OnResetView()
-{
-  if (m_DataProvider.empty())
-    return;
-}
-
-void m2Spectrum::OnAxisXTicksChanged(int v)
-{
-  m_AxisTicks[0] = v;
-  if (m_xAxis)
+  void m2Spectrum::OnLegnedHandleMarkerClicked()
   {
-    m_xAxis->setTickCount(m_AxisTicks[0]);
-    m_xAxis->setMinorTickCount(1);
-    m_xAxis->setLabelsAngle(0);
-    auto col = m_xAxis->gridLineColor();
-    col.setAlphaF(0.3);
-    m_xAxis->setGridLineColor(col);
-    col.setAlphaF(0.15);
-    m_xAxis->setMinorGridLineColor(col);
-  }
-}
-
-void m2Spectrum::OnAxisYTicksChanged(int v)
-{
-  m_AxisTicks[1] = v;
-  if (m_yAxis)
-  {
-    m_yAxis->setTickCount(m_AxisTicks[1]);
-    m_yAxis->setMinorTickCount(1);
-    auto col = m_yAxis->gridLineColor();
-    col.setAlphaF(0.3);
-    m_yAxis->setGridLineColor(col);
-    col.setAlphaF(0.15);
-    m_yAxis->setMinorGridLineColor(col);
-    // yAxis->setTitleText("Intensity");
-  }
-}
-
-void m2Spectrum::OnRangeChangedAxisX(qreal xMin, qreal xMax)
-{
-  if (m_DataProvider.empty())
-    return;
-
-  m_LocalMaximumX = xMax;
-  m_LocalMinimumX = xMin;
-
-  auto axis = m_xAxis;
-  if (xMax > m_GlobalMaximumX)
-  {
-    // MITK_INFO("OnRangeChangedAxisX") << xMax << " > " << m_GlobalMaximumX;
-    this->m_MouseDragUpperDelta = std::abs(m_GlobalMaximumX - this->m_MouseDragCenterPos);
-    axis->blockSignals(true);
-    axis->setMax(m_GlobalMaximumX);
-    axis->blockSignals(false);
+    auto *marker = qobject_cast<QtCharts::QLegendMarker *>(sender());
+    Q_ASSERT(marker);
+    SetSeriesVisible(marker->series(), !marker->series()->isVisible());
   }
 
-  if (xMin < m_GlobalMinimumX)
+  void m2Spectrum::OnResetView()
   {
-    // MITK_INFO("OnRangeChangedAxisX") << xMin << " > " << m_GlobalMinimumX;
-    this->m_MouseDragLowerDelta = std::abs(m_GlobalMinimumX - this->m_MouseDragCenterPos);
-    axis->blockSignals(true);
-    axis->setMin(m_GlobalMinimumX);
-    axis->blockSignals(false);
+    if (m_DataProvider.empty())
+      return;
   }
 
-  UpdateCurrentMinMaxY();
-  UpdateAllSeries();
-  AutoZoomUseLocalExtremaY();
-}
-
-void m2Spectrum::UpdateAllSeries()
-{
-  for (auto &kv : m_DataProvider)
-    kv.second->UpdateBoundaries(m_LocalMinimumX, m_LocalMaximumX);
-}
-
-void m2Spectrum::OnRangeChangedAxisY(qreal min, qreal max)
-{
-  if (max > m_GlobalMaximumY * 1.1)
+  void m2Spectrum::OnAxisXTicksChanged(int v)
   {
-    m_yAxis->blockSignals(true);
-    m_yAxis->setMax(m_GlobalMaximumY * 1.1);
-    m_yAxis->blockSignals(false);
+    m_AxisTicks[0] = v;
+    if (m_xAxis)
+    {
+      m_xAxis->setTickCount(m_AxisTicks[0]);
+      m_xAxis->setMinorTickCount(1);
+      m_xAxis->setLabelsAngle(0);
+      auto col = m_xAxis->gridLineColor();
+      col.setAlphaF(0.3);
+      m_xAxis->setGridLineColor(col);
+      col.setAlphaF(0.15);
+      m_xAxis->setMinorGridLineColor(col);
+    }
   }
 
-  if (min < m_GlobalMinimumY * 0.9)
+  void m2Spectrum::OnAxisYTicksChanged(int v)
   {
-    m_yAxis->blockSignals(true);
-    m_yAxis->setMin(m_GlobalMinimumY);
-    m_yAxis->blockSignals(false);
-  }
-  UpdateSelectedArea();
-}
-
-void m2Spectrum::UpdateTitles(const mitk::DataNode *node)
-{
-  if (!m_xAxis || !m_yAxis)
-    return;
-
-  if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
-  {
-    auto xlabel = image->GetSpectrumType().XAxisLabel;
-    auto ylabel = image->GetSpectrumType().YAxisLabel;
-    m_xAxis->setTitleText(xlabel.c_str());
-    m_yAxis->setTitleText(ylabel.c_str());
+    m_AxisTicks[1] = v;
+    if (m_yAxis)
+    {
+      m_yAxis->setTickCount(m_AxisTicks[1]);
+      m_yAxis->setMinorTickCount(1);
+      auto col = m_yAxis->gridLineColor();
+      col.setAlphaF(0.3);
+      m_yAxis->setGridLineColor(col);
+      col.setAlphaF(0.15);
+      m_yAxis->setMinorGridLineColor(col);
+      // yAxis->setTitleText("Intensity");
+    }
   }
 
-  // switch (m_CurrentOverviewSpectrumType)
-  // {
-  //   case m2::SpectrumType::Maximum:
-  //     m_yAxis->setTitleText("Intensity (maximum)");
-  //     break;
-  //   case m2::SpectrumType::Sum:
-  //     m_yAxis->setTitleText("Intensity (sum)");
-  //     break;
-  //   case m2::SpectrumType::Mean:
-  //     m_yAxis->setTitleText("Intensity (mean)");
-  //     break;
-  //   default:
-  //     break;
-  // }
-}
+  void m2Spectrum::OnRangeChangedAxisX(qreal xMin, qreal xMax)
+  {
+    if (m_DataProvider.empty())
+      return;
+
+    m_LocalMaximumX = xMax;
+    m_LocalMinimumX = xMin;
+
+    auto axis = m_xAxis;
+    if (xMax > m_GlobalMaximumX)
+    {
+      // MITK_INFO("OnRangeChangedAxisX") << xMax << " > " << m_GlobalMaximumX;
+      this->m_MouseDragUpperDelta = std::abs(m_GlobalMaximumX - this->m_MouseDragCenterPos);
+      axis->blockSignals(true);
+      axis->setMax(m_GlobalMaximumX);
+      axis->blockSignals(false);
+    }
+
+    if (xMin < m_GlobalMinimumX)
+    {
+      // MITK_INFO("OnRangeChangedAxisX") << xMin << " > " << m_GlobalMinimumX;
+      this->m_MouseDragLowerDelta = std::abs(m_GlobalMinimumX - this->m_MouseDragCenterPos);
+      axis->blockSignals(true);
+      axis->setMin(m_GlobalMinimumX);
+      axis->blockSignals(false);
+    }
+
+    UpdateCurrentMinMaxY();
+    UpdateAllSeries();
+    AutoZoomUseLocalExtremaY();
+  }
+
+  void m2Spectrum::UpdateAllSeries()
+  {
+    for (auto &kv : m_DataProvider)
+      kv.second->UpdateBoundaries(m_LocalMinimumX, m_LocalMaximumX);
+  }
+
+  void m2Spectrum::OnRangeChangedAxisY(qreal min, qreal max)
+  {
+    if (max > m_GlobalMaximumY * 1.1)
+    {
+      m_yAxis->blockSignals(true);
+      m_yAxis->setMax(m_GlobalMaximumY * 1.1);
+      m_yAxis->blockSignals(false);
+    }
+
+    if (min < m_GlobalMinimumY * 0.9)
+    {
+      m_yAxis->blockSignals(true);
+      m_yAxis->setMin(m_GlobalMinimumY);
+      m_yAxis->blockSignals(false);
+    }
+    UpdateSelectedArea();
+  }
+
+  void m2Spectrum::UpdateTitles(const mitk::DataNode *node)
+  {
+    if (!m_xAxis || !m_yAxis)
+      return;
+
+    if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
+    {
+      auto xlabel = image->GetSpectrumType().XAxisLabel;
+      auto ylabel = image->GetSpectrumType().YAxisLabel;
+      m_xAxis->setTitleText(xlabel.c_str());
+      m_yAxis->setTitleText(ylabel.c_str());
+    }
+
+    // switch (m_CurrentOverviewSpectrumType)
+    // {
+    //   case m2::SpectrumType::Maximum:
+    //     m_yAxis->setTitleText("Intensity (maximum)");
+    //     break;
+    //   case m2::SpectrumType::Sum:
+    //     m_yAxis->setTitleText("Intensity (sum)");
+    //     break;
+    //   case m2::SpectrumType::Mean:
+    //     m_yAxis->setTitleText("Intensity (mean)");
+    //     break;
+    //   default:
+    //     break;
+    // }
+  }
