@@ -46,6 +46,7 @@ See LICENSE.txt for details.
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateOr.h>
 #include <mitkNodePredicateProperty.h>
+#include <mitkImagePixelWriteAccessor.h>
 #include <regex>
 
 const std::string m2Data::VIEW_ID = "org.mitk.views.m2.data";
@@ -110,14 +111,14 @@ void m2Data::CreateQtPartControl(QWidget *parent)
             {
               // if it should be visible in the data storage remove the helper object property
               dNode->RemoveProperty("helper object");
-              
+
               // update level window
               mitk::LevelWindow lw;
-              node->GetLevelWindow(lw);
-              lw.SetAuto(image);
+              dNode->GetLevelWindow(lw);
+              lw.SetAuto(image->GetNormalizationImage(type));
               const auto max = lw.GetRangeMax();
               lw.SetWindowBounds(0, max);
-              const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
+              dNode->SetLevelWindow(lw);
             }
             this->RequestRenderWindowUpdate();
           }
@@ -153,7 +154,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   };
 
   // connect checkboxes to handle visibility of helper objects in the DataManager
-
+  int i = 1;
   for (m2::NormalizationStrategyType type : m2::NormalizationStrategyTypeList)
   {
     if (type == m2::NormalizationStrategyType::None)
@@ -161,14 +162,15 @@ void m2Data::CreateQtPartControl(QWidget *parent)
 
     auto ckBox = new QCheckBox(("Show " + m2::to_string(type) + " normalization images").c_str(), m_Controls.settings);
     QHBoxLayout *layout = (QHBoxLayout *)(m_Controls.settings->layout());
-    layout->insertWidget(layout->indexOf(m_Controls.hLineNormImages) + 1, ckBox);
+    layout->insertWidget(layout->indexOf(m_Controls.hLineNormImages) + i, ckBox);
     ckBox->setObjectName(("ckBoxNormalizationImage" + m2::to_string(type)).c_str());
 
-    connect(ckBox, &QCheckBox::stateChanged, this, [toggleByType, type](int v) { toggleByType(v, type); });
+    connect(ckBox, &QCheckBox::toggled, this, [toggleByType, type](int v) { toggleByType(v, type); });
+    ++i;
   }
 
   connect(m_Controls.showIndexImages,
-          &QCheckBox::stateChanged,
+          &QCheckBox::toggled,
           this,
           [toggleByName](bool isChecked) { toggleByName(isChecked, "IndexImage"); });
   connect(m_Controls.showMaskImages,
@@ -871,35 +873,57 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
     helperNode->SetName("MaskImage");
     helperNode->SetVisibility(m_Controls.showMaskImages->isChecked());
     helperNode->SetData(spectrumImage->GetMaskImage());
-    helperNode->SetBoolProperty("helper object", !m_Controls.showMaskImages->isChecked());
     helperNode->SetStringProperty("spectrum.image.type", "mask");
 
+    // add hidden to DS
+    helperNode->SetBoolProperty("helper object", true);
     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    // consideration of the check boxes
+    emit m_Controls.showMaskImages->toggled(m_Controls.showMaskImages->isChecked());
 
     // -------------- add Index to datastorage --------------
     helperNode = mitk::DataNode::New();
     helperNode->SetName("IndexImage");
     helperNode->SetVisibility(m_Controls.showIndexImages->isChecked());
     helperNode->SetData(spectrumImage->GetIndexImage());
-    helperNode->SetBoolProperty("helper object", !m_Controls.showIndexImages->isChecked());
     helperNode->SetStringProperty("spectrum.image.type", "index");
-
+    // add hidden to DS
+    helperNode->SetBoolProperty("helper object", true);
     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+    // consideration of the check boxes
+    emit m_Controls.showIndexImages->toggled(m_Controls.showIndexImages->isChecked());
 
     // -------------- add Normalization to datastorage --------------
-    for (auto name : m2::NormalizationStrategyTypeNames)
+    for (auto type : m2::NormalizationStrategyTypeList)
     {
-      if (name == "None")
+      if (type == m2::NormalizationStrategyType::None)
         continue;
+
       helperNode = mitk::DataNode::New();
-      helperNode->SetName("NormalizationImage" + name);
-      auto checkBox = m_Controls.settings->findChild<QCheckBox *>(("ckBoxNormalizationImage" + name).c_str());
-      helperNode->SetVisibility(checkBox->isChecked());
-      auto type = static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(name));
-      helperNode->SetData(spectrumImage->GetNormalizationImage(type));
-      helperNode->SetBoolProperty("helper object", !checkBox->isChecked());
-      helperNode->SetStringProperty("spectrum.image.type", ("normalization " + name).c_str());
+      helperNode->SetName("NormalizationImage" + m2::to_string(type));
+      helperNode->SetStringProperty("spectrum.image.type", ("normalization " + m2::to_string(type)).c_str());    
+      
+      // here we add only the template images
+      // initialization is done by UI interaction
+      auto image = spectrumImage->GetNormalizationImage(type);
+      helperNode->SetData(image); 
+
+      // add hidden to DS
+      helperNode->SetBoolProperty("helper object", true);
       this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
+
+      // clear the image data if not already initialized
+      if(!spectrumImage->GetNormalizationImageStatus(type)){
+        auto imageSize = image->GetDimensions();
+        mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(image);
+        std::memset(acc.GetData(), 0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
+      }
+      
+   
+
+      // consideration of the check boxes
+      auto checkBox = m_Controls.settings->findChild<QCheckBox *>(("ckBoxNormalizationImage" + m2::to_string(type)).c_str());
+      emit checkBox->toggled(checkBox->isChecked());
     }
 
     // -------------- add Spectra to datastorage --------------
