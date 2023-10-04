@@ -36,6 +36,6 @@ set(target_libraries
   org_mitk_gui_qt_matchpoint_manipulator
   org_mitk_gui_qt_matchpoint_evaluator
   org_mitk_gui_qt_matchpoint_visualizer
-  org_mitk_gui_qt_dicombrowser
-  org_mitk_gui_qt_dicominspector
+  # org_mitk_gui_qt_dicombrowser
+  # org_mitk_gui_qt_dicominspector
 )

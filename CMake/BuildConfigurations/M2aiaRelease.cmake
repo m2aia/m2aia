@@ -31,8 +31,8 @@ set(MITK_CONFIG_PLUGINS
   org.mitk.gui.qt.m2.Position
   org.mitk.gui.qt.m2.registration
   org.mitk.gui.qt.matchpoint.evaluator
-  org.mitk.gui.qt.dicombrowser
-  org.mitk.gui.qt.dicominspector
+  # org.mitk.gui.qt.dicombrowser
+  # org.mitk.gui.qt.dicominspector
 )
 
 set(MITK_VTK_DEBUG_LEAKS OFF CACHE BOOL "Enable VTK Debug Leaks" FORCE)
