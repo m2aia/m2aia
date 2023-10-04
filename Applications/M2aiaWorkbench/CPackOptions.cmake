@@ -6,7 +6,7 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "M²aia - Mass spectrometry imaging applic
 # Major version is the year of release
 set(CPACK_PACKAGE_VERSION_MAJOR "2023")
 # Minor version is the month of release
-set(CPACK_PACKAGE_VERSION_MINOR "08")
+set(CPACK_PACKAGE_VERSION_MINOR "10")
 # Patch versioning
 set(CPACK_PACKAGE_VERSION_PATCH "00")
 set(CPACK_PACKAGE_VENDOR "m2aia")
