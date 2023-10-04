@@ -810,7 +810,6 @@ void m2Spectrum::UpdateCurrentMinMaxY()
     }
 
     if(m_DataProvider.empty()){
-      std::setprecision(2);
       if(m_xAxis) m_xAxis->setRange(0,1);
       if(m_yAxis) {
         m_yAxis->setRange(0,1);
