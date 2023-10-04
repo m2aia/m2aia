@@ -19,6 +19,7 @@ See LICENSE.txt for details.
 #include <itkCastImageFilter.h>
 #include <m2ISpectrumImageSource.h>
 #include <m2ImzMLSpectrumImage.h>
+#include <m2Timer.h>
 #include <m2Process.hpp>
 #include <mitkCoreServices.h>
 #include <mitkIPreferences.h>
@@ -155,6 +156,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeNormal
 
   // initialize the normalization iamge
   auto image = p->GetNormalizationImage(type);
+  
   
   // create a write accessor
   using WriteAccessorType = mitk::ImagePixelWriteAccessor<NormImagePixelType, 3>;
@@ -455,9 +457,12 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
 
   auto max_dim0 = p->GetDimensions()[0];
   auto max_dim1 = p->GetDimensions()[1];
-  
+  std::vector<std::thread> threads;
   for(auto type : m2::NormalizationStrategyTypeList)
   {
+    m2::Timer t("Initialization of the Normalization images took");
+    t.printIf = [](m2::Timer::Duration d) -> bool{MITK_INFO << d.count(); return d.count() > 1.0;};
+
     using LocalImageType = itk::Image<m2::NormImagePixelType, 3>;
     auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
     caster->SetInput(itkIonImage);
@@ -466,12 +471,18 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
     p->SetNormalizationImage(normImage, type);
     normImage->InitializeByItk(caster->GetOutput());
 
-    mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(normImage);
-    std::memset(acc.GetData(), 1, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
-    acc.SetPixelByIndex({0, 0, 0}, 1);
-    acc.SetPixelByIndex({0, max_dim1 - 1, 0}, max_dim1 / 2);
-    acc.SetPixelByIndex({max_dim0 - 1, 0, 0}, max_dim0 / 2);
-    acc.SetPixelByIndex({max_dim0 - 1, max_dim1 - 1, 0}, max_dim1 + max_dim0);
+    {
+      mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(normImage);
+      std::memset(acc.GetData(), 1, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
+    }
+    
+    
+      
+    p->InitializeNormalizationImage(type);
+    p->SetNormalizationImageStatus(type,true);
+  
+
+  
   }
 
   mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> acc(p);
@@ -487,15 +498,6 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
   p->SetImageAccessInitialized(false);
   //////////---------------------------
   const auto spectrumType = p->GetSpectrumType();
-
-  // check if the normalization iamge was already initialized for this type of normalization
-  // and initialize the image if necessary
-  auto currentType = p->GetNormalizationStrategy();
-  MITK_WARN << "INITIALIZATION STATUS " << p->GetNormalizationImageStatus(currentType);
-  if(p->GetNormalizationImageStatus(currentType) == false){
-    InitializeNormalizationImage(currentType);
-    p->SetNormalizationImageStatus(currentType, true);
-  } 
 
   if (spectrumType.Format == m2::SpectrumFormat::ProcessedProfile)
   {

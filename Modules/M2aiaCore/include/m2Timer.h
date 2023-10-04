@@ -19,26 +19,32 @@ See LICENSE.txt for details.
 #include <iostream>
 #include <mbilog.h>
 #include <string>
+#include <functional>
+#include <mitkCommon.h>
 
 namespace m2
 {
   class Timer
   {
   public:
-    std::chrono::time_point<std::chrono::high_resolution_clock> start;
-    std::chrono::duration<float> duration;
+    using TimePoint = std::chrono::time_point<std::chrono::high_resolution_clock>;
+    using Duration = std::chrono::duration<float>;
+    TimePoint start;
+    Duration duration;
     std::string m_what;
+    std::function<bool(Duration)> printIf = [](Duration){return false;};
     int m_N = 1;
 
     ~Timer()
     {
-      duration = std::chrono::high_resolution_clock::now() - start;
-      MITK_INFO << m_what << ": "<< duration.count()<< " Average(" << m_N <<" runs):" << duration.count()/double(m_N) << "s";
+      auto now = std::chrono::high_resolution_clock::now();
+      duration = now - start;
+      if(printIf(duration))
+        MITK_INFO << m_what << ": "<< duration.count()<< " Average(" << m_N <<" runs):" << duration.count()/double(m_N) << "s";
     }
 
     explicit Timer(std::string what) : m_what(what)
     {
-      MITK_INFO << m_what << " started ...";
       start = std::chrono::high_resolution_clock::now();
     }
 
