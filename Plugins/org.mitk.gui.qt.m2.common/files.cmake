@@ -1,12 +1,17 @@
 set(SRC_CPP_FILES
   m2UIUtils.cpp
-  QmitkDataNodeExportComponentAction.cpp
-  QmitkDataNodeConvertPixelTypeAction.cpp
+
+  
 )
 
 set(INTERNAL_CPP_FILES
   org_mitk_gui_qt_m2_common_Activator.cpp
   m2BrowserPreferencesPage.cpp
+  QmitkDataNodeConvertPixelTypeAction.cpp
+  QmitkDataNodeExportComponentAction.cpp
+  QmitkDataNodeSliceWiseNormalizationAction.cpp
+  QmitkDataNodeReimportImageAction.cpp
+  QmitkDataNodePlotColorAction.cpp
 )
 
 set(UI_FILES
@@ -22,8 +27,11 @@ set(MOC_H_FILES
   src/internal/m2BrowserPreferencesPage.h
   src/m2UIUtils.h
   src/m2NameDialog.h
-  src/QmitkDataNodeExportComponentAction.h
-  src/QmitkDataNodeConvertPixelTypeAction.h
+  src/internal/QmitkDataNodeConvertPixelTypeAction.h
+  src/internal/QmitkDataNodeExportComponentAction.h
+  src/internal/QmitkDataNodeSliceWiseNormalizationAction.h
+  src/internal/QmitkDataNodePlotColorAction.h
+  src/internal/QmitkDataNodeReimportImageAction.h
 )
 
 # list of resource files which can be used by the plug-in

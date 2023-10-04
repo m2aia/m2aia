@@ -67,21 +67,20 @@ namespace m2
   {
     auto pathWithoutExtension = this->GetInputLocation();
     itksys::SystemTools::ReplaceString(pathWithoutExtension, ".fsm", "");
-    auto image = dynamic_cast<m2::SpectrumImageBase *>(object);
+    auto image = dynamic_cast<m2::SpectrumImage *>(object);
 
     if (itksys::SystemTools::FileExists(pathWithoutExtension + ".nrrd"))
     {
-      auto maskPath = pathWithoutExtension + ".nrrd";
+      auto maskPath = pathWithoutExtension + ".mask.nrrd";
       auto data = mitk::IOUtil::Load(maskPath).at(0);
-      image->GetImageArtifacts()["mask"] = data.GetPointer();
-      image->UseExternalMaskOn();
+      image->SetMaskImage(dynamic_cast<mitk::Image *>(data.GetPointer()));
     }
 
     if (itksys::SystemTools::FileExists(pathWithoutExtension + ".mps"))
     {
       auto pointsDataPath = pathWithoutExtension + ".mps";
       auto data = mitk::IOUtil::Load(pointsDataPath).at(0);
-      image->GetImageArtifacts()["references"] = data.GetPointer();
+      image->SetPoints(dynamic_cast<mitk::PointSet *>(data.GetPointer()));
     }
   }
 
@@ -257,8 +256,8 @@ namespace m2
     fsmImage->SetPropertyValue<unsigned>("dim_y", dimensions[1]); // n_z
     fsmImage->SetPropertyValue<unsigned>("dim_z", 1);
 
-    fsmImage->SetPropertyValue<double>("absolute position offset x", meta[7]); // x_init
-    fsmImage->SetPropertyValue<double>("absolute position offset y", meta[8]);
+    fsmImage->SetPropertyValue<double>("[IMS:1000053] absolute position offset x", meta[7]); // x_init
+    fsmImage->SetPropertyValue<double>("[IMS:1000054] absolute position offset y", meta[8]);
     fsmImage->SetPropertyValue<double>("absolute position offset z", 0);
 
     fsmImage->SetPropertyValue<double>("spacing_x", m2::MicroMeterToMilliMeter(meta[0])); // x_delta

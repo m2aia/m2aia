@@ -20,6 +20,10 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include "QmitkM2aiaAppWorkbenchAdvisor.h"
 
+#include <usModuleInitialization.h>
+
+US_INITIALIZE_MODULE
+
 QVariant QmitkM2aiaAppApplication::Start(berry::IApplicationContext*)
 {
   berry::Display* display = berry::PlatformUI::CreateDisplay();

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+
+  <extension point="org.blueberry.ui.views">
+    <view id="org.mitk.views.m2.reconstruction3D"
+          name="Reconstruction 3D"
+          category="Spectrum imaging"
+          class="m2Reconstruction3D"
+          icon="resources/noun_Layers_1604118.svg" />
+  </extension>
+
+  <extension point="org.blueberry.ui.keywords">
+    <keyword id="org.mitk.views.imsBase.ViewKeyword" label="Mass" />
+    <keyword id="org.mitk.views.imsBase.ViewKeyword" label="Spectrometry" />  
+    <keyword id="org.mitk.views.imsBase.ViewKeyword" label="Ion image" />
+    <keyword id="org.mitk.views.imsBase.ViewKeyword" label="Register" />
+  </extension>
+
+</plugin>

@@ -18,7 +18,7 @@ See LICENSE.txt for details.
 #include <itkSignedMaurerDistanceMapImageFilter.h>
 #include <itksys/SystemTools.hxx>
 #include <m2ImzMLSpectrumImage.h>
-#include <m2SpectrumImageProcessor.h>
+#include <m2ISpectrumImageSource.h>
 #include <m2SpectrumImageStack.h>
 #include <mitkExtractSliceFilter.h>
 #include <mitkIOUtil.h>
@@ -29,24 +29,38 @@ See LICENSE.txt for details.
 #include <mitkProgressBar.h>
 #include <signal/m2PeakDetection.h>
 
+#include <mitkCoreServices.h>
+#include <mitkIPreferencesService.h>
+#include <mitkIPreferences.h>
+
 namespace m2
 {
+  SpectrumImageStack::SpectrumImageStack(unsigned int stackSize, double spacingZ) : 
+  m_StackSize(stackSize), m_SpacingZ(spacingZ)
+  {
+    SetPropertyValue<double>("m2aia.xs.min", std::numeric_limits<double>::max());
+    SetPropertyValue<double>("m2aia.xs.max", std::numeric_limits<double>::min());
+
+    m_SliceTransformers.resize(stackSize);
+  }
+
+
   void SpectrumImageStack::Insert(unsigned int sliceId, std::shared_ptr<m2::ElxRegistrationHelper> transformer)
   {
     m_SliceTransformers[sliceId] = transformer;
 
-    if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer()))
+    if (auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer()))
     {
-      auto newMin = spectrumImage->GetPropertyValue<double>("x_min");
-      auto newMax = spectrumImage->GetPropertyValue<double>("x_max");
+      auto newMin = spectrumImage->GetPropertyValue<double>("m2aia.xs.min");
+      auto newMax = spectrumImage->GetPropertyValue<double>("m2aia.xs.max");
       auto xLabel = spectrumImage->GetSpectrumType().XAxisLabel;
       
-      auto currentMax = GetPropertyValue<double>("x_max");
-      auto currentMin = GetPropertyValue<double>("x_min");
+      auto currentMin = GetPropertyValue<double>("m2aia.xs.min");
+      auto currentMax = GetPropertyValue<double>("m2aia.xs.max");
       if (newMin < currentMin)
-        SetPropertyValue<double>("x_min", newMin);
+        SetPropertyValue<double>("m2aia.xs.min", newMin);
       if (newMax > currentMax)
-        SetPropertyValue<double>("x_max", newMax);
+        SetPropertyValue<double>("m2aia.xs.max", newMax);
 
       this->GetSpectrumType().XAxisLabel = xLabel;
     }
@@ -56,18 +70,14 @@ namespace m2
     }
   }
 
-  SpectrumImageStack::SpectrumImageStack(double spacingZ) : m_SpacingZ(spacingZ)
-  {
-    SetPropertyValue<double>("x_min", std::numeric_limits<double>::max());
-    SetPropertyValue<double>("x_max", std::numeric_limits<double>::min());
-  }
+
 
   void SpectrumImageStack::InitializeGeometry()
   {
     unsigned int dims[3];
     mitk::Vector3D spacing;
 
-    auto &transformer = m_SliceTransformers.begin()->second;
+    auto &transformer = m_SliceTransformers.front();
     auto image = transformer->GetMovingImage();
     if (!transformer->GetTransformation().empty())
     {
@@ -82,11 +92,11 @@ namespace m2
     spacing[2] = m_SpacingZ;
     this->GetGeometry()->SetSpacing(spacing);
 
+    unsigned int sliceId = 0;
+
     // fill with data
-    for (auto &kv : m_SliceTransformers)
-    {
-      auto sliceId = kv.first;
-      const auto &transformer = kv.second;
+    for (auto &transformer : m_SliceTransformers)
+    {      
       if (auto movingImage = transformer->GetMovingImage())
       {
         // create temp image and copy requested image range to the stack
@@ -100,6 +110,7 @@ namespace m2
           CopyWarpedImageToStackImage(movingImage, this, sliceId);
         }
       }
+      ++sliceId;
     }
   }
 
@@ -112,15 +123,14 @@ namespace m2
 
     // assign import spectrum type based on first transformer
     // this must be equally for all slices/images
-    auto movingImage = m_SliceTransformers.begin()->second->GetMovingImage().GetPointer();
-    if(auto specImage =dynamic_cast<m2::SpectrumImageBase *>(movingImage))
+    auto movingImage = m_SliceTransformers.front()->GetMovingImage().GetPointer();
+    if(auto specImage =dynamic_cast<m2::SpectrumImage *>(movingImage))
       m_SpectrumType.Format = specImage->GetSpectrumType().Format;
     
     
-    for (auto &kv : m_SliceTransformers)
+    for (auto &transformer : m_SliceTransformers)
     {
-      const auto &transformer = kv.second;
-      auto specImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer());
+      auto specImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer());
       
       if (m_SpectrumType.Format != specImage->GetSpectrumType().Format)
       {
@@ -132,42 +142,42 @@ namespace m2
   void SpectrumImageStack::InitializeImageAccess()
   {
     std::list<m2::Interval> peaks;
-    const auto &bins = GetNumberOfBins();
+    auto* preferencesService = mitk::CoreServices::GetPreferencesService();
+    auto* preferences = preferencesService->GetSystemPreferences();
+    const auto bins = preferences->GetInt("m2aia.view.spectrum.bins", 1500);
     //    const auto normalizationStrategy = GetNormalizationStrategy();
 
     double max = 0;
     double min = std::numeric_limits<double>::max();
     double binSize = 1;
 
-    for (auto &kv : m_SliceTransformers)
+    for (auto &transformer : m_SliceTransformers)
     {
-      const auto &transformer = kv.second;
-      auto specImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer());
+      auto specImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer());
       auto xAxis = specImage->GetXAxis();
       min = std::min(min, xAxis.front());
       max = std::max(max, xAxis.back());
     }
 
     binSize = (max - min) / double(bins);
-    using SpectrumVector = m2::SpectrumImageBase::SpectrumArtifactVectorType;
+    using SpectrumVector = m2::SpectrumImage::SpectrumArtifactVectorType;
     SpectrumVector xSumVec(bins);
     SpectrumVector hits(bins);
 
-    SpectrumVector ySumVec = SumSpectrum();
+    SpectrumVector ySumVec = GetSumSpectrum();
     ySumVec.resize(bins, 0);
-    SpectrumVector yMeanVec = MeanSpectrum();
+    SpectrumVector yMeanVec = GetMeanSpectrum();
     yMeanVec.resize(bins, 0);
-    SpectrumVector yMaxVec = SkylineSpectrum();
+    SpectrumVector yMaxVec = GetSkylineSpectrum();
     yMaxVec.resize(bins, 0);
 
-    for (auto &kv : m_SliceTransformers)
+    for (auto &transformer : m_SliceTransformers)
     {
-      const auto &transformer = kv.second;
-      auto specImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer());
+      auto specImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer());
       auto sliceXAxis = specImage->GetXAxis();
-      auto sliceSumVec = specImage->SumSpectrum();
-      auto sliceMaxVec = specImage->SkylineSpectrum();
-      auto sliceMeanVec = specImage->MeanSpectrum();
+      auto sliceSumVec = specImage->GetSumSpectrum();
+      auto sliceMaxVec = specImage->GetSkylineSpectrum();
+      auto sliceMeanVec = specImage->GetMeanSpectrum();
 
       for (unsigned int k = 0; k < sliceXAxis.size(); ++k)
       {
@@ -188,11 +198,11 @@ namespace m2
 
     SpectrumVector &xVecFinal = GetXAxis();
     xVecFinal.clear();
-    SpectrumVector &ySumVecFinal = SumSpectrum();
+    SpectrumVector &ySumVecFinal = GetSumSpectrum();
     ySumVecFinal.clear();
-    SpectrumVector &yMeanVecFinal = MeanSpectrum();
+    SpectrumVector &yMeanVecFinal = GetMeanSpectrum();
     yMeanVecFinal.clear();
-    SpectrumVector &yMaxVecFinal = SkylineSpectrum();
+    SpectrumVector &yMaxVecFinal = GetSkylineSpectrum();
     yMaxVecFinal.clear();
 
     for (int k = 0; k < bins; ++k)
@@ -206,10 +216,11 @@ namespace m2
       }
     }
 
-    SetPropertyValue<double>("x_min", xVecFinal.front());
-    SetPropertyValue<double>("x_max", xVecFinal.back());
 
-    m_IsDataAccessInitialized = true;
+    SetPropertyValue<double>("m2aia.xs.min", xVecFinal.front());
+    SetPropertyValue<double>("m2aia.xs.max", xVecFinal.back());
+
+    m_ImageAccessInitialized = true;
     
   }
 
@@ -227,6 +238,18 @@ namespace m2
     mitk::ImageWriteAccessor stackAccess(stack);
     auto stackData = static_cast<m2::DisplayImagePixelType *>(stackAccess.GetData());
 
+    if(m_UseSliceWiseMaximumNormalization){
+      AccessByItk(warped,
+                (
+                  [&](auto itkImg)
+                  {
+                    auto warpedData = itkImg->GetBufferPointer();
+                    auto max = *(std::max_element(warpedData, warpedData + stackN));
+                    std::transform(warpedData, warpedData + stackN, stackData + (i * stackN), [max](auto v){return v/max;});
+                  }));
+    }else{
+
+
     AccessByItk(warped,
                 (
                   [&](auto itkImg)
@@ -234,17 +257,19 @@ namespace m2
                     auto warpedData = itkImg->GetBufferPointer();
                     std::copy(warpedData, warpedData + stackN, stackData + (i * stackN));
                   }));
+    }
   }
 
   void SpectrumImageStack::GetImage(double center, double tol, const mitk::Image * /*mask*/, mitk::Image *img) const
   {
     mitk::ProgressBar::GetInstance()->AddStepsToDo(m_SliceTransformers.size());
-    for (auto &kv : m_SliceTransformers)
+    int sliceId = 0;
+    for (auto &transformer : m_SliceTransformers)
     {
       mitk::ProgressBar::GetInstance()->Progress();
-      auto sliceId = kv.first;
-      const auto &transformer = kv.second;
-      if (auto spectrumImage = dynamic_cast<m2::SpectrumImageBase *>(transformer->GetMovingImage().GetPointer()))
+      
+      
+      if (auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer()))
       {
         // create temp image and copy requested image range to the stack
         auto imageTemp = mitk::Image::New();
@@ -260,6 +285,7 @@ namespace m2
           CopyWarpedImageToStackImage(imageTemp, img, sliceId);
         }
       }
+      ++sliceId;
     }
 
     // current->GetImage(mz, tol, current->GetMaskImage(), current);

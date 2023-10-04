@@ -16,12 +16,12 @@ See LICENSE.txt for details.
 
 #include "mitkIOUtil.h"
 #include <m2CoreCommon.h>
-#include <mitkTestFixture.h>
+#include <m2TestFixture.h>
 #include <mitkTestingMacros.h>
 
 //#include <boost/algorithm/string.hpp>
 
-class m2CoreMappingsTestSuite : public mitk::TestFixture
+class m2CoreMappingsTestSuite : public m2::TestFixture
 {
   CPPUNIT_TEST_SUITE(m2CoreMappingsTestSuite);
   MITK_TEST(CreateSwitches);
@@ -44,6 +44,10 @@ private:
       case m2::SpectrumFormat::ContinuousProfile:
       case m2::SpectrumFormat::ProcessedCentroid:
       case m2::SpectrumFormat::ProcessedProfile:
+      case m2::SpectrumFormat::Profile:
+      case m2::SpectrumFormat::Centroid:
+      case m2::SpectrumFormat::Continuous:
+      case m2::SpectrumFormat::Processed:
       case m2::SpectrumFormat::None:
         // add your new case here
         {
@@ -109,6 +113,7 @@ private:
 #endif
     switch (e)
     {
+      case m2::NumericType::None:
       case m2::NumericType::Float:
       case m2::NumericType::Double:
 

@@ -19,14 +19,14 @@ See LICENSE.txt for details.
 #include <signal/m2Normalization.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <m2TestingConfig.h>
-#include <mitkTestFixture.h>
+#include <m2TestFixture.h>
 #include <mitkTestingMacros.h>
 #include <numeric>
 #include <random>
 
 //#include <boost/algorithm/string.hpp>
 
-class m2ImzMLImageIOTestSuite : public mitk::TestFixture
+class m2ImzMLImageIOTestSuite : public m2::TestFixture
 {
   CPPUNIT_TEST_SUITE(m2ImzMLImageIOTestSuite);
   MITK_TEST(LoadTestData_shouldReturnTrue);
@@ -82,7 +82,7 @@ public:
     CPPUNIT_ASSERT_ASSERTION_PASS(CPPUNIT_ASSERT(imzMLImage != nullptr));
 
     std::vector<float> ints, mzs;
-    imzMLImage->GetSpectrum(0, mzs, ints);
+    imzMLImage->GetSpectrumFloat(0, mzs, ints);
     WriteVector(ints, "lipid_spectrum0.data");
     auto reference = ReadDoubleVector("lipid_spectrum0.data");
 

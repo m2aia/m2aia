@@ -17,7 +17,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #ifndef _MITK_M2_ABSTRACT_VIEW_H
 #define _MITK_M2_ABSTRACT_VIEW_H
 
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <mitkDataNode.h>
 #include <org_mitk_gui_qt_m2_common_Export.h>
 #include <qobject.h>
@@ -62,15 +62,32 @@ namespace m2
      * @param x
      * @param tol
      */
-    void UpdateImage(qreal x, qreal tol);
+    void UpdateImage(qreal x, qreal tol = -1);
+
+
+     /**
+     * @brief This signal can be emitted to add/update a spectrum to the spectrum view.
+     *
+     * @param name std::string
+     * @param xs vector of x positions
+     * @param ys vector of y positions
+     */
+    void AddSpectrumToSpectrumView(std::string name, const std::vector<double> & xs, const std::vector<double> & ys);
+
+     /**
+     * @brief This signal can be emitted to remove a spectrum from the spectrum view.
+     *
+     * @param x
+     * @param tol
+     */
+    void RemoveSpectrumFromSpectrumView(std::string name);
+    
 
     void NextImage();
     void PreviousImage();
     void IncreaseTolerance();
-    void DecreaseTolerance();
-
-    void OverviewSpectrumChanged(const mitk::DataNode *, m2::SpectrumType);
-    
+    void DecreaseTolerance(); 
+    void RequestTolerance(float x, float & tol);
   
   private:
   };

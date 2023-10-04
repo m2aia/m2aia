@@ -19,6 +19,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include "berryIQtPreferencePage.h"
 #include <QProcess>
+#include <QString>
+#include <mitkIPreferences.h>
 
 class QWidget;
 class QCheckBox;
@@ -26,8 +28,6 @@ class QComboBox;
 class QSpinBox;
 class ctkDirectoryButton;
 
-
-class berryIPreferences;
 class Ui_m2PreferencePage;
 
 /**
@@ -45,10 +45,10 @@ public:
 
 private:
 	QProcess *m_ElastixProcess;
-	QString m_ElastixPath;
+	std::string m_ElastixPath;
 
 	QProcess *m_TransformixProcess;
-	QString m_TransformixPath;
+	std::string m_TransformixPath;
 
 public slots:
 	void OnElastixButtonClicked();
@@ -59,14 +59,11 @@ public slots:
 	void OnTransformixProcessError(QProcess::ProcessError error);
 	void OnTransformixProcessFinished(int exitCode, QProcess::ExitStatus exitStatus);
 
-	void OnBinsSpinBoxValueChanged(const QString &);
+	void OnBinsSpinBoxValueChanged(int);
 
 	void OnUseMinIntensity(bool v);
 	void OnUseMaxIntensity(bool v);
-
-	void OnShowIndexImage(bool v);
-	void OnShowNormalizationImage(bool v);
-	void OnShowMaskImage(bool v);
+	void OnUseMinimalImagingArea(bool v);
 
 	void CreateQtControl(QWidget* parent) override;
 	QWidget* GetQtControl() const override;
@@ -78,7 +75,7 @@ public slots:
 private:
 
     QString ConvertToString(const QStringList& list);
-	berry::IPreferences::Pointer m_Preferences;
+	mitk::IPreferences* m_Preferences;
 	QScopedPointer<Ui_m2PreferencePage> m_Ui;
 	QWidget* m_Control;
 };

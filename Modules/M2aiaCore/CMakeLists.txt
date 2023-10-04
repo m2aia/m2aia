@@ -1,7 +1,7 @@
 set(MITK_MODULE_NAME_PREFIX "")
 
 MITK_CREATE_MODULE(
-  DEPENDS MitkCore MitkMultilabel MitkElastix
+  DEPENDS MitkCore MitkMultilabel MitkElastix MitkDocker
   PACKAGE_DEPENDS
     PUBLIC Poco
   )
@@ -12,6 +12,4 @@ MITK_CREATE_MODULE(
    add_subdirectory(Testing)
   endif()
   
-  
-  configure_file(mitkM2aiaVersion.h.in ${MITK_BINARY_DIR}/mitkM2aiaVersion.h)
-  
+  configure_file(mitkM2aiaVersion.h.in ${MITK_BINARY_DIR}/mitkM2aiaVersion.h)  

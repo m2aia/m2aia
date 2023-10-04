@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 20 20"
+   version="1.1"
+   x="0px"
+   y="0px"
+   id="svg156"
+   sodipodi:docname="icon_stats.svg"
+   inkscape:version="1.2.2 (732a01da63, 2022-12-09, custom)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs160" />
+  <sodipodi:namedview
+     id="namedview158"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showgrid="false"
+     inkscape:zoom="29.325"
+     inkscape:cx="-8.0647911"
+     inkscape:cy="14.680307"
+     inkscape:window-width="3366"
+     inkscape:window-height="1376"
+     inkscape:window-x="74"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g154" />
+  <title
+     id="title148">symbol/pulse-note</title>
+  <!-- <desc>Created with Sketch.</desc> -->
+  <style
+     type="text/css"
+     id="style150">.st1{fill:#00ff00;} .st2{fill:#ff00ff;}</style>
+  <g
+     stroke="none"
+     stroke-width="1"
+     fill="none"
+     fill-rule="evenodd"
+     id="g154">
+    <path
+       class="st1"
+       d="m 10.812177,1.1930732 h 3.108327 V 0.67501871 c 0,-0.28611364 0.231941,-0.51805452 0.518054,-0.51805452 0.286114,0 0.518055,0.23194088 0.518055,0.51805452 V 1.1930732 h 2.590272 c 0.286114,0 0.518055,0.2319409 0.518055,0.5180545 V 19.324981 c 0,0.286114 -0.231941,0.518055 -0.518055,0.518055 H 3.0413583 c -0.2861136,0 -0.5180545,-0.231941 -0.5180545,-0.518055 V 1.7111277 c 0,-0.2861136 0.2319409,-0.5180545 0.5180545,-0.5180545 H 5.6316309 V 0.67501871 c 0,-0.28611364 0.2319409,-0.51805452 0.5180545,-0.51805452 0.2861136,0 0.5180545,0.23194088 0.5180545,0.51805452 V 1.1930732 H 9.776067 V 0.67501871 c 0,-0.28611364 0.231941,-0.51805452 0.518055,-0.51805452 0.286113,0 0.518055,0.23194088 0.518055,0.51805452 z M 9.776067,2.2291823 H 6.6677399 v 1.5541635 c 0,0.2861136 -0.2319409,0.5180545 -0.5180545,0.5180545 -0.2861136,0 -0.5180545,-0.2319409 -0.5180545,-0.5180545 V 2.2291823 H 3.5594128 V 18.806927 H 17.028831 V 2.2291823 h -2.072218 v 1.5541635 c 0,0.2861136 -0.231941,0.5180545 -0.518055,0.5180545 -0.286113,0 -0.518054,-0.2319409 -0.518054,-0.5180545 V 2.2291823 h -3.108327 v 1.5541635 c 0,0.2861136 -0.231942,0.5180545 -0.518055,0.5180545 -0.286114,0 -0.518055,-0.2319409 -0.518055,-0.5180545 z"
+       id="path152"
+       sodipodi:nodetypes="ccssscsssssssscsssccssscccsssccccccsssccsssc"
+       style="stroke-width:1.03611" />
+    <path
+       class="st2"
+       d="m 7.4650812,10.351176 -0.3163397,0.790848 c -0.078674,0.196684 -0.2691667,0.325655 -0.4810016,0.325655 H 5.1135764 c -0.2861137,0 -0.5180545,-0.231942 -0.5180545,-0.518055 0,-0.286113 0.2319408,-0.518054 0.5180545,-0.518054 H 6.3169999 L 7.2228474,8.1669511 C 7.4198148,7.6745325 8.1416938,7.761067 8.2166968,8.2860877 L 8.9424551,13.366393 11.356816,6.1233104 c 0.17287,-0.5186108 0.927008,-0.4506102 1.004318,0.090559 l 0.762029,5.3342026 0.31634,-0.790848 c 0.07867,-0.196684 0.269166,-0.325654 0.481001,-0.325654 h 1.554163 c 0.286114,0 0.518055,0.231941 0.518055,0.518054 0,0.286113 -0.231941,0.518055 -0.518055,0.518055 h -1.203423 l -0.905848,2.264618 c -0.196967,0.492419 -0.918846,0.405884 -0.993849,-0.119136 L 11.645789,8.5328561 9.231428,15.775938 c -0.1728706,0.518611 -0.9270079,0.45061 -1.0043179,-0.09056 z"
+       style="fill:#ff00ff;stroke-width:1.03611"
+       id="path377" />
+  </g>
+  <!-- <text x="0" y="39" fill="#000000" font-size="5px" font-weight="bold"
+        font-family="'Helvetica Neue', Helvetica, Arial-Unicode, Arial, Sans-serif">Created by
+        Travis Avery</text>
+    <text x="0" y="44" fill="#000000" font-size="5px" font-weight="bold"
+        font-family="'Helvetica Neue', Helvetica, Arial-Unicode, Arial, Sans-serif">from the Noun
+        Project</text> -->
+  <metadata
+     id="metadata212">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:title>symbol/pulse-note</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+</svg>

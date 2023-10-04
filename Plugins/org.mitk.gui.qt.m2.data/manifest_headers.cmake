@@ -1,0 +1,5 @@
+set(Plugin-Name "M2aia Data")
+set(Plugin-Version "0.1")
+set(Plugin-Vendor "M2aia")
+set(Plugin-ContactAddress "j.cordes@hs-mannheim.de")
+set(Require-Plugin org.mitk.gui.qt.common org.mitk.gui.qt.m2.common)

@@ -14,51 +14,53 @@ See LICENSE.txt for details.
 ===================================================================*/
 #pragma once
 #include <M2aiaCoreExports.h>
+#include <m2CoreCommon.h>
 #include <mitkBaseData.h>
 #include <mitkDataNode.h>
-#include <m2CoreCommon.h>
 
 namespace m2
 {
-  
-  struct Accumulator{
-    double mean() const {return m_sum/double(m_count);}
-    double sum() const {return m_sum;}
-    double min() const {return m_min;}
-    double max() const {return m_max;}
-    unsigned int count() const {return m_count;}
+
+  struct Accumulator
+  {
+    double mean() const { return m_sum / double(m_count); }
+    double sum() const { return m_sum; }
+    double min() const { return m_min; }
+    double max() const { return m_max; }
+    unsigned int count() const { return m_count; }
 
     double m_sum = 0;
     double m_min = std::numeric_limits<double>::max();
     double m_max = std::numeric_limits<double>::min();
     unsigned int m_count = 0;
 
-    void operator()(double v){
+    void operator()(double v)
+    {
       m_sum += v;
-      m_min = std::min(m_min,v);
-      m_max = std::max(m_max,v);
+      m_min = std::min(m_min, v);
+      m_max = std::max(m_max, v);
       ++m_count;
     }
 
-    Accumulator& operator+=(const Accumulator& rhs){
+    Accumulator &operator+=(const Accumulator &rhs)
+    {
       m_sum += rhs.m_sum;
       m_count += rhs.m_count;
-      m_min = std::min(m_min,rhs.m_min);
-      m_max = std::max(m_max,rhs.m_max);
+      m_min = std::min(m_min, rhs.m_min);
+      m_max = std::max(m_max, rhs.m_max);
       return *this;
     }
 
-    Accumulator operator+(const Accumulator& rhs){
+    Accumulator operator+(const Accumulator &rhs)
+    {
       Accumulator res;
       res.m_sum = rhs.m_sum + m_sum;
       res.m_count = rhs.m_sum + m_count;
-      res.m_min = std::min(m_min,rhs.m_min);
-      res.m_max = std::max(m_max,rhs.m_max);
+      res.m_min = std::min(m_min, rhs.m_min);
+      res.m_max = std::max(m_max, rhs.m_max);
       return res;
     }
-
   };
-
 
   struct Interval
   {
@@ -67,14 +69,24 @@ namespace m2
     Accumulator y;
     std::string description;
 
-    Interval() = default;
-    Interval(double x, double y){
+    /**
+     * This tag can be used to indicate it's source. Can be used during processing and is not guranteed to be unique.
+     * Default:0
+     *
+     */
+    unsigned int sourceId = 0;
+
+    Interval(unsigned int source = 0) : sourceId(source) {}
+
+    Interval(double x, double y, unsigned int source = 0) : Interval(source)
+    {
       // this->index(index);
       this->x(x);
       this->y(y);
     }
 
-    Interval& operator+=(const Interval& rhs){
+    Interval &operator+=(const Interval &rhs)
+    {
       x += rhs.x;
       y += rhs.y;
       // index += rhs.index;
@@ -83,19 +95,21 @@ namespace m2
     friend bool operator<(const Interval &lhs, const Interval &rhs) { return lhs.x.mean() < rhs.x.mean(); }
     // friend bool operator==(const Interval &lhs, const Interval &rhs) { return lhs.x.mean() == rhs.x.mean(); }
   };
-
-  enum class IntervalVectorType : unsigned int
-    {
-      None = 0,
-      Profile = 1,
-      Centroid = 2,
-      Indicator = 4
-    };
-
+  
+  
+  /**
+   * DataNode properties:
+   * - spectrum.plot.color: color of plot lines in spectrum view's
+   * - spectrum.marker.color: color of markers in spectrum view's selected area
+   * - spectrum.marker.size: size of markers in spectrum view's selected area
+   * 
+   * BaseData properties:
+   * - spectrum.pixel.count: number of reference pixels for this spectrum container
+   * - spectrum.xaxis.count: number of values on the x axis (i.e. number of m/z values or centroids)
+   */
   class M2AIACORE_EXPORT IntervalVector : public mitk::BaseData
   {
   public:
-
     mitkClassMacro(IntervalVector, mitk::BaseData);
     itkCloneMacro(Self);
     itkFactorylessNewMacro(Self);
@@ -104,8 +118,6 @@ namespace m2
     bool RequestedRegionIsOutsideOfTheBufferedRegion() override { return true; }
     bool VerifyRequestedRegion() override { return false; }
     void SetRequestedRegion(const itk::DataObject *) override {}
-
-    IntervalVectorType type;
 
     std::vector<double> GetXMean() const;
     std::vector<double> GetXSum() const;
@@ -117,7 +129,7 @@ namespace m2
     std::vector<double> GetYSum() const;
     std::vector<double> GetYMax() const;
     std::vector<double> GetYMin() const;
-    std::vector<unsigned int > GetYCount() const;
+    std::vector<unsigned int> GetYCount() const;
 
     // std::vector<double> GetIndexMean() const;
     // std::vector<double> GetIndexSum() const;
@@ -125,12 +137,54 @@ namespace m2
     // std::vector<double> GetIndexMin() const;
     // std::vector<unsigned int> GetIndexCount() const;
 
-    std::vector<Interval> & GetIntervals(){return m_Data;}
-    const std::vector<Interval> & GetIntervals() const {return m_Data;}
+    std::vector<Interval> &GetIntervals() { return m_Data; }
+    const std::vector<Interval> &GetIntervals() const { return m_Data; }
+    void SetType(SpectrumFormat type)
+    {
+      m_Type = type;
+      this->SetProperty("m2aia.spectrum.type", mitk::StringProperty::New(m2::to_string(type)));
+    }
+    void SetInfo(std::string info)
+    {
+      m_Info = info;
+      this->SetProperty("m2aia.spectrum.info", mitk::StringProperty::New(info));
+    }
 
-    private:
+    /**
+     * Get the type of an interval vector.
+     * See enum definition: m2::SpectrumFormat
+     */
+    SpectrumFormat GetType() const { return m_Type; }
+
+    /**
+     * Custom data info
+     * e.g. if it is an overview spectrum:
+     * - overview.mean
+     * - overview.max
+     * - overview.single
+     * - overview.centroids
+     * ToDo: write as string property of the data
+     */
+    std::string GetInfo() const { return m_Info; }
+
+
+    /**
+     * @brief Check whether object contains data (at
+     * least at one point in time), e.g., a set of points
+     * may be empty
+    */
+    
+    //## \warning Returns IsInitialized()==false by default for
+    //## compatibility reasons. Override in sub-classes that
+    //## support distinction between empty/non-empty state.
+    virtual bool IsEmpty() const{
+      return m_Data.empty();
+    }
+
+  private:
     std::vector<Interval> m_Data;
-
+    std::string m_Info = "Not Set!";
+    SpectrumFormat m_Type = SpectrumFormat::Centroid;
   };
 
 } // namespace m2

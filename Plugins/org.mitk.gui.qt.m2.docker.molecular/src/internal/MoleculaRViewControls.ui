@@ -15,10 +15,10 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QmitkSingleNodeSelectionWidget" name="imageSelection" native="true"/>
+    <widget class="QmitkMultiNodeSelectionWidget" name="imageSelection" native="true"/>
    </item>
    <item>
-    <widget class="QmitkSingleNodeSelectionWidget" name="peakListSelection" native="true"/>
+    <widget class="QmitkMultiNodeSelectionWidget" name="centroidsSelection" native="true"/>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_14">
@@ -78,9 +78,9 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QmitkSingleNodeSelectionWidget</class>
+   <class>QmitkMultiNodeSelectionWidget</class>
    <extends>QWidget</extends>
-   <header location="global">QmitkSingleNodeSelectionWidget.h</header>
+   <header>QmitkMultiNodeSelectionWidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

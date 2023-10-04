@@ -59,6 +59,11 @@ namespace m2
          * @brief Numeric storage/representation type of y values.
          */
         NumericType YAxisType = NumericType::Float;
+
+        /**
+         * @brief Unit of the x axis. This is used for plotting of spectra in the spectrum view.
+         */
+        std::string YAxisLabel = "Intensity";
         
         /**
          * @brief Spectrum profile format type. Combines [Continuous/Processed] and [Profile/Centroid].

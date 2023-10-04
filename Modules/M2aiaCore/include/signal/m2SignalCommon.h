@@ -19,6 +19,15 @@ See LICENSE.txt for details.
 #include <map>
 #include <string>
 
+
+#include <type_traits>
+
+template <typename E>
+constexpr auto to_underlying(E e) noexcept
+{
+    return static_cast<std::underlying_type_t<E>>(e);
+}
+
 namespace m2
 {
   enum class SmoothingType : unsigned int
@@ -43,18 +52,27 @@ namespace m2
 
   enum class NormalizationStrategyType : unsigned int
   {
-    None = 0,
-    TIC = 1,
-    Median = 2,
-    InFile = 3,
-    Sum = 4,
-    Mean = 5,
-    Max = 6,
-    RMS = 7
+    None = 0, TIC ,Sum, Mean, Max, RMS, Internal, External
+  };
+
+  const std::array<NormalizationStrategyType, 8> NormalizationStrategyTypeList = {
+    NormalizationStrategyType::None,
+    NormalizationStrategyType::TIC,
+    NormalizationStrategyType::Sum,
+    NormalizationStrategyType::Mean,
+    NormalizationStrategyType::Max,
+    NormalizationStrategyType::RMS,
+    NormalizationStrategyType::Internal,
+    NormalizationStrategyType::External
   };
 
   const std::array<std::string, 8> NormalizationStrategyTypeNames = {
-    "None", "TIC", "Median", "InFile", "Sum", "Mean", "Max", "RMS"};
+    "None", "TIC", "Sum", "Mean", "Max", "RMS", "Internal", "External"};
+
+  inline std::string to_string(m2::NormalizationStrategyType type){
+    return NormalizationStrategyTypeNames.at(to_underlying(type));
+  }
+
 
   enum class BaselineCorrectionType : unsigned int
   {
@@ -94,7 +112,8 @@ namespace m2
   const std::map<const std::string, unsigned int> BASECOR_MAPPINGS{{"None", 0}, {"TopHat", 1}, {"Median", 2}};
 
   const std::map<const std::string, unsigned int> NORMALIZATION_MAPPINGS{
-    {"None", 0}, {"TIC", 1}, {"Median", 2}, {"InFile", 3}, {"Sum", 4}, {"RMS", 7}};
+     {"None", 0}, {"TIC", 1}, {"Sum", 2}, {"Mean", 3}, {"Max",4}, {"RMS",5}, {"Internal",6}, {"External", 7}};
+    
 
   const std::map<const std::string, unsigned int> POOLING_MAPPINGS{
     {"None", 0}, {"Mean", 1}, {"Median", 2}, {"Maximum", 3}, {"Sum", 4}};
@@ -129,3 +148,4 @@ namespace m2
   }
 
 } // namespace m2
+

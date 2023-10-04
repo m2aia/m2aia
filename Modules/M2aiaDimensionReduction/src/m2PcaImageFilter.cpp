@@ -95,35 +95,35 @@ void m2::PcaImageFilter::GenerateData()
   }
 
   // feature pca
-  Eigen::MatrixXf pcaData = m_DataMatrix.rowwise() - m_DataMatrix.colwise().mean();
-  Eigen::MatrixXf cov = (pcaData.transpose() * pcaData) / (pcaData.rows() - 1);
+  // Eigen::MatrixXf pcaData = m_DataMatrix.rowwise() - m_DataMatrix.colwise().mean();
+  // Eigen::MatrixXf cov = (pcaData.transpose() * pcaData) / (pcaData.rows() - 1);
 
-  Eigen::EigenSolver<Eigen::MatrixXf> solver(cov);
-  Eigen::VectorXf values = solver.eigenvalues().real();
-  Eigen::MatrixXf vectors = solver.eigenvectors().real();
-  Eigen::MatrixXf vectorsSorted(vectors);
-  // fill indices
-  std::vector<unsigned int> indices(values.size());
-  std::iota(indices.begin(), indices.end(), 0);
-  // sort indices according to
-  std::stable_sort(indices.begin(), indices.end(), [&values](auto i1, auto i2) { return values[i1] > values[i2]; });
+  // Eigen::EigenSolver<Eigen::MatrixXf> solver(cov);
+  // Eigen::VectorXf values = solver.eigenvalues().real();
+  // Eigen::MatrixXf vectors = solver.eigenvectors().real();
+  // Eigen::MatrixXf vectorsSorted(vectors);
+  // // fill indices
+  // std::vector<unsigned int> indices(values.size());
+  // std::iota(indices.begin(), indices.end(), 0);
+  // // sort indices according to
+  // std::stable_sort(indices.begin(), indices.end(), [&values](auto i1, auto i2) { return values[i1] > values[i2]; });
 
-  unsigned int i = 0;
-  for (auto u : indices)
-    vectorsSorted.col(i++) = vectors.col(u);
+  // unsigned int i = 0;
+  // for (auto u : indices)
+  //   vectorsSorted.col(i++) = vectors.col(u);
 
-  Eigen::MatrixXf pc = pcaData * vectorsSorted;
-  auto pcVectorImage = initializeItkVectorImage(m_NumberOfComponents);
-  data = pcVectorImage->GetBufferPointer();
+  // Eigen::MatrixXf pc = pcaData * vectorsSorted;
+  // auto pcVectorImage = initializeItkVectorImage(m_NumberOfComponents);
+  // data = pcVectorImage->GetBufferPointer();
 
-  for (unsigned int c = 0; c < m_NumberOfComponents; ++c)
-  {
-    const auto &col = pc.col(c);
-    for (unsigned int p = 0; p < pc.rows(); ++p)
-    {
-      data[p * m_NumberOfComponents + c] = col(p);
-    }
-  }
+  // for (unsigned int c = 0; c < m_NumberOfComponents; ++c)
+  // {
+  //   const auto &col = pc.col(c);
+  //   for (unsigned int p = 0; p < pc.rows(); ++p)
+  //   {
+  //     data[p * m_NumberOfComponents + c] = col(p);
+  //   }
+  // }
   
 
   mitk::Image::Pointer eigenIonImage = this->GetOutput(0);
@@ -131,9 +131,9 @@ void m2::PcaImageFilter::GenerateData()
   eigenIonImage->SetSpacing(this->GetInput()->GetGeometry()->GetSpacing());
   eigenIonImage->SetOrigin(this->GetInput()->GetGeometry()->GetOrigin());
 
-  mitk::Image::Pointer pcImage = this->GetOutput(1);
-  mitk::CastToMitkImage(pcVectorImage, pcImage);
-  pcImage->SetSpacing(this->GetInput()->GetGeometry()->GetSpacing());
-  pcImage->SetOrigin(this->GetInput()->GetGeometry()->GetOrigin());
+  // mitk::Image::Pointer pcImage = this->GetOutput(1);
+  // mitk::CastToMitkImage(pcVectorImage, pcImage);
+  // pcImage->SetSpacing(this->GetInput()->GetGeometry()->GetSpacing());
+  // pcImage->SetOrigin(this->GetInput()->GetGeometry()->GetOrigin());
  
 }

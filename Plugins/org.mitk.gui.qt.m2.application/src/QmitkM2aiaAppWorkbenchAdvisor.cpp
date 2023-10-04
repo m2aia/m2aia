@@ -26,10 +26,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkExtWorkbenchWindowAdvisor.h>
 #include <QmitkM2aiaAboutDialog.h>
 #include <QmitkM2aiaViewAction.h>
-#include <berryIBerryPreferences.h>
-#include <berryIBerryPreferencesService.h>
-#include <berryIPreferences.h>
-#include <berryIPreferencesService.h>
+#include <mitkCoreServices.h>
+#include <mitkIPreferences.h>
+#include <mitkIPreferencesService.h>
 #include <berryIWorkbenchWindow.h>
 #include <berryPlatform.h>
 #include <berryQtPreferences.h>
@@ -117,7 +116,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
   
   // ==== RenderwindowViewNames ======================
 
-  berry::IPreferencesService *prefService = berry::Platform::GetPreferencesService();
+  mitk::IPreferencesService *prefService = mitk::CoreServices::GetPreferencesService();
   Q_ASSERT(prefService);
 
 
@@ -141,12 +140,11 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
     }
   }
 
-  const std::vector<QString> viewCategories = {"Spectrum imaging", "Segmentation" /*, "Registration"*/};
+  const std::vector<QString> viewCategories = {"Spectrum imaging", "Segmentation", "Spectrum imaging (Docker)"};
 
   {
     auto prefService = berry::WorkbenchPlugin::GetDefault()->GetPreferencesService();
-    berry::IPreferences::Pointer stylePrefs =
-      prefService->GetSystemPreferences()->Node(berry::QtPreferences::QT_STYLES_NODE);
+    auto stylePrefs = prefService->GetSystemPreferences()->Node(berry::QtPreferences::QT_STYLES_NODE);
     bool showCategoryNames = stylePrefs->GetBool(berry::QtPreferences::QT_SHOW_TOOLBAR_CATEGORY_NAMES, true);
 
     // Order view descriptors by category
@@ -167,6 +165,10 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
       if ((*iter)->GetId() == "org.mitk.views.imagenavigator")
         continue;
       if ((*iter)->GetId() == "org.mitk.views.viewnavigatorview")
+        continue;
+      if ((*iter)->GetId() == "org.mitk.views.m2.data")
+        continue;
+      if ((*iter)->GetId() == "org.mitk.views.m2.spectrum")
         continue;
 
       std::pair<QString, berry::IViewDescriptor::Pointer> p((*iter)->GetLabel(), (*iter));
@@ -202,7 +204,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
         {
           auto categoryButton = new QToolButton;
           categoryButton->setToolButtonStyle(Qt::ToolButtonTextOnly);
-          categoryButton->setText(category);
+          categoryButton->setText("");
           categoryButton->setStyleSheet("background: transparent; margin: 0; padding: 0;");
           toolbar->addWidget(categoryButton);
 

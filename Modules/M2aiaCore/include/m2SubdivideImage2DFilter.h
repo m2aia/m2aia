@@ -17,7 +17,7 @@ See LICENSE.txt for details.
 
 #include <M2aiaCoreExports.h>
 #include <mitkImageToImageFilter.h>
-#include <m2SpectrumImageBase.h>
+#include <m2SpectrumImage.h>
 #include <itkSmartPointer.h>
 
 namespace m2
