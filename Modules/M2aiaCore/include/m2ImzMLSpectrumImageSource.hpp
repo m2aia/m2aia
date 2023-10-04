@@ -461,7 +461,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
   for(auto type : m2::NormalizationStrategyTypeList)
   {
     m2::Timer t("Initialization of the Normalization images took");
-    t.printIf = [](m2::Timer::Duration d) -> bool{MITK_INFO << d.count(); return d.count() > 1.0;};
+    t.printIf = [](m2::Timer::Duration d) -> bool{return d.count() > 1.0;};
 
     using LocalImageType = itk::Image<m2::NormImagePixelType, 3>;
     auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
