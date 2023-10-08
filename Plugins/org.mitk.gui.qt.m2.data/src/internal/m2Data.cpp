@@ -599,21 +599,24 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
 {
   // get the selection
   auto nodesToProcess = m2::UIUtils::AllNodes(GetDataStorage());
+
+
   if (nodesToProcess->empty())
     return;
-  if (xRangeTol < 0)
-  {
+  if (xRangeTol < 0){
     xRangeTol = Controls()->spnBxTol->value();
     bool isPpm = Controls()->rbtnTolPPM->isChecked();
     xRangeTol = isPpm ? m2::PartPerMillionToFactor(xRangeTol) * xRangeCenter : xRangeTol;
   }
 
   emit m2::UIUtils::Instance()->RangeChanged(xRangeCenter, xRangeTol);
-
+  
   this->m_Controls.spnBxMz->setValue(xRangeCenter);
   auto flag = std::make_shared<std::atomic<bool>>(0);
-  QString labelText = str(boost::format("%.4f +/- %.2f") % xRangeCenter % xRangeTol).c_str();
+
+  QString labelText = str(boost::format("%.4f +/- %.2f Da") % xRangeCenter % xRangeTol).c_str();
   this->UpdateTextAnnotations(labelText.toStdString());
+
   if (nodesToProcess->size() == 1)
   {
     auto node = nodesToProcess->front();
