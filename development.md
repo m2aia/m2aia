@@ -8,7 +8,7 @@ Supported platforms: see [https://docs.mitk.org/nightly/SupportedPlatformsPage.h
 Requirements: 
 
 * On Windows: Visual Studio (Community Edition) 2019 (2022 usually also works) ([link](https://visualstudio.microsoft.com/de/vs/community))
-* Qt 5.12.x (select at least Qt Charts, Qt WebEngine and Qt Script) ([Qt download](https://www.qt.io/download-thank-you))
+* Qt 5.12.8 (select at least Qt Charts, Qt WebEngine and Qt Script) ([Qt download](https://download.qt.io/archive/qt/5.12/5.12.8/))
 * latest version of [CMake](https://cmake.org/download)
 * [Git](https://git-scm.com/download/)
 * [doxygen](https://www.doxygen.nl/download.html)
