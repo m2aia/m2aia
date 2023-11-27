@@ -916,7 +916,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
       this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
 
       // clear the image data if not already initialized
-      if(!spectrumImage->GetNormalizationImageStatus(type)){
+      if(image && !spectrumImage->GetNormalizationImageStatus(type)){
         auto imageSize = image->GetDimensions();
         mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(image);
         std::memset(acc.GetData(), 0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
