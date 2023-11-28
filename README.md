@@ -2,7 +2,9 @@
   <img src="https://github.com/jtfcordes/M2aia/raw/master/Applications/M2aiaWorkbench/icons/icon.png" alt="M2aia logo" title="M2aia" align="right" height="80" />
 </a>
 
-## Welcome to *[M²aia][m2aia]*: a desktop application for mass spectrometry imaging.
+[Downloads][download]<br>
+
+## [M²aia][m2aia]: a mass spectrometry imaging applications for interactive analysis in MITK
 
 M²aia is open source software, based on the well-known [Medical Imaging Interaction Toolkit (MITK)](https://mitk.org/). The software enables interactive visualization, signal-processing, 3D reconstruction and multi-modal image registration of mass spectrometry imaging (MSI) datasets.
 
@@ -11,8 +13,6 @@ M²aia is open source software, based on the well-known [Medical Imaging Interac
 
 **[github.io/m2aia][m2aia]**<br>
 [Build instructions (windows/Linux)][m2aia-build] <br>
-[Downloads][download]<br>
-
 [Protocols][m2aia]<br>
 
 ## Cite M²aia ##
