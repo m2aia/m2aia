@@ -4,12 +4,12 @@ set(CPACK_PACKAGE_EXECUTABLES "M2aiaWorkbench;M2aiaWorkbench")
 set(CPACK_PACKAGE_NAME "M2aiaWorkbench")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "M²aia - Mass spectrometry imaging applications for interactive analysis in MITK.")
 
-if(not DEFINED ENV{M2AIA_PACKAGE_VERSION})
+if(M2AIA_PACKAGE_VERSION)
+  set(CPACK_PACKAGE_VERSION ENV{M2AIA_PACKAGE_VERSION})
+else()
   set(CPACK_PACKAGE_VERSION_MAJOR "2023") # Major version is the year of release
   set(CPACK_PACKAGE_VERSION_MINOR "10") # Minor version is the month of release
   set(CPACK_PACKAGE_VERSION_PATCH "00") # Patch versioning
-else()
-  set(CPACK_PACKAGE_VERSION ENV{M2AIA_PACKAGE_VERSION})
 endif()
 
 set(CPACK_PACKAGE_VENDOR "m2aia")
