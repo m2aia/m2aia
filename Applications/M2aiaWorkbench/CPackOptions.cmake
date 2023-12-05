@@ -5,7 +5,7 @@ set(CPACK_PACKAGE_NAME "M2aiaWorkbench")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "M²aia - Mass spectrometry imaging applications for interactive analysis in MITK.")
 
 if(M2AIA_PACKAGE_VERSION)
-  set(CPACK_PACKAGE_VERSION ENV{M2AIA_PACKAGE_VERSION})
+  set(CPACK_PACKAGE_VERSION "${M2AIA_PACKAGE_VERSION}")
 else()
   set(CPACK_PACKAGE_VERSION_MAJOR "2023") # Major version is the year of release
   set(CPACK_PACKAGE_VERSION_MINOR "10") # Minor version is the month of release
