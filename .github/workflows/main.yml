@@ -1,0 +1,63 @@
+# This is a basic workflow to help you get started with Actions
+
+name: CI
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on push or pull request events but only for the "main" branch
+  push:
+    branches: [ "main", "develop", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: self-hosted
+    env:
+      UBUNTU_VERSION: 20.04
+      M2AIA_BRANCH: master
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Runs a single command using the runners shell
+      - name: 1. Clone m2aia-docker
+        run: |
+          echo "GITHUB_SHA_SHORT=$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+          echo "M2AIA_PACKAGE_VERSION=v2023.10.$(echo $GITHUB_SHA | cut -c 1-6)" >> $GITHUB_ENV
+          rm -rf m2aia-docker || true
+          git clone https://github.com/m2aia/m2aia-docker.git m2aia-docker
+      - name: 2. build mitk
+        run: |
+          docker build \
+          -t local/images/mitk/build:${GITHUB_SHA_SHORT} \
+          -f m2aia-docker/applications/build-mitk/Dockerfile \
+          --build-arg="UBUNTU_VERSION=${UBUNTU_VERSION}" \
+          .
+      - name: 3. build m2aia
+        run: |
+          docker build -t local/images/m2aia/build:${GITHUB_SHA_SHORT} \
+          --no-cache \
+          -f m2aia-docker/applications/build-m2aia/Dockerfile \
+          --build-arg DOCKER_IMAGE_MITK_BUILD=local/images/mitk/build:${GITHUB_SHA_SHORT} \
+          --build-arg M2AIA_BRANCH=${M2AIA_BRANCH} \
+          --build-arg M2AIA_PACKAGE_VERSION=${M2AIA_PACKAGE_VERSION} \
+          .
+      - name: 4. copy packages
+        run: |
+          rm -rf dist || true
+          mkdir dist
+          
+          docker rm -f m2aia-packages-tmp
+          docker run --name m2aia-packages-tmp local/images/m2aia/build:${GITHUB_SHA_SHORT}
+          docker cp m2aia-packages-tmp:/opt/build/MITK-build/M2aia-${M2AIA_PACKAGE_VERSION}-linux-x86_64.tar.gz dist/
+          docker rm -f m2aia-packages-tmp
+          
+      - name: 5. store packages
+        uses: actions/upload-artifact@v3
+        with:
+          path: dist/M2aia-${M2AIA_PACKAGE_VERSION}-linux-x86_64.tar.gz
