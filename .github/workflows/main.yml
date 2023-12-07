@@ -53,11 +53,18 @@ jobs:
           mkdir dist
           
           docker rm -f m2aia-packages-tmp
-          docker run --name m2aia-packages-tmp local/images/m2aia/build:${GITHUB_SHA_SHORT}
+          docker run -t -d --name m2aia-packages-tmp local/images/m2aia/build:${GITHUB_SHA_SHORT}
           docker cp m2aia-packages-tmp:/opt/build/MITK-build/M2aia-${M2AIA_PACKAGE_VERSION}-linux-x86_64.tar.gz dist/
           docker rm -f m2aia-packages-tmp
           
       - name: 5. store packages
         uses: actions/upload-artifact@v3
         with:
-          path: dist/M2aia-${M2AIA_PACKAGE_VERSION}-linux-x86_64.tar.gz
+          name: "M²aia Package"
+          path: dist/M2aia*.tar.gz
+      
+      - name: 6. cleanup
+        run: |
+          rm -rf dist || true
+          docker rmi local/images/m2aia/build:${GITHUB_SHA_SHORT}
+          docker rmi local/images/mitk/build:${GITHUB_SHA_SHORT}
