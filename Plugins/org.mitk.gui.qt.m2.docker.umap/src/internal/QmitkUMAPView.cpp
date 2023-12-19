@@ -79,77 +79,50 @@ void QmitkUMAPView::OnStartDockerProcessing()
       {
         try
         {
+
           mitk::ProgressBar::GetInstance()->AddStepsToDo(3);
 
-          mitk::DockerHelper helper("ghcr.io/m2aia/umap:latest");
-          m2::SpectrumImageHelper::AddArguments(helper);
+// docker image name
+mitk::DockerHelper helper("ghcr.io/m2aia/umap:latest");
+m2::SpectrumImageHelper::AddArguments(helper);
 
-          helper.EnableAutoRemoveContainer(true);
-          helper.EnableGPUs(false);
+helper.EnableAutoRemoveContainer(true);
+helper.EnableGPUs(false);
 
-          helper.AddAutoSaveData(imageNode->GetData(), "--imzml", "processData",".imzML");
-          helper.AddAutoSaveData(centroidNode->GetData(), "--centroids", "input",".centroids");
-          helper.AddAutoLoadOutput("--out", "umap.nrrd");
+helper.AddAutoSaveData(imageNode->GetData(), "--imzml", "processData",".imzML");
+helper.AddAutoSaveData(centroidNode->GetData(), "--centroids", "input",".centroids");
+helper.AddAutoLoadOutput("--out", "umap.nrrd");
+helper.AddApplicationArgument("--n_neighbors", m_Controls.n_neighbors->text().toStdString());
+helper.AddApplicationArgument("--n_components", m_Controls.n_components->text().toStdString());
+helper.AddApplicationArgument("--metric", m_Controls.metric->currentText().toStdString());
+helper.AddApplicationArgument("--n_epochs", m_Controls.n_epochs->text().toStdString());
+helper.AddApplicationArgument("--learning_rate", m_Controls.learning_rate->text().toStdString());
+helper.AddApplicationArgument("--min_dist", m_Controls.min_dist->text().toStdString());
+helper.AddApplicationArgument("--spread", m_Controls.spread->text().toStdString());
+helper.AddApplicationArgument("--local_connectivity", m_Controls.local_connectivity->text().toStdString());
 
-          helper.AddApplicationArgument("--n_neighbors", m_Controls.n_neighbors->text().toStdString());
-          helper.AddApplicationArgument("--n_components", m_Controls.n_components->text().toStdString());
-          helper.AddApplicationArgument("--metric", m_Controls.metric->currentText().toStdString());
-          // helper.AddApplicationArgument("--output_metric", m_Controls.output_metric->text().toStdString());
-          MITK_INFO << "m_Controls.n_epochs->text().toStdString() " << m_Controls.n_epochs->text().toStdString();
-          helper.AddApplicationArgument("--n_epochs", m_Controls.n_epochs->text().toStdString());
-          helper.AddApplicationArgument("--learning_rate", m_Controls.learning_rate->text().toStdString());
-          helper.AddApplicationArgument("--min_dist", m_Controls.min_dist->text().toStdString());
-          helper.AddApplicationArgument("--spread", m_Controls.spread->text().toStdString());
-          helper.AddApplicationArgument("--local_connectivity", m_Controls.local_connectivity->text().toStdString());
-          // helper.AddApplicationArgument("--random_state", m_Controls.random_state->text().toStdString());
+// start processing
+const auto results = helper.GetResults();
 
-          // metric_kwds
-          // output_metric_kwds
-          // init=args.init,
-          // low_memory=args.low_memory,
-          // n_jobs=args.n_jobs,
-          // set_op_mix_ratio=args.set_op
-          // repulsion_strength
-          // negative_sample_rate=args.ne
-          // transform_queue_size=args.tr
-          // a=args.a,
-          // b=args.b,
-          // angular_rp_forest=args.angul
-          // target_n_neighbors=args.targ
-          // target_metric=args.target_me
-          // target_metric_kwds=args.targ
-          // target_weight=args.target_we
-          // transform_seed=args.transfor
-          // transform_mode=args.transfor
-          // force_approximation_algorith
-          // verbose=args.verbose,
-          // tqdm_kwds=args.tqdm_kwds,
-          // unique=args.unique,
-          // densmap
-          // dens_lambda
-          // dens_frac
-          // dens_var_shift
-          // output_dens
-          // disconnection_distance=args.
+// feed back results into MTIK
+auto refImage = dynamic_cast<mitk::Image *>(imageNode->GetData());
+auto image = dynamic_cast<mitk::Image *>(results[0].GetPointer());
+image->GetGeometry()->SetSpacing(refImage->GetGeometry()->GetSpacing());
+image->GetGeometry()->SetOrigin(refImage->GetGeometry()->GetOrigin());
+auto newNode = mitk::DataNode::New();
+newNode->SetData(image);
+newNode->SetName(imageNode->GetName() + "_umap");
 
-          // from data view?
-          // helper.AddAutoLoadOutputFolder("--")
+GetDataStorage()->Add(newNode, const_cast<mitk::DataNode *>(imageNode.GetPointer()));
+
+
+
+
 
           mitk::ProgressBar::GetInstance()->Progress();
-          const auto results = helper.GetResults();
-          mitk::ProgressBar::GetInstance()->Progress();
 
-          auto refImage = dynamic_cast<mitk::Image *>(imageNode->GetData());
-          auto image = dynamic_cast<mitk::Image *>(results[0].GetPointer());
-          image->GetGeometry()->SetSpacing(refImage->GetGeometry()->GetSpacing());
-          image->GetGeometry()->SetOrigin(refImage->GetGeometry()->GetOrigin());
-          auto newNode = mitk::DataNode::New();
-          newNode->SetData(image);
-          newNode->SetName(imageNode->GetName() + "_umap");
 
-          GetDataStorage()->Add(newNode, const_cast<mitk::DataNode *>(imageNode.GetPointer()));
 
-          mitk::ProgressBar::GetInstance()->Progress();
         }
         catch (std::exception &e)
         {

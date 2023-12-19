@@ -114,7 +114,7 @@ I.SetBaselineCorrection(args.baseline_correction, args.baseline_correction_value
 I.SetNormalization(args.normalization)
 I.SetPooling(args.range_pooling)
 I.SetIntensityTransformation(args.intensity_transform)
-I.Execute()
+I.Load()
 
 
 # Load centroids

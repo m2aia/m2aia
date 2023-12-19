@@ -1,4 +1,5 @@
-FROM ubuntu:22.10 as system
+FROM ghcr.io/m2aia/pym2aia/cuda:11.8.0-ubuntu22.04 as system
+
 
 # system container dependencies
 RUN apt-get update 
@@ -12,6 +13,8 @@ RUN apt-get install -q -y --no-install-recommends \
     python3-venv \
     git \
     unzip
+RUN apt-get clean 
+RUN rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
 
 # Manage to use the virtual environment
 RUN python3 -m venv /.venv
@@ -22,16 +25,12 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN export PATH
 
 # Install python dependencies
-RUN pip install SimpleITK numpy scipy matplotlib scikit-learn
-RUN pip install -i https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple pym2aia
-RUN pip install umap-learn 
-
-# clean caches
-RUN pip cache purge
-RUN apt-get clean && rm -rf /var/cache/apt/archives /var/lib/apt/lists/*
+RUN pip install SimpleITK numpy scipy seaborn matplotlib scikit-learn
+RUN pip install m2aia==0.5.10
 
 # provide app data
 FROM system as application
-
-COPY app_umap.py app_umap.py
-ENTRYPOINT [ "python", "app_umap.py"]
+RUN pip install tensorflow[and-cuda]
+RUN git clone https://github.com/m2aia/pym2aia-examples-msiPL.git /msiPL
+COPY app_msiPL.py app_msiPL.py
+ENTRYPOINT [ "python", "app_msiPL.py" ]

@@ -77,6 +77,13 @@ void QmitkSimCLRView::OnStartDockerProcessing()
     for (auto centroidNode : m_Controls.centroidsSeceltion->GetSelectedNodesStdVector())
       for (auto imageNode : m_Controls.imageSelection->GetSelectedNodesStdVector())
       {
+
+        m2::IntervalVector * centroids = dynamic_cast<m2::IntervalVector *>(centroidNode->GetData());
+        if((unsigned int)(m_Controls.batch_size->value()) > centroids->GetIntervals().size()){
+          QMessageBox::critical(nullptr, QString("Batch size error") ,QString("Number of centroids must be smaller than the number of samples in a batch."));
+          return;
+        }
+
         try
         {
           auto refImage = dynamic_cast<mitk::Image *>(imageNode->GetData());
@@ -126,6 +133,7 @@ void QmitkSimCLRView::OnStartDockerProcessing()
             newNode->SetData(*resultsIt);
             newNode->SetName(imageNode->GetName() + "_" + std::to_string(i));
             GetDataStorage()->Add(newNode, const_cast<mitk::DataNode *>(imageNode.GetPointer()));
+            m2::CopyNodeProperties(imageNode, newNode);
             ++resultsIt;
             ++i;
           }
