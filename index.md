@@ -12,10 +12,15 @@ M²aia provides features for
 
 Downloads
 ---------
+[ubuntu2004]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-2024.01.1285f33-Ubuntu20.04-linux-x86_64.tar.gz
+[ubuntu2204]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-2024.01.1285f33-Ubuntu22.04-linux-x86_64.tar.gz
+[windows]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-v2024.01.1285f33-windows-x86_64.exe
+[windows-zip]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-v2024.01.1285f33-windows-x86_64.zip
 
-|M²aia       |  Package|
+|M²aia       |  Packages|
 |---         |---      |
-| **latest** | http://data.jtfc.de/latest/|
+| **v2024.01**<br>[Github](https://github.com/m2aia/m2aia/releases/tag/v2024.01)| [ubuntu-20.04][ubuntu2004] <br> [ubuntu-22.04][ubuntu2204] <br> [windows-installer][windows] <br> [windows-zip][windows-zip]| 
+| **archive** | http://data.jtfc.de/latest/|
 
 Using registration utilities requires [elastix 5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0).
 
