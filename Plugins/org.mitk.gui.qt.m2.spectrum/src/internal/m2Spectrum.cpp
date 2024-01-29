@@ -377,7 +377,7 @@ void m2Spectrum::NodeAdded(const mitk::DataNode *node)
     node->GetPropertyList()->Modified();
     node->Modified();
 
-    UpdateTitles(node);
+    // UpdateTitles(node);
   }
 }
 
@@ -672,6 +672,8 @@ void m2Spectrum::CreateQChartViewMenu()
           this,
           [this](bool s)
           {
+            m_yAxis->setTitleText("Intensity");
+            m_xAxis->setTitleText("m/z");
             m_yAxis->setTitleVisible(s);
             m_xAxis->setTitleVisible(s);
           });
