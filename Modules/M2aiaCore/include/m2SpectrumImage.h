@@ -213,6 +213,31 @@ namespace m2
 
   itkEventMacroDeclaration(InitializationFinishedEvent, itk::AnyEvent);
 
+
+  template<typename T>
+  T lerp(const T& a, const T& b, float t) {
+      return (1 - t) * a + t * b;
+  }
+
+
+  inline mitk::Color RandomColor(){
+    std::random_device rd;
+    std::mt19937 e2(rd());
+    std::uniform_real_distribution<> dist(0, 1);
+    mitk::Color mitkColor;
+    mitkColor.Set(dist(e2), dist(e2), dist(e2));
+    return mitkColor;
+  }
+
+  inline mitk::Color MixColor(mitk::Color col, double fac = 0.15){
+
+    auto mix = RandomColor();
+    col.SetRed(lerp(col.GetRed(), mix.GetRed(), fac));
+    col.SetGreen(lerp(col.GetGreen(), mix.GetGreen(), fac));
+    col.SetBlue(lerp(col.GetBlue(), mix.GetBlue(), fac));
+    return col;
+  }
+
   /**
    * Clone and add properties:
    * - spectrum.plot.color
@@ -221,14 +246,25 @@ namespace m2
    */
   inline void CopyNodeProperties(const mitk::DataNode *sourceNode, mitk::DataNode *targetNode)
   {
-    if (const auto plotColorProp = sourceNode->GetProperty("spectrum.plot.color"))
-      targetNode->SetProperty("spectrum.plot.color", plotColorProp->Clone());
+    if (const auto plotColorProp = sourceNode->GetProperty("spectrum.plot.color")){
+      auto propClone = plotColorProp->Clone();
+      auto colProp = dynamic_cast<mitk::ColorProperty *>(propClone.GetPointer());
+      auto newColor = MixColor(colProp->GetColor());
+      colProp->SetColor(newColor);
+      targetNode->SetProperty("spectrum.plot.color", colProp);
+    }
 
-    if (const auto markerColorProp = sourceNode->GetProperty("spectrum.marker.color"))
-      targetNode->SetProperty("spectrum.marker.color", markerColorProp->Clone());
+    if (const auto markerColorProp = sourceNode->GetProperty("spectrum.marker.color")){
+      auto propClone = markerColorProp->Clone();
+      auto colProp = dynamic_cast<mitk::ColorProperty *>(propClone.GetPointer());
+      auto newColor = MixColor(colProp->GetColor());
+      colProp->SetColor(newColor);
+      targetNode->SetProperty("spectrum.marker.color", propClone->Clone());
+    }
 
-    if (const auto markerSizeProp = sourceNode->GetProperty("spectrum.marker.size"))
+    if (const auto markerSizeProp = sourceNode->GetProperty("spectrum.marker.size")){
       targetNode->SetProperty("spectrum.marker.size", markerSizeProp->Clone());
+    }
   }
 
   /**
@@ -239,11 +275,7 @@ namespace m2
    */
   inline void DefaultNodeProperties(const mitk::DataNode *node, bool override = true)
   {
-    std::random_device rd;
-    std::mt19937 e2(rd());
-    std::uniform_real_distribution<> dist(0, 1);
-    mitk::Color mitkColor;
-    mitkColor.Set(dist(e2), dist(e2), dist(e2));
+    auto mitkColor = RandomColor();
     if (override || !node->GetPropertyList()->GetProperty("spectrum.plot.color"))
       node->GetPropertyList()->SetProperty("spectrum.plot.color", mitk::ColorProperty::New(mitkColor));
     if (override || !node->GetPropertyList()->GetProperty("spectrum.marker.color"))

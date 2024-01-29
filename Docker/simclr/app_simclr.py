@@ -68,7 +68,7 @@ I.SetBaselineCorrection(args.baseline_correction, args.baseline_correction_value
 I.SetNormalization(args.normalization)
 I.SetPooling(args.range_pooling)
 I.SetIntensityTransformation(args.intensity_transform)
-I.Execute()
+I.Load()
 
 max_dim = np.max([np.max(I.GetShape()[:2]),max_dim])
 
@@ -92,6 +92,8 @@ dataset = m2.IonImageDataset([I],
                             tolerance_type='ppm', 
                             buffer_type='memory', 
                             transforms=trans)
+
+
 
 
 #===================================
@@ -244,15 +246,16 @@ targetCluster = 5
 sea.set_style('darkgrid')
 plt.figure(figsize=(8,8))
 fig = sea.scatterplot(x=transformedHatA[:,0], y=transformedHatA[:,1], hue=clusteredHatA ,legend=False, palette='colorblind')
-# plt.plot(transformedHatA[:,0][clusteredHatA == targetCluster], transformedHatA[:,1][clusteredHatA == targetCluster], 'rx')
 plt.savefig(args.umap)
 
-I = m2.ImzMLReader(args.imzml)
-I.Execute()
-mean = np.mean(I.GetMeanSpectrum())
-files = {}
+ys = I.GetMeanSpectrum()
+xs = I.GetXAxis()
 
 with open(args.out, mode="w") as f:
     f.write("center,intensity,label\n")
     for center, label in zip(centroids, clusteredHatA):
-        f.write(f"{center},{mean},{label}\n")
+        ys_i = np.argmin(np.abs(xs-center))
+        f.write(f"{center},{ys[ys_i]},{label}\n")
+        print(f"{center},{ys[ys_i]},{label}\n")
+
+print("Done!")

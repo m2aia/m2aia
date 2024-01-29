@@ -60,7 +60,7 @@ namespace m2
     if(auto prop = input->GetProperty("m2aia.spectrum.position.z"))
       position[2] = prop->GetValueAsString();
 
-    file << "[spectrum position] " << boost::algorithm::join(position, " ") << "\n"; 
+    // file << "[spectrum position] " << boost::algorithm::join(position, " ") << "\n"; 
     file << "center,max,min,mean\n";
     for(const m2::Interval & i: input->GetIntervals()){
       file << i.x.mean() << "," << i.y.max() << "," << i.y.min() << "," << i.y.mean() << "\n";
