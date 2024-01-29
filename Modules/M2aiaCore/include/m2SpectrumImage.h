@@ -229,7 +229,7 @@ namespace m2
     return mitkColor;
   }
 
-  inline mitk::Color MixColor(mitk::Color col, double fac = 0.2){
+  inline mitk::Color MixColor(mitk::Color col, double fac = 0.15){
 
     auto mix = RandomColor();
     col.SetRed(lerp(col.GetRed(), mix.GetRed(), fac));
