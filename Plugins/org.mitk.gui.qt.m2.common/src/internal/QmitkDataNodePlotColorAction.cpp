@@ -56,7 +56,9 @@ void QmitkDataNodePlotColorAction::InitializeAction()
   colorWidgetLayout->setContentsMargins(4, 4, 4, 4);
   colorWidgetLayout->addWidget(colorLabel);
   colorWidgetLayout->addWidget(m_ColorButton);
-  colorWidgetLayout->addWidget(m_ColorButtonMarker);
+
+  // disabled maker color button
+  // colorWidgetLayout->addWidget(m_ColorButtonMarker);
 
   QWidget *colorWidget = new QWidget;
   colorWidget->setLayout(colorWidgetLayout);
