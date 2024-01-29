@@ -54,6 +54,7 @@ namespace m2
     {
       mitk::CustomMimeType mimeType(IMZML_MIMETYPE_NAME());
       mimeType.AddExtension("imzML");
+      mimeType.AddExtension("imzml");
       mimeType.SetCategory("Images");
       mimeType.SetComment("imzML");
       return mimeType;
@@ -91,6 +92,8 @@ namespace m2
     void EvaluateSpectrumFormatType(m2::SpectrumImage *);
     void LoadAssociatedData(m2::ImzMLSpectrumImage *);
     ImzMLImageIO *IOClone() const override;
+
+    std::string RemoveExtensionFromPath(std::string path);
 
     m2::IntervalVector::Pointer m_Intervals;
     m2::NumericType m_DataTypeXAxis = m2::NumericType::Float;

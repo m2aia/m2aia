@@ -32,6 +32,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <signal/m2PeakDetection.h>
 #include <signal/m2Pooling.h>
 
+
 template <class ConversionType, class ItFirst, class ItLast, class OStreamType>
 void writeData(ItFirst itFirst, ItLast itLast, OStreamType &os)
 {
@@ -560,14 +561,22 @@ namespace m2
     return Supported;
   }
 
+  std::string ImzMLImageIO::RemoveExtensionFromPath(std::string path)
+  {
+      itksys::SystemTools::ReplaceString(path, ".imzML", "");
+      itksys::SystemTools::ReplaceString(path, ".imzml", "");
+      return path;  
+             
+      mitkThrow() << "The given file location requires an valid file ending.";
+    }
+
+
   std::vector<mitk::BaseData::Pointer> ImzMLImageIO::DoRead()
   {
     std::string mzGroupId, intGroupId;
     m2::ImzMLSpectrumImage::Pointer object = m2::ImzMLSpectrumImage::New();
 
-    auto pathWithoutExtension = this->GetInputLocation();
-    itksys::SystemTools::ReplaceString(pathWithoutExtension, ".imzML", "");
-
+    auto pathWithoutExtension = RemoveExtensionFromPath(GetInputLocation());   
     if (!itksys::SystemTools::FileExists(pathWithoutExtension + ".ibd"))
       mitkThrow() << "No such file " << pathWithoutExtension;
 
@@ -665,9 +674,8 @@ namespace m2
 
   void ImzMLImageIO::LoadAssociatedData(m2::ImzMLSpectrumImage *object)
   {
-    auto pathWithoutExtension = this->GetInputLocation();
-    itksys::SystemTools::ReplaceString(pathWithoutExtension, ".imzML", "");
 
+    auto pathWithoutExtension = RemoveExtensionFromPath(GetInputLocation());   
     auto maskPath = pathWithoutExtension + ".mask.nrrd";
     if (itksys::SystemTools::FileExists(maskPath))
     {
