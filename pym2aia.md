@@ -7,10 +7,7 @@ ImzML access using M²aia in Python
 Consider to install pyM²aia in an [virtual environment](https://packaging.python.org/en/latest/tutorials/installing-packages/#creating-and-using-virtual-environments).
 
 ```sh
-# cd projectDir/
 python3 -m venv .venv
-pip3 install --upgrade pip
-
 source .venv/bin/activate
 
 pip install m2aia
