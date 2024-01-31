@@ -491,9 +491,9 @@ namespace m2
       auto yo = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetOrigin()[1]);
       auto zo = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetOrigin()[2]);
 
-      context["absolute position offset x"] = std::to_string(xo);
-      context["absolute position offset y"] = std::to_string(yo);
-      context["absolute position offset z"] = std::to_string(zo);
+      context["origin x"] = std::to_string(xo);
+      context["origin y"] = std::to_string(yo);
+      context["origin z"] = std::to_string(zo);
 
       context["run_id"] = std::to_string(0);
       
