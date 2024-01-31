@@ -408,20 +408,20 @@ namespace m2
           break;
         case SpectrumFormat::ContinuousCentroid:
         case SpectrumFormat::Centroid:
-          context["spectrumtype"] = "[MS:1000127] centroid spectrum";
-          context["mode"] = "[IMS:1000030] continuous";
+          context["spectrumtype"] = "centroid spectrum";
+          context["mode"] = "continuous";
           break;
         case SpectrumFormat::ContinuousProfile:
-          context["spectrumtype"] = "[MS:1000128] profile spectrum";
-          context["mode"] = "[IMS:1000030] continuous";
+          context["spectrumtype"] = "profile spectrum";
+          context["mode"] = "continuous";
           break;
         case SpectrumFormat::ProcessedCentroid:
-          context["spectrumtype"] = "[MS:1000127] centroid spectrum";
-          context["mode"] = "[IMS:1000031] processed";
+          context["spectrumtype"] = "centroid spectrum";
+          context["mode"] = "processed";
           break;
         case SpectrumFormat::ProcessedProfile:
-          context["spectrumtype"] = "[MS:1000128] profile spectrum";
-          context["mode"] = "[IMS:1000031] processed";
+          context["spectrumtype"] = "profile spectrum";
+          context["mode"] = "processed";
           break;
         default:
           break;
