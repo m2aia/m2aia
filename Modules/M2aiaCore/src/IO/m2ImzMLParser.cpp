@@ -465,15 +465,15 @@ void m2::ImzMLParser::ReadImageSpectrumMetaData(m2::ImzMLSpectrumImage::Pointer 
 
     // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L196
     accession_map["IMS:1000050"] = [&](auto line)
-    { spectra[spectrumIndexReference].index.SetElement(0, std::stoul(attributeValue(line, "value", value)) - 1); };
+    { spectra[spectrumIndexReference].index.SetElement(0, std::stol(attributeValue(line, "value", value)) - 1); };
 
     // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L204
     accession_map["IMS:1000051"] = [&](auto line)
-    { spectra[spectrumIndexReference].index.SetElement(1, std::stoul(attributeValue(line, "value", value)) - 1); };
+    { spectra[spectrumIndexReference].index.SetElement(1, std::stol(attributeValue(line, "value", value)) - 1); };
 
     // https://github.com/m2aia/imzML/blob/master/imagingMS.obo#L213
     accession_map["IMS:1000052"] = [&](auto line)
-    { spectra[spectrumIndexReference].index.SetElement(2, std::stoul(attributeValue(line, "value", value)) - 1); };
+    { spectra[spectrumIndexReference].index.SetElement(2, std::stol(attributeValue(line, "value", value)) - 1); };
 
     // Foreign user tags
     accession_map["3DPositionX"] = [&](auto line)
