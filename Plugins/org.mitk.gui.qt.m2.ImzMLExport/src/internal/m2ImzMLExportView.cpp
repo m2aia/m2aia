@@ -48,8 +48,8 @@ void m2ImzMLExportView::CreateQtPartControl(QWidget *parent)
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
 
-  m_Controls.cmbBxOutputMode->addItem("Continuous Profile",
-                                      static_cast<unsigned>(m2::SpectrumFormat::ContinuousProfile));
+  // m_Controls.cmbBxOutputMode->addItem("Continuous Profile",
+  //                                     static_cast<unsigned>(m2::SpectrumFormat::ContinuousProfile));
   m_Controls.cmbBxOutputMode->addItem("Continuous Centroid",
                                       static_cast<unsigned>(m2::SpectrumFormat::ContinuousCentroid));
 
