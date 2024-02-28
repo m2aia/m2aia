@@ -1,7 +1,7 @@
 ## Installation dependencies for ubuntu 20.04:
 
 ```
-sudo apt-get install -q -y --no-install-recommends \  
+sudo apt-get install -q -y --no-install-recommends \
     libglu1-mesa-dev \
     libtiff5-dev \
     qtbase5-dev \
@@ -14,16 +14,16 @@ sudo apt-get install -q -y --no-install-recommends \
     libqt5charts5-dev \
     libqt5x11extras5-dev \
     qtxmlpatterns5-dev-tools \
-    libqt5webengine-data \    
-    libopenslide-dev 
+    libqt5webengine-data \
+    libopenslide-dev
 ```
 
 ## Installation dependencies for ubuntu 18.04:
 
 ```
-sudo apt-get install -q -y --no-install-recommends \  
+sudo apt-get install -q -y --no-install-recommends \
     libglu1-mesa-dev \
-    libopenslide-dev 
+    libopenslide-dev
 ```
 To run M²aia on Ubuntu 18.04 you have to provide Qt 5.12 libraries >= Qt 5.12.9. Installers can be found in the [Qt 5.12] archive. In this example Qt is installed in the system folder ```/opt/``` to provide multi-user access.
 
