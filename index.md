@@ -12,8 +12,8 @@ M²aia provides features for
 
 Downloads
 ---------
-[ubuntu2004]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-2024.01.1285f33-Ubuntu20.04-linux-x86_64.tar.gz
-[ubuntu2204]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-2024.01.1285f33-Ubuntu22.04-linux-x86_64.tar.gz
+[ubuntu2004]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-v2024.01.1285f33-Ubuntu20.04-linux-x86_64.tar.gz
+[ubuntu2204]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-v2024.01.1285f33-Ubuntu22.04-linux-x86_64.tar.gz
 [windows]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-v2024.01.1285f33-windows-x86_64.exe
 [windows-zip]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-v2024.01.1285f33-windows-x86_64.zip
 
