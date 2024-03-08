@@ -1,7 +1,9 @@
 ImzML access using M²aia in Python 
 ----------------------------------
 
-[pyM²aia](https://github.com/m2aia/pym2aia) is a Python interface for mass spectrometry imaging with focus on Deep Learning utilizing M²aia's I/O libraries.
+pyM²aia is a Python interface for mass spectrometry imaging with focus on Deep Learning utilizing M²aia's I/O libraries.
+
+[github.com/m2aia/pym2aia](https://github.com/m2aia/pym2aia)
 
 #### Package installation 
 Consider to install pyM²aia in an [virtual environment](https://packaging.python.org/en/latest/tutorials/installing-packages/#creating-and-using-virtual-environments).
