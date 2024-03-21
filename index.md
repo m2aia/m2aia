@@ -16,20 +16,32 @@ Downloads
 [ubuntu2204]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-v2024.01.1285f33-Ubuntu22.04-linux-x86_64.tar.gz
 [windows]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-v2024.01.1285f33-windows-x86_64.exe
 [windows-zip]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-v2024.01.1285f33-windows-x86_64.zip
+[pym2aia-github]: https://github.com/m2aia/pym2aia
+[pym2aia-pypi]: https://pypi.org/project/m2aia/
+[pym2aia-examples]: https://github.com/m2aia/pym2aia-examples
+[pym2aia-gettingstarted]: https://m2aia.de/pym2aia.html
 
 |M²aia       |  Packages|
 |---         |---      |
 | **v2024.01**<br>[Github](https://github.com/m2aia/m2aia/releases/tag/v2024.01)| [ubuntu-20.04][ubuntu2004] <br> [ubuntu-22.04][ubuntu2204] <br> [windows-installer][windows] <br> [windows-zip][windows-zip]| 
 | **archive** | http://data.jtfc.de/latest/|
 
-Using registration utilities requires [elastix 5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0).
+Install elastix for image-based registration utilities: [elastix 5.0.0](https://github.com/SuperElastix/elastix/releases/tag/5.0.0)
+
+|pyM²aia     |  |
+|---         |---      |
+| [getting started][pym2aia-gettingstarted] | [Github][pym2aia-github] <br> [PyPi][pym2aia-pypi] <br> [Examples][pym2aia-examples]  |
+
 
 Cite M²aia
 ----------
 
-Cordes J; Enzlein T; Marsching C; Hinze M; Engelhardt S; Hopf C; Wolf
-I (July, 2021): M²aia - Interactive, fast and memory efficient analysis of 2D and 3D multi-modal mass spectrometry imaging
-data [https://doi.org/10.1093/gigascience/giab049](https://doi.org/10.1093/gigascience/giab049)
+Cordes, Jonas, Thomas Enzlein, Christian Marsching, Marven Hinze, Sandy Engelhardt, Carsten Hopf, and Ivo Wolf. “M²aia—Interactive, Fast, and Memory-Efficient Analysis of 2D and 3D Multi-Modal Mass Spectrometry Imaging Data.” GigaScience 10, no. 7 (July 20, 2021): giab049. https://doi.org/10.1093/gigascience/giab049.
+
+
+Cordes, Jonas, Thomas Enzlein, Carsten Hopf, and Ivo Wolf. “pyM2aia: Python Interface for Mass Spectrometry Imaging with Focus on Deep Learning.” Bioinformatics 40, no. 3 (March 1, 2024): btae133. https://doi.org/10.1093/bioinformatics/btae133.
+
+
 
 [biotools:m2aia](https://bio.tools/m2aia) 
 
