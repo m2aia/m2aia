@@ -36,10 +36,10 @@ Install elastix for image-based registration utilities: [elastix 5.0.0](https://
 Cite M²aia
 ----------
 
-Cordes, Jonas, Thomas Enzlein, Christian Marsching, Marven Hinze, Sandy Engelhardt, Carsten Hopf, and Ivo Wolf. “M²aia—Interactive, Fast, and Memory-Efficient Analysis of 2D and 3D Multi-Modal Mass Spectrometry Imaging Data.” GigaScience 10, no. 7 (July 20, 2021): giab049. https://doi.org/10.1093/gigascience/giab049.
+Cordes, Jonas, Thomas Enzlein, Christian Marsching, Marven Hinze, Sandy Engelhardt, Carsten Hopf, and Ivo Wolf. “M²aia—Interactive, Fast, and Memory-Efficient Analysis of 2D and 3D Multi-Modal Mass Spectrometry Imaging Data.” GigaScience 10, no. 7 (July 20, 2021): giab049. [https://doi.org/10.1093/gigascience/giab049](https://doi.org/10.1093/gigascience/giab049).
 
 
-Cordes, Jonas, Thomas Enzlein, Carsten Hopf, and Ivo Wolf. “pyM2aia: Python Interface for Mass Spectrometry Imaging with Focus on Deep Learning.” Bioinformatics 40, no. 3 (March 1, 2024): btae133. https://doi.org/10.1093/bioinformatics/btae133.
+Cordes, Jonas, Thomas Enzlein, Carsten Hopf, and Ivo Wolf. “pyM2aia: Python Interface for Mass Spectrometry Imaging with Focus on Deep Learning.” Bioinformatics 40, no. 3 (March 1, 2024): btae133. [https://doi.org/10.1093/bioinformatics/btae133](https://doi.org/10.1093/bioinformatics/btae133).
 
 
 
