@@ -10,6 +10,7 @@ doCppm <- function(path_ionDir,
                   path_mask, 
                   path_out,
                   pval = 0.05,
+                  label = "all",
                   verbose = TRUE) {
   
   ionImages <- list.files(path = path_ionDir, pattern = "nrrd", full.names = TRUE)
@@ -19,7 +20,27 @@ doCppm <- function(path_ionDir,
   stopifnot(is.numeric(pval))
   
   # create window object
-  mask <- nat::read.nrrd(path_mask)[,,1] == 1
+  mask_data <- nat::read.nrrd(path_mask)[,,1]
+  
+  # Handle label parameter
+  if(label == "all") {
+    # All non-zero labels
+    mask <- mask_data >= 1
+    if(verbose) {
+      cat(timeNow(), "using all labels (>= 1)\n")
+    }
+  } else {
+    # Convert label to numeric
+    label_val <- as.numeric(label)
+    if(is.na(label_val)) {
+      stop("Invalid label value: ", label, "\n")
+    }
+    mask <- mask_data == label_val
+    if(verbose) {
+      cat(timeNow(), "using label value:", label_val, "\n")
+    }
+  }
+  
   win <- spatstat.geom::as.polygonal(spatstat.geom::owin(mask=mask))
   
   # save spp objects into a list
@@ -108,6 +129,7 @@ parser$add_argument("-v", "--verbose", action="store_true", default=TRUE,
 parser$add_argument("--ionimage", type="character", help="directory path where the ion images (*.nrrd) are.")
 parser$add_argument("--mask", type="character", help="path to the mask image file (*.nrrd).")
 parser$add_argument("--pval", type="double", help="P-value for probability calculation", default = 0.05)
+parser$add_argument("--label", type="character", help="Mask label to use: 'all' for all non-zero labels, or specific integer value (e.g., '0' for background, '1', '2', etc.)", default = "all")
 
 # Outputs
 parser$add_argument("--out", type = "character", help="Hot and cold spot output path (*.nrrd)")
@@ -118,5 +140,6 @@ doCppm(path_ionDir = args$ionimage,
       path_mask = args$mask, 
       path_out = args$out, 
       pval = args$pval,
+      label = args$label,
       verbose = args$verbose)
 
