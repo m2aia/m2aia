@@ -1,7 +1,5 @@
 FROM rocker/r-ver:4.2 as rbase
 
-LABEL maintainer="jtfc@posteo.de"
-
 ARG BUILD_DATE
 ARG BUILD_VERSION
 

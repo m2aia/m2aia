@@ -47,12 +47,16 @@ public:
 
 private slots:
   void OnStartMoleculaR();
+  void OnMaskLabelChanged(int index);
+  void OnImageSelectionChanged(QmitkSingleNodeSelectionWidget::NodeList nodes);
 
 private:
   // Typically a one-liner. Set the focus to the default widget.
   void SetFocus() override;
 
   void EnableWidgets(bool enable);
+  
+  void UpdateMaskLabelComboBox();
 
   // Generated from the associated UI file, it encapsulates all the widgets
   // of our view.

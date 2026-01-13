@@ -15,10 +15,31 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QmitkMultiNodeSelectionWidget" name="imageSelection" native="true"/>
+    <widget class="QmitkSingleNodeSelectionWidget" name="imageSelection" native="true"/>
    </item>
    <item>
     <widget class="QmitkMultiNodeSelectionWidget" name="centroidsSelection" native="true"/>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_label">
+     <item>
+      <widget class="QLabel" name="label_mask">
+       <property name="toolTip">
+        <string>Which label(s) from the mask to use for analysis</string>
+       </property>
+       <property name="text">
+        <string>Mask Label</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="comboBoxMaskLabel">
+       <property name="toolTip">
+        <string>Select which label(s) from the mask image to use</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_14">
@@ -63,7 +84,7 @@
    <item>
     <spacer name="verticalSpacer">
      <property name="orientation">
-      <enum>Qt::Vertical</enum>
+      <enum>Qt::Orientation::Vertical</enum>
      </property>
      <property name="sizeHint" stdset="0">
       <size>
@@ -78,7 +99,7 @@
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
   <customwidget>
-   <class>QmitkMultiNodeSelectionWidget</class>
+   <class>QmitkSingleNodeSelectionWidget</class>
    <extends>QWidget</extends>
    <header>QmitkMultiNodeSelectionWidget.h</header>
    <container>1</container>
