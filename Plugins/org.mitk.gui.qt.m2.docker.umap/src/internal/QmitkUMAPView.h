@@ -15,6 +15,7 @@ found in the LICENSE file.
 #include <berryISelectionListener.h>
 #include <QmitkAbstractView.h>
 #include <QmitkSingleNodeSelectionWidget.h>
+#include <QFutureWatcher>
 
 // There's an item "MoleculaRViewControls.ui" in the UI_FILES list in
 // files.cmake. The Qt UI Compiler will parse this file and generate a
@@ -46,6 +47,7 @@ public:
 
 private slots:
   void OnStartDockerProcessing();
+  void OnDockerProcessingFinished();
 
 private:
   // Typically a one-liner. Set the focus to the default widget.
@@ -56,5 +58,15 @@ private:
   // Generated from the associated UI file, it encapsulates all the widgets
   // of our view.
   Ui::ViewControls m_Controls;
+  
+  // Structure to hold processing results
+  struct UMAPResult {
+    std::vector<mitk::BaseData::Pointer> images;
+    std::vector<mitk::DataNode::ConstPointer> referenceNodes;
+    int n_components;
+  };
+  
+  // Future watcher for async Docker execution
+  QFutureWatcher<UMAPResult> m_DockerProcessWatcher;
 };
 
