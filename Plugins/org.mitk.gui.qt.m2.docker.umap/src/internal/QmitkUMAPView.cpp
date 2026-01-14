@@ -142,7 +142,7 @@ void QmitkUMAPView::OnStartDockerProcessing()
         helper.AddAutoSaveData(imageData, "--imzml", "imzml_images/image%1%", ".imzML");
         
         // Add centroids (common for all images)
-        helper.AddAutoSaveData(centroidNode->GetData(), "--centroids", "input", ".centroids");
+        helper.AddAutoSaveData(centroidNode->GetData(), "--centroids", "input", ".csv");
         
         // Prepare output file names for loading
         std::vector<std::string> expectedOutputs;
