@@ -15,7 +15,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #pragma once
-#include "ui_m2DataTools.h"
+#include "ui_m2DataToolsView.h"
 #include <QThreadPool>
 #include <QmitkAbstractView.h>
 #include <mitkColorBarAnnotation.h>
@@ -23,7 +23,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2UIUtils.h>
 
 
-class m2DataTools : public QmitkAbstractView
+class m2DataToolsView : public QmitkAbstractView
 {
   // this is needed for all Qt objects that should have a Qt meta-object
   // (everything that derives from QObject and wants to have signal/slots)
@@ -38,6 +38,9 @@ public slots:
   void OnApplyTiling();
   void OnResetTiling();  
   void UpdateColorBarAndRenderWindows();
+
+  void OnAlignImages();
+  void OnResetAlignment();
   
   
 protected:
