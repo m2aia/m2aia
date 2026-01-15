@@ -15,7 +15,7 @@ See LICENSE.txt for details.
 
 ===================================================================*/
 
-#include "m2Data.h"
+#include "m2DataView.h"
 
 #include "Qm2OpenSlideImageIOHelperDialog.h"
 #include <QColorDialog>
@@ -59,9 +59,9 @@ See LICENSE.txt for details.
 #include <regex>
 // #include <Qm2AssociatedFilesDialog.h>
 
-const std::string m2Data::VIEW_ID = "org.mitk.views.m2.data";
+const std::string m2DataView::VIEW_ID = "org.mitk.views.m2.data";
 
-void m2Data::CreateQtPartControl(QWidget *parent)
+void m2DataView::CreateQtPartControl(QWidget *parent)
 {
   // create GUI widgets from the Qt Designer's .ui file
   m_Controls.setupUi(parent);
@@ -392,7 +392,7 @@ void m2Data::CreateQtPartControl(QWidget *parent)
   });
 }
 
-void m2Data::InitToleranceControls()
+void m2DataView::InitToleranceControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -400,7 +400,7 @@ void m2Data::InitToleranceControls()
   m_Controls.spnBxTol->setValue(defaultValue);
 }
 
-void m2Data::InitNormalizationControls()
+void m2DataView::InitNormalizationControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -412,7 +412,7 @@ void m2Data::InitNormalizationControls()
   cb->setCurrentIndex(defaultValue);
 }
 
-m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
+m2::NormalizationStrategyType m2DataView::GuiToNormalizationStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -421,7 +421,7 @@ m2::NormalizationStrategyType m2Data::GuiToNormalizationStrategyType()
   return static_cast<m2::NormalizationStrategyType>(value);
 }
 
-void m2Data::InitImageNormalizationControls(){
+void m2DataView::InitImageNormalizationControls(){
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
   auto defaultValue =
@@ -433,7 +433,7 @@ void m2Data::InitImageNormalizationControls(){
 }
 
 
-m2::ImageNormalizationStrategyType m2Data::GuiToImageNormalizationStrategyType()
+m2::ImageNormalizationStrategyType m2DataView::GuiToImageNormalizationStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -442,7 +442,7 @@ m2::ImageNormalizationStrategyType m2Data::GuiToImageNormalizationStrategyType()
   return static_cast<m2::ImageNormalizationStrategyType>(value);
 }
 
-m2::ImageSmoothingStrategyType m2Data::GuiToImageSmoothingStrategyType()
+m2::ImageSmoothingStrategyType m2DataView::GuiToImageSmoothingStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -451,7 +451,7 @@ m2::ImageSmoothingStrategyType m2Data::GuiToImageSmoothingStrategyType()
   return static_cast<m2::ImageSmoothingStrategyType>(value);
 }
 
-void m2Data::InitImageSmoothingControls()
+void m2DataView::InitImageSmoothingControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -464,7 +464,7 @@ void m2Data::InitImageSmoothingControls()
 }
 
 
-void m2Data::InitIntensityTransformationControls()
+void m2DataView::InitIntensityTransformationControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -478,7 +478,7 @@ void m2Data::InitIntensityTransformationControls()
   cb->setCurrentIndex(defaultValue);
 }
 
-m2::IntensityTransformationType m2Data::GuiToIntensityTransformationStrategyType()
+m2::IntensityTransformationType m2DataView::GuiToIntensityTransformationStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -487,7 +487,7 @@ m2::IntensityTransformationType m2Data::GuiToIntensityTransformationStrategyType
   return static_cast<m2::IntensityTransformationType>(value);
 }
 
-void m2Data::InitRangePoolingControls()
+void m2DataView::InitRangePoolingControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -500,7 +500,7 @@ void m2Data::InitRangePoolingControls()
   cb->setCurrentIndex(defaultValue);
 }
 
-m2::RangePoolingStrategyType m2Data::GuiToRangePoolingStrategyType()
+m2::RangePoolingStrategyType m2DataView::GuiToRangePoolingStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -509,7 +509,7 @@ m2::RangePoolingStrategyType m2Data::GuiToRangePoolingStrategyType()
   return static_cast<m2::RangePoolingStrategyType>(value);
 }
 
-void m2Data::InitSmoothingControls()
+void m2DataView::InitSmoothingControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -528,7 +528,7 @@ void m2Data::InitSmoothingControls()
           { preferences->PutInt("m2aia.signal.SmoothingValue", m_Controls.spnBxSmoothing->value()); });
 }
 
-m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
+m2::SmoothingType m2DataView::GuiToSmoothingStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -536,7 +536,7 @@ m2::SmoothingType m2Data::GuiToSmoothingStrategyType()
   return static_cast<m2::SmoothingType>(value);
 }
 
-void m2Data::InitBaselineCorrectionControls()
+void m2DataView::InitBaselineCorrectionControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -565,7 +565,7 @@ void m2Data::InitBaselineCorrectionControls()
           { preferences->PutInt("m2aia.signal.BaselineCorrectionValue", m_Controls.spnBxBaseline->value()); });
 }
 
-m2::BaselineCorrectionType m2Data::GuiToBaselineCorrectionStrategyType()
+m2::BaselineCorrectionType m2DataView::GuiToBaselineCorrectionStrategyType()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
@@ -574,19 +574,19 @@ m2::BaselineCorrectionType m2Data::GuiToBaselineCorrectionStrategyType()
   return static_cast<m2::BaselineCorrectionType>(value);
 }
 
-void m2Data::OnDecreaseTolerance()
+void m2DataView::OnDecreaseTolerance()
 {
   m_Controls.spnBxTol->setValue(m_Controls.spnBxTol->value() * 0.9);
   OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
 }
 
-void m2Data::OnIncreaseTolerance()
+void m2DataView::OnIncreaseTolerance()
 {
   m_Controls.spnBxTol->setValue(m_Controls.spnBxTol->value() * 1.1);
   OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
 }
 
-void m2Data::OnCreateNextImage()
+void m2DataView::OnCreateNextImage()
 {
   auto center = m_Controls.spnBxMz->value();
   auto offset = m_Controls.spnBxTol->value();
@@ -597,7 +597,7 @@ void m2Data::OnCreateNextImage()
   this->OnGenerateImageData(center + offset, FROM_GUI);
 }
 
-void m2Data::OnCreatePrevImage()
+void m2DataView::OnCreatePrevImage()
 {
   auto center = m_Controls.spnBxMz->value();
   auto offset = m_Controls.spnBxTol->value();
@@ -608,7 +608,7 @@ void m2Data::OnCreatePrevImage()
   this->OnGenerateImageData(center - offset, FROM_GUI);
 }
 
-void m2Data::OnCreateNextPeakImage()
+void m2DataView::OnCreateNextPeakImage()
 {
   auto predicate = mitk::TNodePredicateDataType<m2::IntervalVector>::New();
   auto processableNodes = GetDataStorage()->GetSubset(predicate)->CastToSTLConstContainer();
@@ -660,7 +660,7 @@ void m2Data::OnCreateNextPeakImage()
   this->OnGenerateImageData(nearestElement->x.mean(), FROM_GUI);
 }
 
-void m2Data::OnCreatePrevPeakImage()
+void m2DataView::OnCreatePrevPeakImage()
 {
   auto predicate = mitk::TNodePredicateDataType<m2::IntervalVector>::New();
   auto processableNodes = GetDataStorage()->GetSubset(predicate)->CastToSTLConstContainer();
@@ -712,7 +712,7 @@ void m2Data::OnCreatePrevPeakImage()
   this->OnGenerateImageData(nearestElement->x.mean(), FROM_GUI);
 }
 
-void m2Data::ApplySettingsToNodes(m2::UIUtils::NodesVectorType::Pointer v)
+void m2DataView::ApplySettingsToNodes(m2::UIUtils::NodesVectorType::Pointer v)
 {
   for (auto dataNode : *v)
   {
@@ -721,7 +721,7 @@ void m2Data::ApplySettingsToNodes(m2::UIUtils::NodesVectorType::Pointer v)
   }
 }
 
-void m2Data::ApplySettingsToImage(m2::SpectrumImage *data)
+void m2DataView::ApplySettingsToImage(m2::SpectrumImage *data)
 {
   if (data)
   {
@@ -747,7 +747,7 @@ void m2Data::ApplySettingsToImage(m2::SpectrumImage *data)
   }
 }
 
-void m2Data::OnGenerateImageData(mitk::DataNode::Pointer node,
+void m2DataView::OnGenerateImageData(mitk::DataNode::Pointer node,
                                  qreal xRangeCenter,
                                  qreal xRangeTol,
                                  bool emitRangeChanged)
@@ -831,7 +831,7 @@ void m2Data::OnGenerateImageData(mitk::DataNode::Pointer node,
 }
 
 
-void m2Data::OnCreateShiftMap()
+void m2DataView::OnCreateShiftMap()
 {
 // get the selection
   auto nodesToProcess = m2::UIUtils::AllNodes(GetDataStorage());
@@ -858,7 +858,7 @@ void m2Data::OnCreateShiftMap()
 }
 
 
-void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
+void m2DataView::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
 {
   // get the selection
   auto nodesToProcess = m2::UIUtils::AllNodes(GetDataStorage());
@@ -901,7 +901,7 @@ void m2Data::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
       OnGenerateImageData(dataNode, xRangeCenter, xRangeTol, false); // do not emit
 }
 
-void m2Data::UpdateSpectrumImageTable(const mitk::DataNode *node)
+void m2DataView::UpdateSpectrumImageTable(const mitk::DataNode *node)
 {
   if (dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
@@ -926,13 +926,13 @@ void m2Data::UpdateSpectrumImageTable(const mitk::DataNode *node)
   // item = m_Controls.tableWidget->item(0, 0)->setData()
 }
 
-void m2Data::OnRenderSpectrumImages(double min, double max)
+void m2DataView::OnRenderSpectrumImages(double min, double max)
 {
   Q_UNUSED(min);
   Q_UNUSED(max);
 }
 
-void m2Data::UpdateTextAnnotations(std::string text)
+void m2DataView::UpdateTextAnnotations(std::string text)
 {
   if (auto mainWindow = qobject_cast<QMainWindow *>(QApplication::activeWindow()))
   {
@@ -944,7 +944,7 @@ void m2Data::UpdateTextAnnotations(std::string text)
   }
 }
 
-mitk::DataNode::Pointer m2Data::FindChildNodeRegex(mitk::DataNode::Pointer &parent, std::string regexString)
+mitk::DataNode::Pointer m2DataView::FindChildNodeRegex(mitk::DataNode::Pointer &parent, std::string regexString)
 {
   auto deriv = this->GetDataStorage()->GetDerivations(parent.GetPointer(), nullptr, true);
   try
@@ -962,7 +962,7 @@ mitk::DataNode::Pointer m2Data::FindChildNodeRegex(mitk::DataNode::Pointer &pare
   return nullptr;
 }
 
-void m2Data::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/, const QList<mitk::DataNode::Pointer> &nodes)
+void m2DataView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/, const QList<mitk::DataNode::Pointer> &nodes)
 {
   if (!nodes.empty())
   {
@@ -980,7 +980,7 @@ void m2Data::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/, const Q
   }
 }
 
-void m2Data::UpdateLevelWindow(const mitk::DataNode *node)
+void m2DataView::UpdateLevelWindow(const mitk::DataNode *node)
 {
   if (auto msImageBase = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
@@ -995,7 +995,7 @@ void m2Data::UpdateLevelWindow(const mitk::DataNode *node)
   }
 }
 
-void m2Data::NodeAdded(const mitk::DataNode *node)
+void m2DataView::NodeAdded(const mitk::DataNode *node)
 {
   if (dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
   {
@@ -1018,7 +1018,7 @@ void m2Data::NodeAdded(const mitk::DataNode *node)
   }
 }
 
-void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
+void m2DataView::OpenSlideImageNodeAdded(const mitk::DataNode *node)
 {
   if (auto openSlideIOHelper = dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
   {
@@ -1094,14 +1094,14 @@ void m2Data::OpenSlideImageNodeAdded(const mitk::DataNode *node)
   }
 }
 
-void m2Data::ImzMLImageNodeAdded(const mitk::DataNode *) {}
+void m2DataView::ImzMLImageNodeAdded(const mitk::DataNode *) {}
 
-void m2Data::FsmImageNodeAdded(const mitk::DataNode *)
+void m2DataView::FsmImageNodeAdded(const mitk::DataNode *)
 {
   //
 }
 
-void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
+void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
 {
   
 
@@ -1324,7 +1324,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
   }
 }
 
-void m2Data::NodeRemoved(const mitk::DataNode *node)
+void m2DataView::NodeRemoved(const mitk::DataNode *node)
 {
   if (dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {

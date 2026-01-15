@@ -15,7 +15,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #pragma once
-#include "ui_m2Data.h"
+#include "ui_m2DataView.h"
 #include <QmitkAbstractView.h>
 
 #include <mitkImage.h>
@@ -42,7 +42,7 @@ namespace m2
 
 class QmitkMultiNodeSelectionWidget;
 
-class m2Data : public QmitkAbstractView
+class m2DataView : public QmitkAbstractView
 {
   // this is needed for all Qt objects that should have a Qt meta-object
   // (everything that derives from QObject and wants to have signal/slots)
