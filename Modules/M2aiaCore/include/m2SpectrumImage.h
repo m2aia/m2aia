@@ -107,9 +107,9 @@ namespace m2
     itkGetMacro(NormalizationImages, NormalizationImageMapType &);
     itkGetConstReferenceMacro(NormalizationImages, NormalizationImageMapType);
 
-    itkGetMacro(MaskImage, mitk::Image::Pointer);
-    itkGetConstMacro(MaskImage, mitk::Image::Pointer);
-    itkSetMacro(MaskImage, mitk::Image::Pointer);
+    itkGetMacro(MultilabelSegmentation, mitk::MultiLabelSegmentation::Pointer);
+    itkGetConstMacro(MultilabelSegmentation, mitk::MultiLabelSegmentation::Pointer);
+    itkSetMacro(MultilabelSegmentation, mitk::MultiLabelSegmentation::Pointer);
 
     itkGetMacro(ShiftImage, mitk::Image::Pointer);
     itkGetConstMacro(ShiftImage, mitk::Image::Pointer);
@@ -234,7 +234,7 @@ namespace m2
 
     SpectrumArtifactMapType m_SpectraArtifacts;
 
-    mitk::Image::Pointer m_MaskImage;
+    mitk::MultiLabelSegmentation::Pointer m_MultilabelSegmentation;
     mitk::Image::Pointer m_ShiftImage;
     mitk::Image::Pointer m_IndexImage;
     mitk::PointSet::Pointer m_Points;
