@@ -124,20 +124,20 @@ void QmitkMoleculaRView::OnStartMoleculaR()
           mitk::DockerHelper helper("ghcr.io/m2aia/molecular");
           helper.EnableAutoRemoveContainer(true);
           helper.AddAutoSaveData(data, "--ionimage", "ionimages/image%1%", ".nrrd");
-          helper.AddAutoSaveData(image->GetMaskImage(), "--mask", "mask", ".nrrd");
+          helper.AddAutoSaveData(image->GetMultilabelSegmentation()->GetGroupImage(0), "--mask", "mask", ".nrrd");
           helper.AddApplicationArgument("--pval", std::to_string(m_Controls.spnBxMPMPValue->value()));
           helper.AddAutoLoadOutput("--out", "mpm.nrrd");
           mitk::ProgressBar::GetInstance()->Progress();
 
           const auto results = helper.GetResults();
-          auto lsImage = mitk::LabelSetImage::New();
+          auto lsImage = mitk::MultiLabelSegmentation::New();
           lsImage->InitializeByLabeledImage(dynamic_cast<mitk::Image *>(results[0].GetPointer()));
           mitk::ProgressBar::GetInstance()->Progress();
 
           // {
           //   using namespace std;
-          //   mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType> mAcc(image->GetMaskImage());
-          //   mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType> lsAcc(lsImage);
+          //   mitk::ImagePixelReadAccessor<mitk::MultiLabelSegmentation::PixelType> mAcc(image->GetMaskImage());
+          //   mitk::ImagePixelWriteAccessor<mitk::MultiLabelSegmentation::PixelType> lsAcc(lsImage);
           //   auto N = accumulate(lsImage->GetDimensions(), lsImage->GetDimensions() + 3, 1, multiplies<unsigned
           //   long>()); transform(mAcc.GetData(), mAcc.GetData() + N, lsAcc.GetData(), lsAcc.GetData(), [](auto a,
           //   auto b) {

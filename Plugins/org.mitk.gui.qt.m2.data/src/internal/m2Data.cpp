@@ -782,7 +782,7 @@ void m2Data::OnGenerateImageData(mitk::DataNode::Pointer node,
     if (!data->IsInitialized())
       mitkThrow() << "Trying to grab an ion image but data access was not initialized properly!";
 
-    mitk::Image::Pointer maskImage = data->GetMaskImage();
+    mitk::Image::Pointer maskImage = data->GetMultilabelSegmentation()->GetGroupImage(0);
 
     // The smartpointer will stay alive until all captured copies are relesed. Additional
     // all connected signals must be disconnected to make sure that the future is not kept
@@ -1146,7 +1146,7 @@ void m2Data::SpectrumImageNodeAdded(const mitk::DataNode *node)
     auto helperNode = mitk::DataNode::New();
     helperNode->SetName(nodeName);
     helperNode->SetVisibility(m_Controls.showMaskImages->isChecked());
-    helperNode->SetData(spectrumImage->GetMaskImage());
+    helperNode->SetData(spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0));
     helperNode->SetStringProperty("m2aia.helper.image.name", "mask");
 
     // add hidden to DS

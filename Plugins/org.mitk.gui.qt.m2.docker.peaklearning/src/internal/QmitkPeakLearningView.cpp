@@ -47,7 +47,7 @@ void QmitkPeakLearningView::CreateQtPartControl(QWidget *parent)
   m_Controls.maskSelection->SetDataStorage(this->GetDataStorage());
   m_Controls.maskSelection->SetSelectionIsOptional(true);
   m_Controls.maskSelection->SetEmptyInfo(QStringLiteral("Select a mask image"));
-  m_Controls.maskSelection->SetNodePredicate(mitk::TNodePredicateDataType<mitk::LabelSetImage>::New());
+  m_Controls.maskSelection->SetNodePredicate(mitk::TNodePredicateDataType<mitk::MultiLabelSegmentation>::New());
 
   // Wire up the UI widgets with our functionality.
   connect(m_Controls.btnRun, SIGNAL(clicked()), this, SLOT(OnStartDockerProcessing()));
@@ -78,7 +78,7 @@ void QmitkPeakLearningView::OnStartDockerProcessing()
         if (auto maskNode = m_Controls.maskSelection->GetSelectedNode())
           mask = dynamic_cast<mitk::Image *>(maskNode->GetData());
         else
-          mask = image->GetMaskImage();
+          mask = image->GetMultilabelSegmentation()->GetGroupImage(0);
         
         try
         {

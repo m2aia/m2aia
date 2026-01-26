@@ -108,7 +108,7 @@ void QmitkSklearnView::OnStartDockerProcessing()
 
           auto resultsIt = std::begin(results);
 
-          auto lsImage = mitk::LabelSetImage::New();
+          auto lsImage = mitk::MultiLabelSegmentation::New();
           lsImage->InitializeByLabeledImage(dynamic_cast<mitk::Image *>(resultsIt->GetPointer()));
           lsImage->GetGeometry()->SetSpacing(refImage->GetGeometry()->GetSpacing());
           lsImage->GetGeometry()->SetOrigin(refImage->GetGeometry()->GetOrigin());
