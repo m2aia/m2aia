@@ -37,10 +37,10 @@ void m2::SpectrumContainerImage::GetImage(double x, double tol, const mitk::Imag
   // accessors
   mitk::ImagePixelWriteAccessor<DisplayImagePixelType, 3> imageAccess(destImage);
 
-  std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>> maskAccess;
+  std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::Label::PixelType, 3>> maskAccess;
 
   if (mask)
-    maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>(mask));
+    maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::Label::PixelType, 3>(mask));
   
   GetPropertyList()->SetProperty("cm¯¹", mitk::DoubleProperty::New(x));
   GetPropertyList()->SetProperty("tol", mitk::DoubleProperty::New(tol));
@@ -190,11 +190,8 @@ void m2::SpectrumContainerImage::InitializeGeometry()
   }
 
   {
-    mitk::LabelSetImage::Pointer image = mitk::LabelSetImage::New();
-    SetMaskImage(image.GetPointer());
-
+    mitk::MultiLabelSegmentation::Pointer image = mitk::MultiLabelSegmentation::New();
     image->Initialize((mitk::Image *)this);
-    
 
     mitk::Color color;
     color.Set(0, 1, 0);
@@ -205,6 +202,9 @@ void m2::SpectrumContainerImage::InitializeGeometry()
     label->SetLocked(true);
     label->SetValue(1);
     image->AddLabel(label,0);
+    
+    // Clone the group image to keep it alive after the MultiLabelSegmentation goes out of scope
+    SetMultilabelSegmentation(image);
   }
 
   for( auto type : m2::NormalizationStrategyTypeList){
@@ -282,7 +282,7 @@ void m2::SpectrumContainerImage::InitializeImageAccess()
   using namespace m2;
 
 
-  auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType, 3>>(GetMaskImage());
+  auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<mitk::Label::PixelType, 3>>(GetMultilabelSegmentation()->GetGroupImage(0));
   auto accIndex = std::make_shared<mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3>>(GetIndexImage());
 
     const auto currentType = GetNormalizationStrategy();
@@ -389,8 +389,8 @@ void m2::SpectrumContainerImage::InitializeImageAccess()
   // accumulate valid spectra defined by mask image
   auto N = std::accumulate(accMask->GetData(),
                            accMask->GetData() + GetSpectra().size(),
-                           mitk::LabelSetImage::PixelType(0),
-                           [](const auto &a, const auto &b) -> mitk::LabelSetImage::PixelType { return a + (b > 0); });
+                           mitk::Label::PixelType(0),
+                           [](const auto &a, const auto &b) -> mitk::Label::PixelType { return a + (b > 0); });
 
   for (unsigned int t = 0; t < GetNumberOfThreads(); ++t)
     std::transform(

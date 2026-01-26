@@ -67,7 +67,10 @@ namespace m2
     {
       auto maskPath = pathWithoutExtension + ".mask.nrrd";
       auto data = mitk::IOUtil::Load(maskPath).at(0);
-      image->SetMaskImage(dynamic_cast<mitk::Image *>(data.GetPointer()));
+      auto maskImage = dynamic_cast<mitk::Image *>(data.GetPointer());
+      auto lsImage = mitk::MultiLabelSegmentation::New();
+      lsImage->InitializeByLabeledImage(maskImage);
+      image->SetMultilabelSegmentation(lsImage);
     }
 
     if (itksys::SystemTools::FileExists(pathWithoutExtension + ".mps"))

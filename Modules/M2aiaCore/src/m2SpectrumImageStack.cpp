@@ -108,9 +108,10 @@ namespace m2
     auto imageData = static_cast<m2::DisplayImagePixelType *>(imageAccess.GetData());
     std::fill(imageData, imageData + imageSibling->GetDimension(0) * imageSibling->GetDimension(1) * imageSibling->GetDimension(2), 0);
 
-    auto labelImage = mitk::LabelSetImage::New();
+    auto labelImage = mitk::MultiLabelSegmentation::New();
     labelImage->Initialize(this);
-    this->SetMaskImage(labelImage);
+    // Clone the group image to keep it alive after the MultiLabelSegmentation goes out of scope
+    this->SetMultilabelSegmentation(labelImage);
 
     // fill with data
     unsigned int sliceId = 0;
@@ -125,13 +126,13 @@ namespace m2
           CopyWarpedImageToStackImage(warpedImage, this, sliceId);
 
           // selecting "short" as pixel type for nearest neighbor interpolation
-          auto warpedMask = transformer->WarpImage(movingImage->GetMaskImage(), "short"); 
-          CopyWarpedImageToStackImage(warpedMask, GetMaskImage(), sliceId);
+          auto warpedMask = transformer->WarpImage(movingImage->GetMultilabelSegmentation()->GetGroupImage(0), "short"); 
+          CopyWarpedImageToStackImage(warpedMask, GetMultilabelSegmentation()->GetGroupImage(0), sliceId);
         }
         else
         {
           CopyWarpedImageToStackImage(movingImage, this, sliceId);
-          CopyWarpedImageToStackImage(movingImage->GetMaskImage(), GetMaskImage(), sliceId);
+          CopyWarpedImageToStackImage(movingImage->GetMultilabelSegmentation()->GetGroupImage(0), GetMultilabelSegmentation()->GetGroupImage(0), sliceId);
         }
       }
       ++sliceId;
@@ -309,7 +310,7 @@ namespace m2
               spectrumImage->SetIntensityTransformationStrategy(this->GetIntensityTransformationStrategy());
               spectrumImage->SetImageSmoothingStrategy(this->GetImageSmoothingStrategy());
               spectrumImage->SetImageNormalizationStrategy(this->GetImageNormalizationStrategy());
-              spectrumImage->GetImage(center, tol, spectrumImage->GetMaskImage(), imageTemp);
+              spectrumImage->GetImage(center, tol, spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0), imageTemp);
 
               if (!transformer->GetTransformation().empty())
                 imageTemp = transformer->WarpImage(imageTemp);
@@ -365,3 +366,4 @@ namespace m2
   }
 
 } // namespace m2
+
