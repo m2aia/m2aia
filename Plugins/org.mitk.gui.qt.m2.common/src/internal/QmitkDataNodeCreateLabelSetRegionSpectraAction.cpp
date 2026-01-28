@@ -58,11 +58,11 @@ void QmitkDataNodeCreateLabelSetRegionSpectraAction::OnMenuAboutShow()
   auto selectedNodes = this->GetSelectedNodes();
   for (auto referenceNode : selectedNodes){
     auto res = this->m_DataStorage.Lock()->GetDerivations(referenceNode,
-      mitk::TNodePredicateDataType<mitk::LabelSetImage>::New());
+      mitk::TNodePredicateDataType<mitk::MultiLabelSegmentation>::New());
     if (res->empty()) continue;
 
     for(auto l : res->CastToSTLConstContainer()){
-      auto labelSetImage = dynamic_cast<mitk::LabelSetImage *>(l->GetData());
+      auto labelSetImage = dynamic_cast<mitk::MultiLabelSegmentation *>(l->GetData());
       // auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(referenceNode->GetData());
       
       action = menu()->addAction(l->GetName().c_str());
@@ -80,7 +80,7 @@ void QmitkDataNodeCreateLabelSetRegionSpectraAction::OnMenuAboutShow()
     }
     
     // if (referenceNode.IsNotNull()){
-    //   if (mitk::LabelSetImage::Pointer labelSetImage = dynamic_cast<mitk::LabelSetImage *>(referenceNode->GetData())){
+    //   if (mitk::MultiLabelSegmentation::Pointer labelSetImage = dynamic_cast<mitk::MultiLabelSegmentation *>(referenceNode->GetData())){
     //     action = menu()->addAction("Regions to Spectra");
     //     connect(action, &QAction::triggered, [labelSetImage, this](){
     //       auto spectra = OnApplyRegionsToSpectra(labelSetImage);

@@ -154,7 +154,7 @@ void m2PeakPickingView::CreateQtPartControl(QWidget *parent)
   m_Controls.maskImageSelector->SetPopUpTitel(QString("Select Mask"));
   m_Controls.maskImageSelector->SetNodePredicate(
     mitk::NodePredicateAnd::New(
-      mitk::TNodePredicateDataType<mitk::LabelSetImage>::New(), 
+      mitk::TNodePredicateDataType<mitk::MultiLabelSegmentation>::New(), 
       m2::DataNodePredicates::NoActiveHelper));
       
 
@@ -342,7 +342,7 @@ void m2PeakPickingView::OnStartExportImages() {
 
         centroidValues = centroidValues + std::to_string(i.x.mean()) + ",";
         emit m2::UIUtils::Instance()->RequestTolerance(i.x.mean(), tol);
-        image->GetImage(i.x.mean(), tol, image->GetMaskImage(), image);
+        image->GetImage(i.x.mean(), tol, image->GetMultilabelSegmentation()->GetGroupImage(0), image);
         
         if(helper)
           ionImage = helper->WarpImage(image, "double");
@@ -578,7 +578,7 @@ void m2PeakPickingView::OnStartPeakPickingImage()
     auto ysAllIt = back_inserter(ysAll);
     auto ssAllIt = back_inserter(ssAll);
     // auto idxAllIt = back_inserter(idxAll);z
-    using MaskPixelAccessor = mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType,3>;
+    using MaskPixelAccessor = mitk::ImagePixelReadAccessor<mitk::MultiLabelSegmentation::LabelValueType,3>;
     std::unique_ptr<MaskPixelAccessor> maskAcc;
     if(auto maskNode = m_Controls.maskImageSelector->GetSelectedNode()){
       auto mask = dynamic_cast<mitk::Image *>(maskNode->GetData());

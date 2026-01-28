@@ -387,7 +387,7 @@ void m2DataToolsView::OnResetTiling()
       origin[1] = image->GetPropertyValue<double>("[IMS:1000054] absolute position offset y", 0);
       origin[2] = image->GetPropertyValue<double>("absolute position offset z", 0);
       image->GetGeometry()->SetOrigin(origin);
-      std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), image->GetMaskImage(), image->GetPoints()};
+      std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), image->GetMultilabelSegmentation()->GetGroupImage(0), image->GetPoints()};
 
       for (auto kv : image->GetNormalizationImages())
         imageList.push_back(kv.second.image);
@@ -480,7 +480,7 @@ void m2DataToolsView::OnApplyTiling()
       image->GetGeometry()->SetOrigin(origin);
       
       if(auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(node->GetData())){
-        std::vector<mitk::BaseData *> imageList{spectrumImage->GetIndexImage(), spectrumImage->GetMaskImage(), spectrumImage->GetPoints()};
+        std::vector<mitk::BaseData *> imageList{spectrumImage->GetIndexImage(), spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0), spectrumImage->GetPoints()};
         for (auto kv : spectrumImage->GetNormalizationImages())
           imageList.push_back(kv.second.image);
       

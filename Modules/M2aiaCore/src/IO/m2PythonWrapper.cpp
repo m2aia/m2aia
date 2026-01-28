@@ -66,7 +66,7 @@ extern "C"
 
   M2AIACORE_EXPORT void GetMaskArray(m2::sys::ImageHandle *handle, mitk::Label::PixelType *data)
   {
-    auto mask = handle->Image->GetMaskImage();
+    auto mask = handle->Image->GetMultilabelSegmentation()->GetGroupImage(0);
     auto N = GetNumberOfPixelsInImage(handle);
     mitk::ImageReadAccessor acc(mask);
     std::copy((mitk::Label::PixelType *)(acc.GetData()), (mitk::Label::PixelType *)(acc.GetData()) + N, data);

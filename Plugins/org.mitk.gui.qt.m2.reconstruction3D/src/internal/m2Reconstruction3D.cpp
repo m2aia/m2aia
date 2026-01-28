@@ -506,7 +506,7 @@ void m2Reconstruction3D::OnUpdateList()
       DataTuple tuple;
       tuple.node = node;
       tuple.image = data;
-      tuple.mask = data->GetMaskImage();
+      tuple.mask = data->GetMultilabelSegmentation()->GetGroupImage(0);
       // tuple.points = data->Get
 
       m_referenceMap[i] = tuple;
@@ -604,7 +604,7 @@ void m2Reconstruction3D::OnStartExport(){
   
               
     
-    mitk::IOUtil::Save(stackImage->GetMaskImage(), dir.toStdString() + "/MaskImage.nrrd");
+    mitk::IOUtil::Save(stackImage->GetMultilabelSegmentation()->GetGroupImage(0), dir.toStdString() + "/MaskImage.nrrd");
     unsigned i = 0;
     unsigned n = stackImage->GetSliceTransformers().size();
     for(std::shared_ptr<m2::ElxRegistrationHelper> t : stackImage->GetSliceTransformers()){

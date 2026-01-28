@@ -209,7 +209,6 @@ void QmitkDataCompressionView::OnStartKMeans()
   for(auto s : selectedNodes)
   {  
     auto outputNode = mitk::DataNode::New();
-    mitk::Image::Pointer data = filter->GetOutput(0);
     outputNode->SetData(filter->GetOutput(i++));
     outputNode->SetName("KMeans_" + std::to_string(m_Controls.kmeans_clusters->value()) + "_" + vectorNodeNames);
     this->GetDataStorage()->Add(outputNode, const_cast<mitk::DataNode *>(s.GetPointer()));  
@@ -230,7 +229,7 @@ void QmitkDataCompressionView::OnStartPCA()
         continue;
 
       auto filter = m2::PcaImageFilter::New();
-      filter->SetMaskImage(image->GetMaskImage());
+      filter->SetMaskImage(image->GetMultilabelSegmentation()->GetGroupImage(0));
 
       std::vector<mitk::Image::Pointer> temporaryImages;
       auto progressBar = mitk::ProgressBar::GetInstance();
@@ -242,7 +241,7 @@ void QmitkDataCompressionView::OnStartPCA()
         temporaryImages.push_back(mitk::Image::New());
         temporaryImages.back()->Initialize(image);
         const auto mz = intervals.at(row).x.mean();
-        image->GetImage(mz, image->ApplyTolerance(mz), image->GetMaskImage(), temporaryImages.back());
+        image->GetImage(mz, image->ApplyTolerance(mz), temporaryImages.back());
         filter->SetInput(inputIdx, temporaryImages.back());
         ++inputIdx;
       }
@@ -295,8 +294,8 @@ void QmitkDataCompressionView::OnStartTSNE()
       filter->SetIterations(m_Controls.tnse_iters->value());
       filter->SetTheta(m_Controls.tsne_theta->value());
 
-      using MaskImageType = itk::Image<mitk::LabelSetImage::PixelType, 3>;
-      auto maskImage =image->GetMaskImage();
+      using MaskImageType = itk::Image<mitk::MultiLabelSegmentation::LabelValueType, 3>;
+      auto maskImage = image->GetMultilabelSegmentation()->GetGroupImage(0);
       
       if(m_Controls.tsne_shrink->value() > 1){
         MaskImageType::Pointer maskImageItk;
