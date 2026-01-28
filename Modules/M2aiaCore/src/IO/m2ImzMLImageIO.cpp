@@ -818,9 +818,11 @@ namespace m2
           if (externalImage->GetPixelType().GetComponentType() == mitk::MakeScalarPixelType<double>().GetComponentType())
           {
             std::copy(static_cast<const double *>(racc.GetData()), static_cast<const double *>(racc.GetData()) + numPixelsExternal, wacc.GetData());
+            object->SetNormalizationImageStatus(type, true);
           }else if(externalImage->GetPixelType().GetComponentType() == mitk::MakeScalarPixelType<float>().GetComponentType())
           {
             std::copy(static_cast<const float *>(racc.GetData()), static_cast<const float *>(racc.GetData()) + numPixelsExternal, wacc.GetData());
+            object->SetNormalizationImageStatus(type, true);
           }
         }
       }

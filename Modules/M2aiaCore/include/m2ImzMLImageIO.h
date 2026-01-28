@@ -120,7 +120,7 @@ namespace m2
           {
             MITK_WARN << "Image spacing of [" << prop->GetValueAsString() << "] is not equal to the spacing definen in ["
             << parent->GetProperty("path")->GetValueAsString() << "]";
-            parent->GetGeometry()->SetSpacing(child->GetGeometry()->GetSpacing());
+            child->GetGeometry()->SetSpacing(parent->GetGeometry()->GetSpacing());
             MITK_WARN << "Image spacing was set to the spacing defined in the imzML data.";
           }
           
@@ -128,7 +128,7 @@ namespace m2
           {
             MITK_WARN << "Image origin of [" << prop->GetValueAsString() << "] is not equal to the origin definen in ["
             << parent->GetProperty("path")->GetValueAsString() << "]";
-            parent->GetGeometry()->SetOrigin(child->GetGeometry()->GetOrigin());
+            child->GetGeometry()->SetOrigin(parent->GetGeometry()->GetOrigin());
             MITK_WARN << "Image origin was set to the origin defined in the imzML data.";
           }
   

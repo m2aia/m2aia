@@ -236,6 +236,8 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeNormal
   if(p->GetNormalizationImageStatus(type)){
     MITK_WARN << "The normalization image is already initialized. " << "type " << m2::to_string(type);
     return;
+  }else{
+    MITK_INFO << "Start initialization of normalization image. " << "type " << m2::to_string(type);
   }
 
   // initialize the normalization iamge
@@ -318,8 +320,10 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
   }
 
   // Create the normalization image on access    
-  if (!p->GetNormalizationImageStatus(currentType))
+  if (!p->GetNormalizationImageStatus(currentType)){
+    MITK_INFO << "Initialize Normalization Image of type " + m2::to_string(currentType);
     InitializeNormalizationImage(currentType);
+  }
 
   // Get the profile type
   const auto spectrumType = p->GetSpectrumType();
@@ -629,25 +633,22 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
   }
 
   
-  
-  
-  
   for (auto type :  m2::NormalizationStrategyTypeList){
-    // Create a reference image for normalization images
-    auto normImage = mitk::Image::New();
-    
-    
-    using LocalImageType = itk::Image<m2::NormImagePixelType, 3>;
-    auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
-    caster->SetInput(itkIonImage);
-    caster->Update();
-    normImage->InitializeByItk(caster->GetOutput());
-    
-    mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(normImage);
-    std::memset(acc.GetData(), 1.0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
-    
-    p->SetNormalizationImage(normImage, type);
-    p->SetNormalizationImageStatus(type, false);
+    if (!p->GetNormalizationImageStatus(type))
+    {
+      auto normImage = mitk::Image::New();
+      using LocalImageType = itk::Image<m2::NormImagePixelType, 3>;
+      auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
+      caster->SetInput(itkIonImage);
+      caster->Update();
+      normImage->InitializeByItk(caster->GetOutput());
+      
+      mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(normImage);
+      std::memset(acc.GetData(), 1.0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
+      
+      p->SetNormalizationImage(normImage, type);
+      p->SetNormalizationImageStatus(type, false);
+    }
   }
 
   // p->SetNormalizationImageStatus(m2::NormalizationStrategyType::None, true);
@@ -674,6 +675,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
   const auto currentType = p->GetNormalizationStrategy();
   if (!p->GetNormalizationImageStatus(currentType))
   {
+    MITK_INFO << "Initialize Normalization Image of type " + m2::to_string(currentType);
     p->InitializeNormalizationImage(currentType);
   }
   
