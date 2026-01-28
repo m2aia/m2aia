@@ -24,6 +24,7 @@ set(H_FILES
   include/m2ImzMLSpectrumImageSource.hpp
   include/m2SpectrumContainerImage.h
   include/m2IntervalVector.h
+  include/m2PlotData.h
   include/m2DataNodePredicates.h
   include/signal/m2Baseline.h
   include/signal/m2EstimateFwhm.h
@@ -52,6 +53,7 @@ set(CPP_FILES
   m2SubdivideImage2DFilter.cpp
   m2SpectrumImageDataInteractor.cpp
   m2IntervalVector.cpp
+  m2PlotData.cpp
   m2ShiftMapImageFilter.cpp
   m2MassSpecVisualizationFilter.cpp
   
