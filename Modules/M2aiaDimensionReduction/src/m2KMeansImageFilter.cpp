@@ -197,21 +197,19 @@ void m2::KMeansImageFilter::GenerateData()
   for (auto [imageId, image] : m_Inputs)
   {
     auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(image.GetPointer());
-
-    auto clusteredImage = dynamic_cast<mitk::MultiLabelSegmentation *>(this->GetOutput(imageId).GetPointer());
-    auto maskImage = spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0);
-    clusteredImage->Initialize(maskImage);
-
-    // Get the underlying group image (group 0 is created by Initialize)
-    auto groupImage = clusteredImage->GetGroupImage(0);
+    auto clusteredImage = dynamic_cast<mitk::Image *>(this->GetOutput(imageId).GetPointer());
     
+    auto refMask = spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0);
+    clusteredImage->Initialize(refMask);
+
+
     {
-      mitk::ImagePixelWriteAccessor<mitk::MultiLabelSegmentation::LabelValueType, 3> c_acc(groupImage);
+      mitk::ImagePixelWriteAccessor<mitk::MultiLabelSegmentation::LabelValueType, 3> c_acc(clusteredImage);
+      auto p_data = c_acc.GetData();
+      std::fill(p_data, p_data + clusteredImage->GetDimensions()[0] * clusteredImage->GetDimensions()[1] * clusteredImage->GetDimensions()[2], 0);
       for (auto s : m_ValidIndicesMap[imageId])
         c_acc.SetPixelByIndex(s, *classLabelIterator++ + 1);
     }
-
-    clusteredImage->InitializeByLabeledImage(groupImage);
   }
 }
 

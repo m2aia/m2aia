@@ -46,7 +46,7 @@ class M2AIADIMENSIONREDUCTION_EXPORT KMeansImageFilter : public itk::Object
 
 private:
     // Input and output images
-    std::map<int, mitk::MultiLabelSegmentation::Pointer> m_Outputs;
+    std::map<int, mitk::Image::Pointer> m_Outputs;
     std::map<int, mitk::Image::Pointer> m_Inputs;
 
     // stores for each input the valid indices (masked pixels are valid)
@@ -61,7 +61,7 @@ public:
     mitkClassMacroItkParent(KMeansImageFilter, itk::Object);
     itkFactorylessNewMacro(Self);
     itkCloneMacro(Self);
-    typedef mitk::MultiLabelSegmentation OutputType;
+    typedef mitk::Image OutputType;
 
     itkSetMacro(NumberOfClusters, unsigned int);
     itkGetMacro(NumberOfClusters, unsigned int);
@@ -87,13 +87,13 @@ public:
         m_Intervals = intervals;
     }
     
-    mitk::MultiLabelSegmentation::Pointer GetOutput(int idx)
+    mitk::Image::Pointer GetOutput(int idx)
     {
         if(m_Outputs.find(idx) == m_Outputs.end())
         {
-            m_Outputs[idx] = mitk::MultiLabelSegmentation::New();
+            m_Outputs[idx] = mitk::Image::New();
         }
-        return dynamic_cast<mitk::MultiLabelSegmentation*>(m_Outputs[idx].GetPointer());
+        return dynamic_cast<mitk::Image*>(m_Outputs[idx].GetPointer());
     }
  
 private:
