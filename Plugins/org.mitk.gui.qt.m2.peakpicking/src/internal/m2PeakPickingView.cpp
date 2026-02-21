@@ -531,12 +531,11 @@ void m2PeakPickingView::OnStartPeakPickingOverview()
     const auto parentName = parentNode->GetName();
 
     // auto p1 = sourceName.find(parentNode->GetName());
-    std::string targetNodeName = "Overview Centroids";
-    auto targetNode = GetDerivations(parentNode, targetNodeName);
-    // find target if in selection
-    bool targetNodeAlreadyInDataStorage = targetNode;
+    std::string targetNodeName = sourceName + ".centroids";
+    auto targetNode = GetDerivations(sourceNode, targetNodeName);
+    bool targetNodeAlreadyInDataStorage = targetNode != nullptr;
     if (!targetNode)
-      targetNode = CreatePeakList(parentNode, targetNodeName);
+      targetNode = CreatePeakList(parentNode, targetNodeName); // copy properties from parent node, e.g. color
 
     auto targetData = dynamic_cast<m2::IntervalVector *>(targetNode->GetData());
     auto sourceData = dynamic_cast<m2::IntervalVector *>(sourceNode->GetData());
@@ -550,12 +549,12 @@ void m2PeakPickingView::OnStartPeakPickingOverview()
 
     targetData->SetProperty("m2aia.image.pixel.count", mitk::IntProperty::New(image->GetNumberOfValidPixels()));
     targetData->SetProperty("m2aia.helper.spectrum.xaxis.count", mitk::IntProperty::New(targetData->GetIntervals().size()));
-    
 
     if (!targetNodeAlreadyInDataStorage)
-      GetDataStorage()->Add(targetNode, parentNode);
-    
+      GetDataStorage()->Add(targetNode, const_cast<mitk::DataNode *>(sourceNode));
+
     targetNode->InvokeEvent(m2::IntervalVectorModified());
+  
   }
 }
 
