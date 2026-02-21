@@ -34,7 +34,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <qfuturewatcher.h>
 #include <qlistwidget.h>
 #include <qprocess.h>
-#include <ui_ParameterFileEditorDialog.h>
+#include <Qm2ElxParameterWidget.h>
 
 /**
   \brief m2Reconstruction3D
@@ -83,9 +83,7 @@ protected:
 
   std::map<unsigned int, DataTuple> m_referenceMap;
 
-  Ui::elxParameterFileEditor m_ParameterFileEditorControls;
-  QDialog *m_ParameterFileEditor;
-  std::vector<std::string> m_ParameterFiles;
+  Qm2ElxParameterWidget *m_ElxParamWidget = nullptr;
 
 public slots:
   void OnUpdateList();
