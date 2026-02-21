@@ -198,7 +198,7 @@ void m2DataToolsView::OnAlignImages()
   if (auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(referenceNode->GetData()))
   {
     std::vector<mitk::BaseData *> imageList{spectrumImage->GetIndexImage(), 
-                                             spectrumImage->GetMaskImage(), 
+                                             spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0), 
                                              spectrumImage->GetPoints()};
     for (auto kv : spectrumImage->GetNormalizationImages())
       imageList.push_back(kv.second.image);
@@ -267,8 +267,10 @@ void m2DataToolsView::OnAlignImages()
       // Handle spectrum images and their associated data
       if (auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
       {
+
+        auto mask = spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0);
         std::vector<mitk::BaseData *> imageList{spectrumImage->GetIndexImage(), 
-                                                 spectrumImage->GetMaskImage(), 
+                                                 mask, 
                                                  spectrumImage->GetPoints()};
         for (auto kv : spectrumImage->GetNormalizationImages())
           imageList.push_back(kv.second.image);
@@ -335,7 +337,8 @@ void m2DataToolsView::OnResetAlignment()
       origin[1] = image->GetPropertyValue<double>("[IMS:1000054] absolute position offset y", 0);
       origin[2] = image->GetPropertyValue<double>("absolute position offset z", 0);
       image->GetGeometry()->SetOrigin(origin);
-      std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), image->GetMaskImage(), image->GetPoints()};
+      auto mask = image->GetMultilabelSegmentation()->GetGroupImage(0);
+      std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), mask, image->GetPoints()};
 
       for (auto kv : image->GetNormalizationImages())
         imageList.push_back(kv.second.image);

@@ -161,7 +161,7 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
     }
   };
 
-  const auto toggleByName = [&](bool isChecked, const char *postfix)
+  const auto toggleByName = [&](bool isChecked, const char *postfix, bool updateHelperProperty = true)
   {
     const auto a = TNodePredicateDataType<m2::SpectrumImageStack>::New();
     const auto b = TNodePredicateDataType<m2::ImzMLSpectrumImage>::New();
@@ -176,10 +176,13 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
         if (dNode->GetName().find(postfix) != std::string::npos)
         {
           dNode->SetVisibility(isChecked);
-          if (!isChecked)
-            dNode->SetBoolProperty("helper object", true);
-          else
-            dNode->RemoveProperty("helper object");
+          if (updateHelperProperty)
+          {
+            if (!isChecked)
+              dNode->SetBoolProperty("helper object", true);
+            else
+              dNode->RemoveProperty("helper object");
+          }
           this->RequestRenderWindowUpdate();
         }
       }
@@ -192,7 +195,7 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
   {
     auto ckBox = new QCheckBox(("Show " + m2::to_string(type) + " normalization images").c_str(), m_Controls.settings);
     QHBoxLayout *layout = (QHBoxLayout *)(m_Controls.settings->layout());
-    layout->insertWidget(layout->indexOf(m_Controls.hLineNormImages) + i, ckBox);
+    layout->insertWidget(layout->indexOf(m_Controls.line) + i, ckBox);
     ckBox->setObjectName(("ckBoxNormalizationImage" + m2::to_string(type)).c_str());
 
     connect(ckBox, &QCheckBox::toggled, this, [toggleByType, type](int v) { toggleByType(v, type); });
@@ -208,23 +211,7 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
           &QCheckBox::toggled,
           this,
           [toggleByName](bool isChecked) { toggleByName(isChecked, ".mask"); });
-  connect(m_Controls.showMeanSpectrum,
-          &QCheckBox::toggled,
-          this,
-          [toggleByName](bool isChecked) { toggleByName(isChecked, ".mean_spectrum"); });
-  connect(m_Controls.showMaxSpectrum,
-          &QCheckBox::toggled,
-          this,
-          [toggleByName](bool isChecked) { toggleByName(isChecked, ".max_spectrum"); });
-  connect(m_Controls.showSingleSpectrum,
-          &QCheckBox::stateChanged,
-          this,
-          [toggleByName](bool isChecked) { toggleByName(isChecked, ".single_spectrum"); });
-  connect(m_Controls.showCentroidSpectrum,
-          &QCheckBox::stateChanged,
-          this,
-          [toggleByName](bool isChecked) { toggleByName(isChecked, ".centroids"); });
-
+  
   connect(m2::UIUtils::Instance(),
           &m2::UIUtils::RequestTolerance,
           this,
@@ -591,10 +578,36 @@ void m2DataView::OnCreateNextImage()
   auto center = m_Controls.spnBxMz->value();
   auto offset = m_Controls.spnBxTol->value();
   if (m_Controls.rbtnTolPPM->isChecked())
+    offset = m2::PartPerMillionToFactor(offset) * .5 * center;
+
+  double candidate = center + offset;
+
+  // Collect per-node [xMin, xMax] ranges from all visible spectrum nodes.
+  auto allNodes = m2::UIUtils::AllNodes(GetDataStorage());
+  bool inRange = false;
+  double nearestXMin = std::numeric_limits<double>::max(); // smallest xMin > center
+  for (const auto &n : *allNodes)
   {
-    offset = m2::PartPerMillionToFactor(offset)*.5 * center;
+    if (auto img = dynamic_cast<m2::SpectrumImage *>(n->GetData()))
+    {
+      const double lo = img->GetPropertyValue<double>("m2aia.xs.min");
+      const double hi = img->GetPropertyValue<double>("m2aia.xs.max");
+      if (candidate >= lo && candidate <= hi)
+      {
+        inRange = true;
+        break;
+      }
+      // Track the nearest range that starts above center (for gap-jumping).
+      if (lo > center && lo < nearestXMin)
+        nearestXMin = lo;
+    }
   }
-  this->OnGenerateImageData(center + offset, FROM_GUI);
+
+  // If the candidate lands in a gap, jump to the start of the next range instead.
+  if (!inRange && nearestXMin != std::numeric_limits<double>::max())
+    candidate = nearestXMin;
+
+  this->OnGenerateImageData(candidate, FROM_GUI);
 }
 
 void m2DataView::OnCreatePrevImage()
@@ -602,10 +615,36 @@ void m2DataView::OnCreatePrevImage()
   auto center = m_Controls.spnBxMz->value();
   auto offset = m_Controls.spnBxTol->value();
   if (m_Controls.rbtnTolPPM->isChecked())
+    offset = m2::PartPerMillionToFactor(offset) * .5 * center;
+
+  double candidate = center - offset;
+
+  // Collect per-node [xMin, xMax] ranges from all visible spectrum nodes.
+  auto allNodes = m2::UIUtils::AllNodes(GetDataStorage());
+  bool inRange = false;
+  double nearestXMax = std::numeric_limits<double>::lowest(); // largest xMax < center
+  for (const auto &n : *allNodes)
   {
-    offset = m2::PartPerMillionToFactor(offset)*.5 * center;
+    if (auto img = dynamic_cast<m2::SpectrumImage *>(n->GetData()))
+    {
+      const double lo = img->GetPropertyValue<double>("m2aia.xs.min");
+      const double hi = img->GetPropertyValue<double>("m2aia.xs.max");
+      if (candidate >= lo && candidate <= hi)
+      {
+        inRange = true;
+        break;
+      }
+      // Track the nearest range that ends below center (for gap-jumping).
+      if (hi < center && hi > nearestXMax)
+        nearestXMax = hi;
+    }
   }
-  this->OnGenerateImageData(center - offset, FROM_GUI);
+
+  // If the candidate lands in a gap, jump to the end of the previous range instead.
+  if (!inRange && nearestXMax != std::numeric_limits<double>::lowest())
+    candidate = nearestXMax;
+
+  this->OnGenerateImageData(candidate, FROM_GUI);
 }
 
 void m2DataView::OnCreateNextPeakImage()
@@ -616,46 +655,46 @@ void m2DataView::OnCreateNextPeakImage()
   auto center = m_Controls.spnBxMz->value();
   auto tolerance = m_Controls.spnBxTol->value();
   if (m_Controls.rbtnTolPPM->isChecked())
-    tolerance = m2::PartPerMillionToFactor(tolerance)*.5 * center;
-  
-  std::vector<m2::Interval> nearestValues;
-  for (auto node : processableNodes)
+    tolerance = m2::PartPerMillionToFactor(tolerance) * .5 * center;
+
+  // Helper: collect the nearest peak strictly beyond 'threshold' across all centroid vectors.
+  const auto collectNext = [&processableNodes](double threshold) -> std::vector<m2::Interval>
   {
-    if (auto intervalVector = dynamic_cast<m2::IntervalVector *>(node->GetData()))
+    std::vector<m2::Interval> result;
+    for (auto node : processableNodes)
     {
-      const auto intervalType = to_underlying(intervalVector->GetType());
-      const auto centroidType = to_underlying(m2::SpectrumFormat::Centroid);
-      if (intervalType & centroidType)
+      if (auto iv = dynamic_cast<m2::IntervalVector *>(node->GetData()))
       {
-        auto intervals = intervalVector->GetIntervals();
-        auto nearestElement = std::min_element(intervals.begin(),
-                                               intervals.end(),
-                                               [center, tolerance](const m2::Interval &a, const m2::Interval &b)
-                                               {
-                                                 // Ensure both are greater than target, and compare only those
-                                                 if (a.x.mean() <= center + tolerance)
-                                                   return false;
-                                                 if (b.x.mean() <= center + tolerance)
-                                                   return true;
-                                                 return a.x.mean() < b.x.mean();
-                                               });
-        if (nearestElement == intervals.end() || nearestElement->x.mean() <= center)
+        if (!(to_underlying(iv->GetType()) & to_underlying(m2::SpectrumFormat::Centroid)))
           continue;
-        
-        nearestValues.push_back(*nearestElement);
+        const auto &intervals = iv->GetIntervals();
+        auto it = std::min_element(intervals.begin(), intervals.end(),
+          [threshold](const m2::Interval &a, const m2::Interval &b)
+          {
+            if (a.x.mean() <= threshold) return false;
+            if (b.x.mean() <= threshold) return true;
+            return a.x.mean() < b.x.mean();
+          });
+        if (it != intervals.end() && it->x.mean() > threshold)
+          result.push_back(*it);
       }
     }
-  }
+    return result;
+  };
 
-  auto nearestElement = std::min_element(nearestValues.begin(),
-                   nearestValues.end(),
-                   [center](const m2::Interval &a, const m2::Interval &b)
-                   {
-                     return a.x.mean() < b.x.mean();
-                   });
+  // First try: skip the full tolerance window (normal behaviour).
+  auto candidates = collectNext(center + tolerance);
 
-  if (nearestElement == nearestValues.end())
-    return; // no peak found
+  // Fallback: if nothing found beyond center+tolerance, search strictly > center
+  // so we can cross a gap that is smaller than the tolerance.
+  if (candidates.empty())
+    candidates = collectNext(center);
+
+  auto nearestElement = std::min_element(candidates.begin(), candidates.end(),
+    [](const m2::Interval &a, const m2::Interval &b){ return a.x.mean() < b.x.mean(); });
+
+  if (nearestElement == candidates.end())
+    return;
 
   this->OnGenerateImageData(nearestElement->x.mean(), FROM_GUI);
 }
@@ -668,46 +707,46 @@ void m2DataView::OnCreatePrevPeakImage()
   auto center = m_Controls.spnBxMz->value();
   auto tolerance = m_Controls.spnBxTol->value();
   if (m_Controls.rbtnTolPPM->isChecked())
-    tolerance = m2::PartPerMillionToFactor(tolerance)*.5 * center;
-  
-  std::vector<m2::Interval> nearestValues;
-  for (auto node : processableNodes)
+    tolerance = m2::PartPerMillionToFactor(tolerance) * .5 * center;
+
+  // Helper: collect the nearest peak strictly before 'threshold' across all centroid vectors.
+  const auto collectPrev = [&processableNodes](double threshold) -> std::vector<m2::Interval>
   {
-    if (auto intervalVector = dynamic_cast<m2::IntervalVector *>(node->GetData()))
+    std::vector<m2::Interval> result;
+    for (auto node : processableNodes)
     {
-      const auto intervalType = to_underlying(intervalVector->GetType());
-      const auto centroidType = to_underlying(m2::SpectrumFormat::Centroid);
-      if (intervalType & centroidType)
+      if (auto iv = dynamic_cast<m2::IntervalVector *>(node->GetData()))
       {
-        auto intervals = intervalVector->GetIntervals();
-        auto nearestElement = std::min_element(intervals.begin(),
-                                               intervals.end(),
-                                               [center, tolerance](const m2::Interval &a, const m2::Interval &b)
-                                               {
-                                                 // Ensure both are greater than target, and compare only those
-                                                 if (a.x.mean() >= center - tolerance)
-                                                   return false;
-                                                 if (b.x.mean() >= center - tolerance)
-                                                   return true;
-                                                 return a.x.mean() > b.x.mean();
-                                               });
-        if (nearestElement == intervals.end() || nearestElement->x.mean() >= center)
+        if (!(to_underlying(iv->GetType()) & to_underlying(m2::SpectrumFormat::Centroid)))
           continue;
-        
-        nearestValues.push_back(*nearestElement);
+        const auto &intervals = iv->GetIntervals();
+        auto it = std::min_element(intervals.begin(), intervals.end(),
+          [threshold](const m2::Interval &a, const m2::Interval &b)
+          {
+            if (a.x.mean() >= threshold) return false;
+            if (b.x.mean() >= threshold) return true;
+            return a.x.mean() > b.x.mean();
+          });
+        if (it != intervals.end() && it->x.mean() < threshold)
+          result.push_back(*it);
       }
     }
-  }
+    return result;
+  };
 
-  auto nearestElement = std::min_element(nearestValues.begin(),
-                   nearestValues.end(),
-                   [center](const m2::Interval &a, const m2::Interval &b)
-                   {
-                     return a.x.mean() > b.x.mean();
-                   });
+  // First try: skip the full tolerance window (normal behaviour).
+  auto candidates = collectPrev(center - tolerance);
 
-  if (nearestElement == nearestValues.end()) 
-    return; // no peak found
+  // Fallback: if nothing found before center-tolerance, search strictly < center
+  // so we can cross a gap that is smaller than the tolerance.
+  if (candidates.empty())
+    candidates = collectPrev(center);
+
+  auto nearestElement = std::min_element(candidates.begin(), candidates.end(),
+    [](const m2::Interval &a, const m2::Interval &b){ return a.x.mean() > b.x.mean(); });
+
+  if (nearestElement == candidates.end())
+    return;
 
   this->OnGenerateImageData(nearestElement->x.mean(), FROM_GUI);
 }
@@ -765,18 +804,14 @@ void m2DataView::OnGenerateImageData(mitk::DataNode::Pointer node,
 
   this->m_Controls.spnBxMz->setValue(xRangeCenter);
 
+  
+
   if (m2::SpectrumImage::Pointer data = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
-    auto xMin = data->GetPropertyValue<double>("m2aia.xs.min");
-    auto xMax = data->GetPropertyValue<double>("m2aia.xs.max");
-    if (xRangeCenter > xMax || xRangeCenter < xMin){
-      // mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> acc(data);
-      // auto N = std::accumulate(data->GetDimensions(), data->GetDimensions()+3, 1, std::multiplies<int>());
-      // std::fill(acc.GetData(), acc.GetData() + N, 0);
-      // UpdateLevelWindow(node);
-      // this->RequestRenderWindowUpdate();
+    const auto xMin = data->GetPropertyValue<double>("m2aia.xs.min");
+    const auto xMax = data->GetPropertyValue<double>("m2aia.xs.max");
+    if (xRangeCenter > xMax || xRangeCenter < xMin)
       return;
-    }
 
     ApplySettingsToImage(data);
     if (!data->IsInitialized())
@@ -1146,7 +1181,7 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     auto helperNode = mitk::DataNode::New();
     helperNode->SetName(nodeName);
     helperNode->SetVisibility(m_Controls.showMaskImages->isChecked());
-    helperNode->SetData(spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0));
+    helperNode->SetData(spectrumImage->GetMultilabelSegmentation());
     helperNode->SetStringProperty("m2aia.helper.image.name", "mask");
 
     // add hidden to DS
@@ -1244,12 +1279,11 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     // color for plots in spectrum view
 
     const auto AddSpectrum = [&node, this](std::string name,
-                                           m2::SpectrumFormat type,
-                                           std::string info,
-                                           const std::vector<double> xs,
-                                           const std::vector<double> ys,
-                                           bool checkState,
-                                           float alpha = 1.0)
+                                          m2::SpectrumFormat type,
+                                          std::string info,
+                                          const std::vector<double> xs,
+                                          const std::vector<double> ys,
+                                          bool visibility = false)
     {
       auto intervalsNode = mitk::DataNode::New();
       auto intervals = m2::IntervalVector::New();
@@ -1266,17 +1300,18 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
       
       intervalsNode->SetData(intervals);
       intervalsNode->SetName(name);
-      intervalsNode->SetVisibility(this->Controls()->visibleOnInitialization->isChecked() && !m_ResetPreventDataStorageOverload.isRunning());
-      intervalsNode->SetBoolProperty("helper object", !checkState);
-      m2::CopyNodeProperties(node, intervalsNode);
-      if ((unsigned int)(type) & (unsigned int)(m2::SpectrumFormat::Centroid))
-        intervalsNode->SetOpacity(1 - alpha);
+      intervalsNode->SetVisibility(visibility);
+      m2::CopyNodeProperties(node, intervalsNode);       
       intervalsNode->Modified();
+      // intervals->
       this->GetDataStorage()->Add(intervalsNode, const_cast<mitk::DataNode *>(node));     
-    
+      return intervalsNode;
     };
 
     const auto &xs = spectrumImage->GetXAxis();
+
+    
+ 
 
     if (spectrumImage->GetSpectrumType().Format == m2::SpectrumFormat::ContinuousProfile ||
         spectrumImage->GetSpectrumType().Format == m2::SpectrumFormat::ProcessedProfile)
@@ -1285,37 +1320,18 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
                   m2::SpectrumFormat::Profile,
                   "overview.max",
                   xs,
-                  spectrumImage->GetSkylineSpectrum(),
-                  m_Controls.showMaxSpectrum->isChecked());
+                  spectrumImage->GetSkylineSpectrum(), false);
       AddSpectrum(node->GetName() + ".mean_spectrum",
                   m2::SpectrumFormat::Profile,
                   "overview.mean",
                   xs,
-                  spectrumImage->GetMeanSpectrum(),
-                  m_Controls.showMeanSpectrum->isChecked());
-      AddSpectrum(node->GetName() + ".single_spectrum",
-                  m2::SpectrumFormat::Profile,
-                  "overview.single",
-                  {},
-                  {},
-                  m_Controls.showSingleSpectrum->isChecked());
-    }
-    else
-    {
+                  spectrumImage->GetMeanSpectrum(), true);
+    }else{
       AddSpectrum(node->GetName() + ".centroids",
                   m2::SpectrumFormat::Centroid,
                   "overview.centroids",
                   xs,
-                  spectrumImage->GetMeanSpectrum(),
-                  m_Controls.showCentroidSpectrum->isChecked(),
-                  0.5);
-      AddSpectrum(node->GetName() + ".single_spectrum",
-                  m2::SpectrumFormat::Centroid,
-                  "overview.single",
-                  {},
-                  {},
-                  m_Controls.showSingleSpectrum->isChecked(),
-                  0.5);
+                  spectrumImage->GetMeanSpectrum(), true);
     }
 
     m_ResetPreventDataStorageOverload.cancel();
