@@ -18,14 +18,19 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "ui_m2DataPlotView.h"
 
 #include <QWebEngineView>
+#include <QWebEngineSettings>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QVBoxLayout>
+#include <QTemporaryFile>
+#include <QUrl>
+#include <QDir>
 #include <sstream>
 #include <fstream>
 #include <mitkImageReadAccessor.h>
 #include <algorithm>
 #include <cmath>
+#include <m2HtmlData.h>
 
 const std::string m2DataPlotView::VIEW_ID = "org.mitk.views.m2.dataplot";
 
@@ -43,6 +48,16 @@ void m2DataPlotView::CreateQtPartControl(QWidget *parent)
 {
   m_Controls = new Ui::m2DataPlotViewControls;
   m_Controls->setupUi(parent);
+
+  // Enable JavaScript in the web view
+  if (m_Controls->webView && m_Controls->webView->page())
+  {
+    auto* settings = m_Controls->webView->page()->settings();
+    settings->setAttribute(QWebEngineSettings::JavascriptEnabled, true);
+    settings->setAttribute(QWebEngineSettings::LocalContentCanAccessRemoteUrls, true);
+    settings->setAttribute(QWebEngineSettings::ErrorPageEnabled, true);
+    settings->setAttribute(QWebEngineSettings::PluginsEnabled, true);
+  }
 
   // Add plot type options
   m_Controls->plotTypeComboBox->addItem("Box Plot");
@@ -73,6 +88,7 @@ void m2DataPlotView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*
 {
   m_CurrentPlotData = nullptr;
   m_CurrentImage = nullptr;
+  m_CurrentHtmlData = nullptr;
 
   for (const auto &node : nodes)
   {
@@ -82,7 +98,17 @@ void m2DataPlotView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*
       if (plotData)
       {
         m_CurrentPlotData = plotData;
+        MITK_INFO << "PlotData selected.";
         UpdatePlotData();
+        break;
+      }
+      
+      auto *htmlData = dynamic_cast<m2::HtmlData *>(node->GetData());
+      if (htmlData)
+      {
+        m_CurrentHtmlData = htmlData;
+        MITK_INFO << "HTML data selected.";
+        UpdateHtmlData();
         break;
       }
       
@@ -90,6 +116,7 @@ void m2DataPlotView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*
       if (image)
       {
         m_CurrentImage = image;
+        MITK_INFO << "Image data selected.";
         UpdateImageData();
         break;
       }
@@ -98,7 +125,7 @@ void m2DataPlotView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*source*
 
   if (m_Controls)
   {
-    bool hasData = m_CurrentPlotData.IsNotNull() || m_CurrentImage.IsNotNull();
+    bool hasData = m_CurrentPlotData.IsNotNull() || m_CurrentImage.IsNotNull() || m_CurrentHtmlData.IsNotNull();
     m_Controls->generateButton->setEnabled(hasData);
     m_Controls->exportButton->setEnabled(hasData);
   }
@@ -126,6 +153,7 @@ void m2DataPlotView::OnPlotTypeChanged(int /*index*/)
   {
     OnGeneratePlot();
   }
+  // HtmlData doesn't need regeneration on plot type change
 }
 
 void m2DataPlotView::OnGeneratePlot()
@@ -135,11 +163,18 @@ void m2DataPlotView::OnGeneratePlot()
 
   if (m_CurrentPlotData.IsNotNull())
   {
+    MITK_INFO << "Generating plot for PlotData.";
     GeneratePlotlyHtml(m_CurrentPlotData);
   }
   else if (m_CurrentImage.IsNotNull())
   {
+    MITK_INFO << "Generating plot for Image.";
     GenerateImagePlotlyHtml(m_CurrentImage);
+  }
+  else if (m_CurrentHtmlData.IsNotNull())
+  {
+    MITK_INFO << "Displaying HTML content.";
+    DisplayHtmlContent(m_CurrentHtmlData);
   }
 }
 
@@ -169,7 +204,18 @@ void m2DataPlotView::GeneratePlotlyHtml(const m2::PlotData* plotData)
     htmlContent = GenerateScatterPlotHtml(plotData);
   }
 
-  m_Controls->webView->setHtml(QString::fromStdString(htmlContent));
+  // Write to temporary file for proper JavaScript execution
+  QTemporaryFile *tempFile = new QTemporaryFile(QDir::tempPath() + "/m2aia_plot_XXXXXX.html", this);
+  tempFile->setAutoRemove(true);
+  
+  if (tempFile->open())
+  {
+    tempFile->write(htmlContent.c_str(), htmlContent.length());
+    tempFile->flush();
+    m_Controls->webView->setUrl(QUrl::fromLocalFile(tempFile->fileName()));
+  }
+  
+  MITK_INFO << "Plot generated and displayed.";
 }
 
 std::string m2DataPlotView::GenerateBoxPlotHtml(const m2::PlotData* plotData)
@@ -477,7 +523,7 @@ std::string m2DataPlotView::GenerateBarPlotHtml(const m2::PlotData* plotData)
 
 void m2DataPlotView::OnExportPlot()
 {
-  if ((m_CurrentPlotData.IsNull() && m_CurrentImage.IsNull()) || !m_Controls)
+  if ((m_CurrentPlotData.IsNull() && m_CurrentImage.IsNull() && m_CurrentHtmlData.IsNull()) || !m_Controls)
     return;
 
   QString filename = QFileDialog::getSaveFileName(
@@ -492,7 +538,11 @@ void m2DataPlotView::OnExportPlot()
   std::string htmlContent;
   int plotType = m_Controls->plotTypeComboBox->currentIndex();
 
-  if (m_CurrentPlotData.IsNotNull())
+  if (m_CurrentHtmlData.IsNotNull())
+  {
+    htmlContent = m_CurrentHtmlData->GetHtmlContent();
+  }
+  else if (m_CurrentPlotData.IsNotNull())
   {
     switch (plotType)
     {
@@ -586,7 +636,18 @@ void m2DataPlotView::GenerateImagePlotlyHtml(mitk::Image* image)
     htmlContent = GenerateHistogramHtml(image);
   }
 
-  m_Controls->webView->setHtml(QString::fromStdString(htmlContent));
+  MITK_INFO << "Generated HTML content for image plot.";
+  
+  // Write to temporary file for proper JavaScript execution
+  QTemporaryFile *tempFile = new QTemporaryFile(QDir::tempPath() + "/m2aia_plot_XXXXXX.html", this);
+  tempFile->setAutoRemove(true);
+  
+  if (tempFile->open())
+  {
+    tempFile->write(htmlContent.c_str(), htmlContent.length());
+    tempFile->flush();
+    m_Controls->webView->setUrl(QUrl::fromLocalFile(tempFile->fileName()));
+  }
 }
 
 std::vector<std::pair<double, unsigned int>> m2DataPlotView::ComputeHistogram(mitk::Image* image, unsigned int component, unsigned int bins)
@@ -930,4 +991,48 @@ std::string m2DataPlotView::GenerateComponentScatterHtml(mitk::Image* image)
 </html>)";
 
   return html.str();
+}
+
+void m2DataPlotView::UpdateHtmlData()
+{
+  if (!m_Controls || m_CurrentHtmlData.IsNull())
+    return;
+
+  // Update info label
+  m_Controls->dataInfoLabel->setText("HTML Data loaded. Click 'Generate Plot' to display.");
+
+  // Auto-display the HTML content
+  DisplayHtmlContent(m_CurrentHtmlData);
+}
+
+void m2DataPlotView::DisplayHtmlContent(const m2::HtmlData *htmlData)
+{
+  if (!m_Controls || !htmlData)
+    return;
+
+  // Get HTML content
+  std::string htmlContent = htmlData->GetHtmlContent();
+  
+  // Write HTML to a temporary file and load it via file:// URL
+  // This provides proper security context for JavaScript execution
+  QTemporaryFile *tempFile = new QTemporaryFile(QDir::tempPath() + "/m2aia_plot_XXXXXX.html", this);
+  tempFile->setAutoRemove(true);
+  
+  if (tempFile->open())
+  {
+    tempFile->write(htmlContent.c_str(), htmlContent.length());
+    tempFile->flush();
+    
+    QString filePath = tempFile->fileName();
+    QUrl fileUrl = QUrl::fromLocalFile(filePath);
+    
+    MITK_INFO << "Loading HTML from temporary file: " << filePath.toStdString();
+    m_Controls->webView->setUrl(fileUrl);
+    
+    // Keep the file open during display (it will be auto-removed when deleted)
+  }
+  else
+  {
+    MITK_ERROR << "Failed to create temporary HTML file";
+  }
 }

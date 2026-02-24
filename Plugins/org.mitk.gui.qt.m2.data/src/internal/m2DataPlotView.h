@@ -20,6 +20,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QmitkAbstractView.h>
 #include <berryISelectionListener.h>
 #include <m2PlotData.h>
+#include <m2HtmlData.h>
 #include <mitkImage.h>
 
 namespace Ui
@@ -52,8 +53,10 @@ private slots:
 private:
   void UpdatePlotData();
   void UpdateImageData();
+  void UpdateHtmlData();
   void GeneratePlotlyHtml(const m2::PlotData* plotData);
   void GenerateImagePlotlyHtml(mitk::Image* image);
+  void DisplayHtmlContent(const m2::HtmlData* htmlData);
   
   // PlotData visualization methods
   std::string GenerateBoxPlotHtml(const m2::PlotData* plotData);
@@ -71,6 +74,7 @@ private:
   void ExtractComponentData(mitk::Image* image, unsigned int component, std::vector<double>& values);
 
   Ui::m2DataPlotViewControls *m_Controls;
+  m2::HtmlData::Pointer m_CurrentHtmlData;
   m2::PlotData::Pointer m_CurrentPlotData;
   mitk::Image::Pointer m_CurrentImage;
 };
