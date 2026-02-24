@@ -75,11 +75,35 @@ void QmitkPeakLearningView::OnStartDockerProcessing()
           return;
 
         mitk::Image::Pointer mask;
-        if (auto maskNode = m_Controls.maskSelection->GetSelectedNode())
-          mask = dynamic_cast<mitk::Image *>(maskNode->GetData());
-        else
-          mask = image->GetMultilabelSegmentation()->GetGroupImage(0);
+        std::vector<std::string> expectedOutputs;
         
+        if (auto maskNode = m_Controls.maskSelection->GetSelectedNode())
+        {  
+          if (auto maskImage = dynamic_cast<mitk::Image *>(maskNode->GetData()))
+          {
+            mask = maskImage;
+          }
+          else if (auto lsi = dynamic_cast<mitk::MultiLabelSegmentation *>(maskNode->GetData()))
+          {  
+            // Get labels from the segmentation for group 0
+            auto labelValues = lsi->GetLabelValuesByGroup(0);
+            mask = lsi->GetGroupImage(0);
+            if(labelValues.empty())
+            {
+              MITK_WARN << "Selected mask segmentation has no labels in group 0!";
+              mitkThrow() << "Selected mask segmentation has no labels in group 0!";
+            }
+            MITK_INFO << "Expected peaks_"<< labelValues[0]  << ".csv" ;
+            std::transform(labelValues.begin(), labelValues.end(), std::back_inserter(expectedOutputs), [](auto val) { return "peaks_" + std::to_string(val) + ".csv"; });
+          }
+        }
+        else
+        {
+          MITK_WARN << "No mask image selected! Please select a mask image.";
+          QMessageBox::warning(nullptr, "Missing Mask Image", "No mask image selected! Please select a mask image.");
+          return;
+        }
+
         try
         {
           mitk::ProgressBar::GetInstance()->AddStepsToDo(3);
@@ -97,20 +121,30 @@ void QmitkPeakLearningView::OnStartDockerProcessing()
           helper.AddApplicationArgument("--beta", m_Controls.beta->text().toStdString());
           helper.AddApplicationArgument("--epochs", m_Controls.epochs->text().toStdString());
           helper.AddApplicationArgument("--batch_size", m_Controls.batch_size->text().toStdString());
-          helper.AddAutoLoadOutput("--csv", "peaks.csv");
-          helper.AddLoadLaterOutput("--model", "model.h5");
+
+          helper.AddAutoLoadOutputFolder("--output", "output", expectedOutputs);
+          helper.AddLoadLaterOutput("--model", "model.weights.h5");
 
           mitk::ProgressBar::GetInstance()->Progress();
           const auto results = helper.GetResults();
-          mitk::ProgressBar::GetInstance()->Progress();
+          
+          
+          if(results.empty())
+          {
+            MITK_ERROR << "No results returned from Docker container!";
+            mitkThrow() << "Docker container returned no results";
+          }
 
-          auto newNode = mitk::DataNode::New();
-          newNode->SetData(results[0]);
-          newNode->SetName(node->GetName() + "_msiPL");
-          GetDataStorage()->Add(newNode, node);
+          for(unsigned int  i = 0 ; i < results.size(); ++i)
+          {
+            auto newNode = mitk::DataNode::New();
+            newNode->SetData(results[i]);
+            newNode->SetName(expectedOutputs[i]);
+            GetDataStorage()->Add(newNode, node);
+            mitk::ProgressBar::GetInstance()->Progress();
+            m2::CopyNodeProperties(node, newNode);
+          }
 
-
-          m2::CopyNodeProperties(node, newNode);
 
           mitk::ProgressBar::GetInstance()->Progress();
         }
