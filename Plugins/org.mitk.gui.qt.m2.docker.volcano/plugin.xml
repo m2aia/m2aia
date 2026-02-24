@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+  <extension point="org.blueberry.ui.views">
+    <view id="org.mitk.views.docker.volcano"
+          name="Volcano Analysis View"
+          class="QmitkVolcanoView"
+          category="Spectral Imaging (Docker)"
+          icon="resources/VolcanoIcon.svg" />
+  </extension>
+</plugin>

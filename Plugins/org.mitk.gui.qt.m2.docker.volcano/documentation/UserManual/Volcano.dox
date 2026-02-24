@@ -1,0 +1,57 @@
+/**
+\page org_mitk_views_docker_volcano Volcano Analysis View
+
+\imageMacro{VolcanoIcon.svg,"Icon of the Volcano Analysis View",2.00}
+
+\tableofcontents
+
+\section org_mitk_views_docker_volcano_intro Introduction
+
+The Volcano Analysis View provides a Docker-based differential expression analysis tool for mass spectrometry imaging data. This plugin performs region-based statistical comparisons between two groups defined in a segmentation mask, generating volcano plots and identifying significantly different m/z features.
+
+\section org_mitk_views_docker_volcano_prereqs Prerequisites
+
+- Docker must be installed and running on your system
+- The Docker image ghcr.io/cemos-mannheim/volcanodocker:main will be automatically pulled when needed
+- A spectrum image must be loaded in M2aia
+- A segmentation mask with at least two labeled regions must be created
+
+\section org_mitk_views_docker_volcano_usage Usage
+
+1. Select a spectrum image from the Data Manager
+2. (Optional) Select centroid lists to analyze specific m/z values
+3. Select a segmentation mask that defines the groups to compare
+4. Choose Group 1 and Group 2 from the dropdown menus (based on mask labels)
+5. Configure statistical parameters:
+   - Alpha: Significance threshold (default: 0.05)
+   - Log2 FC Threshold: Minimum fold change (default: 1.0)
+   - Min Regions: Minimum regions to avoid bootstrapping (default: 3)
+   - Bootstrap N: Number of bootstrap replicates (default: 3)
+   - Bootstrap Pixels: Pixels per bootstrap replicate (default: 50)
+6. Click "Run Volcano Analysis"
+
+The plugin will:
+- Extract ion images from centroids or current display
+- Compare intensity distributions between the two groups
+- Perform statistical testing (with bootstrapping if needed)
+- Generate volcano plot results showing differential features
+
+\section org_mitk_views_docker_volcano_params Parameters
+
+- **Alpha**: Statistical significance threshold (p-value cutoff)
+- **Log2 FC Threshold**: Minimum log2 fold change to be considered biologically significant
+- **Min Regions**: If fewer regions than this exist, bootstrapping is used
+- **Bootstrap N**: Number of bootstrap replicates for small sample sizes
+- **Bootstrap Pixels**: Number of pixels sampled per bootstrap replicate
+
+\section org_mitk_views_docker_volcano_output Output
+
+The analysis generates CSV files with volcano plot data including:
+- m/z values
+- Log2 fold changes
+- P-values
+- Significance indicators
+
+Results are saved to the output directory and can be visualized externally.
+
+*/
