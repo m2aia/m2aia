@@ -883,7 +883,7 @@ std::string m2DataPlotView::GenerateComponentsHtml(mitk::Image* image)
     html << "        y: [";
     
     // Sample values for box plot (use every nth value to avoid too much data)
-    size_t step = std::max(1ul, values.size() / 1000);
+    size_t step = std::max(size_t(1), values.size() / 1000);
     for (size_t i = 0; i < values.size(); i += step)
     {
       if (i > 0) html << ", ";
@@ -945,7 +945,7 @@ std::string m2DataPlotView::GenerateComponentScatterHtml(mitk::Image* image)
     ExtractComponentData(image, 1, comp1);
     
     // Sample data to avoid overwhelming the browser
-    size_t step = std::max(1ul, comp0.size() / 5000);
+    size_t step = std::max(size_t(1), comp0.size() / 5000);
     
     html << "    var data = [{\n";
     html << "      type: 'scatter',\n";
