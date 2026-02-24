@@ -47,25 +47,12 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
 # Application stage
 FROM system AS application
 
-# Create non-root user for security
-RUN groupadd -r m2aia && useradd -r -g m2aia -u 1000 -m m2aia
-
-# Create writable cache directories
-RUN mkdir -p /home/m2aia/.cache/numba && \
-    chown -R m2aia:m2aia /home/m2aia/.cache
-
 # Set working directory
 WORKDIR /app
 
 # Copy application file
-COPY --chown=m2aia:m2aia app_umap.py /app/app_umap.py
+COPY app_umap.py /app/app_umap.py
 RUN chmod +x /app/app_umap.py
-
-# Switch to non-root user
-USER m2aia
-
-# Override numba cache to use home directory
-ENV NUMBA_CACHE_DIR=/home/m2aia/.cache/numba
 
 # Set entrypoint
 ENTRYPOINT ["python3", "/app/app_umap.py"]
