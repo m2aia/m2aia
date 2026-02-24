@@ -86,41 +86,30 @@ void QmitkMoleculaRView::UpdateMaskLabelComboBox()
     auto node = selectedNodes.front();
     if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
-      auto maskImage = image->GetMaskImage();
-      if (maskImage)
+      auto segmentation = image->GetMultilabelSegmentation();
+      if (segmentation)
       {
-        auto labelSetImage = dynamic_cast<mitk::LabelSetImage *>(maskImage.GetPointer());
-        if (labelSetImage)
+        // Get labels from the segmentation for group 0
+        auto labelValues = segmentation->GetLabelValuesByGroup(0);
+        
+        // Add each label to combo box
+        for (auto labelValue : labelValues)
         {
-          // Get all labels from the active layer
-          auto labels = labelSetImage->GetLabels();
-          std::set<mitk::Label::PixelType> labelValues;
+          if (labelValue == 0) continue; // Skip background
           
-          for (const auto& label : labels)
+          QString labelName = QString("Label %1").arg(labelValue);
+          
+          // Try to get the actual label name
+          auto label = segmentation->GetLabel(labelValue);
+          if (label && !label->GetName().empty())
           {
-            if (label->GetValue() > 0) // Skip background
-            {
-              labelValues.insert(label->GetValue());
-            }
+            labelName = QString("%1 (%2)").arg(QString::fromStdString(label->GetName())).arg(labelValue);
           }
           
-          // Add each label to combo box
-          for (auto labelValue : labelValues)
-          {
-            QString labelName = QString("Label %1").arg(labelValue);
-            
-            // Try to get the actual label name
-            auto label = labelSetImage->GetLabel(labelValue);
-            if (label && !label->GetName().empty())
-            {
-              labelName = QString("%1 (%2)").arg(QString::fromStdString(label->GetName())).arg(labelValue);
-            }
-            
-            m_Controls.comboBoxMaskLabel->addItem(labelName, QVariant(QString::number(labelValue)));
-          }
-          
-          MITK_INFO << "Updated mask label combo box with " << labelValues.size() << " labels from mask";
+          m_Controls.comboBoxMaskLabel->addItem(labelName, QVariant(QString::number(labelValue)));
         }
+        
+        MITK_INFO << "Updated mask label combo box with " << labelValues.size() << " labels from mask";
       }
     }
   }
@@ -228,7 +217,7 @@ void QmitkMoleculaRView::OnStartMoleculaR()
           MITK_INFO << "Adding " << data.size() << " ion images to Docker helper";
           helper.AddAutoSaveData(data, "--ionimage", "ionimages/image%1%", ".nrrd");
           
-          auto maskImage = image->GetMaskImage();
+          auto maskImage = image->GetMultilabelSegmentation()->GetGroupImage(0);
           MITK_INFO << "Adding mask image to Docker helper - mask is " << (maskImage ? "valid" : "null");
           helper.AddAutoSaveData(maskImage, "--mask", "mask", ".nrrd");
           
@@ -254,8 +243,8 @@ void QmitkMoleculaRView::OnStartMoleculaR()
             throw std::runtime_error("Docker container returned no results");
           }
           
-          MITK_INFO << "Creating LabelSetImage from results";
-          auto lsImage = mitk::LabelSetImage::New();
+          MITK_INFO << "Creating MultiLabelSegmentation from results";
+          auto lsImage = mitk::MultiLabelSegmentation::New();
           auto resultImage = dynamic_cast<mitk::Image *>(results[0].GetPointer());
           if (!resultImage)
           {
@@ -264,22 +253,21 @@ void QmitkMoleculaRView::OnStartMoleculaR()
           }
           
           lsImage->InitializeByLabeledImage(resultImage);
-          MITK_INFO << "LabelSetImage initialized - number of layers: " << lsImage->GetNumberOfLayers();
-          MITK_INFO << "Number of labels in active layer: " << lsImage->GetNumberOfLabels(lsImage->GetActiveLayer());
+          MITK_INFO << "MultiLabelSegmentation initialized - number of groups: " << lsImage->GetNumberOfGroups();
+          MITK_INFO << "Number of labels in group 0: " << lsImage->GetNumberOfLabels(0);
           
           mitk::ProgressBar::GetInstance()->Progress();
           
 
           
-          if (lsImage->GetNumberOfLabels(lsImage->GetActiveLayer()) == 2) {
-            MITK_INFO << "Valid segmentation detected (>2 labels) - creating result node";
+          if (lsImage->GetNumberOfLabels(0) == 2) {
+            MITK_INFO << "Valid segmentation detected (2 labels) - creating result node";
             auto newNode = mitk::DataNode::New();
             newNode->SetData(lsImage);
             auto nodeName = node->GetName() + "_mpm_" + std::to_string(image->GetCurrentX());
             MITK_INFO << "Result node name: " << nodeName;
             newNode->SetName(nodeName);
             GetDataStorage()->Add(newNode, node);
-            lsImage->Update();
             RequestRenderWindowUpdate();
 
             mitk::Color h;
