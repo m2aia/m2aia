@@ -1,0 +1,63 @@
+/**
+\page org_mitk_views_m2_docker_metabolicdepth Metabolic Depth Analysis
+
+\imageMacro{icon.svg,"Icon of Metabolic Depth",2.00}
+
+\tableofcontents
+
+\section org_mitk_views_m2_docker_metabolicdepthOverview Overview
+
+The Metabolic Depth plugin applies the Multi-GASTON (MET-MAP) method to learn metabolic depth (isodepth) from mass spectrometry imaging data. This technique uses a neural network to identify and quantify spatial gradients in metabolite abundance patterns, revealing underlying tissue organization and metabolic zonation.
+
+Multi-GASTON is particularly useful for analyzing tissue structures with known spatial organization, such as:
+- Liver zonation (portal to central vein gradients)
+- Kidney nephron segments
+- Intestinal crypt-villus axis
+- Tumor microenvironment gradients
+
+\section org_mitk_views_m2_docker_metabolicdepthRequirements Requirements
+
+This plugin requires:
+- Docker installed and running on your system
+- The metabolic depth Docker image: \c ghcr.io/m2aia/metabolicdepth:latest
+- A spectrum image (MSI data)
+- A centroid list defining metabolites of interest
+- (Optional) A segmentation mask to restrict analysis to specific regions
+
+\section org_mitk_views_m2_docker_metabolicdepthUsage Usage
+
+\subsection org_mitk_views_m2_docker_metabolicdepthInput Input Selection
+
+1. <b>Spectrum Image:</b> Select the mass spectrometry imaging dataset
+2. <b>Centroid List:</b> Select the list of metabolite m/z values to analyze
+3. <b>Mask (Optional):</b> Select a segmentation to restrict analysis to specific tissue regions
+4. <b>Mask Label (Optional):</b> If using a multi-label segmentation, select the specific label to analyze
+
+\subsection org_mitk_views_m2_docker_metabolicdepthParameters Algorithm Parameters
+
+- <b>Number of Isodepths (K):</b> Number of distinct spatial gradients expected in the data (typically 1 for tissues with one dominant gradient like liver)
+- <b>Training Epochs:</b> Number of iterations for neural network training (12,000 is a good default; increase for more complex patterns)
+- <b>Number of Restarts:</b> Number of random initializations (10 recommended; the best model is selected automatically)
+- <b>Mass Tolerance (ppm):</b> Tolerance for extracting ion images (typically 75 ppm)
+
+\subsection org_mitk_views_m2_docker_metabolicdepthOutput Output
+
+The plugin generates a metabolic depth image showing the learned spatial gradient(s). Higher values indicate greater metabolic depth along the learned axis. For liver tissue, this typically represents the portal-to-central vein axis.
+
+The output image can be:
+- Visualized as a heatmap overlay on the original MSI data
+- Used for downstream analysis (e.g., correlating gene expression or metabolite levels with zonation)
+- Exported for further processing or publication
+
+\section org_mitk_views_m2_docker_metabolicdepthReferences References
+
+Multi-GASTON: Metabolic-Tissue-depth Analysis via Spatial Transcriptomics Or Metabolomics
+- GitHub: https://github.com/raphael-group/Multi-GASTON
+
+\section org_mitk_views_m2_docker_metabolicdepthTips Tips and Best Practices
+
+- <b>Crop Selection:</b> For large images, consider cropping to focus on specific tissue regions with clear spatial organization
+- <b>Training Time:</b> Training can take several minutes to hours depending on image size and number of restarts
+- <b>Multiple Restarts:</b> Using 10 restarts helps ensure the neural network finds a good solution despite random initialization
+- <b>Validation:</b> Compare the learned isodepth with known marker metabolites to validate the results
+*/
