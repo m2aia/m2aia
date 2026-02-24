@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 100 100"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg">
+
+  <!--
+    SpatialKMeans icon — MoleculaRIcon style
+    Three spatial clusters of molecular nodes representing K-means grouping.
+    Cluster A (top-left):    magenta  #ff00ff
+    Cluster B (bottom-mid):  green    #00ff00
+    Cluster C (top-right):   cyan     #00ffff
+    Each cluster has a dashed boundary circle and a centroid cross marker.
+    Intra-cluster bonds connect nodes in each cluster.
+  -->
+
+  <!-- ── cluster boundary hints (dashed circles) ── -->
+  <circle cx="28" cy="32" r="18" fill="none" stroke="#ff00ff" stroke-width="1.0"
+          stroke-dasharray="3,2" stroke-opacity="0.6"/>
+  <circle cx="72" cy="30" r="18" fill="none" stroke="#00ffff" stroke-width="1.0"
+          stroke-dasharray="3,2" stroke-opacity="0.6"/>
+  <circle cx="50" cy="72" r="20" fill="none" stroke="#00ff00" stroke-width="1.0"
+          stroke-dasharray="3,2" stroke-opacity="0.6"/>
+
+  <!-- ── intra-cluster bonds ── -->
+  <!-- Cluster A (magenta) -->
+  <line x1="18" y1="24" x2="30" y2="18" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="18" y1="24" x2="16" y2="38" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="30" y1="18" x2="38" y2="30" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="16" y1="38" x2="30" y2="44" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="30" y1="44" x2="38" y2="30" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="18" y1="24" x2="38" y2="30" stroke="#222" stroke-width="1.0" stroke-linecap="round" stroke-opacity="0.35"/>
+
+  <!-- Cluster C (cyan) -->
+  <line x1="62" y1="18" x2="78" y2="20" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="62" y1="18" x2="64" y2="36" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="78" y1="20" x2="82" y2="36" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="64" y1="36" x2="82" y2="36" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="62" y1="18" x2="82" y2="36" stroke="#222" stroke-width="1.0" stroke-linecap="round" stroke-opacity="0.35"/>
+
+  <!-- Cluster B (green) -->
+  <line x1="36" y1="68" x2="50" y2="60" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="36" y1="68" x2="40" y2="82" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="50" y1="60" x2="64" y2="66" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="40" y1="82" x2="58" y2="84" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="64" y1="66" x2="62" y2="80" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="62" y1="80" x2="58" y2="84" stroke="#222" stroke-width="1.8" stroke-linecap="round"/>
+  <line x1="36" y1="68" x2="64" y2="66" stroke="#222" stroke-width="1.0" stroke-linecap="round" stroke-opacity="0.35"/>
+
+  <!-- ── Cluster A nodes (magenta) ── -->
+  <circle cx="18" cy="24" r="5.0" fill="#ff00ff" stroke="#000" stroke-width="1.8"/>
+  <circle cx="30" cy="18" r="5.0" fill="#ff00ff" stroke="#000" stroke-width="1.8"/>
+  <circle cx="16" cy="38" r="5.0" fill="#ff00ff" stroke="#000" stroke-width="1.8"/>
+  <circle cx="38" cy="30" r="5.0" fill="#ff00ff" stroke="#000" stroke-width="1.8"/>
+  <circle cx="30" cy="44" r="4.5" fill="#ff00ff" stroke="#000" stroke-width="1.8"/>
+
+  <!-- Cluster A centroid cross -->
+  <line x1="25" y1="30" x2="31" y2="30" stroke="#000" stroke-width="2.0" stroke-linecap="round"/>
+  <line x1="28" y1="27" x2="28" y2="33" stroke="#000" stroke-width="2.0" stroke-linecap="round"/>
+
+  <!-- ── Cluster C nodes (cyan) ── -->
+  <circle cx="62" cy="18" r="5.0" fill="#00ffff" stroke="#000" stroke-width="1.8"/>
+  <circle cx="78" cy="20" r="5.0" fill="#00ffff" stroke="#000" stroke-width="1.8"/>
+  <circle cx="64" cy="36" r="5.0" fill="#00ffff" stroke="#000" stroke-width="1.8"/>
+  <circle cx="82" cy="36" r="4.5" fill="#00ffff" stroke="#000" stroke-width="1.8"/>
+
+  <!-- Cluster C centroid cross -->
+  <line x1="70" y1="27" x2="76" y2="27" stroke="#000" stroke-width="2.0" stroke-linecap="round"/>
+  <line x1="73" y1="24" x2="73" y2="30" stroke="#000" stroke-width="2.0" stroke-linecap="round"/>
+
+  <!-- ── Cluster B nodes (green) ── -->
+  <circle cx="36" cy="68" r="5.0" fill="#00ff00" stroke="#000" stroke-width="1.8"/>
+  <circle cx="50" cy="60" r="5.0" fill="#00ff00" stroke="#000" stroke-width="1.8"/>
+  <circle cx="40" cy="82" r="5.0" fill="#00ff00" stroke="#000" stroke-width="1.8"/>
+  <circle cx="64" cy="66" r="5.0" fill="#00ff00" stroke="#000" stroke-width="1.8"/>
+  <circle cx="62" cy="80" r="4.5" fill="#00ff00" stroke="#000" stroke-width="1.8"/>
+  <circle cx="58" cy="84" r="4.5" fill="#00ff00" stroke="#000" stroke-width="1.8"/>
+
+  <!-- Cluster B centroid cross -->
+  <line x1="48" y1="73" x2="54" y2="73" stroke="#000" stroke-width="2.0" stroke-linecap="round"/>
+  <line x1="51" y1="70" x2="51" y2="76" stroke="#000" stroke-width="2.0" stroke-linecap="round"/>
+
+</svg>
