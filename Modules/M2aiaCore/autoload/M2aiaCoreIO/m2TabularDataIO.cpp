@@ -389,7 +389,7 @@ namespace m2
         {
           try
           {
-            std::stod(row[col]);
+            (void)std::stod(row[col]);
           }
           catch (const std::exception&)
           {
