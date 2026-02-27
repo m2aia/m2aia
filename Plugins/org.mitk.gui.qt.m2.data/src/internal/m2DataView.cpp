@@ -193,7 +193,7 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
   int i = 1;
   for (m2::NormalizationStrategyType type : m2::NormalizationStrategyTypeList)
   {
-    auto ckBox = new QCheckBox(("Show " + m2::to_string(type) + " normalization images").c_str(), m_Controls.settings);
+    auto ckBox = new QCheckBox(("Show " + m2::to_string(type) + " normalization image").c_str(), m_Controls.settings);
     QHBoxLayout *layout = (QHBoxLayout *)(m_Controls.settings->layout());
     layout->insertWidget(layout->indexOf(m_Controls.line) + i, ckBox);
     ckBox->setObjectName(("ckBoxNormalizationImage" + m2::to_string(type)).c_str());
@@ -248,6 +248,7 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
           {
             auto value = m_Controls.CBNormalization->currentData().toUInt();
             preferences->PutInt("m2aia.signal.NormalizationStrategy", value);
+            UpdateCentroidNormalizationWarning();
           });
 
   connect(m_Controls.CBTransformation,
@@ -1129,6 +1130,54 @@ void m2DataView::OpenSlideImageNodeAdded(const mitk::DataNode *node)
   }
 }
 
+void m2DataView::UpdateCentroidNormalizationWarning()
+{
+  // Check whether any loaded centroid dataset is combined with a spectrum-based normalization
+  // (TIC, Sum, Mean, Max, RMS) that computes its factor from stored peaks only.
+  const auto normValue = static_cast<m2::NormalizationStrategyType>(
+    m_Controls.CBNormalization->currentData().toUInt());
+
+  const bool spectrumBasedNorm =
+    normValue == m2::NormalizationStrategyType::TIC ||
+    normValue == m2::NormalizationStrategyType::Sum ||
+    normValue == m2::NormalizationStrategyType::Mean ||
+    normValue == m2::NormalizationStrategyType::Max ||
+    normValue == m2::NormalizationStrategyType::RMS;
+
+  bool hasCentroidData = false;
+  if (spectrumBasedNorm)
+  {
+    auto allNodes = GetDataStorage()->GetAll();
+    for (auto &n : *allNodes)
+    {
+      if (auto img = dynamic_cast<m2::SpectrumImage *>(n->GetData()))
+      {
+        const auto fmt = img->GetSpectrumType().Format;
+        if (any(fmt & m2::SpectrumFormat::Centroid))
+        {
+          hasCentroidData = true;
+          break;
+        }
+      }
+    }
+  }
+
+  if (spectrumBasedNorm && hasCentroidData)
+  {
+    m_Controls.lblCentroidNormalizationWarning->setText(
+      "<span style='color:#cc6600;'>"
+      "&#9888; Spectrum-based normalization (TIC/Sum/Mean/Max/RMS) is active on centroid data. "
+      "Normalization factors are computed only from stored peaks, not the full spectrum. "
+      "Consider using &lt;None&gt; or &lt;External&gt; instead. Press F1 for details."
+      "</span>");
+    m_Controls.lblCentroidNormalizationWarning->setVisible(true);
+  }
+  else
+  {
+    m_Controls.lblCentroidNormalizationWarning->setVisible(false);
+  }
+}
+
 void m2DataView::ImzMLImageNodeAdded(const mitk::DataNode *) {}
 
 void m2DataView::FsmImageNodeAdded(const mitk::DataNode *)
@@ -1138,6 +1187,7 @@ void m2DataView::FsmImageNodeAdded(const mitk::DataNode *)
 
 void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
 {
+  UpdateCentroidNormalizationWarning();
   
 
   auto nodes = GetDataStorage()->GetAll();

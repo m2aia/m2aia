@@ -83,6 +83,7 @@ public:
   void ApplySettingsToImage(m2::SpectrumImage *image);
 
   void InitNormalizationControls();
+  void UpdateCentroidNormalizationWarning();
   void InitIntensityTransformationControls();
   void InitRangePoolingControls();
   void InitSmoothingControls();
