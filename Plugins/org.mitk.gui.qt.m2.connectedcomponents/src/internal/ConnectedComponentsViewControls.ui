@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ConnectedComponentsViewControls</class>
+ <widget class="QWidget" name="ConnectedComponentsViewControls">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>420</width>
+    <height>800</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Connected Components</string>
+  </property>
+  <layout class="QVBoxLayout" name="mainLayout">
+   <property name="spacing">
+    <number>6</number>
+   </property>
+   <property name="leftMargin">
+    <number>6</number>
+   </property>
+   <property name="topMargin">
+    <number>6</number>
+   </property>
+   <property name="rightMargin">
+    <number>6</number>
+   </property>
+   <property name="bottomMargin">
+    <number>6</number>
+   </property>
+
+   <!-- =====================================================================
+        1. Image selection
+        ===================================================================== -->
+   <item>
+    <widget class="QGroupBox" name="groupBoxImage">
+     <property name="title">
+      <string>1. Select Segmentation / Binary Image</string>
+     </property>
+     <layout class="QVBoxLayout" name="layoutImage">
+      <item>
+       <widget class="QmitkSingleNodeSelectionWidget" name="segmentationSelection" native="true"/>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <!-- =====================================================================
+        2. Morphological cleanup
+        ===================================================================== -->
+   <item>
+    <widget class="QGroupBox" name="groupBoxMorph">
+     <property name="title">
+      <string>2. Morphological Cleanup</string>
+     </property>
+     <layout class="QVBoxLayout" name="layoutMorph">
+      <item>
+       <layout class="QHBoxLayout" name="layoutRadius">
+        <item>
+         <widget class="QLabel" name="labelRadius">
+          <property name="text">
+           <string>Radius (vx):</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spinRadius">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>50</number>
+          </property>
+          <property name="value">
+           <number>1</number>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="spacerRadius">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size><width>40</width><height>20</height></size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="layoutMorphButtons">
+        <item>
+         <widget class="QPushButton" name="btnErode">
+          <property name="text"><string>Erode</string></property>
+          <property name="toolTip"><string>Binary erosion with ball structuring element</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnDilate">
+          <property name="text"><string>Dilate</string></property>
+          <property name="toolTip"><string>Binary dilation with ball structuring element</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnClose">
+          <property name="text"><string>Close</string></property>
+          <property name="toolTip"><string>Binary morphological closing (dilate then erode)</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnFillHoles">
+          <property name="text"><string>Fill Holes</string></property>
+          <property name="toolTip"><string>Fill enclosed holes in the binary mask</string></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <!-- =====================================================================
+        3. Connected Components
+        ===================================================================== -->
+   <item>
+    <widget class="QGroupBox" name="groupBoxCC">
+     <property name="title">
+      <string>3. Connected Component Labeling</string>
+     </property>
+     <layout class="QVBoxLayout" name="layoutCC">
+      <item>
+       <layout class="QHBoxLayout" name="layoutCCOptions">
+        <item>
+         <widget class="QCheckBox" name="checkFullyConnected">
+          <property name="text"><string>Fully connected (26-neighborhood)</string></property>
+          <property name="toolTip">
+           <string>Use 26-connectivity (true) or 6-connectivity (false) in 3D</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnCreateCC">
+        <property name="text"><string>Create Connected Components</string></property>
+        <property name="toolTip">
+         <string>Run ITK ConnectedComponentImageFilter on the selected image</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="labelStats">
+        <property name="text"><string>Components: -</string></property>
+        <property name="alignment">
+         <set>Qt::AlignmentFlag::AlignCenter</set>
+        </property>
+        <property name="wordWrap"><bool>true</bool></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+
+   <!-- =====================================================================
+        4 + 5. Groups
+        ===================================================================== -->
+   <item>
+    <widget class="QGroupBox" name="groupBoxGroups">
+     <property name="title">
+      <string>4. Size-Based Groups</string>
+     </property>
+     <layout class="QVBoxLayout" name="layoutGroups">
+
+      <!-- Suggest / Add / Apply toolbar -->
+      <item>
+       <layout class="QHBoxLayout" name="layoutGroupButtons">
+        <item>
+         <widget class="QPushButton" name="btnSuggestGroups">
+          <property name="text"><string>Suggest 3 Groups</string></property>
+          <property name="toolTip">
+           <string>Automatically initialise 3 groups based on 33 %% / 67 %% size quantiles</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnAddGroup">
+          <property name="text"><string>Add Group</string></property>
+          <property name="toolTip"><string>Add a new empty group manually</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnApplyGroups">
+          <property name="text"><string>Apply Groups</string></property>
+          <property name="toolTip">
+           <string>Create a color-coded MultiLabel segmentation based on the current groups</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+
+      <!-- Scroll area that holds the QmitkGroupWidget instances -->
+      <item>
+       <widget class="QScrollArea" name="groupScrollArea">
+        <property name="widgetResizable"><bool>true</bool></property>
+        <property name="minimumHeight"><number>200</number></property>
+        <widget class="QWidget" name="scrollAreaWidgetContents">
+         <property name="geometry">
+          <rect><x>0</x><y>0</y><width>400</width><height>400</height></rect>
+         </property>
+        </widget>
+       </widget>
+      </item>
+
+     </layout>
+    </widget>
+   </item>
+
+   <!-- Vertical spacer at bottom -->
+   <item>
+    <spacer name="verticalSpacerBottom">
+     <property name="orientation">
+      <enum>Qt::Orientation::Vertical</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size><width>20</width><height>20</height></size>
+     </property>
+    </spacer>
+   </item>
+
+  </layout>
+ </widget>
+
+ <!-- Custom widgets declarations -->
+ <customwidgets>
+  <customwidget>
+   <class>QmitkSingleNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkSingleNodeSelectionWidget.h</header>
+   <container>0</container>
+  </customwidget>
+ </customwidgets>
+
+ <resources/>
+ <connections/>
+</ui>
