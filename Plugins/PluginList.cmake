@@ -16,7 +16,6 @@ org.mitk.gui.qt.m2.docker.umap:ON
 org.mitk.gui.qt.m2.docker.molecular:ON
 org.mitk.gui.qt.m2.docker.peaklearning:ON
 
-org.mitk.gui.qt.m2.docker.simclr:OFF
 org.mitk.gui.qt.m2.docker.spatialkmeans:ON
 org.mitk.gui.qt.m2.docker.volcano:ON
 org.mitk.gui.qt.m2.docker.metabolicdepth:ON
