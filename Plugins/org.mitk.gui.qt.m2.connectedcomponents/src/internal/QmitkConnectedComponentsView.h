@@ -18,6 +18,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <QmitkAbstractView.h>
 #include <QmitkSingleNodeSelectionWidget.h>
+#include <QmitkMultiNodeSelectionWidget.h>
 #include <mitkImage.h>
 #include <mitkLabelSetImage.h>  // defines mitk::MultiLabelSegmentation
 
@@ -67,6 +68,9 @@ private slots:
   // Apply
   void OnApplyGroups();
 
+  // CSV Export
+  void OnExportCSV();
+
 private:
   void SetFocus() override;
 
@@ -89,6 +93,12 @@ private:
    *  - anything else                 → nullptr
    */
   mitk::Image* ResolveInputImage(mitk::DataNode* node) const;
+
+  /**
+   * Write a CSV file.
+   * @param pixelWise  true → one row per voxel; false → one row per cluster (object-wise means).
+   */
+  void ExportCSV(bool pixelWise);
 
   // UI
   QWidget *m_Parent = nullptr;

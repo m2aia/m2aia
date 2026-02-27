@@ -218,6 +218,72 @@
     </widget>
    </item>
 
+   <!-- =====================================================================
+        5. CSV Export
+        ===================================================================== -->
+   <item>
+    <widget class="QGroupBox" name="groupBoxExport">
+     <property name="title">
+      <string>5. CSV Export</string>
+     </property>
+     <layout class="QVBoxLayout" name="layoutExport">
+
+      <!-- Feature images selection -->
+      <item>
+       <widget class="QLabel" name="labelFeatureImages">
+        <property name="text">
+         <string>Additional feature images (MITK Image / MultiLabel / SpectrumImage):</string>
+        </property>
+        <property name="wordWrap"><bool>true</bool></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QmitkMultiNodeSelectionWidget" name="featureImageSelection" native="true">
+        <property name="minimumHeight"><number>60</number></property>
+       </widget>
+      </item>
+
+      <!-- Export mode radio buttons -->
+      <item>
+       <layout class="QHBoxLayout" name="layoutExportMode">
+        <item>
+         <widget class="QRadioButton" name="radioPixelWise">
+          <property name="text"><string>Pixel-wise  [x,y,z, clusterID, label, features…]</string></property>
+          <property name="checked"><bool>true</bool></property>
+          <property name="toolTip">
+           <string>One row per non-background voxel.  Features are sampled at each voxel position.</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="layoutExportMode2">
+        <item>
+         <widget class="QRadioButton" name="radioObjectWise">
+          <property name="text"><string>Object-wise [xcenter,ycenter,zcenter, objectID, label, mean features…]</string></property>
+          <property name="toolTip">
+           <string>One row per connected component.  Position = centroid, features = per-component mean.</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+
+      <!-- Export button -->
+      <item>
+       <widget class="QPushButton" name="btnExportCSV">
+        <property name="text"><string>Export CSV…</string></property>
+        <property name="toolTip">
+         <string>Write a CSV file with cluster coordinates and optional feature values</string>
+        </property>
+       </widget>
+      </item>
+
+     </layout>
+    </widget>
+   </item>
+
    <!-- Vertical spacer at bottom -->
    <item>
     <spacer name="verticalSpacerBottom">
@@ -239,6 +305,12 @@
    <class>QmitkSingleNodeSelectionWidget</class>
    <extends>QWidget</extends>
    <header>QmitkSingleNodeSelectionWidget.h</header>
+   <container>0</container>
+  </customwidget>
+  <customwidget>
+   <class>QmitkMultiNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header>QmitkMultiNodeSelectionWidget.h</header>
    <container>0</container>
   </customwidget>
  </customwidgets>

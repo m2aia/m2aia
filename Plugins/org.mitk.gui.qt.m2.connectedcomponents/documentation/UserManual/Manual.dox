@@ -1,0 +1,305 @@
+/**
+\page org_mitk_views_m2_connectedcomponents The M²aia Connected Components View
+
+\imageMacro{logo.svg,"Icon of the M²aia Connected Components View",2.00}
+
+\tableofcontents
+
+\section cc_overview Overview
+
+The <b>Connected Components</b> view provides a complete pipeline for extracting, classifying,
+and exporting spatially connected regions from binary or multi-label segmentation images.
+
+The workflow runs top-to-bottom through five numbered sections:
+
+<ol>
+  <li>Select Segmentation / Binary Image
+  <li>Morphological Cleanup <em>(optional)</em>
+  <li>Connected Component Labeling
+  <li>Size-Based Groups
+  <li>CSV Export <em>(optional)</em>
+</ol>
+
+---
+
+\section cc_sec1 Section 1 — Select Segmentation / Binary Image
+
+Use the node-selection widget to choose an input image from the Data Manager.
+
+<b>Accepted input types</b>
+
+<table>
+  <tr><th>Type</th><th>How it is used</th></tr>
+  <tr><td><tt>mitk::Image</tt> (binary, e.g. 0/1 or 0/255)</td><td>Used directly.</td></tr>
+  <tr><td><tt>mitk::MultiLabelSegmentation</tt></td><td>Group 0 is used as the binary working image.</td></tr>
+</table>
+
+The selected image is the source for all subsequent morphology and connected-component
+operations.  It is never modified in-place; all results are written to new data nodes.
+
+---
+
+\section cc_sec2 Section 2 — Morphological Cleanup
+
+Pre-process the binary mask before labeling to close gaps, remove noise, or fill holes.
+
+\subsection cc_sec2_radius Radius (vx)
+
+Integer voxel radius of the spherical (ball) structuring element used by all four operations.
+Range: 1&ndash;50.  Default: 1.
+
+\subsection cc_sec2_buttons Morphology Buttons
+
+<table>
+  <tr><th>Button</th><th>Operation</th><th>Description</th></tr>
+  <tr>
+    <td><b>Erode</b></td>
+    <td>Binary erosion</td>
+    <td>Shrinks foreground regions; removes thin protrusions and small isolated blobs.</td>
+  </tr>
+  <tr>
+    <td><b>Dilate</b></td>
+    <td>Binary dilation</td>
+    <td>Expands foreground regions; bridges narrow gaps between nearby objects.</td>
+  </tr>
+  <tr>
+    <td><b>Close</b></td>
+    <td>Morphological closing (dilate &rarr; erode)</td>
+    <td>Closes small holes and narrow gaps without significantly changing object size.</td>
+  </tr>
+  <tr>
+    <td><b>Fill Holes</b></td>
+    <td>Binary hole filling</td>
+    <td>Fills fully enclosed background regions inside a foreground object.</td>
+  </tr>
+</table>
+
+Each operation commits its result back into the selected node:
+<ul>
+  <li>For a plain <tt>mitk::Image</tt>: replaces the node data.
+  <li>For a <tt>mitk::MultiLabelSegmentation</tt>: appends the result as a new group,
+      preserving the original group 0.
+</ul>
+
+\note Operations can be chained. For example, apply <em>Fill Holes</em> followed by
+<em>Close</em> to prepare a noisy mask before running connected-component labeling.
+Always re-run <em>Create Connected Components</em> after any morphological edit.
+
+---
+
+\section cc_sec3 Section 3 — Connected Component Labeling
+
+\subsection cc_sec3_connectivity Fully connected (26-neighborhood)
+
+<table>
+  <tr><th>State</th><th>Connectivity</th></tr>
+  <tr><td>Unchecked (default)</td><td>6-connectivity — voxels must share a face.</td></tr>
+  <tr><td>Checked</td><td>26-connectivity — voxels may share a face, edge, or corner.</td></tr>
+</table>
+
+Use 26-connectivity to group diagonally touching voxels into the same component.
+Use 6-connectivity to keep touching but non-overlapping objects separate.
+
+\subsection cc_sec3_run Create Connected Components
+
+Runs ITK <tt>ConnectedComponentImageFilter</tt> on the (optionally pre-processed) input.
+
+The output is a new relabeled <tt>mitk::Image</tt> (pixel type <tt>unsigned short</tt>)
+stored as <b><tt>&lt;sourceName&gt;_CC</tt></b> in the Data Manager.
+
+<ul>
+  <li>Component labels are re-assigned 1 &hellip; N sorted <em>descending</em> by size:
+      label 1 always corresponds to the largest object.
+  <li>Background voxels retain the value 0.
+</ul>
+
+The statistics label below the button reports:
+\code
+Components: <N>   |   Min size: <m> vx   |   Max size: <M> vx
+\endcode
+
+\note The connected-component result is required for Group assignment and CSV export.
+Re-run this step whenever the input image or morphology settings change.
+
+---
+
+\section cc_sec4 Section 4 — Size-Based Groups
+
+Groups map connected components to named, colour-coded categories based on object size
+(number of voxels).  A component is placed in a group if its size falls within the
+group's [min, max] range (inclusive, in voxels).
+
+\subsection cc_sec4_buttons Toolbar Buttons
+
+<table>
+  <tr><th>Button</th><th>Effect</th></tr>
+  <tr>
+    <td><b>Suggest 3 Groups</b></td>
+    <td>Automatically creates three groups named <em>Small</em>, <em>Medium</em>, and <em>Large</em>
+        using the 33rd and 67th percentile of the component-size distribution as thresholds.</td>
+  </tr>
+  <tr>
+    <td><b>Add Group</b></td>
+    <td>Appends a new empty group with the full size range [0, max].</td>
+  </tr>
+  <tr>
+    <td><b>Apply Groups</b></td>
+    <td>Creates a <tt>mitk::MultiLabelSegmentation</tt> node (<tt>&lt;CC_name&gt;_Groups</tt>)
+        where each voxel is coloured according to its group.</td>
+  </tr>
+</table>
+
+\subsection cc_sec4_widget Group Widget Controls
+
+Each group row exposes the following controls:
+
+<table>
+  <tr><th>Control</th><th>Description</th></tr>
+  <tr><td><b>Name</b> text field</td><td>Editable label used in the CSV export and the output segmentation.</td></tr>
+  <tr><td><b>Min / Max</b> spin boxes</td><td>Inclusive voxel-count range.  The match count updates live.</td></tr>
+  <tr><td><b>Color</b> button</td><td>Opens a colour picker; the chosen colour is applied to the corresponding <tt>mitk::Label</tt>.</td></tr>
+  <tr><td><b>Match count</b> label</td><td>Number of components that currently fall inside this group's size range.</td></tr>
+  <tr><td><b>Remove</b> button (&times;)</td><td>Deletes this group row.</td></tr>
+</table>
+
+\subsection cc_sec4_apply Applying Groups
+
+<b>Apply Groups</b> converts the current CC image into a <tt>mitk::MultiLabelSegmentation</tt>:
+<ul>
+  <li>Each component is assigned the label value of the <em>first</em> matching group
+      (1-based, top-to-bottom order).
+  <li>Components that match no group remain background (0).
+  <li>Label names and colours are taken directly from the group widgets.
+  <li>The result node (<tt>&lt;CC_name&gt;_Groups</tt>) is added as a child of the CC
+      node and is immediately visible in all render windows.
+</ul>
+
+---
+
+\section cc_sec5 Section 5 — CSV Export
+
+Exports spatial coordinates, cluster identifiers, and optional feature data for all
+connected components.
+
+\subsection cc_sec5_features Feature Image Selection
+
+Multi-selection widget accepting any number of additional image nodes.
+Three image types are supported:
+
+<table>
+  <tr><th>Type</th><th>Exported columns</th></tr>
+  <tr>
+    <td><tt>mitk::Image</tt></td>
+    <td>One column <tt>&lt;nodeName&gt;_value</tt>: scalar grey value at the sampled
+        voxel, cast to <tt>double</tt>.</td>
+  </tr>
+  <tr>
+    <td><tt>mitk::MultiLabelSegmentation</tt></td>
+    <td>One column <tt>&lt;nodeName&gt;_label</tt>: integer label value of group 0 at
+        the sampled position.</td>
+  </tr>
+  <tr>
+    <td><tt>m2::SpectrumImage</tt> (imzML, profile or centroid)</td>
+    <td>One column per m/z bin: <tt>&lt;nodeName&gt;_mz_&lt;value&gt;</tt>.
+        For <b>profile</b> data the intensity is read directly from the matching bin.
+        For <b>centroid</b> data each peak is matched to the nearest global-axis column
+        within the image's configured tolerance (Da or PPM); columns with no matching
+        peak are written as 0.</td>
+  </tr>
+</table>
+
+Positions that lie outside the spatial extent of a feature image produce <tt>NaN</tt>.
+Background pixels of a <tt>SpectrumImage</tt> (index value == 0) produce 0.
+
+\subsection cc_sec5_mode Export Mode
+
+\subsubsection cc_sec5_pixelwise Pixel-wise (default)
+
+One row per non-background voxel in the CC image.
+
+\code
+x_world, y_world, z_world, clusterID, groupLabel, [feature columns…]
+\endcode
+
+<table>
+  <tr><th>Column</th><th>Description</th></tr>
+  <tr><td><tt>x_world</tt>, <tt>y_world</tt>, <tt>z_world</tt></td><td>World-space coordinates of the voxel centre (mm).</td></tr>
+  <tr><td><tt>clusterID</tt></td><td>Relabeled component index (1 = largest, N = smallest).</td></tr>
+  <tr><td><tt>groupLabel</tt></td><td>Name of the matched size group, or empty if unassigned.</td></tr>
+  <tr><td>feature columns</td><td>Values sampled from each selected feature image at the same world position.</td></tr>
+</table>
+
+Use this mode when per-voxel features are required, e.g. for training a machine-learning model.
+
+\subsubsection cc_sec5_objectwise Object-wise
+
+One row per connected component; feature values are the <b>mean</b> over all voxels
+belonging to that component (NaN-excluded).
+
+\code
+x_center, y_center, z_center, clusterID, size, groupLabel, [mean feature columns…]
+\endcode
+
+<table>
+  <tr><th>Column</th><th>Description</th></tr>
+  <tr><td><tt>x_center</tt>, <tt>y_center</tt>, <tt>z_center</tt></td><td>Centroid of the component in world space (mm).</td></tr>
+  <tr><td><tt>clusterID</tt></td><td>Component index.</td></tr>
+  <tr><td><tt>size</tt></td><td>Number of voxels in the component.</td></tr>
+  <tr><td><tt>groupLabel</tt></td><td>Size-group name, or empty if unassigned.</td></tr>
+  <tr><td>mean feature columns</td><td>Per-column mean over all valid (non-NaN) voxel samples. Columns with no valid samples are written as <tt>NaN</tt>.</td></tr>
+</table>
+
+Use this mode for downstream statistical analysis where one measurement per object is
+required (e.g. tissue-region characterisation, cell counting).
+
+\subsection cc_sec5_export Export CSV&hellip;
+
+Opens a save-file dialog. The default filename is:
+<ul>
+  <li><tt>cc_export_pixelwise.csv</tt> &mdash; pixel-wise mode
+  <li><tt>cc_export_objectwise.csv</tt> &mdash; object-wise mode
+</ul>
+
+The file uses <tt>.</tt> as the decimal separator, 6 significant digits for floating-point
+values, and 4 decimal places for m/z column headers.
+
+\note No feature images need to be selected. Exporting with an empty selection produces a
+coordinate + cluster-ID table only.
+
+---
+
+\section cc_workflow Typical Workflow
+
+<ol>
+  <li>Load a binary mask or MultiLabelSegmentation into the Data Manager.
+  <li>Select it in Section 1.
+  <li><em>(Optional)</em> Apply <em>Fill Holes</em> and/or <em>Close</em> to clean up the mask.
+  <li>Choose connectivity and click <b>Create Connected Components</b>.
+  <li>Inspect the statistics label; adjust morphology and re-run if needed.
+  <li>Click <b>Suggest 3 Groups</b> (or add groups manually) and tune the size ranges.
+  <li>Click <b>Apply Groups</b> to visualise the colour-coded result.
+  <li><em>(Optional)</em> Select feature images in Section 5.
+  <li>Choose Pixel-wise or Object-wise mode and click <b>Export CSV&hellip;</b>.
+</ol>
+
+---
+
+\section cc_notes Notes and Limitations
+
+<ul>
+  <li>The working pixel type is <tt>unsigned short</tt> (0&ndash;65535). Input images are
+      automatically cast. Inputs with more than 65&thinsp;534 distinct components will overflow
+      the label range.
+  <li>Morphology operations act on the currently loaded working image, not on the
+      connected-component result. Always re-run <em>Create Connected Components</em> after
+      morphological edits.
+  <li>A component that fits into more than one group (overlapping size ranges) is assigned
+      to the <em>first</em> matching group (top-to-bottom order in the list).
+  <li>For <tt>SpectrumImage</tt> features, only spectra at valid index positions (&gt; 0)
+      contribute data. Pixels outside the acquisition area are written as 0.
+  <li>Very large images with many SpectrumImage feature columns can take several minutes in
+      pixel-wise mode because each voxel requires a full spectrum lookup. Object-wise mode
+      is significantly faster in that case.
+</ul>
+
+*/

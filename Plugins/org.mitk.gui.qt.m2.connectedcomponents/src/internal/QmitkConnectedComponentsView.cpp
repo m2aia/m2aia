@@ -22,6 +22,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QScrollArea>
 #include <QVBoxLayout>
 #include <QColor>
+#include <QFileDialog>
+#include <QString>
 
 // MITK
 #include <mitkImage.h>
@@ -40,6 +42,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkRenderingManager.h>
 #include <mitkStatusBar.h>
 
+// MITK Qt Widgets
+#include <QmitkMultiNodeSelectionWidget.h>
+
 // ITK morphology
 #include <itkBinaryBallStructuringElement.h>
 #include <itkBinaryErodeImageFilter.h>
@@ -57,6 +62,15 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <cmath>
 #include <map>
 #include <unordered_map>
+#include <fstream>
+#include <sstream>
+#include <iomanip>
+#include <limits>
+
+// M2aia
+#include <m2SpectrumImage.h>
+#include <m2SpectrumImageStack.h>
+#include <m2CoreCommon.h>
 
 const std::string QmitkConnectedComponentsView::VIEW_ID = "org.mitk.views.m2.connectedcomponents";
 
@@ -116,6 +130,28 @@ void QmitkConnectedComponentsView::CreateQtPartControl(QWidget *parent)
           this, &QmitkConnectedComponentsView::OnAddGroup);
   connect(m_Controls.btnApplyGroups, &QPushButton::clicked,
           this, &QmitkConnectedComponentsView::OnApplyGroups);
+
+  // ---- CSV Export ----
+  {
+    // Accept any image-like node (plain Image, MultiLabelSegmentation, SpectrumImage)
+    auto isHelperObj = mitk::NodePredicateFunction::New(
+      [](const mitk::DataNode *n) { return n->IsOn("helper object", nullptr, false); });
+    auto noHelperExport = mitk::NodePredicateNot::New(isHelperObj);
+    auto isAnyImage = mitk::NodePredicateAnd::New(
+      mitk::NodePredicateOr::New(
+        mitk::TNodePredicateDataType<mitk::Image>::New(),
+        mitk::TNodePredicateDataType<mitk::MultiLabelSegmentation>::New()),
+      noHelperExport);
+
+    m_Controls.featureImageSelection->SetDataStorage(GetDataStorage());
+    m_Controls.featureImageSelection->SetNodePredicate(isAnyImage);
+    m_Controls.featureImageSelection->SetSelectionIsOptional(true);
+    m_Controls.featureImageSelection->SetEmptyInfo("Select feature images (optional)");
+    m_Controls.featureImageSelection->SetPopUpTitel("Feature Images");
+
+    connect(m_Controls.btnExportCSV, &QPushButton::clicked,
+            this, &QmitkConnectedComponentsView::OnExportCSV);
+  }
 
   // Ensure scroll area layout exists
   if (!m_Controls.scrollAreaWidgetContents->layout())
@@ -713,4 +749,420 @@ void QmitkConnectedComponentsView::OnApplyGroups()
     QMessageBox::critical(m_Parent, "Error",
                           QString("Apply groups failed:\n%1").arg(e.what()));
   }
+}
+
+// ---------------------------------------------------------------------------
+// CSV Export
+// ---------------------------------------------------------------------------
+
+void QmitkConnectedComponentsView::OnExportCSV()
+{
+  ExportCSV(m_Controls.radioPixelWise->isChecked());
+}
+
+void QmitkConnectedComponentsView::ExportCSV(bool pixelWise)
+{
+  if (!m_CCNode)
+  {
+    QMessageBox::warning(m_Parent, "No CC result",
+                         "Please create connected components first.");
+    return;
+  }
+
+  auto *ccImage = dynamic_cast<mitk::Image *>(m_CCNode->GetData());
+  if (!ccImage)
+  {
+    QMessageBox::warning(m_Parent, "Error", "Connected component image is invalid.");
+    return;
+  }
+
+  // -------------------------------------------------------------------------
+  // Ask for output file
+  // -------------------------------------------------------------------------
+  const QString defaultName = pixelWise ? "cc_export_pixelwise.csv"
+                                        : "cc_export_objectwise.csv";
+  const QString filePath = QFileDialog::getSaveFileName(
+    m_Parent, "Export CSV", defaultName, "CSV files (*.csv);;All files (*)");
+  if (filePath.isEmpty())
+    return;
+
+  // -------------------------------------------------------------------------
+  // Rebuild cluster-label → group-name mapping
+  // -------------------------------------------------------------------------
+  const int numComponents = static_cast<int>(m_ComponentSizes.size());
+  std::vector<std::string> labelToGroupName(static_cast<std::size_t>(numComponents + 1), "");
+  for (int gi = 0; gi < static_cast<int>(m_GroupWidgets.size()); ++gi)
+  {
+    auto *gw = m_GroupWidgets[gi];
+    const int lo = gw->GetMinSize(), hi = gw->GetMaxSize();
+    const std::string name = gw->GetGroupName().toStdString();
+    for (int li = 1; li <= numComponents; ++li)
+    {
+      const int sz = static_cast<int>(m_ComponentSizes[static_cast<std::size_t>(li - 1)]);
+      if (sz >= lo && sz <= hi)
+        labelToGroupName[static_cast<std::size_t>(li)] = name;
+    }
+  }
+
+  // -------------------------------------------------------------------------
+  // Build feature sources
+  // -------------------------------------------------------------------------
+  struct FeatureSource
+  {
+    enum class Type { PLAIN_IMAGE, MULTILABEL, SPECTRUM_IMAGE } type;
+    std::string nodeName;
+    std::vector<std::string> columnNames;
+    mitk::BaseGeometry *geom = nullptr;
+
+    // PLAIN_IMAGE / MULTILABEL: pre-converted float ITK image
+    itk::Image<float, 3>::Pointer floatImg;
+    // MULTILABEL: label value → label name
+    std::map<unsigned int, std::string> labelNames;
+
+    // SPECTRUM_IMAGE
+    m2::SpectrumImage *specImage = nullptr;
+    // Pre-created read accessor for the index image (avoids per-pixel locking)
+    std::shared_ptr<mitk::ImagePixelReadAccessor<m2::IndexImagePixelType, 3>> indexAcc;
+    std::array<unsigned int, 3> indexImgDims = {0, 0, 0};
+  };
+
+  std::vector<FeatureSource> sources;
+
+  auto selectedNodes = m_Controls.featureImageSelection->GetSelectedNodes();
+  for (const auto &nodePtr : selectedNodes)
+  {
+    mitk::DataNode *node = nodePtr.GetPointer();
+    if (!node || !node->GetData()) continue;
+
+    FeatureSource src;
+    src.nodeName = node->GetName();
+    src.geom     = node->GetData()->GetGeometry();
+
+    // ---- m2::SpectrumImage (check before mitk::Image, it inherits from it) ----
+    if (auto *si = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
+    {
+      // Skip SpectrumImageStack
+      if (dynamic_cast<m2::SpectrumImageStack *>(node->GetData()))
+        continue;
+
+      src.type      = FeatureSource::Type::SPECTRUM_IMAGE;
+      src.specImage = si;
+
+      mitk::Image *idxImg = si->GetIndexImage();
+      try
+      {
+        src.indexAcc = std::make_shared<mitk::ImagePixelReadAccessor<m2::IndexImagePixelType, 3>>(idxImg);
+        src.indexImgDims = {idxImg->GetDimension(0),
+                            idxImg->GetDimension(1),
+                            idxImg->GetDimension(2)};
+      }
+      catch (const std::exception &e)
+      {
+        MITK_WARN << "CSV export: cannot access index image of '" << src.nodeName << "': " << e.what();
+        continue;
+      }
+
+      const auto &xAxis = si->GetXAxis();
+      src.columnNames.reserve(xAxis.size());
+      for (double mz : xAxis)
+      {
+        std::ostringstream oss;
+        oss << src.nodeName << "_mz_" << std::fixed << std::setprecision(4) << mz;
+        src.columnNames.push_back(oss.str());
+      }
+    }
+    // ---- mitk::MultiLabelSegmentation ----
+    else if (auto *seg = dynamic_cast<mitk::MultiLabelSegmentation *>(node->GetData()))
+    {
+      src.type = FeatureSource::Type::MULTILABEL;
+      try
+      {
+        mitk::CastToItkImage(seg->GetGroupImage(0), src.floatImg);
+      }
+      catch (const std::exception &e)
+      {
+        MITK_WARN << "CSV export: cannot cast MultiLabelSegmentation '" << src.nodeName << "': " << e.what();
+        continue;
+      }
+      src.columnNames.push_back(src.nodeName + "_label");
+      for (auto lv : seg->GetAllLabelValues())
+      {
+        auto lbl = seg->GetLabel(lv);
+        if (lbl.IsNotNull())
+          src.labelNames[static_cast<unsigned int>(lv)] = lbl->GetName();
+      }
+    }
+    // ---- plain mitk::Image ----
+    else if (auto *img = dynamic_cast<mitk::Image *>(node->GetData()))
+    {
+      src.type = FeatureSource::Type::PLAIN_IMAGE;
+      try
+      {
+        mitk::CastToItkImage(img, src.floatImg);
+      }
+      catch (const std::exception &e)
+      {
+        MITK_WARN << "CSV export: cannot cast image '" << src.nodeName << "': " << e.what();
+        continue;
+      }
+      src.columnNames.push_back(src.nodeName + "_value");
+    }
+    else
+      continue;
+
+    sources.push_back(std::move(src));
+  }
+
+  // Count total feature columns
+  std::size_t totalCols = 0;
+  for (const auto &src : sources)
+    totalCols += src.columnNames.size();
+
+  // -------------------------------------------------------------------------
+  // Helper: sample one FeatureSource at a world point → append to out
+  // -------------------------------------------------------------------------
+  auto sampleSource = [&](FeatureSource &src,
+                          const mitk::Point3D &worldPt,
+                          std::vector<double> &out)
+  {
+    if (!src.geom || !src.geom->IsInside(worldPt))
+    {
+      out.insert(out.end(), src.columnNames.size(),
+                 std::numeric_limits<double>::quiet_NaN());
+      return;
+    }
+
+    mitk::Point3D idx3d;
+    src.geom->WorldToIndex(worldPt, idx3d);
+    itk::Index<3> idx = {{static_cast<itk::IndexValueType>(std::lround(idx3d[0])),
+                          static_cast<itk::IndexValueType>(std::lround(idx3d[1])),
+                          static_cast<itk::IndexValueType>(std::lround(idx3d[2]))}};
+
+    if (src.type == FeatureSource::Type::SPECTRUM_IMAGE)
+    {
+      // Bounds check against index image dimensions
+      if (idx[0] < 0 || idx[1] < 0 || idx[2] < 0 ||
+          static_cast<unsigned int>(idx[0]) >= src.indexImgDims[0] ||
+          static_cast<unsigned int>(idx[1]) >= src.indexImgDims[1] ||
+          static_cast<unsigned int>(idx[2]) >= src.indexImgDims[2])
+      {
+        out.insert(out.end(), src.columnNames.size(),
+                   std::numeric_limits<double>::quiet_NaN());
+        return;
+      }
+      const auto spectrumId = src.indexAcc->GetPixelByIndex(idx);
+      if (spectrumId == 0)
+      {
+        out.insert(out.end(), src.columnNames.size(), 0.0);
+        return;
+      }
+
+      // Initialize all output columns to zero; for processed centroid imzML
+      // each spectrum carries its own sparse, potentially shifted m/z axis,
+      // so we must match every peak to the nearest global-axis column.
+      std::vector<double> colVals(src.columnNames.size(), 0.0);
+
+      std::vector<double> specXs, specYs;
+      src.specImage->GetSpectrum(spectrumId, specXs, specYs);
+
+      const std::vector<double> &globalXAxis = src.specImage->GetXAxis();
+
+      for (std::size_t pi = 0; pi < specXs.size(); ++pi)
+      {
+        const double mz  = specXs[pi];
+        const double tol = src.specImage->ApplyTolerance(mz); // absolute half-window
+
+        // Binary search for insertion point
+        auto it = std::lower_bound(globalXAxis.begin(), globalXAxis.end(), mz);
+
+        // Find nearest neighbour among iterator and its predecessor
+        std::size_t bestCol  = globalXAxis.size(); // sentinel = no match
+        double      bestDist = std::numeric_limits<double>::max();
+
+        if (it != globalXAxis.end())
+        {
+          const std::size_t c = static_cast<std::size_t>(std::distance(globalXAxis.begin(), it));
+          const double d = std::abs(globalXAxis[c] - mz);
+          if (d < bestDist) { bestDist = d; bestCol = c; }
+        }
+        if (it != globalXAxis.begin())
+        {
+          const std::size_t c = static_cast<std::size_t>(std::distance(globalXAxis.begin(), std::prev(it)));
+          const double d = std::abs(globalXAxis[c] - mz);
+          if (d < bestDist) { bestDist = d; bestCol = c; }
+        }
+
+        if (bestCol < colVals.size() && bestDist <= tol)
+          colVals[bestCol] = specYs[pi];
+      }
+
+      out.insert(out.end(), colVals.begin(), colVals.end());
+    }
+    else // PLAIN_IMAGE / MULTILABEL
+    {
+      if (!src.floatImg->GetLargestPossibleRegion().IsInside(idx))
+      {
+        out.insert(out.end(), src.columnNames.size(),
+                   std::numeric_limits<double>::quiet_NaN());
+        return;
+      }
+      out.push_back(static_cast<double>(src.floatImg->GetPixel(idx)));
+    }
+  };
+
+  // -------------------------------------------------------------------------
+  // Open output file and write header
+  // -------------------------------------------------------------------------
+  std::ofstream ofs(filePath.toLocal8Bit().constData());
+  if (!ofs.is_open())
+  {
+    QMessageBox::critical(m_Parent, "Error",
+                          QString("Could not open file for writing:\n%1").arg(filePath));
+    return;
+  }
+  ofs << std::setprecision(6);
+
+  if (pixelWise)
+    ofs << "x_world,y_world,z_world,clusterID,groupLabel";
+  else
+    ofs << "x_center,y_center,z_center,clusterID,size,groupLabel";
+
+  for (const auto &src : sources)
+    for (const auto &col : src.columnNames)
+      ofs << "," << col;
+  ofs << "\n";
+
+  // -------------------------------------------------------------------------
+  // Iterate CC image pixels
+  // -------------------------------------------------------------------------
+  auto *ccGeom              = ccImage->GetGeometry();
+  const unsigned int *dims  = ccImage->GetDimensions();
+  mitk::ImagePixelReadAccessor<PixelType, 3> ccAcc(ccImage);
+
+  if (pixelWise)
+  {
+    // -----------------------------------------------------------------------
+    // Pixel-wise: one row per non-background voxel
+    // -----------------------------------------------------------------------
+    for (unsigned int z = 0; z < dims[2]; ++z)
+    for (unsigned int y = 0; y < dims[1]; ++y)
+    for (unsigned int x = 0; x < dims[0]; ++x)
+    {
+      itk::Index<3> idx = {{static_cast<itk::IndexValueType>(x),
+                            static_cast<itk::IndexValueType>(y),
+                            static_cast<itk::IndexValueType>(z)}};
+      const PixelType clusterId = ccAcc.GetPixelByIndex(idx);
+      if (clusterId == 0) continue;
+
+      // Voxel-centre index → world
+      mitk::Point3D mitkIdx, worldPt;
+      mitkIdx[0] = static_cast<mitk::ScalarType>(x);
+      mitkIdx[1] = static_cast<mitk::ScalarType>(y);
+      mitkIdx[2] = static_cast<mitk::ScalarType>(z);
+      ccGeom->IndexToWorld(mitkIdx, worldPt);
+
+      const std::size_t ci = static_cast<std::size_t>(clusterId);
+      const std::string &groupLabel =
+        (ci < labelToGroupName.size()) ? labelToGroupName[ci] : "";
+
+      ofs << worldPt[0] << "," << worldPt[1] << "," << worldPt[2]
+          << "," << clusterId << "," << groupLabel;
+
+      for (auto &src : sources)
+      {
+        std::vector<double> vals;
+        sampleSource(src, worldPt, vals);
+        for (double v : vals)
+          ofs << "," << v;
+      }
+      ofs << "\n";
+    }
+  }
+  else
+  {
+    // -----------------------------------------------------------------------
+    // Object-wise: accumulate per cluster, write means
+    // -----------------------------------------------------------------------
+    struct ClusterAccum
+    {
+      double wx = 0.0, wy = 0.0, wz = 0.0;
+      unsigned long count = 0;
+      std::vector<double>       featureSum;
+      std::vector<unsigned long> featureCount; // non-NaN pixel count per column
+    };
+
+    std::unordered_map<PixelType, ClusterAccum> accum;
+    accum.reserve(static_cast<std::size_t>(numComponents));
+
+    for (unsigned int z = 0; z < dims[2]; ++z)
+    for (unsigned int y = 0; y < dims[1]; ++y)
+    for (unsigned int x = 0; x < dims[0]; ++x)
+    {
+      itk::Index<3> idx = {{static_cast<itk::IndexValueType>(x),
+                            static_cast<itk::IndexValueType>(y),
+                            static_cast<itk::IndexValueType>(z)}};
+      const PixelType clusterId = ccAcc.GetPixelByIndex(idx);
+      if (clusterId == 0) continue;
+
+      mitk::Point3D mitkIdx, worldPt;
+      mitkIdx[0] = x; mitkIdx[1] = y; mitkIdx[2] = z;
+      ccGeom->IndexToWorld(mitkIdx, worldPt);
+
+      auto &a = accum[clusterId];
+      if (a.count == 0)
+      {
+        a.featureSum.assign(totalCols, 0.0);
+        a.featureCount.assign(totalCols, 0UL);
+      }
+      a.wx += worldPt[0]; a.wy += worldPt[1]; a.wz += worldPt[2];
+      ++a.count;
+
+      std::vector<double> vals;
+      for (auto &src : sources)
+        sampleSource(src, worldPt, vals);
+
+      for (std::size_t col = 0; col < vals.size(); ++col)
+      {
+        if (!std::isnan(vals[col]))
+        {
+          a.featureSum[col]  += vals[col];
+          a.featureCount[col]++;
+        }
+      }
+    }
+
+    // Write one row per cluster, sorted by cluster ID
+    std::vector<PixelType> clusterIds;
+    clusterIds.reserve(accum.size());
+    for (auto &kv : accum)
+      clusterIds.push_back(kv.first);
+    std::sort(clusterIds.begin(), clusterIds.end());
+
+    for (const PixelType clusterId : clusterIds)
+    {
+      const auto &a     = accum.at(clusterId);
+      const double inv  = 1.0 / static_cast<double>(a.count);
+      const std::size_t ci = static_cast<std::size_t>(clusterId);
+      const std::string &groupLabel =
+        (ci < labelToGroupName.size()) ? labelToGroupName[ci] : "";
+
+      ofs << (a.wx * inv) << "," << (a.wy * inv) << "," << (a.wz * inv)
+          << "," << clusterId << "," << a.count << "," << groupLabel;
+
+      for (std::size_t col = 0; col < totalCols; ++col)
+      {
+        if (a.featureCount[col] > 0)
+          ofs << "," << (a.featureSum[col] / static_cast<double>(a.featureCount[col]));
+        else
+          ofs << "," << std::numeric_limits<double>::quiet_NaN();
+      }
+      ofs << "\n";
+    }
+  }
+
+  ofs.close();
+  mitk::StatusBar::GetInstance()->DisplayText(
+    QString("CSV exported: %1").arg(filePath).toLocal8Bit().constData());
+  QMessageBox::information(m_Parent, "Export complete",
+                           QString("CSV written to:\n%1").arg(filePath));
 }
