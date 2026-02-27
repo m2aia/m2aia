@@ -6,6 +6,7 @@ org.mitk.gui.qt.m2.data:ON
 org.mitk.gui.qt.m2.spectrum:ON
 org.mitk.gui.qt.m2.datacompression:ON
 org.mitk.gui.qt.m2.peakpicking:ON
+org.mitk.gui.qt.m2.connectedcomponents:ON
 
 org.mitk.gui.qt.m2.Position:ON
 org.mitk.gui.qt.m2.ImzMLExport:ON
