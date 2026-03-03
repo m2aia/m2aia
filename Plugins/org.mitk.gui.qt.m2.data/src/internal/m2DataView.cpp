@@ -48,10 +48,13 @@ See LICENSE.txt for details.
 #include <mitkLookupTableProperty.h>
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateDataType.h>
+#include <mitkNodePredicateFunction.h>
 #include <mitkNodePredicateNot.h>
 #include <mitkNodePredicateOr.h>
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateProperty.h>
+#include <mitkPointSet.h>
+#include <mitkPointSetDataInteractor.h>
 #include <mitkImagePixelWriteAccessor.h>
 #include <mitkImageVtkMapper2D.h>
 #include <mitkImageAccessByItk.h>
@@ -1033,7 +1036,11 @@ void m2DataView::UpdateLevelWindow(const mitk::DataNode *node)
 
 void m2DataView::NodeAdded(const mitk::DataNode *node)
 {
-  if (dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
+  if (dynamic_cast<mitk::PointSet *>(node->GetData()))
+  {
+    PointSetNodeAdded(node);
+  }
+  else if (dynamic_cast<m2::OpenSlideImageIOHelperObject *>(node->GetData()))
   {
     OpenSlideImageNodeAdded(node);
   }
@@ -1051,6 +1058,55 @@ void m2DataView::NodeAdded(const mitk::DataNode *node)
       this->OnGenerateImageData(xs[xs.size()/2], FROM_GUI);
     else
       this->OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
+  }
+}
+
+void m2DataView::PointSetNodeAdded(const mitk::DataNode *node)
+{
+  // Find a reference image to derive the physical spacing for point sizing.
+  // Prefer m2::SpectrumImage; fall back to any mitk::Image in the storage.
+  double spacingX = 1.0;
+
+  auto spectrumPredicate = mitk::NodePredicateFunction::New(
+    [](const mitk::DataNode *n) -> bool {
+      return dynamic_cast<m2::SpectrumImage *>(n->GetData()) != nullptr;
+    });
+
+  auto candidates = GetDataStorage()->GetSubset(spectrumPredicate);
+  if (candidates->empty())
+    candidates = GetDataStorage()->GetSubset(
+      mitk::TNodePredicateDataType<mitk::Image>::New());
+
+  if (!candidates->empty())
+  {
+    if (auto img = dynamic_cast<mitk::Image *>(candidates->front()->GetData()))
+      spacingX = img->GetGeometry()->GetSpacing()[0];
+  }
+
+  const float pointSize3D = static_cast<float>(4.0 * spacingX);
+  const float pointSize2D = static_cast<float>(4.0 * spacingX);
+
+  auto *mutableNode = const_cast<mitk::DataNode *>(node);
+  mutableNode->ReplaceProperty("pointsize",      mitk::FloatProperty::New(pointSize3D)); // 3-D sphere diameter (world coords)
+  mutableNode->ReplaceProperty("point 2D size",  mitk::FloatProperty::New(pointSize2D)); // 2-D pixel radius
+
+  // Adapt the interactor hit-test radius to match the visual point size.
+  // SetAccuracy takes a world-space radius; pointSize3D is a diameter, so accuracy = pointSize3D / 2.
+  const float accuracy = pointSize3D / 2.0f;
+  auto existingInteractor =
+    dynamic_cast<mitk::PointSetDataInteractor *>(mutableNode->GetDataInteractor().GetPointer());
+  if (existingInteractor)
+  {
+    existingInteractor->SetAccuracy(accuracy);
+  }
+  else
+  {
+    auto interactor = mitk::PointSetDataInteractor::New();
+    interactor->LoadStateMachine("PointSet.xml");
+    interactor->SetEventConfig("PointSetConfig.xml");
+    interactor->SetAccuracy(accuracy);
+    interactor->SetDataNode(mutableNode);
+    mutableNode->SetDataInteractor(interactor);
   }
 }
 

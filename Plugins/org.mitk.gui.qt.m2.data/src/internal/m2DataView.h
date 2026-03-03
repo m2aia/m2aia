@@ -135,6 +135,7 @@ protected:
   void ImzMLImageNodeAdded(const mitk::DataNode *node);
   void FsmImageNodeAdded(const mitk::DataNode *node);
   void SpectrumImageNodeAdded(const mitk::DataNode *node);
+  void PointSetNodeAdded(const mitk::DataNode *node);
 
   // 20201023: custom selection service did not work as expected
   //  m2::SelectionProvider::Pointer m_SelectionProvider;
