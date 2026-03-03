@@ -6,266 +6,332 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>416</width>
-    <height>610</height>
+    <width>300</width>
+    <height>520</height>
    </rect>
   </property>
-  <property name="minimumSize">
-   <size>
-    <width>0</width>
-    <height>0</height>
-   </size>
-  </property>
   <property name="windowTitle">
-   <string>QmitkTemplate</string>
+   <string>Image Position</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,1">
+   <property name="spacing">
+    <number>6</number>
+   </property>
    <item>
-    <widget class="QLabel" name="label">
+    <widget class="QLabel" name="lblInfo">
      <property name="text">
-      <string>Manipulate the image world position.
- - Select nodes in the DataManager view.</string>
+      <string>Select image nodes in the Data Manager to manipulate their world-space position.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
      </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="label_2">
-     <property name="text">
-      <string>Rotation:
-Controls: numpad +/- to apply +/- 10% to rotation.</string>
-     </property>
-     <property name="wordWrap">
-      <bool>true</bool>
+     <property name="styleSheet">
+      <string>color: gray; font-style: italic;</string>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QDoubleSpinBox" name="rotationBox">
-     <property name="suffix">
-      <string>°</string>
+    <widget class="QGroupBox" name="grpRotation">
+     <property name="title">
+      <string>Rotation</string>
      </property>
-     <property name="minimum">
-      <double>-360.000000000000000</double>
-     </property>
-     <property name="maximum">
-      <double>360.000000000000000</double>
-     </property>
-     <property name="value">
-      <double>5.000000000000000</double>
-     </property>
+     <layout class="QVBoxLayout">
+      <item>
+       <layout class="QHBoxLayout">
+        <item>
+         <widget class="QLabel" name="lblAngle">
+          <property name="text">
+           <string>Step angle:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="rotationBox">
+          <property name="toolTip">
+           <string>Rotation step angle applied per button click or shortcut key.
+Use numpad + / - to scale this value by ×1.1 / ×0.9.</string>
+          </property>
+          <property name="suffix">
+           <string>°</string>
+          </property>
+          <property name="minimum">
+           <double>-360.000000000000000</double>
+          </property>
+          <property name="maximum">
+           <double>360.000000000000000</double>
+          </property>
+          <property name="value">
+           <double>5.000000000000000</double>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout">
+        <item>
+         <widget class="QPushButton" name="btnRotateMinus">
+          <property name="toolTip">
+           <string>Rotate counter-clockwise by the step angle.
+Shortcuts: Q or L</string>
+          </property>
+          <property name="text">
+           <string>↺  CCW</string>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>80</width>
+            <height>36</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="hSpacerRot">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="btnRotatePlus">
+          <property name="toolTip">
+           <string>Rotate clockwise by the step angle.
+Shortcuts: E or R</string>
+          </property>
+          <property name="text">
+           <string>↻  CW</string>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>80</width>
+            <height>36</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
-    <widget class="Line" name="line">
-     <property name="orientation">
-      <enum>Qt::Orientation::Horizontal</enum>
+    <widget class="QGroupBox" name="grpTranslation">
+     <property name="title">
+      <string>Translation</string>
      </property>
+     <layout class="QVBoxLayout">
+      <item>
+       <layout class="QHBoxLayout">
+        <item>
+         <widget class="QLabel" name="lblStep">
+          <property name="text">
+           <string>Step size:</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="spnBxStepWidth">
+          <property name="toolTip">
+           <string>Translation step size per button click or shortcut key.
+Shortcuts: Ctrl++ / Ctrl+- to increase or decrease by 5 μm.</string>
+          </property>
+          <property name="suffix">
+           <string> μm</string>
+          </property>
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>10000</number>
+          </property>
+          <property name="value">
+           <number>10</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QGridLayout" name="gridLayout_2">
+        <item row="0" column="1">
+         <widget class="QPushButton" name="btnUp">
+          <property name="toolTip">
+           <string>Move up by step size.
+Shortcuts: W or ↑</string>
+          </property>
+          <property name="text">
+           <string>▲</string>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>60</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="0">
+         <widget class="QPushButton" name="btnLeft">
+          <property name="toolTip">
+           <string>Move left by step size.
+Shortcuts: A or ←</string>
+          </property>
+          <property name="text">
+           <string>◄</string>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>60</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="1" column="2">
+         <widget class="QPushButton" name="btnRight">
+          <property name="toolTip">
+           <string>Move right by step size.
+Shortcuts: D or →</string>
+          </property>
+          <property name="text">
+           <string>►</string>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>60</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="1">
+         <widget class="QPushButton" name="btnDown">
+          <property name="toolTip">
+           <string>Move down by step size.
+Shortcuts: S or ↓</string>
+          </property>
+          <property name="text">
+           <string>▼</string>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>50</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>60</width>
+            <height>60</height>
+           </size>
+          </property>
+         </widget>
+        </item>
+        <item row="0" column="3">
+         <spacer name="hSpacerDpad">
+          <property name="orientation">
+           <enum>Qt::Orientation::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
-    <widget class="QLabel" name="label_3">
-     <property name="text">
-      <string>Translation (center):
-Controls: Use shift and numpad +/- 5 μm to transflation.</string>
+    <widget class="QGroupBox" name="grpMirror">
+     <property name="title">
+      <string>Mirror</string>
      </property>
-     <property name="wordWrap">
-      <bool>true</bool>
-     </property>
+     <layout class="QHBoxLayout">
+      <item>
+       <widget class="QPushButton" name="mirrorH">
+        <property name="toolTip">
+         <string>Mirror the selected image(s) horizontally (flip left–right).</string>
+        </property>
+        <property name="text">
+         <string>⇔  Horizontal</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>36</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="mirrorV">
+        <property name="toolTip">
+         <string>Mirror the selected image(s) vertically (flip up–down).</string>
+        </property>
+        <property name="text">
+         <string>⇕  Vertical</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>0</width>
+          <height>36</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
-    <widget class="QSpinBox" name="spnBxStepWidth">
-     <property name="suffix">
-      <string> μm</string>
+    <widget class="QGroupBox" name="grpViewOptions">
+     <property name="title">
+      <string>View Options</string>
      </property>
-     <property name="prefix">
-      <string/>
-     </property>
-     <property name="maximum">
-      <number>10000</number>
-     </property>
-     <property name="value">
-      <number>10</number>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QLabel" name="label_8">
-     <property name="text">
-      <string>Manual Controls</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <layout class="QGridLayout" name="gridLayout_2" rowstretch="0,0,0,0">
-     <item row="1" column="0">
-      <widget class="QPushButton" name="btnRotateMinus">
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>-R</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QPushButton" name="btnDown">
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Down</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QPushButton" name="btnUp">
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Up</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QPushButton" name="btnRight">
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Right</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QPushButton" name="btnLeft">
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Left</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="3">
-      <spacer name="horizontalSpacer_2">
-       <property name="orientation">
-        <enum>Qt::Orientation::Horizontal</enum>
-       </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>40</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
-     </item>
-     <item row="1" column="2">
-      <widget class="QPushButton" name="btnRotatePlus">
-       <property name="minimumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="maximumSize">
-        <size>
-         <width>50</width>
-         <height>50</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>+R</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </item>
-   <item>
-    <widget class="QPushButton" name="mirrorV">
-     <property name="minimumSize">
-      <size>
-       <width>200</width>
-       <height>50</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>50</width>
-       <height>50</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>Mirror vertically</string>
-     </property>
-    </widget>
-   </item>
-   <item>
-    <widget class="QPushButton" name="mirrorH">
-     <property name="minimumSize">
-      <size>
-       <width>200</width>
-       <height>50</height>
-      </size>
-     </property>
-     <property name="maximumSize">
-      <size>
-       <width>50</width>
-       <height>50</height>
-      </size>
-     </property>
-     <property name="text">
-      <string>Mirror horizontally</string>
-     </property>
+     <layout class="QVBoxLayout">
+      <item>
+       <widget class="QCheckBox" name="chkAutoFitView">
+        <property name="toolTip">
+         <string>When enabled, all render views are re-fitted to the bounding box of all data objects after each transformation.
+Disable to improve performance during rapid repeated operations.</string>
+        </property>
+        <property name="text">
+         <string>Auto-fit view after transformation</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
     </widget>
    </item>
    <item>
@@ -279,7 +345,7 @@ Controls: Use shift and numpad +/- 5 μm to transflation.</string>
      <property name="sizeHint" stdset="0">
       <size>
        <width>20</width>
-       <height>220</height>
+       <height>40</height>
       </size>
      </property>
     </spacer>
