@@ -19,4 +19,6 @@ org.mitk.gui.qt.m2.docker.peaklearning:ON
 org.mitk.gui.qt.m2.docker.spatialkmeans:ON
 org.mitk.gui.qt.m2.docker.volcano:ON
 org.mitk.gui.qt.m2.docker.metabolicdepth:ON
+
+org.mitk.gui.qt.m2.docker.shape2instrument:ON
 )
