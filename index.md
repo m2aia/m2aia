@@ -12,6 +12,7 @@ M²aia provides features for
 
 Downloads
 ---------
+[windowsv202603rc]: https://github.com/m2aia/m2aia/releases/download/v2025.07/M2aia-2026.03.02-windows-x86_64.exe
 [windowsv202507]: https://github.com/m2aia/m2aia/releases/download/v2025.07/M2aia-2025.07.00-windows-x86_64.zip
 [ubuntuv202507]: https://github.com/m2aia/m2aia/releases/download/v2025.07/M2aia-2025.07.00-linux-x86_64.tar.gz
 [ubuntu2004]: https://github.com/m2aia/m2aia/releases/download/v2024.01/M2aia-v2024.01.1285f33-Ubuntu20.04-linux-x86_64.tar.gz
@@ -25,6 +26,7 @@ Downloads
 
 |M²aia       |  Packages|
 |---         |---      |
+| **v2026.03rc**<br>[Github](https://github.com/m2aia/m2aia/releases/tag/v2025.07)| [windows-exe][windowsv202603rc]| 
 | **v2025.07**<br>[Github](https://github.com/m2aia/m2aia/releases/tag/v2025.07)| [ubuntu-22.04][ubuntuv202507] <br> [windows-zip][windowsv202507]| 
 | **v2024.01**<br>[Github](https://github.com/m2aia/m2aia/releases/tag/v2024.01)| [ubuntu-20.04][ubuntu2004] <br> [ubuntu-22.04][ubuntu2204] <br> [windows-installer][windows] <br> [windows-zip][windows-zip]| 
 | **archive** | http://data.jtfc.de/latest/|
