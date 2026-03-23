@@ -11,14 +11,4 @@ org.mitk.gui.qt.m2.connectedcomponents:ON
 org.mitk.gui.qt.m2.Position:ON
 org.mitk.gui.qt.m2.ImzMLExport:ON
 org.mitk.gui.qt.m2.reconstruction3D:ON
-
-org.mitk.gui.qt.m2.docker.umap:ON
-org.mitk.gui.qt.m2.docker.molecular:ON
-org.mitk.gui.qt.m2.docker.peaklearning:ON
-
-org.mitk.gui.qt.m2.docker.spatialkmeans:ON
-org.mitk.gui.qt.m2.docker.volcano:ON
-org.mitk.gui.qt.m2.docker.metabolicdepth:ON
-
-org.mitk.gui.qt.m2.docker.shape2instrument:ON
 )
