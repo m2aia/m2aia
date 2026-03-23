@@ -139,6 +139,74 @@ namespace m2
 
   const std::array<std::string, 4> IntensityTransformationTypeNames = {"None", "Log2", "Log10", "SquareRoot"};
 
+  // ── MIR-specific processing enums ────────────────────────────────────────
+  // These are NOT part of SIGNAL_MAPPINGS (they apply only to the MIR modality
+  // in SpectrumContainerImage) and do not require entries in the mapping tests.
+
+  /**
+   * @brief Controls atmospheric band suppression in MIR pre-processing.
+   *
+   *  None                – no correction applied
+   *  LinearInterpolation – replaces CO₂ and H₂O vapour bands with a
+   *                        straight-line bridge between their band edges
+   */
+  enum class MIRAtmosphericCorrectionType : unsigned int
+  {
+    None = 0,
+    LinearInterpolation = 1
+  };
+
+  const std::array<std::string, 2> MIRAtmosphericCorrectionTypeNames = {
+    "None", "LinearInterpolation"};
+
+  inline std::string to_string(MIRAtmosphericCorrectionType t)
+  {
+    return MIRAtmosphericCorrectionTypeNames.at(to_underlying(t));
+  }
+
+  /**
+   * @brief Controls scattering baseline removal in MIR pre-processing.
+   *
+   *  None              – no correction applied
+   *  PolynomialDegree2 – subtracts a least-squares quadratic polynomial
+   *                      fitted to the whole spectrum (EMSC-lite)
+   */
+  enum class MIRScatteringCorrectionType : unsigned int
+  {
+    None = 0,
+    PolynomialDegree2 = 1
+  };
+
+  const std::array<std::string, 2> MIRScatteringCorrectionTypeNames = {
+    "None", "PolynomialDegree2"};
+
+  inline std::string to_string(MIRScatteringCorrectionType t)
+  {
+    return MIRScatteringCorrectionTypeNames.at(to_underlying(t));
+  }
+
+  /**
+   * @brief Controls spectral derivative applied after all other MIR pre-processing steps.
+   *
+   *  None   – no derivative (default)
+   *  First  – centred first-order finite difference
+   *  Second – centred second-order finite difference
+   */
+  enum class MIRDerivativeType : unsigned int
+  {
+    None   = 0,
+    First  = 1,
+    Second = 2
+  };
+
+  const std::array<std::string, 3> MIRDerivativeTypeNames = {
+    "None", "First", "Second"};
+
+  inline std::string to_string(MIRDerivativeType t)
+  {
+    return MIRDerivativeTypeNames.at(to_underlying(t));
+  }
+
   //////////////////////////////////////////////////////////////////////
   /////////////////// ATTENTION ////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////
