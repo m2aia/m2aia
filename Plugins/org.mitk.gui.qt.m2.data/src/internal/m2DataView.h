@@ -91,6 +91,7 @@ public:
   void InitBaselineCorrectionControls();
   void InitImageNormalizationControls();
   void InitImageSmoothingControls();
+  void InitMIRControls();
   
   
 
@@ -113,6 +114,9 @@ public slots:
   m2::BaselineCorrectionType GuiToBaselineCorrectionStrategyType();
   m2::ImageNormalizationStrategyType GuiToImageNormalizationStrategyType();
   m2::ImageSmoothingStrategyType GuiToImageSmoothingStrategyType();
+  m2::MIRAtmosphericCorrectionType GuiToMIRAtmosphericCorrectionType();
+  m2::MIRScatteringCorrectionType  GuiToMIRScatteringCorrectionType();
+  m2::MIRDerivativeType            GuiToMIRDerivativeType();
   
 
 signals:

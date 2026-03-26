@@ -361,6 +361,93 @@
     </widget>
    </item>
    <item>
+    <widget class="QGroupBox" name="groupBoxMIR">
+     <property name="toolTip">
+      <string>Mid-InfraRed specific pre-processing steps applied per-spectrum during image access initialization (MIR modality only).</string>
+     </property>
+     <property name="title">
+      <string>MIR pre-processing</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_MIR">
+      <item>
+       <layout class="QHBoxLayout" name="hLayoutMIRAtm">
+        <item>
+         <widget class="QLabel" name="labelMIRAtm">
+          <property name="minimumSize"><size><width>150</width><height>0</height></size></property>
+          <property name="maximumSize"><size><width>150</width><height>16777215</height></size></property>
+          <property name="text"><string>Atm. correction</string></property>
+          <property name="toolTip"><string>Suppress CO&#8322; and H&#8322;O-vapour bands by linear interpolation across the affected wavenumber ranges.</string></property>
+          <property name="indent"><number>0</number></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="CBMIRAtmosphericCorrection">
+          <property name="toolTip"><string>None: off.  Linear interpolation: bridge CO&#8322; (~2280-2400 cm&#8254;&#185;) and H&#8322;O vapour (~1500-1900, 3540-3900 cm&#8254;&#185;) bands with a straight-line ramp.</string></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="Line" name="lineMIR1">
+        <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="hLayoutMIRScat">
+        <item>
+         <widget class="QLabel" name="labelMIRScat">
+          <property name="minimumSize"><size><width>150</width><height>0</height></size></property>
+          <property name="maximumSize"><size><width>150</width><height>16777215</height></size></property>
+          <property name="text"><string>Scattering corr.</string></property>
+          <property name="toolTip"><string>Subtract a polynomial baseline to remove Mie-scattering offsets from tissue sections.</string></property>
+          <property name="indent"><number>0</number></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="CBMIRScatteringCorrection">
+          <property name="toolTip"><string>None: off.  Polynomial (degree 2): fit and subtract a least-squares quadratic baseline (EMSC-lite).</string></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="Line" name="lineMIR2">
+        <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ckMIRVectorNormalization">
+        <property name="text"><string>Vector (L&#8322;) normalisation</string></property>
+        <property name="toolTip"><string>Divide each spectrum by its Euclidean norm to remove intensity variation caused by sample thickness or detector sensitivity differences.</string></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="lineMIR3">
+        <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="hLayoutMIRDeriv">
+        <item>
+         <widget class="QLabel" name="labelMIRDeriv">
+          <property name="minimumSize"><size><width>150</width><height>0</height></size></property>
+          <property name="maximumSize"><size><width>150</width><height>16777215</height></size></property>
+          <property name="text"><string>Derivative</string></property>
+          <property name="toolTip"><string>Apply a spectral derivative to each spectrum before image generation (Step 5).</string></property>
+          <property name="indent"><number>0</number></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QComboBox" name="CBMIRDerivative">
+          <property name="toolTip"><string>None: off.  First: centred 1st-order finite difference.  Second: centred 2nd-order finite difference.</string></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="toolTip">
       <string>Create (ion) images by accumulation of intensities (pooling) along the spectral axis.</string>

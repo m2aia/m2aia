@@ -57,6 +57,58 @@ namespace m2
     itkSetEnumMacro(ImageAccessInitialized, bool);
     itkGetEnumMacro(ImageAccessInitialized, bool);
 
+    /**
+     * @brief Modality of this container image.
+     *   MSI – Mass Spectrometry Imaging (m/z axis)
+     *   MIR – Mid-InfraRed Spectral Imaging (wavenumber axis, cm⁻¹)
+     * The modality controls which pre-processing and image-generation
+     * steps are applied (e.g. absorbance conversion, derivative imaging).
+     */
+    itkSetEnumMacro(Modality, m2::ModalityType);
+    itkGetEnumMacro(Modality, m2::ModalityType);
+
+    // ── MIR-specific processing controls ──────────────────────────────────
+    // All three flags are only evaluated when Modality == MIR.  They default
+    // to off (None / false) so that existing code is unaffected; set them
+    // explicitly after constructing or loading a MIR container image.
+
+    /**
+     * @brief Step 2 – atmospheric band suppression strategy.
+     *
+     *  None                – skip (default)
+     *  LinearInterpolation – bridge CO₂ and H₂O bands with a linear ramp
+     */
+    itkSetEnumMacro(MIRAtmosphericCorrectionStrategy, m2::MIRAtmosphericCorrectionType);
+    itkGetEnumMacro(MIRAtmosphericCorrectionStrategy, m2::MIRAtmosphericCorrectionType);
+
+    /**
+     * @brief Step 3 – polynomial scattering (baseline) correction strategy.
+     *
+     *  None              – skip (default)
+     *  PolynomialDegree2 – subtract least-squares quadratic fit (EMSC-lite)
+     */
+    itkSetEnumMacro(MIRScatteringCorrectionStrategy, m2::MIRScatteringCorrectionType);
+    itkGetEnumMacro(MIRScatteringCorrectionStrategy, m2::MIRScatteringCorrectionType);
+
+    /**
+     * @brief Step 4 – per-spectrum vector (L₂) normalisation.
+     *
+     *  false – skip (default)
+     *  true  – divide each spectrum by its Euclidean norm
+     */
+    itkSetMacro(MIRVectorNormalization, bool);
+    itkGetConstReferenceMacro(MIRVectorNormalization, bool);
+
+    /**
+     * @brief Step 5 – spectral derivative.
+     *
+     *  None   – skip (default)
+     *  First  – centred first-order finite difference
+     *  Second – centred second-order finite difference
+     */
+    itkSetEnumMacro(MIRDerivativeStrategy, m2::MIRDerivativeType);
+    itkGetEnumMacro(MIRDerivativeStrategy, m2::MIRDerivativeType);
+
     void GetImage(double mz, double tol, const mitk::Image *mask, mitk::Image *img) const override;
     
 
@@ -88,6 +140,18 @@ namespace m2
   private:
     SpectrumVectorType m_Spectra;
     m2::SpectrumFormat m_ImportMode = m2::SpectrumFormat::ContinuousProfile;
+    /// @brief Imaging modality – defaults to MIR because the container uses a cm⁻¹ x-axis.
+    m2::ModalityType m_Modality = m2::ModalityType::MIR;
+    /// @brief Step 2: atmospheric band suppression (default: off).
+    m2::MIRAtmosphericCorrectionType m_MIRAtmosphericCorrectionStrategy =
+      m2::MIRAtmosphericCorrectionType::None;
+    /// @brief Step 3: polynomial scattering correction (default: off).
+    m2::MIRScatteringCorrectionType  m_MIRScatteringCorrectionStrategy =
+      m2::MIRScatteringCorrectionType::None;
+    /// @brief Step 4: per-spectrum vector (L₂) normalisation (default: off).
+    bool m_MIRVectorNormalization = false;
+    /// @brief Step 5: spectral derivative (default: off).
+    m2::MIRDerivativeType m_MIRDerivativeStrategy = m2::MIRDerivativeType::None;
     using m2::SpectrumImage::InternalClone;
     bool m_ImageAccessInitialized = false;
     bool m_ImageGeometryInitialized = false;

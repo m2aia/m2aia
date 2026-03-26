@@ -77,6 +77,8 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
   InitIntensityTransformationControls();
   InitImageNormalizationControls();
   InitImageSmoothingControls();
+  InitMIRControls();
+  m_Controls.groupBoxMIR->setVisible(true); // hide MIR controls until we have a better understanding of the use case and the necessary controls
 
   auto serviceRef = m2::UIUtils::Instance();
   connect(serviceRef, SIGNAL(UpdateImage(qreal, qreal)), this, SLOT(OnGenerateImageData(qreal, qreal)));
@@ -455,6 +457,104 @@ void m2DataView::InitImageSmoothingControls()
 }
 
 
+void m2DataView::InitMIRControls()
+{
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+
+  // ── Atmospheric correction combo box ──────────────────────────────────────
+  {
+    auto defaultVal = preferences->GetInt(
+      "m2aia.mir.AtmosphericCorrectionStrategy",
+      to_underlying(m2::MIRAtmosphericCorrectionType::None));
+    auto *cb = m_Controls.CBMIRAtmosphericCorrection;
+    for (unsigned int i = 0; i < m2::MIRAtmosphericCorrectionTypeNames.size(); ++i)
+      cb->addItem(m2::MIRAtmosphericCorrectionTypeNames[i].c_str(), {i});
+    cb->setCurrentIndex(defaultVal);
+    connect(cb, qOverload<int>(&QComboBox::currentIndexChanged), this,
+            [this, preferences](int)
+            {
+              preferences->PutInt("m2aia.mir.AtmosphericCorrectionStrategy",
+                                  m_Controls.CBMIRAtmosphericCorrection->currentData().toInt());
+            });
+  }
+
+  // ── Scattering correction combo box ───────────────────────────────────────
+  {
+    auto defaultVal = preferences->GetInt(
+      "m2aia.mir.ScatteringCorrectionStrategy",
+      to_underlying(m2::MIRScatteringCorrectionType::None));
+    auto *cb = m_Controls.CBMIRScatteringCorrection;
+    for (unsigned int i = 0; i < m2::MIRScatteringCorrectionTypeNames.size(); ++i)
+      cb->addItem(m2::MIRScatteringCorrectionTypeNames[i].c_str(), {i});
+    cb->setCurrentIndex(defaultVal);
+    connect(cb, qOverload<int>(&QComboBox::currentIndexChanged), this,
+            [this, preferences](int)
+            {
+              preferences->PutInt("m2aia.mir.ScatteringCorrectionStrategy",
+                                  m_Controls.CBMIRScatteringCorrection->currentData().toInt());
+            });
+  }
+
+  // ── Vector normalisation check box ────────────────────────────────────────
+  {
+    bool defaultVal = preferences->GetBool("m2aia.mir.VectorNormalization", false);
+    m_Controls.ckMIRVectorNormalization->setChecked(defaultVal);
+    connect(m_Controls.ckMIRVectorNormalization, &QCheckBox::toggled, this,
+            [this, preferences](bool checked)
+            {
+              preferences->PutBool("m2aia.mir.VectorNormalization", checked);
+            });
+  }
+
+  // ── Derivative combo box ──────────────────────────────────────────────────
+  {
+    auto defaultVal = preferences->GetInt(
+      "m2aia.mir.DerivativeStrategy",
+      to_underlying(m2::MIRDerivativeType::None));
+    auto *cb = m_Controls.CBMIRDerivative;
+    for (unsigned int i = 0; i < m2::MIRDerivativeTypeNames.size(); ++i)
+      cb->addItem(m2::MIRDerivativeTypeNames[i].c_str(), {i});
+    cb->setCurrentIndex(defaultVal);
+    connect(cb, qOverload<int>(&QComboBox::currentIndexChanged), this,
+            [this, preferences](int)
+            {
+              preferences->PutInt("m2aia.mir.DerivativeStrategy",
+                                  m_Controls.CBMIRDerivative->currentData().toInt());
+            });
+  }
+}
+
+m2::MIRAtmosphericCorrectionType m2DataView::GuiToMIRAtmosphericCorrectionType()
+{
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+  auto value = preferences->GetInt(
+    "m2aia.mir.AtmosphericCorrectionStrategy",
+    to_underlying(m2::MIRAtmosphericCorrectionType::None));
+  return static_cast<m2::MIRAtmosphericCorrectionType>(value);
+}
+
+m2::MIRScatteringCorrectionType m2DataView::GuiToMIRScatteringCorrectionType()
+{
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+  auto value = preferences->GetInt(
+    "m2aia.mir.ScatteringCorrectionStrategy",
+    to_underlying(m2::MIRScatteringCorrectionType::None));
+  return static_cast<m2::MIRScatteringCorrectionType>(value);
+}
+
+m2::MIRDerivativeType m2DataView::GuiToMIRDerivativeType()
+{
+  auto *preferencesService = mitk::CoreServices::GetPreferencesService();
+  auto *preferences = preferencesService->GetSystemPreferences();
+  auto value = preferences->GetInt(
+    "m2aia.mir.DerivativeStrategy",
+    to_underlying(m2::MIRDerivativeType::None));
+  return static_cast<m2::MIRDerivativeType>(value);
+}
+
 void m2DataView::InitIntensityTransformationControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
@@ -781,12 +881,20 @@ void m2DataView::ApplySettingsToImage(m2::SpectrumImage *data)
     data->SetBaseLineCorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
     data->SetUseToleranceInPPM(m_Controls.rbtnTolPPM->isChecked());
 
-    
+    // MIR-specific settings – only applied when the data is a SpectrumContainerImage
+    // in MIR modality.  Other image types ignore these controls.
+    if (auto mirData = dynamic_cast<m2::SpectrumContainerImage *>(data))
+    {
+      mirData->SetMIRAtmosphericCorrectionStrategy(GuiToMIRAtmosphericCorrectionType());
+      mirData->SetMIRScatteringCorrectionStrategy(GuiToMIRScatteringCorrectionType());
+      mirData->SetMIRVectorNormalization(m_Controls.ckMIRVectorNormalization->isChecked());
+      mirData->SetMIRDerivativeStrategy(GuiToMIRDerivativeType());
+    }
+
     // Initialize normalization image
     auto type = data->GetNormalizationStrategy();
     if(!data->GetNormalizationImageStatus(type))
       data->InitializeNormalizationImage(type);
-    
   }
 }
 
