@@ -161,7 +161,11 @@ namespace m2
      {"None", 0}, {"TIC", 1}, {"Sum", 2}, {"Mean", 3}, {"Max",4}, {"RMS",5}, {"Internal",6}, {"External", 7}};
 
   const std::map<const std::string, unsigned int> IMAGENORMALIZATION_MAPPINGS{
-     {"None", 0}, {"MinMax", 1}, {"zScore", 2}};
+    {"None", 0}, {"MinMax", 1}, {"zScore", 2},
+    {"ParetoScaling", 3}, {"RangeScaling", 4}, {"VastScaling", 5}};
+
+  const std::map<const std::string, unsigned int> IMAGESMOOTHING_MAPPINGS{
+    {"None", 0}, {"Median", 1}, {"Gaussian", 2}};
 
   const std::map<const std::string, unsigned int> POOLING_MAPPINGS{
     {"None", 0}, {"Mean", 1}, {"Median", 2}, {"Maximum", 3}, {"Sum", 4}};

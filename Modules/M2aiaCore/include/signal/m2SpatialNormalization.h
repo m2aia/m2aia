@@ -119,6 +119,18 @@ namespace m2
                     double mu,
                     double sigma)
     {
+      if (sigma == 0.0)
+      {
+        // Constant image: all valid pixels become 0 after centering; avoid division by zero.
+        auto maskIt = first_mask;
+        transform_if(
+          first,
+          last,
+          dest_first,
+          [mu](auto val) { return val - mu; },
+          [&maskIt](auto) { return *maskIt++ > 0; });
+        return;
+      }
       auto maskIt = first_mask;
       transform_if(
         first,
@@ -215,7 +227,9 @@ namespace m2
       maskIt = first_mask;
       double stddev = StdDev(first, last, maskIt, mean);
       maskIt = first_mask;
-      ApplyScore(first, last, maskIt, dest_first, mean, stddev / mean);
+      // sigma = stddev / mean; guard against mean == 0 (would produce NaN)
+      double sigma = (mean != 0.0) ? (stddev / mean) : 0.0;
+      ApplyScore(first, last, maskIt, dest_first, mean, sigma);
     }
 
     template <typename InputIterator, typename MaskIterator, typename OutputIterator>
