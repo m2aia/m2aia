@@ -309,21 +309,22 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
     mitkThrow() << "Please provide an image into which the data can be written.";
 
   const auto currentType = p->GetNormalizationStrategy();
-  mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
+  
   mitk::ImagePixelWriteAccessor<DisplayImagePixelType, 3> imageAccess(destImage);
-
   {
     auto d = destImage->GetDimensions();
     auto N = std::accumulate(d, d+destImage->GetDimension(), 1, std::multiplies<>());
     auto dataPointer = imageAccess.GetData();
     std::fill(dataPointer, dataPointer + N, 0);
   }
-
+  
   // Create the normalization image on access    
   if (!p->GetNormalizationImageStatus(currentType)){
     MITK_INFO << "Initialize Normalization Image of type " + m2::to_string(currentType);
     InitializeNormalizationImage(currentType);
   }
+
+  mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
 
   // Get the profile type
   const auto spectrumType = p->GetSpectrumType();
