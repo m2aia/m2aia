@@ -20,6 +20,7 @@ See LICENSE.txt for details.
 #include <numeric>
 #include <utility>
 #include <vector>
+#include <signal/m2Smoothing.h>
 
 namespace m2
 {
@@ -251,60 +252,45 @@ namespace m2
     }
 
     /**
-     * @brief Centred first-order finite-difference derivative.
+     * @brief Savitzky-Golay first derivative.
      *
-     * Replaces each element of @p ys with the centred first-order difference
-     *   dy[i] = (y[i+1] - y[i-1]) / 2
-     * Boundary elements use one-sided (forward/backward) differences so that
-     * the output length equals the input length.
+     * Fits a polynomial of degree @p polyOrder over a sliding window of
+     * half-width @p hws and evaluates its first derivative at every point.
+     * Boundary values are handled by constant-extension (clamping).
      *
-     * @tparam YVec Container of intensity values (float or double).
-     * @param ys    Intensity values (modified in-place).
+     * @tparam YVec     Container of intensity values (float or double).
+     * @param ys        Intensity values (modified in-place).
+     * @param hws       Half-window size (default 5 → 11-point window).
+     * @param polyOrder Polynomial degree for the fit (default 4).
      */
     template <class YVec>
-    void FirstDerivative(YVec &ys)
+    void FirstDerivative(YVec &ys, int hws = 5, int polyOrder = 4)
     {
-      const int n = static_cast<int>(ys.size());
-      if (n < 2)
+      if (static_cast<int>(ys.size()) < 2 * hws + 1)
         return;
-
-      using T = typename YVec::value_type;
-      YVec tmp(ys);
-
-      // Interior: centred difference
-      for (int i = 1; i < n - 1; ++i)
-        ys[i] = static_cast<T>((static_cast<double>(tmp[i]) - static_cast<double>(tmp[i - 1])));
-
-      // Boundaries: one-sided differences
-      ys[0]     = static_cast<T>(static_cast<double>(tmp[1])     - static_cast<double>(tmp[0]));
-      ys[n - 1] = static_cast<T>(static_cast<double>(tmp[n - 1]) - static_cast<double>(tmp[n - 2]));
+      auto kernel = m2::Signal::savitzkyGolayDerivativeKernel(hws, polyOrder, 1);
+      m2::Signal::filter(ys.begin(), ys.end(), kernel.begin(), kernel.end(), true);
     }
 
     /**
-     * @brief Centred second-order finite-difference derivative.
+     * @brief Savitzky-Golay second derivative.
      *
-     * Replaces each element of @p ys with the centred second-order difference
-     *   d2y[i] = y[i+1] - 2*y[i] + y[i-1]
-     * Boundary elements are set to zero (insufficient stencil points).
+     * Fits a polynomial of degree @p polyOrder over a sliding window of
+     * half-width @p hws and evaluates its second derivative at every point.
+     * Boundary values are handled by constant-extension (clamping).
      *
-     * @tparam YVec Container of intensity values (float or double).
-     * @param ys    Intensity values (modified in-place).
+     * @tparam YVec     Container of intensity values (float or double).
+     * @param ys        Intensity values (modified in-place).
+     * @param hws       Half-window size (default 5 → 11-point window).
+     * @param polyOrder Polynomial degree for the fit (default 4).
      */
     template <class YVec>
-    void SecondDerivative(YVec &ys)
+    void SecondDerivative(YVec &ys, int hws = 5, int polyOrder = 4)
     {
-      const int n = static_cast<int>(ys.size());
-      if (n < 3)
+      if (static_cast<int>(ys.size()) < 2 * hws + 1)
         return;
-
-      using T = typename YVec::value_type;
-      YVec tmp(ys);
-
-      ys[0]     = static_cast<T>(0);
-      ys[n - 1] = static_cast<T>(0);
-      for (int i = 1; i < n - 1; ++i)
-        ys[i] = static_cast<T>(
-          static_cast<double>(tmp[i + 1]) - 2.0 * static_cast<double>(tmp[i]) + static_cast<double>(tmp[i - 1]));
+      auto kernel = m2::Signal::savitzkyGolayDerivativeKernel(hws, polyOrder, 2);
+      m2::Signal::filter(ys.begin(), ys.end(), kernel.begin(), kernel.end(), true);
     }
 
   } // namespace Signal

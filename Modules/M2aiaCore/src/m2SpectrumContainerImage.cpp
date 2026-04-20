@@ -85,21 +85,11 @@ void m2::SpectrumContainerImage::GetImage(double x, double tol, const mitk::Imag
                          std::transform(ys_work.begin(), ys_work.end(), ys_work.begin(),
                                         [](double a) { return std::pow(10.0, -a) * 100.0; });
 
-                         // Step 2 – Atmospheric band suppression
-                         if (GetMIRAtmosphericCorrectionStrategy() ==
-                             m2::MIRAtmosphericCorrectionType::LinearInterpolation)
-                           m2::Signal::SuppressAtmosphericBands(xs, ys_work, m2::Signal::DefaultAtmosphericBands());
-
-                         // Step 3 – Polynomial scattering correction
-                         if (GetMIRScatteringCorrectionStrategy() ==
-                             m2::MIRScatteringCorrectionType::PolynomialDegree2)
-                           m2::Signal::PolynomialScatteringCorrection(xs, ys_work, 2);
-
-                         // Step 4 – Vector (L₂) normalisation
+                         // Step 2 – Vector (L₂) normalisation
                          if (GetMIRVectorNormalization())
                            m2::Signal::VectorNormalize(ys_work);
 
-                         // Step 5 – Spectral derivative
+                         // Step 3 – Spectral derivative
                          switch (GetMIRDerivativeStrategy())
                          {
                            case m2::MIRDerivativeType::First:
@@ -121,7 +111,7 @@ void m2::SpectrumContainerImage::GetImage(double x, double tol, const mitk::Imag
 
                        // Image generation: standard range pooling.
                        // For MIR, the derivative has already been applied to ys_work as
-                       // preprocessing Step 5 (if enabled) above.
+                       // preprocessing Step 3 (if enabled) above.
                        imageAccess.SetPixelByIndex(spectrum.index, Signal::RangePooling<float>(s, e, GetRangePoolingStrategy()));
                      }
                    });
@@ -436,21 +426,11 @@ void m2::SpectrumContainerImage::InitializeImageAccess()
           std::transform(std::begin(ys_work), std::end(ys_work), std::begin(ys_work),
                          [](double absorbance) { return std::pow(10.0, -absorbance) * 100.0; });
 
-          // Step 2 – Atmospheric band suppression
-          if (GetMIRAtmosphericCorrectionStrategy() ==
-              m2::MIRAtmosphericCorrectionType::LinearInterpolation)
-            m2::Signal::SuppressAtmosphericBands(xs, ys_work, m2::Signal::DefaultAtmosphericBands());
-
-          // Step 3 – Polynomial scattering correction
-          if (GetMIRScatteringCorrectionStrategy() ==
-              m2::MIRScatteringCorrectionType::PolynomialDegree2)
-            m2::Signal::PolynomialScatteringCorrection(xs, ys_work, 2);
-
-          // Step 4 – Vector (L₂) normalisation
+          // Step 2 – Vector (L₂) normalisation
           if (GetMIRVectorNormalization())
             m2::Signal::VectorNormalize(ys_work);
 
-          // Step 5 – Spectral derivative
+          // Step 3 – Spectral derivative
           switch (GetMIRDerivativeStrategy())
           {
             case m2::MIRDerivativeType::First:

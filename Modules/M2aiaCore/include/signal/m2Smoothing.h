@@ -91,6 +91,50 @@ namespace m2
       return std::vector<double>(b, e);
     }
 
+    /**
+     * @brief Compute a Savitzky-Golay derivative kernel.
+     *
+     * Fits a polynomial of degree @p polyOrder to a sliding window of
+     * half-width @p hws and returns the convolution kernel that evaluates
+     * the @p derivOrder -th derivative of the polynomial at the window centre.
+     *
+     * The kernel is scaled by derivOrder! so that convolving it with uniformly
+     * spaced data (step = 1) yields the true derivative value.
+     *
+     * @param hws        Half-window size (window = 2*hws + 1 points).
+     * @param polyOrder  Polynomial degree (must be >= derivOrder).
+     * @param derivOrder Derivative order (1 = first, 2 = second).
+     */
+    inline std::vector<double> savitzkyGolayDerivativeKernel(int hws, int polyOrder, int derivOrder)
+    {
+      const int nm = 2 * hws + 1;
+
+      // Vandermonde matrix X: X[r,c] = (r - hws)^c
+      vnl_matrix<double> X(nm, polyOrder + 1);
+      for (int r = 0; r < nm; ++r)
+      {
+        double pos = static_cast<double>(r - hws);
+        double pw  = 1.0;
+        for (int c = 0; c <= polyOrder; ++c, pw *= pos)
+          X.put(r, c, pw);
+      }
+
+      // T = (X^T X)^{-1} X^T  — row k gives SG coefficients for polynomial term k
+      auto T = vnl_matrix_inverse<double>(X.transpose() * X) * X.transpose();
+
+      // Scale row derivOrder by derivOrder! to recover the true derivative
+      double factorial = 1.0;
+      for (int k = 2; k <= derivOrder; ++k)
+        factorial *= k;
+
+      auto row = T.get_row(derivOrder);
+      std::vector<double> kernel(nm);
+      for (int i = 0; i < nm; ++i)
+        kernel[i] = row[i] * factorial;
+
+      return kernel;
+    }
+
     template <class DataIterType, class KernelIterType>
     static void filter(
       DataIterType start, DataIterType end, KernelIterType kernel_start, KernelIterType kernel_end, bool extend = true)

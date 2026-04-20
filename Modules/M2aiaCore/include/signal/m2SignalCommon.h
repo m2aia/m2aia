@@ -189,8 +189,8 @@ namespace m2
    * @brief Controls spectral derivative applied after all other MIR pre-processing steps.
    *
    *  None   – no derivative (default)
-   *  First  – centred first-order finite difference
-   *  Second – centred second-order finite difference
+   *  First  – Savitzky-Golay first derivative (hws=5, poly=4)
+   *  Second – Savitzky-Golay second derivative (hws=5, poly=4)
    */
   enum class MIRDerivativeType : unsigned int
   {
