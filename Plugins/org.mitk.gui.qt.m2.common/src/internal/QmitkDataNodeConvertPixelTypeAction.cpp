@@ -19,6 +19,9 @@ found in the LICENSE file.
 
 #include <itkRescaleIntensityImageFilter.h>
 #include <itkImageIOBase.h>
+#include <itkImageRegionIterator.h>
+
+#include <cmath>
 
 #include <QString>
 #include <QAction>
@@ -97,6 +100,18 @@ namespace m2
       using SourceImageType = typename std::remove_pointer<decltype(sourceImage)>::type;
       using ImageType = typename std::remove_pointer<T>::type;
       using FilterType = itk::RescaleIntensityImageFilter<SourceImageType, ImageType>;
+      
+      // Replace inf and nan values with 0
+      itk::ImageRegionIterator<SourceImageType> it(sourceImage, sourceImage->GetLargestPossibleRegion());
+      for (it.GoToBegin(); !it.IsAtEnd(); ++it)
+      {
+        auto value = it.Get();
+        if (std::isnan(value) || std::isinf(value))
+        {
+          it.Set(0);
+        }
+      }
+      
       mitk::Image::Pointer outImage;
       auto filter = FilterType::New();
       filter->SetInput(sourceImage);

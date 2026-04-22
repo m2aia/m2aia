@@ -4,20 +4,23 @@ set(SRC_CPP_FILES
 
 set(INTERNAL_CPP_FILES
   org_mitk_gui_qt_m2_data_Activator.cpp
-  m2Data.cpp
-  m2DataTools.cpp
+  m2DataView.cpp
+  m2DataToolsView.cpp
+  m2DataPlotView.cpp
 )
 
 set(UI_FILES
-  src/internal/m2Data.ui
-  src/internal/m2DataTools.ui  
+  src/internal/m2DataView.ui
+  src/internal/m2DataToolsView.ui
+  src/internal/m2DataPlotView.ui
   src/Qm2OpenSlideImageIOHelperDialog.ui
 )
 
 set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_data_Activator.h
-  src/internal/m2Data.h
-  src/internal/m2DataTools.h
+  src/internal/m2DataView.h
+  src/internal/m2DataToolsView.h
+  src/internal/m2DataPlotView.h
   src/Qm2OpenSlideImageIOHelperDialog.h
 )
 

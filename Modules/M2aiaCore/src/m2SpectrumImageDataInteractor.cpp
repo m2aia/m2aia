@@ -54,7 +54,7 @@ mitk::DataStorage *m2::SpectrumImageDataInteractor::GetDataStorage() const
   return m_DataStorage;
 }
 
-bool m2::SpectrumImageDataInteractor::FilterEvents(mitk::InteractionEvent *interactionEvent, mitk::DataNode *)
+bool m2::SpectrumImageDataInteractor::FilterEvents(mitk::InteractionEvent *interactionEvent, mitk::DataNode * )
 {
   if (dynamic_cast<mitk::MouseDoubleClickEvent *>(interactionEvent))
   {
@@ -70,6 +70,8 @@ bool m2::SpectrumImageDataInteractor::FilterEvents(mitk::InteractionEvent *inter
         mitk::NodePredicateNot::New(mitk::TNodePredicateDataType<m2::SpectrumImageStack>::New())));
       for (auto imageNode : *imageNodes)
       {
+        if(!imageNode->IsVisible(nullptr))
+          continue;
         auto image = dynamic_cast<m2::SpectrumImage *>(imageNode->GetData());
         itk::Index<3> index;
 
@@ -112,7 +114,25 @@ bool m2::SpectrumImageDataInteractor::FilterEvents(mitk::InteractionEvent *inter
 
 mitk::DataNode *m2::SpectrumImageDataInteractor::FindSingleSpectrumDataNode(mitk::DataNode * node)
 {
-  return this->GetDataStorage()->GetNamedDerivedNode((node->GetName()+".single_spectrum").c_str(), node);
+  const auto name = node->GetName() + ".single_spectrum";
+  auto existingNode = this->GetDataStorage()->GetNamedDerivedNode(name.c_str(), node);
+  if (existingNode)
+    return existingNode;
+
+  m2::SpectrumImage *image = dynamic_cast<m2::SpectrumImage *>(node->GetData());
+  if (!image)
+    return nullptr;
+  
+  // Create a new node with an empty IntervalVector
+  auto intervals = m2::IntervalVector::New();
+  intervals->SetType(image->GetSpectrumType().Format);
+  intervals->SetInfo("single spectrum");
+
+  auto newNode = mitk::DataNode::New();
+  newNode->SetName(name);
+  newNode->SetData(intervals);
+  this->GetDataStorage()->Add(newNode, node);
+  return newNode;
 }
 
 void m2::SpectrumImageDataInteractor::SelectSingleSpectrumByPoint(mitk::StateMachineAction *, mitk::InteractionEvent *)

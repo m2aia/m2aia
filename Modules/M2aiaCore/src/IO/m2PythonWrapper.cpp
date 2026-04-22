@@ -50,7 +50,8 @@ extern "C"
 
   M2AIACORE_EXPORT void GetImageArrayFloat32(m2::sys::ImageHandle *handle, double mz, double tol, float *data)
   {
-    handle->Image->GetImage(mz, tol, nullptr, handle->Image);
+    auto mask = handle->Image->GetMultilabelSegmentation()->GetGroupImage(0);
+    handle->Image->GetImage(mz, tol, mask, handle->Image);
     auto N = GetNumberOfPixelsInImage(handle);
     mitk::ImageReadAccessor acc(handle->Image.GetPointer());
     std::copy((m2::DisplayImagePixelType *)(acc.GetData()), (m2::DisplayImagePixelType *)(acc.GetData()) + N, data);
@@ -58,7 +59,8 @@ extern "C"
 
   M2AIACORE_EXPORT void GetImageArrayFloat64(m2::sys::ImageHandle *handle, double mz, double tol, double *data)
   {
-    handle->Image->GetImage(mz, tol, nullptr, handle->Image);
+    auto mask = handle->Image->GetMultilabelSegmentation()->GetGroupImage(0);
+    handle->Image->GetImage(mz, tol, mask, handle->Image);
     auto N = GetNumberOfPixelsInImage(handle);
     mitk::ImageReadAccessor acc(handle->Image.GetPointer());
     std::copy((m2::DisplayImagePixelType *)(acc.GetData()), (m2::DisplayImagePixelType *)(acc.GetData()) + N, data);
@@ -66,7 +68,7 @@ extern "C"
 
   M2AIACORE_EXPORT void GetMaskArray(m2::sys::ImageHandle *handle, mitk::Label::PixelType *data)
   {
-    auto mask = handle->Image->GetMaskImage();
+    auto mask = handle->Image->GetMultilabelSegmentation()->GetGroupImage(0);
     auto N = GetNumberOfPixelsInImage(handle);
     mitk::ImageReadAccessor acc(mask);
     std::copy((mitk::Label::PixelType *)(acc.GetData()), (mitk::Label::PixelType *)(acc.GetData()) + N, data);
@@ -252,6 +254,19 @@ extern "C"
 
     handle->Image->SetIntensityTransformationStrategy(
       static_cast<m2::IntensityTransformationType>(m2::INTENSITYTRANSFORMATION_MAPPINGS.at(sm_s)));
+  }
+
+  M2AIACORE_EXPORT void SetImageNormalization(m2::sys::ImageHandle *handle, const char *sm_s)
+  {
+    handle->Image->SetImageNormalizationStrategy(
+      static_cast<m2::ImageNormalizationStrategyType>(m2::IMAGENORMALIZATION_MAPPINGS.at(sm_s)));
+
+  }
+
+  M2AIACORE_EXPORT void SetImageSmoothing(m2::sys::ImageHandle *handle, const char *sm_s)
+  {
+    handle->Image->SetImageSmoothingStrategy(
+      static_cast<m2::ImageSmoothingStrategyType>(m2::IMAGESMOOTHING_MAPPINGS.at(sm_s)));
   }
 
   M2AIACORE_EXPORT char *GetMetaDataDictionary(m2::sys::ImageHandle *handle)

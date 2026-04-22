@@ -245,7 +245,7 @@ namespace m2
     // Output file stream for ibd
     const auto *input = static_cast<const m2::SpectrumImage *>(this->GetInput());
     // auto nonConst_input = const_cast<m2::ImzMLSpectrumImage *>(input);
-    mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType> macc(input->GetMaskImage());
+    mitk::ImagePixelReadAccessor<mitk::Label::PixelType> macc(input->GetMultilabelSegmentation()->GetGroupImage(0));
 
     auto numPixels =
       std::accumulate(input->GetDimensions(), input->GetDimensions() + 3, 1, std::multiplies<unsigned int>());
@@ -489,7 +489,7 @@ namespace m2
         }
 
         auto nonConst_input = const_cast<m2::ImzMLSpectrumImage *>(input);
-        mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType> macc(nonConst_input->GetMaskImage());
+        mitk::ImagePixelReadAccessor<mitk::Label::PixelType> macc(nonConst_input->GetMultilabelSegmentation()->GetGroupImage(0));
 
         context["mz_data_type_code"] = TextToCodeMap[context["mz_data_type"]];
         context["int_data_type_code"] = TextToCodeMap[context["int_data_type"]];
@@ -760,19 +760,27 @@ namespace m2
     if (itksys::SystemTools::FileExists(maskPath))
     {
       auto maskData = mitk::IOUtil::Load(maskPath).at(0);
-      if (auto maskImage = dynamic_cast<mitk::Image *>(maskData.GetPointer())){
-        if(ValidateChildImage(object, maskImage)){
-          if (auto lsImage = dynamic_cast<mitk::LabelSetImage *>(maskData.GetPointer()))
-          {
-            object->SetMaskImage(lsImage);
-          }
-          else
-          {
-            auto newLsImage = mitk::LabelSetImage::New();
-            newLsImage->InitializeByLabeledImage(maskImage);
-            object->SetMaskImage(newLsImage);
-          }
-        } 
+      
+      // Try to cast to MultiLabelSegmentation first
+      if (auto lsImage = dynamic_cast<mitk::MultiLabelSegmentation *>(maskData.GetPointer()))
+      {
+        auto groupImage = lsImage->GetGroupImage(0);
+        if (ValidateChildImage(object, groupImage))
+        {
+          // Store the MultiLabelSegmentation directly
+          object->SetMultilabelSegmentation(lsImage);
+        }
+      }
+      // Otherwise, convert regular Image to MultiLabelSegmentation
+      else if (auto maskImage = dynamic_cast<mitk::Image *>(maskData.GetPointer()))
+      {
+        if (ValidateChildImage(object, maskImage))
+        {
+          auto newLsImage = mitk::MultiLabelSegmentation::New();
+          newLsImage->InitializeByLabeledImage(maskImage);
+          // Store the MultiLabelSegmentation
+          object->SetMultilabelSegmentation(newLsImage);
+        }
       }
     }
 
@@ -818,9 +826,11 @@ namespace m2
           if (externalImage->GetPixelType().GetComponentType() == mitk::MakeScalarPixelType<double>().GetComponentType())
           {
             std::copy(static_cast<const double *>(racc.GetData()), static_cast<const double *>(racc.GetData()) + numPixelsExternal, wacc.GetData());
+            object->SetNormalizationImageStatus(type, true);
           }else if(externalImage->GetPixelType().GetComponentType() == mitk::MakeScalarPixelType<float>().GetComponentType())
           {
             std::copy(static_cast<const float *>(racc.GetData()), static_cast<const float *>(racc.GetData()) + numPixelsExternal, wacc.GetData());
+            object->SetNormalizationImageStatus(type, true);
           }
         }
       }

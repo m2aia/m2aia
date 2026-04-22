@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="100"
+   height="100"
+   viewBox="0 0 26.458333 26.458334"
+   version="1.1"
+   xmlns="http://www.w3.org/2000/svg">
+  <g>
+    <!-- Connected components icon: several colored blobs connected by lines -->
+    <circle cx="5"  cy="5"  r="3.5" style="fill:#e07b39;opacity:0.9"/>
+    <circle cx="21" cy="5"  r="3.5" style="fill:#4ea3d4;opacity:0.9"/>
+    <circle cx="13" cy="13" r="3.5" style="fill:#6abf69;opacity:0.9"/>
+    <circle cx="5"  cy="21" r="3.5" style="fill:#e07b39;opacity:0.9"/>
+    <circle cx="21" cy="21" r="3.5" style="fill:#a56fbf;opacity:0.9"/>
+    <line x1="5"  y1="5"  x2="13" y2="13" style="stroke:#888;stroke-width:1"/>
+    <line x1="21" y1="5"  x2="13" y2="13" style="stroke:#888;stroke-width:1"/>
+    <line x1="5"  y1="21" x2="13" y2="13" style="stroke:#888;stroke-width:1"/>
+    <line x1="21" y1="21" x2="13" y2="13" style="stroke:#888;stroke-width:1"/>
+  </g>
+</svg>

@@ -147,7 +147,8 @@ void m2Position::Move(std::array<float, 2> vec)
             MoveImage(derivedImage, vec);
           }
         }
-        mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
+        if (m_Controls.chkAutoFitView->isChecked())
+          mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
         RequestRenderWindowUpdate();
       }
     }
@@ -208,7 +209,8 @@ void m2Position::Mirror(int w)
             MirrorImage(derivedImage, w);
           }
         }
-        mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
+        if (m_Controls.chkAutoFitView->isChecked())
+          mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
         RequestRenderWindowUpdate();
       }
       

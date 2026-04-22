@@ -137,6 +137,29 @@ namespace m2
     return 0;
   }
 
+  /**
+   * @brief Modality of the spectrum image data.
+   *   - MSI : Mass Spectrometry Imaging     (m/z axis, Da)
+   *   - MIR : Mid-InfraRed spectral imaging  (wavenumber axis, cm⁻¹)
+   */
+  enum class ModalityType : unsigned int
+  {
+    MSI = 0, ///< Mass Spectrometry Imaging
+    MIR = 1  ///< Mid-InfraRed (FTIR) Spectral Imaging
+  };
+
+  inline std::string to_string(const ModalityType &type) noexcept
+  {
+    switch (type)
+    {
+      case ModalityType::MSI:
+        return "MSI";
+      case ModalityType::MIR:
+        return "MIR";
+    }
+    return "";
+  }
+
   inline double MicroMeterToMilliMeter(double x)
   {
     return x * 10e-4;

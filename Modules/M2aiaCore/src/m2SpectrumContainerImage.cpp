@@ -21,6 +21,12 @@ See LICENSE.txt for details.
 #include <mitkImagePixelWriteAccessor.h>
 #include <mitkLabelSetImage.h>
 #include <mitkProperties.h>
+#include <mitkImageCast.h>
+
+#include <itkCastImageFilter.h>
+#include <itkMedianImageFilter.h>
+#include <itkDiscreteGaussianImageFilter.h>
+
 #include <signal/m2Baseline.h>
 #include <signal/m2Normalization.h>
 #include <signal/m2PeakDetection.h>
@@ -28,6 +34,7 @@ See LICENSE.txt for details.
 #include <signal/m2Pooling.h>
 #include <signal/m2RunningMedian.h>
 #include <signal/m2Smoothing.h>
+#include <signal/m2MIRProcessing.h>
 
 void m2::SpectrumContainerImage::GetImage(double x, double tol, const mitk::Image *mask, mitk::Image *destImage) const
 {
@@ -37,10 +44,10 @@ void m2::SpectrumContainerImage::GetImage(double x, double tol, const mitk::Imag
   // accessors
   mitk::ImagePixelWriteAccessor<DisplayImagePixelType, 3> imageAccess(destImage);
 
-  std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>> maskAccess;
+  std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::Label::PixelType, 3>> maskAccess;
 
   if (mask)
-    maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>(mask));
+    maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::Label::PixelType, 3>(mask));
   
   GetPropertyList()->SetProperty("cm¯¹", mitk::DoubleProperty::New(x));
   GetPropertyList()->SetProperty("tol", mitk::DoubleProperty::New(tol));
@@ -63,23 +70,49 @@ void m2::SpectrumContainerImage::GetImage(double x, double tol, const mitk::Imag
                      for (unsigned int i = a; i < b; ++i)
                      {
                        auto &spectrum = m_Spectra[i];
-                       auto &ys = spectrum.data;
+
+                       // For MIR mode, build a preprocessed copy on-the-fly from the raw
+                       // absorbance data so that changes to preprocessing settings take
+                       // effect immediately without requiring a data reload.
+                       std::vector<float> ys_work;
+                       const std::vector<float> *ys_ptr = &spectrum.data;
+
+                       if (GetModality() == m2::ModalityType::MIR)
+                       {
+                         ys_work = spectrum.data;
+
+                         // Step 1 – Absorbance → %T
+                         std::transform(ys_work.begin(), ys_work.end(), ys_work.begin(),
+                                        [](double a) { return std::pow(10.0, -a) * 100.0; });
+
+                         // Step 2 – Vector (L₂) normalisation
+                         if (GetMIRVectorNormalization())
+                           m2::Signal::VectorNormalize(ys_work);
+
+                         // Step 3 – Spectral derivative
+                         switch (GetMIRDerivativeStrategy())
+                         {
+                           case m2::MIRDerivativeType::First:
+                             m2::Signal::FirstDerivative(ys_work);
+                             break;
+                           case m2::MIRDerivativeType::Second:
+                             m2::Signal::SecondDerivative(ys_work);
+                             break;
+                           default:
+                             break;
+                         }
+
+                         ys_ptr = &ys_work;
+                       }
+
+                       const auto &ys = *ys_ptr;
                        auto s = std::next(std::begin(ys), subRes.first);
                        auto e = std::next(std::begin(ys), subRes.first + subRes.second);
 
-
-                      if(std::distance(s,e)>=2){
-                        
-
-                        auto mean_derivative = std::inner_product(
-                          std::next(s, 1), e, s,
-                          0.0,
-                          std::plus<>(),
-                          [](auto a, auto b) { return a - b; }
-                        ) / double(std::distance(s, e) - 1);
-                        imageAccess.SetPixelByIndex(spectrum.index, mean_derivative);
-                      }else
-                        imageAccess.SetPixelByIndex(spectrum.index, Signal::RangePooling<float>(s, e, GetRangePoolingStrategy()));
+                       // Image generation: standard range pooling.
+                       // For MIR, the derivative has already been applied to ys_work as
+                       // preprocessing Step 3 (if enabled) above.
+                       imageAccess.SetPixelByIndex(spectrum.index, Signal::RangePooling<float>(s, e, GetRangePoolingStrategy()));
                      }
                    });
 
@@ -114,6 +147,52 @@ void m2::SpectrumContainerImage::GetImage(double x, double tol, const mitk::Imag
         break;
       }
     }
+
+
+    // Spatial Smoothing
+    switch(GetImageSmoothingStrategy()){
+    case m2::ImageSmoothingStrategyType::Median:
+    {
+      using ItkImageType = itk::Image<DisplayImagePixelType, 3>;
+      using MedianFilterType = itk::MedianImageFilter<ItkImageType, ItkImageType>;
+      auto medianFilter = MedianFilterType::New();
+      ItkImageType::Pointer itkImage = ItkImageType::New();
+      mitk::CastToItkImage(destImage->Clone(), itkImage);
+      medianFilter->SetInput(itkImage);
+      MedianFilterType::InputSizeType radius;
+      radius.Fill(1); // Set the radius for the median filter
+      medianFilter->SetRadius(radius);
+      medianFilter->Update();
+
+      // Copy the filtered image back to the destination image
+      auto filteredImage = medianFilter->GetOutput();
+      std::copy(filteredImage->GetBufferPointer(), filteredImage->GetBufferPointer() + bufferN, imageAccess.GetData());
+      break;
+    }
+    case m2::ImageSmoothingStrategyType::Gaussian:
+    {
+      using ItkImageType = itk::Image<DisplayImagePixelType, 3>;
+      using GaussianFilterType = itk::DiscreteGaussianImageFilter<ItkImageType, ItkImageType>;
+      auto gaussianFilter = GaussianFilterType::New();
+      ItkImageType::Pointer itkImage = ItkImageType::New();
+      mitk::CastToItkImage(destImage->Clone(), itkImage);
+      auto spacing = itkImage->GetSpacing();
+      double variance = std::pow(spacing[0]*0.66, 2);
+      gaussianFilter->SetVariance(variance);
+      gaussianFilter->SetInput(itkImage);
+      gaussianFilter->Update();
+
+      // Copy the filtered image back to the destination image
+      auto filteredImage = gaussianFilter->GetOutput();
+      std::copy(filteredImage->GetBufferPointer(), filteredImage->GetBufferPointer() + bufferN, imageAccess.GetData());
+      break;
+    }
+    case m2::ImageSmoothingStrategyType::None:
+    default:
+    {
+      break;
+    }
+  }
 }
 
 void m2::SpectrumContainerImage::InitializeProcessor()
@@ -190,11 +269,8 @@ void m2::SpectrumContainerImage::InitializeGeometry()
   }
 
   {
-    mitk::LabelSetImage::Pointer image = mitk::LabelSetImage::New();
-    SetMaskImage(image.GetPointer());
-
+    mitk::MultiLabelSegmentation::Pointer image = mitk::MultiLabelSegmentation::New();
     image->Initialize((mitk::Image *)this);
-    
 
     mitk::Color color;
     color.Set(0, 1, 0);
@@ -205,6 +281,9 @@ void m2::SpectrumContainerImage::InitializeGeometry()
     label->SetLocked(true);
     label->SetValue(1);
     image->AddLabel(label,0);
+    
+    // Clone the group image to keep it alive after the MultiLabelSegmentation goes out of scope
+    SetMultilabelSegmentation(image);
   }
 
   for( auto type : m2::NormalizationStrategyTypeList){
@@ -282,7 +361,7 @@ void m2::SpectrumContainerImage::InitializeImageAccess()
   using namespace m2;
 
 
-  auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType, 3>>(GetMaskImage());
+  auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<mitk::Label::PixelType, 3>>(GetMultilabelSegmentation()->GetGroupImage(0));
   auto accIndex = std::make_shared<mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3>>(GetIndexImage());
 
     const auto currentType = GetNormalizationStrategy();
@@ -331,17 +410,44 @@ void m2::SpectrumContainerImage::InitializeImageAccess()
       for (unsigned long int i = a; i < b; i++)
       {
         auto &spectrum = spectra[i];
-        auto &ys = spectrum.data;
-        
-        std::transform(std::begin(ys), std::end(ys), std::begin(ys), [](double absorbance) {
-          return std::pow(10.0, -absorbance) * 100.0;
-        });
-        
-        // double t0 = 0.01;
-        // auto trans =  [t0](double x){return std::pow(10.0,-std::log10((x/t0)/100.0))*100.0;};
 
-        // std::transform(std::begin(ys), std::end(ys), std::begin(ys), trans);
-        
+        // For MIR data we work on a local copy so that spectrum.data always
+        // retains the raw absorbance values.  This allows GetImage() to re-apply
+        // the preprocessing on-the-fly whenever the settings change.
+        // For MSI data we still operate on the vector directly (existing behaviour).
+        std::vector<float> ys_work;
+        auto *ys_ptr = &spectrum.data;
+
+        if (GetModality() == m2::ModalityType::MIR)
+        {
+          ys_work = spectrum.data; // shallow copy – raw data stays untouched
+
+          // Step 1 – Absorbance → Percent Transmittance (%T = 10^(−A) × 100)
+          std::transform(std::begin(ys_work), std::end(ys_work), std::begin(ys_work),
+                         [](double absorbance) { return std::pow(10.0, -absorbance) * 100.0; });
+
+          // Step 2 – Vector (L₂) normalisation
+          if (GetMIRVectorNormalization())
+            m2::Signal::VectorNormalize(ys_work);
+
+          // Step 3 – Spectral derivative
+          switch (GetMIRDerivativeStrategy())
+          {
+            case m2::MIRDerivativeType::First:
+              m2::Signal::FirstDerivative(ys_work);
+              break;
+            case m2::MIRDerivativeType::Second:
+              m2::Signal::SecondDerivative(ys_work);
+              break;
+            default:
+              break;
+          }
+
+          ys_ptr = &ys_work;
+        }
+
+        auto &ys = *ys_ptr;
+
         accNorm->SetPixelByIndex(spectrum.index, std::accumulate(std::begin(ys),
                                                                  std::end(ys),
                                                                  0.0,
@@ -352,9 +458,6 @@ void m2::SpectrumContainerImage::InitializeImageAccess()
 
         std::transform(std::begin(ys), std::end(ys), sumT.at(t).begin(), sumT.at(t).begin(), plus);
         std::transform(std::begin(ys), std::end(ys), skylineT.at(t).begin(), skylineT.at(t).begin(), maximum);
-
-
-
       }
     });
 
@@ -389,8 +492,8 @@ void m2::SpectrumContainerImage::InitializeImageAccess()
   // accumulate valid spectra defined by mask image
   auto N = std::accumulate(accMask->GetData(),
                            accMask->GetData() + GetSpectra().size(),
-                           mitk::LabelSetImage::PixelType(0),
-                           [](const auto &a, const auto &b) -> mitk::LabelSetImage::PixelType { return a + (b > 0); });
+                           mitk::Label::PixelType(0),
+                           [](const auto &a, const auto &b) -> mitk::Label::PixelType { return a + (b > 0); });
 
   for (unsigned int t = 0; t < GetNumberOfThreads(); ++t)
     std::transform(
@@ -411,6 +514,11 @@ m2::SpectrumContainerImage::SpectrumContainerImage()
 {
   MITK_INFO << GetStaticNameOfClass() << " created!";
 
-  m_SpectrumType.XAxisLabel = "cm¯¹";
+  // Default configuration for Mid-InfraRed (FTIR) spectral imaging.
+  // Use SetModality(m2::ModalityType::MSI) after construction to switch to
+  // Mass Spectrometry Imaging mode, which uses m/z instead of wavenumber.
+  m_SpectrumType.XAxisLabel = "cm\u00af\u00b9";
   m_SpectrumType.Format = m2::SpectrumFormat::ContinuousProfile;
+  m_Modality = m2::ModalityType::MIR;
+  MITK_INFO << GetStaticNameOfClass() << " modality: " << m2::to_string(m_Modality);
 }

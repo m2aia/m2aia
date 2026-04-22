@@ -1,86 +1,300 @@
 /**
-\page org_mitk_views_m2_data The M²aia Data View
-
-\imageMacro{icon_data.svg, "Icon of the M²aia Data View", 3}
-
+\page org_mitk_views_m2_data M2aia Data View and Data Tools View
 
 \tableofcontents
 
-\section m2_DATA_Introduction Introduction
-This is the main view of the M²aia extension. In the "Spectrum Imaging" perspective this view is attached to the window layout and can't be closed.
-It provides accessible controls for the signal processing methods. Before loading any kind of spectrum data, this view has to be initialized (once opened in a new M²aia session). 
-It will trigger image initialization and the creation of overview spectra and normalization maps.\n\n
+\section m2data_overview Overview
 
-\section m2_DATA_Preferences Preferences
-Before start working, take a look at the preferences menu (Application menu>Window->Preferences or CTRL+P). 
-Here you can find helpful features and, if required, provide paths executables for the registration utilities.
-If elastix is provided in the system PATH environment variable, it can be skipped.
+The <b>Data View</b> and the <b>Data Tools View</b> are the two central control panels for working
+with mass spectrometry imaging (MSI) datasets in M2aia.  Open them via
+<em>Window &rarr; Show View</em> or the perspective toolbar.
 
-\section m2_DATA_Import Image Import
-M²aia can handle Mass spectrometry image (*.imzML) and Infrared Spectroscopy image (*.fsm) data. 
-Depending on the data structures, different artifacts are generated on image import:\n
-<ul>
-    <li>Profile Data: Mean and overviews spectra, as well as the normalization maps, are calculated.</li>
-    <li>Centroid Data: Binning is applied to all kind of centroid data. Number of bins can be adapted in the preferences.</li>
-</ul>
-\remark Binning is only applied for centroid visualization in the spectrum view. Data access, e.g. for imaging, will use raw data.\n\n
+- The <b>Data View</b> controls how ion images are generated and which signal-processing
+  steps are applied before pixels are rendered.
+- The <b>Data Tools View</b> provides dataset-level utilities: level-window equalisation,
+  mosaic / tiling layout, image alignment, and a colour-bar annotation.
 
+\section m2data_dataview Data View
 
-\section m2_DATA_SignalProcessing Signal processing
+\subsection m2data_dataview_ionimage Creating an Ion Image
 
-\remark Due to M²aia's lazy loading strategy (load MSI data only on demand) signal processing may take place in different situations:\n
-(a) During initialization of an MS image to calculate overview spectra and normalization maps.\n
-(b) During the imaging process.\n\n
-Details can be found in the original publication [1].
+An ion image is a 2-D map in which every pixel shows the aggregated signal intensity
+within a user-defined m/z window centred on a target mass.
 
+\note Ion images are only generated for MSI datasets that are currently <b>visible</b>
+(check mark enabled) in the Data Manager.  Datasets that are hidden are silently
+skipped.  Toggle the eye / check-box icon next to a node in the Data Manager to
+include or exclude it from image generation.
 
-<b>Normalization</b>\n
-Initialization of normalization maps during image import. To change the normalization strategy, a re-import of the same data is required.
-You can choose between pixel-wise normalization strategies:\n
-<ul>
-    <li>No normalization: no normalization is applied.</li>
-    <li>In-file: Normalization based on the normalization constants defined in the imzML file.</li>
-    <li>TIC: Total ion count normalization (respects difference step widths on x axis).</li>
-    <li>Sum: Sum of intensities.</li>
-    <li>Mean: Mean of intensities.</li>
-    <li>Max: Max of intensities.</li>
-    <li>RMS: Root Mean Square.</li>
-</ul>
+\subsubsection m2data_dataview_ionimage_manual Manual entry via the Data View
 
-\remark Normalization maps are gray scale images and by default added to the Data Manager.
+-# Enter the target m/z value in the <b>m/z</b> spin box.
+-# Set the mass tolerance in the <b>Tolerance</b> spin box and choose whether the
+   unit is <b>Da</b> (absolute) or <b>PPM</b> (parts per million, relative).
+-# Press <b>Create Image</b> to generate the ion image for all visible datasets.
 
-\remark Currently, only a single normalization strategy can be chosen on initialization.
+\subsubsection m2data_dataview_ionimage_spectrum Interaction via the Spectrum View
 
-\remark During imaging, the previously chosen normalization strategy can be 'turned off' choosing the 'no normalization' option.
+The Spectrum View and the Data View are tightly coupled.  Any action in the spectrum
+chart that selects an m/z position automatically triggers a new ion image for all
+visible datasets.
 
+<b>Mouse interactions</b>
 
-<b>Smoothing</b>\n
-You can enable Savitzky-Golay or Gaussian smoothing. Parameter defines the half window size that is used for processing.
-Smoothing is applied during initialization for creating overview spectra. The strategy can be changed without to reload the data. 
-This changes are not represented in the spectrum view.\n\n
+| Gesture | Effect |
+|---------|--------|
+| <b>Double-click</b> inside the chart | Requests a new ion image at the clicked m/z position.  The tolerance from the Data View is used. |
+| <b>Double-click</b> below the x-axis area | Resets the x-axis to the full data range. |
+| <b>Double-click</b> left of the y-axis area | Resets the y-axis to its auto range. |
+| <b>Alt + left-click and drag</b> | Range selection: press <em>Alt</em> and drag across a spectral region.  On release, the centre and half-width of the selected interval are sent to the Data View as m/z and tolerance, and a new ion image is generated immediately. |
+| <b>Middle-button drag</b> | Pan the chart horizontally without triggering an image update. |
+| <b>Scroll wheel</b> (inside chart) | Zoom the x-axis around the cursor position. |
+| <b>Ctrl + scroll wheel</b> | Faster zoom (3.5× factor). |
+| <b>Scroll wheel below x-axis</b> | Zoom the x-axis only. |
+| <b>Scroll wheel left of y-axis</b> | Zoom the y-axis only. |
 
-<b>Baseline correction</b>\n
-You can enable TopHat or median baseline correction. Parameter defines the half window size that is used for processing.
-The strategy can be changed without to reload the data. This changes are not represented in the spectrum view.\n\n
+<b>Keyboard shortcuts</b> (active while the Spectrum View panel has focus)
 
-\section m2_DATA_Imaging Imaging
-\remark Behavior for interaction with multiple MS images: if multiple spectrum images with overlapping x axes are present, imaging will be applied for all visible spectrum images.
+| Shortcut | Effect |
+|----------|--------|
+| <b>Shift + →</b> | Step to the next m/z position (centre + one tolerance window) and update the ion image.  Jumps over data gaps automatically. |
+| <b>Shift + ←</b> | Step to the previous m/z position (centre − one tolerance window). |
+| <b>Shift + ↑</b> | Increase the current tolerance by 10 % and update the ion image. |
+| <b>Shift + ↓</b> | Decrease the current tolerance by 10 % and update the ion image. |
+| <b>Ctrl + →</b> | Jump to the next centroid peak from a loaded peak list and update the ion image. |
+| <b>Ctrl + ←</b> | Jump to the previous centroid peak from a loaded peak list. |
 
-<b>Pooling</b>\n
-Accumulation method for rang based queries of images. Pooling is applied over given range on the x axis (e.g. m/z +- Da) in each valid pixel.\n
-For interactive imaging queries, use ALT+left click and drag area in spectrum view. If centroid data are queried, empty ranges for single pixels are possible, resulting in zero valued pixels in the result image.\n\n
+When stepping with <b>Shift + ←/→</b>, if the candidate m/z lands inside a gap between
+data ranges (e.g. between two imzML datasets with non-overlapping mass axes), the
+cursor automatically jumps to the boundary of the nearest valid range so no step is
+wasted on a position that would produce an empty image.
 
-<b>Create image</b>\n
-Here you can trigger imaging by defining x range wih position and tolerance.\n\n
+\subsection m2data_dataview_pipeline Signal Processing Pipeline
 
-By checking the "Use labels" box, it is possible to specify regions of interest (ROI) using label-image masks. To define which child mask should be used, a regular expression can be defined.
-To create a new or edit a existing label image use the Segmentation or MultiLabel Segmentation view. Label images have to be child nodes of the original spectrum image node.\n\n
+Every time an ion image is created, the following processing steps are applied to each
+spectrum in the order listed below.
 
-"Create new image node", can be used to create pooled images as stand alone nodes. The resulting data type is determined by the corresponding drop down menu. The chosen data type will be assigned to the resulting images. 
-If any data type except 'double' is chosen, ion image pixel values will be rescaled to support the available value range of each data type, e.g. if 'unsigned char' is selected, all pixel will be rescaled to a new value range of 0-255.
-Rescaling is necessary for supporting the volume visualization utilities.\n\n
+\subsubsection m2data_pp_normalization 1 – Spectral Normalization
 
-[1] J. Cordes et al., “M2aia—Interactive, fast, and memory-efficient analysis of 2D and 3D multi-modal mass spectrometry imaging data,” GigaScience, vol. 10, no. 7, p. giab049, Jul. 2021, doi: 10.1093/gigascience/giab049.
+Corrects for pixel-to-pixel differences in total ion abundance so that intensity values
+are comparable across pixels.  Normalization is applied first, to raw intensities,
+before any further spectral processing.
 
+| Option | Description |
+|--------|-------------|
+| <b>None</b> | Raw intensities are used. |
+| <b>TIC</b> | Total ion current – each spectrum is divided by the sum of all its intensities. |
+| <b>RMS</b> | Root-mean-square – each spectrum is divided by its RMS value. |
+| <b>Mean</b> | Each spectrum is divided by its mean intensity. |
+| <b>Median</b> | Each spectrum is divided by its median intensity. |
+| <b>InFile</b> | Uses a pre-computed normalization vector stored in the imzML binary data. |
+
+Normalization images (one per pixel) are computed on demand and can be shown in the
+Data Manager by ticking the corresponding <em>Show &lt;type&gt; normalization image</em>
+check box in the <b>Settings</b> section of the Data View.
+
+\warning <b>Centroid data and spectrum-based normalization:</b> Options such as
+<b>TIC</b>, <b>RMS</b>, <b>Mean</b>, and <b>Median</b> compute normalization factors
+from the intensities present in each spectrum.  For <em>centroid</em> datasets (processed
+centroid or continuous centroid) only the detected peaks are stored, so the computed
+factor reflects only those peaks rather than the full spectral signal.  This can lead to
+misleading or inconsistent normalization results.  When working with centroid data it is
+strongly recommended to use <b>None</b> or to provide a pre-computed per-pixel
+normalization vector via an external file. Further details can be found in the section
+\ref m2data_artifacts "External Data and Auto-Loading".
+
+\subsubsection m2data_pp_smoothing 2 – Spectral Smoothing
+
+Reduces high-frequency noise in each spectrum after normalization.
+
+| Option | Description |
+|--------|-------------|
+| <b>None</b> | No smoothing. |
+| <b>Gaussian</b> | Convolution with a Gaussian kernel. |
+| <b>SavitzkyGolay</b> | Polynomial least-squares smoothing. |
+
+The <b>Smoothing Half-Window</b> spin box controls the kernel half-width (number of
+data points on each side of the centre).
+
+\subsubsection m2data_pp_baseline 3 – Baseline Correction
+
+Removes the slowly varying baseline signal that underlies the peaks.
+
+| Option | Description |
+|--------|-------------|
+| <b>None</b> | No baseline correction. |
+| <b>TopHat</b> | Morphological top-hat filter; robust for dense spectra. |
+| <b>Median</b> | Rolling median baseline. |
+
+The <b>Baseline Half-Window</b> spin box controls the filter half-width.  Larger values
+produce a flatter, broader baseline estimate.
+
+\subsubsection m2data_pp_transformation 4 – Intensity Transformation
+
+Applies a point-wise function to every intensity value after baseline correction.
+
+| Option | Description |
+|--------|-------------|
+| <b>None</b> | No transformation. |
+| <b>Log2</b> | Base-2 logarithm: \f$ I' = \log_2(I + 1) \f$. |
+| <b>SquareRoot</b> | Square root: \f$ I' = \sqrt{I} \f$. |
+
+\subsubsection m2data_pp_pooling 5 – Range Pooling (Ion Image Aggregation)
+
+Defines how intensities within the tolerance window [\f$ m/z - \delta,\; m/z + \delta \f$]
+are combined into a single pixel value.
+
+| Option | Description |
+|--------|-------------|
+| <b>Mean</b> | Arithmetic mean over all data points in the window (default). |
+| <b>Sum</b> | Sum of all data points. |
+| <b>Maximum</b> | Maximum data point. |
+| <b>Median</b> | Median of all data points. |
+
+\subsubsection m2data_pp_imgnorm 6 – Image-Level Normalization
+
+After the ion image has been assembled, an optional spatial rescaling is applied across all pixels.
+
+| Option | Description |
+|--------|-------------|
+| <b>None</b> | No rescaling. |
+| <b>zScore</b> | Standardize pixel values: subtract the mean and divide by the standard deviation (z-score normalization). |
+| <b>MinMax</b> | Scale pixel values to the [0, 1] range using the minimum and maximum of the image. |
+| <b>ParetoScaling</b> | Divide each pixel by the square root of the standard deviation (Pareto scaling). |
+| <b>VastScaling</b> | Variance-stabilizing scaling: divide by the standard deviation and scale by the coefficient of variation. |
+| <b>RangeScaling</b> | Divide each pixel by the range (max − min) of the image. |
+
+\subsubsection m2data_pp_imgsmoothing 7 – Image-Level Smoothing
+
+A spatial smoothing filter applied to the final ion image.
+
+| Option | Description |
+|--------|-------------|
+| <b>None</b> | No spatial smoothing. |
+| <b>Gaussian</b> | 2-D Gaussian blur. |
+
+\subsection m2data_dataview_settings Settings Panel
+
+The collapsible <b>Settings</b> section at the bottom of the Data View contains
+checkboxes that toggle the visibility of derived helper nodes in the Data Manager:
+
+- <b>Show index image</b> – The pixel-index image that maps each valid spectrum
+  position to its storage index in the imzML binary file.
+- <b>Show mask image</b> – The tissue mask that defines which pixels contain valid
+  spectra.
+- <b>Show &lt;type&gt; normalization image</b> – One checkbox per normalization
+  strategy (TIC, RMS, …).  When activated, M2aia computes the corresponding
+  normalisation image if it has not been computed yet and makes it visible in the
+  Data Manager for inspection or export.
+
+\section m2data_toolsview Data Tools View
+
+\subsection m2data_tools_lw Level Window Equalisation
+
+Select a reference image in the <b>Reference image</b> combo box and press
+<b>Equalize LW</b> to copy its level-window setting to every image that is
+currently in the Data Manager.  This is useful when comparing multiple ion
+images side by side: setting one image's contrast and propagating it to all
+others makes brightness differences immediately visible.
+
+\subsection m2data_tools_tiling Image Tiling (Mosaic Layout)
+
+When several datasets are loaded, they may have overlapping spatial origins.
+The tiling functions rearrange them into a grid for simultaneous inspection.
+
+- Set the number of rows in the <b>Mosaic rows</b> spin box.
+- Press <b>Apply Tiling</b> to arrange all <em>visible</em> images into a grid.
+  Images are sorted alphabetically by node name and placed row by row.  Each
+  cell is sized to the largest image in the dataset so that no image is cropped.
+- Press <b>Reset Tiling</b> to restore every image to the origin coordinates
+  stored in the imzML metadata (IMS:1000053 / IMS:1000054 absolute position
+  offset x/y).
+
+\subsection m2data_tools_align Image Alignment
+
+Press <b>Align Images</b> to automatically centre all visible images on the
+spatial centre of the largest image.  The largest image is moved to the world
+origin first; all other images are then shifted so that their centres coincide
+with that reference centre.  All derived child nodes (segmentations, point sets,
+normalization images) are moved by the same offset.
+
+Press <b>Reset Alignment</b> to revert every image to its original coordinates
+from the imzML metadata.
+
+\subsection m2data_tools_scalebar Colour Bar (Scale Bar)
+
+Enable the <b>Scale Bar</b> group box to overlay a colour bar on the axial render
+window.  Select the image whose lookup table should be reflected in the colour bar
+using the <b>Reference image</b> combo box inside the group box.
+
+Adjust the annotation with:
+- <b>Font Size</b> slider – size of the axis tick labels.
+- <b>Orientation</b> – vertical or horizontal bar.
+
+\section m2data_artifacts External Data and Auto-Loading
+
+M2aia can automatically load pre-computed images and data artefacts that are placed
+in the same directory as the imzML file.  The loading happens in two distinct stages
+handled by different components.
+
+\subsection m2data_artifacts_reader Stage 1 – imzML Reader (before the dataset is added to the Data Manager)
+
+The imzML reader inspects the dataset directory at load time and silently absorbs any
+of the following files if they exist.  The stem \c &lt;name&gt; must match the imzML
+file name without its extension (e.g. \c sample for \c sample.imzML).
+
+| File pattern | Effect |
+|---|---|
+| \c &lt;name&gt;.mask.nrrd | Tissue mask / segmentation. Loaded as a \c MultiLabelSegmentation and replaces the default empty mask. |
+| \c &lt;name&gt;.shift.nrrd | Per-pixel spectral shift correction image. |
+| \c &lt;name&gt;.mps | MITK point set with landmark or injection-site positions. |
+| \c &lt;name&gt;.TIC.nrrd | Pre-computed TIC normalisation image. Bypasses on-the-fly TIC computation. |
+| \c &lt;name&gt;.RMS.nrrd | Pre-computed RMS normalisation image. |
+| \c &lt;name&gt;.Mean.nrrd | Pre-computed Mean normalisation image. |
+| \c &lt;name&gt;.Median.nrrd | Pre-computed Median normalisation image. |
+| \c &lt;name&gt;.&lt;type&gt;.nrrd | Any other normalisation type listed in the normalization strategy type list. |
+
+\note The normalisation NRRD files must have exactly the same number of pixels as the
+imzML dataset (number of valid spectra in the spatial grid).  Pixel type must be
+\c float or \c double; 3-D images are expected.  If the size or type does not match,
+a warning is logged and the file is skipped.
+
+\b Workflow example – providing a custom TIC image:
+
+Suppose your dataset is located at:
+\code
+/data/study/sample.imzML
+/data/study/sample.ibd
+\endcode
+
+Create a TIC image of the same spatial dimensions using an external tool (e.g. pyM2aia)
+and save it as:
+\code
+/data/study/sample.TIC.nrrd
+\endcode
+
+The next time you open \c sample.imzML in M2aia, the TIC normalization image is taken
+directly from that file and the time-consuming per-spectrum accumulation is avoided.
+
+\subsection m2data_artifacts_dataview Stage 2 – Data View (after the dataset appears in the Data Manager)
+
+Once the spectrum image node has been added to the Data Manager, the Data View scans
+the same directory for derived analysis result images and attaches them as hidden
+child nodes:
+
+| File pattern | Loaded as |
+|---|---|
+| \c &lt;name&gt;.tSNE.nrrd | t-SNE embedding image (visual output of dimensionality reduction). |
+| \c &lt;name&gt;.PCA.nrrd | PCA score image. |
+| \c &lt;name&gt;.UMAP.nrrd | UMAP embedding image. |
+| \c &lt;name&gt;.def.nrrd | Deformation / stack index image (used by the image-stack workflow). |
+
+These nodes are added as child nodes of the parent MSI dataset node.  They are
+initially hidden (visibility \c false) and can be made visible via the Data Manager
+or programmatically.
+
+\note All of the Stage-2 files must also conform to the spatial layout of the parent
+image (same width, height, and origin) so that they overlay correctly in the render
+windows.
 
 */

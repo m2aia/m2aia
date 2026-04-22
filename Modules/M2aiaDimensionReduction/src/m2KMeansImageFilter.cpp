@@ -101,12 +101,12 @@ void m2::KMeansImageFilter::GenerateData()
       if (!spectrumImage->GetImageAccessInitialized())
         MITK_INFO << "Image access not initialized";
 
-      if (!spectrumImage->GetMaskImage())
+      if (!spectrumImage->GetMultilabelSegmentation())
         MITK_INFO << "Mask image not set";
 
       std::vector<itk::Index<3>> validIndices;
-      auto maskImage = spectrumImage->GetMaskImage();
-      mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3> maskAcc(maskImage);
+      auto maskImage = spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0);
+      mitk::ImagePixelReadAccessor<mitk::MultiLabelSegmentation::LabelValueType, 3> maskAcc(maskImage);
 
       for (auto s : spectrumImage->GetSpectra())
         if (maskAcc.GetPixelByIndex(s.index) != 0)
@@ -138,7 +138,7 @@ void m2::KMeansImageFilter::GenerateData()
     for (size_t col = 0; col < m_Intervals.size(); ++col)
     {
       const auto mz = m_Intervals.at(col).x.mean();
-      spectrumImage->GetImage(mz, spectrumImage->ApplyTolerance(mz), spectrumImage->GetMaskImage(), ionImage);
+      spectrumImage->GetImage(mz, spectrumImage->ApplyTolerance(mz), spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0), ionImage);
 
       size_t v = offset;
       for (auto index : validIndices)
@@ -197,18 +197,19 @@ void m2::KMeansImageFilter::GenerateData()
   for (auto [imageId, image] : m_Inputs)
   {
     auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(image.GetPointer());
+    auto clusteredImage = dynamic_cast<mitk::Image *>(this->GetOutput(imageId).GetPointer());
+    
+    auto refMask = spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0);
+    clusteredImage->Initialize(refMask);
 
-    auto clusteredImage = dynamic_cast<mitk::LabelSetImage *>(this->GetOutput(imageId).GetPointer());
-    auto maskImage = spectrumImage->GetMaskImage();
-    clusteredImage->Initialize(maskImage);
 
     {
-      mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType, 3> c_acc(clusteredImage);
+      mitk::ImagePixelWriteAccessor<mitk::MultiLabelSegmentation::LabelValueType, 3> c_acc(clusteredImage);
+      auto p_data = c_acc.GetData();
+      std::fill(p_data, p_data + clusteredImage->GetDimensions()[0] * clusteredImage->GetDimensions()[1] * clusteredImage->GetDimensions()[2], 0);
       for (auto s : m_ValidIndicesMap[imageId])
         c_acc.SetPixelByIndex(s, *classLabelIterator++ + 1);
     }
-
-    clusteredImage->InitializeByLabeledImage(clusteredImage->Clone());
   }
 }
 

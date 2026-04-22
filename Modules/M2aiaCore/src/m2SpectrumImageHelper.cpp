@@ -88,7 +88,7 @@ std::vector<float> m2::SpectrumImageHelper::GetIntensityData(
   using namespace std;
   // pixels in image
   unsigned int N = accumulate(image->GetDimensions(), image->GetDimensions() + 3, 1, multiplies<unsigned int>());
-  auto maskImage = image->GetMaskImage();
+  auto maskImage = image->GetMultilabelSegmentation()->GetGroupImage(0);
 
   auto tmpImage = mitk::Image::New();
   tmpImage->Initialize(image);

@@ -23,6 +23,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <QMessageBox>
 #include <QThreadPool>
 #include <QFileDialog>
+#include <QVBoxLayout>
 #include <QtConcurrent>
 
 // mitk
@@ -41,8 +42,6 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include "m2Reconstruction3D.h"
 #include <m2DataNodePredicates.h>
 #include <m2ElxRegistrationHelper.h>
-#include <m2ElxUtil.h>
-#include <m2ElxDefaultParameterFiles.h>
 #include <m2UIUtils.h>
 #include <m2ImzMLSpectrumImage.h>
 #include <Qm2NameDialog.h>
@@ -145,31 +144,11 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
           });
 
 
-  m_ParameterFiles = {m2::Elx::Rigid(), m2::Elx::Deformable()};
-  m_ParameterFileEditor = new QDialog(parent);
-  m_ParameterFileEditorControls.setupUi(m_ParameterFileEditor);
-
-  connect(m_ParameterFileEditorControls.buttonBox->button(QDialogButtonBox::StandardButton::RestoreDefaults),
-          &QAbstractButton::clicked,
-          this,
-          [this]() {
-            m_ParameterFileEditorControls.rigidText->setText(m2::Elx::Rigid().c_str());
-            m_ParameterFileEditorControls.deformableText->setText(m2::Elx::Deformable().c_str());
-          });
-
-  connect(m_ParameterFileEditorControls.buttonBox->button(QDialogButtonBox::StandardButton::Close),
-          &QAbstractButton::clicked,
-          this,
-          [this]() {
-            m_ParameterFiles = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
-                                m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
-          });
-
-  connect(m_Controls.btnEditParameterFiles, &QPushButton::clicked, this, [this]() {
-    m_ParameterFileEditor->exec();
-    m_ParameterFiles = {m_ParameterFileEditorControls.rigidText->toPlainText().toStdString(),
-                        m_ParameterFileEditorControls.deformableText->toPlainText().toStdString()};
-  });
+  // Install the registration parameter widget into the UI placeholder
+  m_ElxParamWidget = new Qm2ElxParameterWidget(parent);
+  auto *elxLayout = new QVBoxLayout(m_Controls.elxParamWidget);
+  elxLayout->setContentsMargins(0, 0, 0, 0);
+  elxLayout->addWidget(m_ElxParamWidget);
 }
 
 m2Reconstruction3D::DataTuple m2Reconstruction3D::GetImageDataById(unsigned int id, QListWidget *listWidget)
@@ -210,10 +189,6 @@ std::shared_ptr<m2::ElxRegistrationHelper> m2Reconstruction3D::RegistrationStep(
     fixedImage = fixedTransformer->WarpImage(fixedImage);
   
   std::vector<std::string> parameters = GetParameters();
-  if(m_Controls.chkBxRigidOnly->isChecked()){
-    parameters.pop_back(); // remove deformable parameters
-  }
-  
   
   // start of the registration procedure
   auto elxHelper = std::make_shared<m2::ElxRegistrationHelper>();
@@ -234,37 +209,7 @@ std::shared_ptr<m2::ElxRegistrationHelper> m2Reconstruction3D::RegistrationStep(
 
 std::vector<std::string> m2Reconstruction3D::GetParameters()
 {
-  std::vector<std::string> parameterFiles{m_ParameterFiles[0], m_ParameterFiles[1]};
-
-  // Rigid
-  auto text = m_Controls.comboBox->currentText();
-  if (text == "None")
-  {
-    m2::ElxUtil::ReplaceParameter(parameterFiles[0], "AutomaticTransformInitialization", "false");
-  }
-  else if (text == "Geometrical Center")
-  {
-    m2::ElxUtil::ReplaceParameter(parameterFiles[0], "AutomaticTransformInitialization", "true");
-    m2::ElxUtil::ReplaceParameter(parameterFiles[0], "AutomaticTransformInitializationMethod", "GeometricalCenter");
-  }
-  else if (text == "Center of Gravity")
-  {
-    m2::ElxUtil::ReplaceParameter(parameterFiles[0], "AutomaticTransformInitialization", "true");
-    m2::ElxUtil::ReplaceParameter(parameterFiles[0], "AutomaticTransformInitializationMethod", "CenterOfGravity");
-  }
-
-  m2::ElxUtil::ReplaceParameter(
-    parameterFiles[0], "MaximumNumberOfIterations", std::to_string(m_Controls.RigidMaxIters->value()));
-
-  // deformable
-  const auto gridSpacing = m_Controls.spinBoxFinalGridSpacing->value();
-
-  m2::ElxUtil::ReplaceParameter(
-    parameterFiles[1], "MaximumNumberOfIterations", std::to_string(m_Controls.DeformableMaxIters->value()));
-  m2::ElxUtil::ReplaceParameter(parameterFiles[1], "FinalGridSpacingInPhysicalUnits", std::to_string(gridSpacing));
-  m2::ElxUtil::ReplaceParameter(parameterFiles[1], "MaximumNumberOfIterations", std::to_string(m_Controls.DeformableMaxIters->value()));
-
-  return parameterFiles;
+  return m_ElxParamWidget->GetParameters();
 }
 
 void m2Reconstruction3D::OnStartStacking()
@@ -506,7 +451,7 @@ void m2Reconstruction3D::OnUpdateList()
       DataTuple tuple;
       tuple.node = node;
       tuple.image = data;
-      tuple.mask = data->GetMaskImage();
+      tuple.mask = data->GetMultilabelSegmentation()->GetGroupImage(0);
       // tuple.points = data->Get
 
       m_referenceMap[i] = tuple;
@@ -604,7 +549,7 @@ void m2Reconstruction3D::OnStartExport(){
   
               
     
-    mitk::IOUtil::Save(stackImage->GetMaskImage(), dir.toStdString() + "/MaskImage.nrrd");
+    mitk::IOUtil::Save(stackImage->GetMultilabelSegmentation()->GetGroupImage(0), dir.toStdString() + "/MaskImage.nrrd");
     unsigned i = 0;
     unsigned n = stackImage->GetSliceTransformers().size();
     for(std::shared_ptr<m2::ElxRegistrationHelper> t : stackImage->GetSliceTransformers()){

@@ -19,6 +19,8 @@ found in the LICENSE file.
 #include <mitkImageReadAccessor.h>
 #include <mitkImageWriteAccessor.h>
 #include <mitkImageCast.h>
+#include <m2SpectrumImage.h>
+
 // needed for qApp
 #include <qcoreapplication.h>
 #include <QWidget>
@@ -104,8 +106,18 @@ void QmitkDataNodeExportComponentAction::OnActionTriggered(bool)
         const auto inputPixelType = img->GetPixelType();
         const auto nComponents = inputPixelType.GetNumberOfComponents();
         const auto ioPixelType = inputPixelType.GetPixelType();
-        if (nComponents == 1)
+        if (nComponents == 1){          
+            auto output = img->Clone();
+            auto newNode = mitk::DataNode::New();
+            newNode->SetData(output);
+            if(dynamic_cast<m2::SpectrumImage *>(img))
+              newNode->SetName(referenceNode->GetName() + "_" + referenceNode->GetProperty("m2aia.xs.selection.center")->GetValueAsString());
+            else
+              newNode->SetName(referenceNode->GetName() + "_component_0");
+            m_DataStorage.Lock()->Add(newNode, referenceNode);
           continue;
+        }
+
 
         if (!m_DataStorage)
           continue;

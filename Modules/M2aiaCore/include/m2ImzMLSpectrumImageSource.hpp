@@ -236,6 +236,8 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeNormal
   if(p->GetNormalizationImageStatus(type)){
     MITK_WARN << "The normalization image is already initialized. " << "type " << m2::to_string(type);
     return;
+  }else{
+    MITK_INFO << "Start initialization of normalization image. " << "type " << m2::to_string(type);
   }
 
   // initialize the normalization iamge
@@ -294,9 +296,9 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
   m_BaselineSubtractor.Initialize(p->GetBaselineCorrectionStrategy(), p->GetBaseLineCorrectionHalfWindowSize());
   m_Transformer.Initialize(p->GetIntensityTransformationStrategy());
 
-  std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>> maskAccess;
+  std::shared_ptr<mitk::ImagePixelReadAccessor<mitk::Label::PixelType, 3>> maskAccess;
   if (mask)
-    maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::LabelSetImage::PixelType, 3>(mask));
+    maskAccess.reset(new mitk::ImagePixelReadAccessor<mitk::Label::PixelType, 3>(mask));
 
   using ShiftImageAccessorType = mitk::ImagePixelReadAccessor<m2::ShiftImageType, 3>;
   std::shared_ptr<ShiftImageAccessorType> accShift;
@@ -307,19 +309,22 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::GetImagePrivate(
     mitkThrow() << "Please provide an image into which the data can be written.";
 
   const auto currentType = p->GetNormalizationStrategy();
-  mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
+  
   mitk::ImagePixelWriteAccessor<DisplayImagePixelType, 3> imageAccess(destImage);
-
   {
     auto d = destImage->GetDimensions();
     auto N = std::accumulate(d, d+destImage->GetDimension(), 1, std::multiplies<>());
     auto dataPointer = imageAccess.GetData();
     std::fill(dataPointer, dataPointer + N, 0);
   }
-
+  
   // Create the normalization image on access    
-  if (!p->GetNormalizationImageStatus(currentType))
+  if (!p->GetNormalizationImageStatus(currentType)){
+    MITK_INFO << "Initialize Normalization Image of type " + m2::to_string(currentType);
     InitializeNormalizationImage(currentType);
+  }
+
+  mitk::ImagePixelReadAccessor<NormImagePixelType, 3> normAccess(p->GetNormalizationImage());
 
   // Get the profile type
   const auto spectrumType = p->GetSpectrumType();
@@ -605,10 +610,9 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
     std::memset(acc.GetData(), 0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::IndexImagePixelType));
   }
 
-  if(p->GetMaskImage().IsNull()){
-    auto image = mitk::LabelSetImage::New();
+  if(p->GetMultilabelSegmentation().IsNull()){
+    auto image = mitk::MultiLabelSegmentation::New();
     image->SetProperty("m2aia.mask.initialization", mitk::StringProperty::New("internal"));
-    p->SetMaskImage(image.GetPointer());
     image->Initialize((mitk::Image *)p);
 
     mitk::Color color;
@@ -621,33 +625,33 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
     label->SetValue(1);
     image->AddLabel(label,0);
 
-    mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType, 3> acc(image);
-    std::memset(acc.GetData(), 0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(mitk::LabelSetImage::PixelType));
+    // Clone the group image to keep it alive after the MultiLabelSegmentation goes out of scope
+    p->SetMultilabelSegmentation(image);
+
+    mitk::ImagePixelWriteAccessor<mitk::Label::PixelType, 3> acc(p->GetMultilabelSegmentation()->GetGroupImage(0));
+    std::memset(acc.GetData(), 0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(mitk::Label::PixelType));
   }else{
-    auto image = p->GetMaskImage();
+    auto image = p->GetMultilabelSegmentation();
     image->SetProperty("m2aia.mask.initialization", mitk::StringProperty::New("external"));
   }
 
   
-  
-  
-  
   for (auto type :  m2::NormalizationStrategyTypeList){
-    // Create a reference image for normalization images
-    auto normImage = mitk::Image::New();
-    
-    
-    using LocalImageType = itk::Image<m2::NormImagePixelType, 3>;
-    auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
-    caster->SetInput(itkIonImage);
-    caster->Update();
-    normImage->InitializeByItk(caster->GetOutput());
-    
-    mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(normImage);
-    std::memset(acc.GetData(), 1.0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
-    
-    p->SetNormalizationImage(normImage, type);
-    p->SetNormalizationImageStatus(type, false);
+    if (!p->GetNormalizationImageStatus(type))
+    {
+      auto normImage = mitk::Image::New();
+      using LocalImageType = itk::Image<m2::NormImagePixelType, 3>;
+      auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
+      caster->SetInput(itkIonImage);
+      caster->Update();
+      normImage->InitializeByItk(caster->GetOutput());
+      
+      mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(normImage);
+      std::memset(acc.GetData(), 1.0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
+      
+      p->SetNormalizationImage(normImage, type);
+      p->SetNormalizationImageStatus(type, false);
+    }
   }
 
   // p->SetNormalizationImageStatus(m2::NormalizationStrategyType::None, true);
@@ -674,6 +678,7 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
   const auto currentType = p->GetNormalizationStrategy();
   if (!p->GetNormalizationImageStatus(currentType))
   {
+    MITK_INFO << "Initialize Normalization Image of type " + m2::to_string(currentType);
     p->InitializeNormalizationImage(currentType);
   }
   
@@ -691,11 +696,11 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
 
   // DEFAULT
   // INITIALIZE MASK, INDEX, NORMALIZATION IMAGES
-  std::shared_ptr<mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType, 3>> accMask;
+  std::shared_ptr<mitk::ImagePixelWriteAccessor<mitk::Label::PixelType, 3>> accMask;
   
-  auto prop = p->GetMaskImage()->GetProperty("m2aia.mask.initialization");
+  auto prop = p->GetMultilabelSegmentation()->GetProperty("m2aia.mask.initialization");
   if(prop && prop->GetValueAsString() == "internal"){
-    accMask =  std::make_shared<mitk::ImagePixelWriteAccessor<mitk::LabelSetImage::PixelType, 3>>(p->GetMaskImage());
+    accMask =  std::make_shared<mitk::ImagePixelWriteAccessor<mitk::Label::PixelType, 3>>(p->GetMultilabelSegmentation()->GetGroupImage(0));
   }
   auto accIndex = std::make_shared<mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3>>(p->GetIndexImage());
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(p->GetNormalizationImage());

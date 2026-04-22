@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+  <extension point="org.blueberry.ui.views">
+    <view id="org.mitk.views.m2.connectedcomponents"
+          name="Connected Components"
+          class="QmitkConnectedComponentsView"
+          category="Spectral Imaging"
+          icon="resources/logo.svg" />
+  </extension>
+</plugin>
