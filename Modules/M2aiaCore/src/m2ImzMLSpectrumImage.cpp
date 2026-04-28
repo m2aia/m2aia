@@ -17,6 +17,7 @@ See LICENSE.txt for details.
 #include <m2ImzMLSpectrumImage.h>
 #include <m2ImzMLSpectrumImageSource.hpp>
 
+#include <itksys/SystemTools.hxx>
 #include <m2Process.hpp>
 #include <m2Timer.h>
 #include <mitkImageAccessByItk.h>
@@ -157,9 +158,9 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
   auto py = this->GetPropertyValue<double>("[IMS:1000047] pixel size y");
   auto pz = this->GetPropertyValue<double>("pixel size z");
 
-
-
-    MITK_INFO << "[imzML]: " + this->GetImzMLDataPath() +
+  if (GetVerboseOutput())
+  {
+    MITK_INFO << "[imzML] (verbose): " + this->GetImzMLDataPath() +
               "\n\t[pixel size (mm)]: " + std::to_string(px)  + "x" + std::to_string(py) +"x" + std::to_string(pz) +
               "\n\t[image dimension]: " + std::to_string(sx) + "x" +std::to_string(sy) + "x" + std::to_string(sz)  +
               "\n\t[num spectra]: " + std::to_string(this->GetNumberOfValidPixels()) +
@@ -169,7 +170,14 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
               ""+(              to_underlying(GetSmoothingStrategy()) ? ("\n\t[smoothing]: "           + m2::SmoothingTypeNames.at(to_underlying(GetSmoothingStrategy())) + "(" + std::to_string(GetSmoothingHalfWindowSize()) + ")"):"") +
               ""+(          to_underlying(GetNormalizationStrategy()) ? ("\n\t[normalization]: "       + m2::NormalizationStrategyTypeNames.at(to_underlying(GetNormalizationStrategy()))):"") +
               ""+(to_underlying(GetIntensityTransformationStrategy()) ? ("\n\t[processing]: "          + m2::IntensityTransformationTypeNames.at(to_underlying(GetIntensityTransformationStrategy()))):"");
-              
+  }else{
+    MITK_INFO << "[imzML] " + itksys::SystemTools::GetFilenameWithoutExtension(GetImzMLDataPath())
+              + " | " + to_string(GetSpectrumType().Format)
+              + " | " + std::to_string(sx) + "x" + std::to_string(sy) + "x" + std::to_string(sz)
+              + " | " + std::to_string(GetNumberOfValidPixels()) + " spectra"
+              + " | mz [" + std::to_string(GetXMin()) + ", " + std::to_string(GetXMax()) + "]";
+  }
+            
   this->SetImageAccessInitialized(true); 
 }
 
