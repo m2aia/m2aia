@@ -88,6 +88,9 @@ namespace m2
     itkSetMacro(UseToleranceInPPM, bool);
     itkGetConstReferenceMacro(UseToleranceInPPM, bool);
 
+    itkSetMacro(VerboseOutput, bool);
+    itkGetConstReferenceMacro(VerboseOutput, bool);
+
     unsigned int GetNumberOfThreads() const
     {
       unsigned int max_threads = std::thread::hardware_concurrency();
@@ -215,6 +218,9 @@ namespace m2
 
     /// @brief If true -
     bool m_UseToleranceInPPM = true;
+
+    /// @brief If true - verbose output is enabled for spectrum image handling
+    bool m_VerboseOutput = true;
 
     /// @brief Image access is only valid if this was set to true from the image source
     bool m_ImageAccessInitialized = false;

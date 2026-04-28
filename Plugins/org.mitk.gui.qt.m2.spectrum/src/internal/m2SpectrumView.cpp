@@ -670,15 +670,17 @@ void m2SpectrumView::NodeAdded(const mitk::DataNode *node)
   if (m_LocalMinY < yHigh)
     m_yAxis->setRange(m_LocalMinY, yHigh);
 
-  MITK_INFO << "NodeAdded [" << node->GetName() << "]"
-            << " xs.size=" << provider->xs().size()
-            << " ys.size=" << provider->ys().size()
-            << " series.points=" << provider->GetSeries()->count()
-            << " series.visible=" << provider->GetSeries()->isVisible()
-            << " xAxis=[" << m_xAxis->min() << "," << m_xAxis->max() << "]"
-            << " yAxis=[" << m_yAxis->min() << "," << m_yAxis->max() << "]"
-            << " GlobalX=[" << m_GlobalMinX << "," << m_GlobalMaxX << "]"
-            << " LocalMaxY=" << m_LocalMaxY;
+  if (auto *image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
+    if (image->GetVerboseOutput())
+      MITK_INFO << "NodeAdded [" << node->GetName() << "]"
+                << " xs.size=" << provider->xs().size()
+                << " ys.size=" << provider->ys().size()
+                << " series.points=" << provider->GetSeries()->count()
+                << " series.visible=" << provider->GetSeries()->isVisible()
+                << " xAxis=[" << m_xAxis->min() << "," << m_xAxis->max() << "]"
+                << " yAxis=[" << m_yAxis->min() << "," << m_yAxis->max() << "]"
+                << " GlobalX=[" << m_GlobalMinX << "," << m_GlobalMaxX << "]"
+                << " LocalMaxY=" << m_LocalMaxY;
 
   QObject::connect(m_xAxis, SIGNAL(rangeChanged(qreal, qreal)),
                    this, SLOT(OnRangeChangedAxisX(qreal, qreal)));
