@@ -178,6 +178,10 @@ namespace m2
 
     for (auto &transformer : m_SliceTransformers)
     {
+      if(!transformer){
+        MITK_ERROR("SpectrumImageStack::InitializeImageAccess") << "Empty transformer found!";
+        continue;
+      }
       auto specImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer());
       auto xAxis = specImage->GetXAxis();
       min = std::min(min, xAxis.front());
@@ -198,6 +202,10 @@ namespace m2
 
     for (auto &transformer : m_SliceTransformers)
     {
+      if(!transformer){
+        MITK_ERROR("SpectrumImageStack::InitializeImageAccess") << "Empty transformer found!";
+        continue;
+      }
       auto specImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer());
       auto sliceXAxis = specImage->GetXAxis();
       auto sliceSumVec = specImage->GetSumSpectrum();
