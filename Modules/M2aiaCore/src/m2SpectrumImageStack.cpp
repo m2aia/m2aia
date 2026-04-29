@@ -133,10 +133,10 @@ namespace m2
           CopyWarpedImageToStackImage(warpedImage, this, sliceId);
 
           // selecting "short" as pixel type for nearest neighbor interpolation
-          auto warpedMask = transformer->WarpImage(movingImage->GetMultilabelSegmentation()->GetGroupImage(0), "unsigned short"); 
+          auto warpedMask = transformer->WarpImage(movingImage->GetMultilabelSegmentation()->GetGroupImage(0), "unsigned_short"); 
           CopyWarpedImageToStackImage(warpedMask, GetMultilabelSegmentation()->GetGroupImage(0), sliceId);
-          MITK_INFO << "RUN " << movingImage->GetIndexImage()->GetPixelType().GetComponentTypeAsString();
-          auto warpedIndexdImage = transformer->WarpImage(movingImage->GetIndexImage(), "unsigned int"); 
+          
+          auto warpedIndexdImage = transformer->WarpImage(movingImage->GetIndexImage(), "unsigned_int"); 
           CopyWarpedImageToStackImage(warpedIndexdImage, GetIndexImage(), sliceId);
         }
         else

@@ -626,9 +626,9 @@ namespace m2
     std::string ibdPath = pathWithoutExtension + ".ibd";
     std::string ibdPathUpper = pathWithoutExtension + ".IBD";
     
-    if (itksys::SystemTools::FileExists(ibdPathUpper))
-    {
-      ibdPath = ibdPathUpper;
+    if(!itksys::SystemTools::FileExists(ibdPath)){
+      if (itksys::SystemTools::FileExists(ibdPathUpper))
+        ibdPath = ibdPathUpper;
     }
     else
     {
