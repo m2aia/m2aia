@@ -35,6 +35,7 @@ See LICENSE.txt for details.
 #include <mitkLabelSetImage.h>
 #include <mitkProperties.h>
 #include <mutex>
+#include <sstream>
 #include <signal/m2Baseline.h>
 #include <signal/m2Morphology.h>
 #include <signal/m2Normalization.h>
@@ -237,7 +238,8 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeNormal
     MITK_WARN << "The normalization image is already initialized. " << "type " << m2::to_string(type);
     return;
   }else{
-    MITK_INFO << "Start initialization of normalization image. " << "type " << m2::to_string(type);
+    if (p->GetVerboseOutput())
+      MITK_INFO << "Start initialization of normalization image. " << "type " << m2::to_string(type);
   }
 
   // initialize the normalization iamge
@@ -581,6 +583,34 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
   s[2] = p->GetPropertyValue<double>("pixel size z");
 
   auto d = itkIonImage->GetDirection();
+  auto directionProperty = p->GetProperty("direction matrix");
+  if (directionProperty != nullptr)
+  {
+    std::istringstream directionStream(directionProperty->GetValueAsString());
+    MITK_INFO << "Found direction matrix metadata: " << directionProperty->GetValueAsString();
+    bool ok = true;
+    for (unsigned int row = 0; row < 3; ++row)
+    {
+      for (unsigned int col = 0; col < 3; ++col)
+      {
+        if (!(directionStream >> d[row][col]))
+        {
+          ok = false;
+          break;
+        }
+      }
+      if (!ok)
+        break;
+    }
+
+    if (!ok)
+      MITK_WARN << "Invalid direction matrix metadata. Falling back to identity direction.";
+  }
+
+  MITK_INFO << "Direction matrix:" << std::endl
+            << d[0][0] << " " << d[0][1] << " " << d[0][2] << std::endl
+            << d[1][0] << " " << d[1][1] << " " << d[1][2] << std::endl
+            << d[2][0] << " " << d[2][1] << " " << d[2][2];
 
   itkIonImage->SetSpacing(s);
   itkIonImage->SetOrigin(o);
@@ -682,7 +712,8 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
     p->InitializeNormalizationImage(currentType);
   }
   
-  MITK_INFO << "Use Normalization Image [" + m2::to_string(currentType) + " " + std::to_string(p->GetNormalizationImageStatus(currentType)) +"] for initialization";
+  if (p->GetVerboseOutput())
+    MITK_INFO << "Use Normalization Image [" + m2::to_string(currentType) + " " + std::to_string(p->GetNormalizationImageStatus(currentType)) +"] for initialization";
 
   if (spectrumType.Format == m2::SpectrumFormat::ProcessedProfile)
     InitializeImageAccessProcessedProfile();
@@ -1018,8 +1049,11 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeImageA
     {
       binsN = preferences->GetInt("m2aia.view.spectrum.bins", 15000);
       // minHits = preferences->GetInt("m2aia.view.spectrum.minimum.hits", 30);
-      MITK_INFO << "Generating processed Centroid/Profile imzML overview spectra )";
-      MITK_INFO << "Number of bins: " << binsN << " (can be changed in the preferences: Window->Preferences->M2aia)";
+      if (p->GetVerboseOutput())
+      {
+        MITK_INFO << "Generating processed Centroid/Profile imzML overview spectra )";
+        MITK_INFO << "Number of bins: " << binsN << " (can be changed in the preferences: Window->Preferences->M2aia)";
+      }
     }
 
   auto &spectra = p->GetSpectra();

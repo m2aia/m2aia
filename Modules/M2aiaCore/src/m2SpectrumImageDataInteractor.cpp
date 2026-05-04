@@ -84,24 +84,34 @@ bool m2::SpectrumImageDataInteractor::FilterEvents(mitk::InteractionEvent *inter
           auto id = acc.GetPixelByIndex(index);
 
           auto singleSpectrumNode = FindSingleSpectrumDataNode(imageNode);
-          if (!singleSpectrumNode)
-            continue;
+          if (singleSpectrumNode){
 
-          auto singleSpectrum = dynamic_cast<m2::IntervalVector *>(singleSpectrumNode->GetData());
-          singleSpectrum->SetProperty("m2aia.spectrum.position.x", mitk::IntProperty::New(index[0]));
-          singleSpectrum->SetProperty("m2aia.spectrum.position.y", mitk::IntProperty::New(index[1]));
-          singleSpectrum->SetProperty("m2aia.spectrum.position.z", mitk::IntProperty::New(index[2]));
-          std::vector<double> xs, ys;
-          image->GetSpectrum(id, xs, ys);
-          singleSpectrum->GetIntervals().clear();
-          auto inserter = std::back_inserter(singleSpectrum->GetIntervals());
-          std::transform(std::begin(xs),
-                         std::end(xs),
-                         std::begin(ys),
-                         inserter,
-                         [](const auto &x, const auto &y) { return m2::Interval(x, y); });
+            auto singleSpectrum = dynamic_cast<m2::IntervalVector *>(singleSpectrumNode->GetData());
+            singleSpectrum->SetProperty("m2aia.spectrum.position.x", mitk::IntProperty::New(index[0]));
+            singleSpectrum->SetProperty("m2aia.spectrum.position.y", mitk::IntProperty::New(index[1]));
+            singleSpectrum->SetProperty("m2aia.spectrum.position.z", mitk::IntProperty::New(index[2]));
+            std::vector<double> xs, ys;
+            image->GetSpectrum(id, xs, ys);
+            singleSpectrum->GetIntervals().clear();
+            auto inserter = std::back_inserter(singleSpectrum->GetIntervals());
+            std::transform(std::begin(xs),
+                          std::end(xs),
+                          std::begin(ys),
+                          inserter,
+                          [](const auto &x, const auto &y) { return m2::Interval(x, y); });
 
-          singleSpectrumNode->InvokeEvent(m2::IntervalVectorModified());
+            singleSpectrumNode->InvokeEvent(m2::IntervalVectorModified());
+          }
+
+          auto embeddingNode = FindEmbeddingImageDataNode(imageNode);
+          if (embeddingNode){
+            
+            embeddingNode->SetProperty("m2aia.event.position.x", mitk::IntProperty::New(index[0]));
+            embeddingNode->SetProperty("m2aia.event.position.y", mitk::IntProperty::New(index[1]));
+            embeddingNode->SetProperty("m2aia.event.position.z", mitk::IntProperty::New(index[2]));
+            embeddingNode->InvokeEvent(m2::ImagePositionEvent());
+
+          }
         }
       }
       
@@ -133,6 +143,16 @@ mitk::DataNode *m2::SpectrumImageDataInteractor::FindSingleSpectrumDataNode(mitk
   newNode->SetData(intervals);
   this->GetDataStorage()->Add(newNode, node);
   return newNode;
+}
+
+mitk::DataNode *m2::SpectrumImageDataInteractor::FindEmbeddingImageDataNode(mitk::DataNode * node)
+{
+  const auto name = node->GetName() + ".embedding";
+  auto existingNode = this->GetDataStorage()->GetNamedDerivedNode(name.c_str(), node);
+  if (existingNode)
+    return existingNode;
+
+  return nullptr;
 }
 
 void m2::SpectrumImageDataInteractor::SelectSingleSpectrumByPoint(mitk::StateMachineAction *, mitk::InteractionEvent *)

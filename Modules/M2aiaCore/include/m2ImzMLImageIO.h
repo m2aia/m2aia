@@ -134,10 +134,15 @@ namespace m2
   
           return true;
         }else{
-          MITK_WARN << "Image dimension of [" << prop->GetValueAsString() << "] is not equal to the dimension definen in ["
-          << parent->GetProperty("path")->GetValueAsString() << "]";
-          MITK_ERROR << "The mask image seems to be not equal to the loaded data."
-          "Make sure to use the correct mask image.";
+          auto dims_a = parent->GetDimensions();
+          auto dims_b = child->GetDimensions();
+          MITK_ERROR << "Image dimension mismatch: ["
+            << prop->GetValueAsString() << "] is "
+            << dims_b[0] << "x" << dims_b[1] << "x" << dims_b[2]
+            << ", but the imzML data ["
+            << parent->GetProperty("path")->GetValueAsString() << "] expects "
+            << dims_a[0] << "x" << dims_a[1] << "x" << dims_a[2]
+            << ". The associated image cannot be used — verify that it was generated from the same imzML file.";
           return false;
         }
       }

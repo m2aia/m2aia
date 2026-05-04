@@ -322,8 +322,8 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
       std::string method_value;
       attributeValue(line, "name", description);
       attributeValue(line, "value", method_value);
-      data->SetPropertyValue<std::string>("m2aia.imzml."+dataProcessingId+"." +processingMethodSoftwareRef+"."+processingMethodOrder+".description", description);
-      data->SetPropertyValue<std::string>("m2aia.imzml."+dataProcessingId+"." +processingMethodSoftwareRef+"."+processingMethodOrder+".value", method_value);
+      // data->SetPropertyValue<std::string>("m2aia.imzml.description", description);
+      data->SetPropertyValue<std::string>(description, method_value);
 
       // MITK_INFO << description << " " << method_value;
     };

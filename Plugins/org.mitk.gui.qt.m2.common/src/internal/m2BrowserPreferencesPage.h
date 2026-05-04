@@ -50,6 +50,7 @@ public slots:
 	void OnUseMaxIntensity(bool v);
 	void OnUseSamplingPoints(bool v);
 	void OnUseMinimalImagingArea(bool v);
+	void OnUseVerboseOutput(bool v);
 
 	void CreateQtControl(QWidget* parent) override;
 	QWidget* GetQtControl() const override;

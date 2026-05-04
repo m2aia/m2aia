@@ -25,7 +25,10 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLImageIO.h>
 #include <m2ImzMLParser.h>
 #include <m2Timer.h>
+#include <mitkCoreServices.h>
 #include <mitkIOUtil.h>
+#include <mitkIPreferences.h>
+#include <mitkIPreferencesService.h>
 #include <mitkImagePixelReadAccessor.h>
 #include <mitkImagePixelWriteAccessor.h>
 #include <mitkLocaleSwitch.h>
@@ -609,6 +612,11 @@ namespace m2
   {
     std::string mzGroupId, intGroupId;
     m2::ImzMLSpectrumImage::Pointer object = m2::ImzMLSpectrumImage::New();
+    bool verboseOutput = false;
+    if (auto *preferencesService = mitk::CoreServices::GetPreferencesService())
+      if (auto *preferences = preferencesService->GetSystemPreferences())
+        verboseOutput = preferences->GetBool("m2aia.spectrumimage.verbose_output", false);
+    object->SetVerboseOutput(verboseOutput);
 
     auto filename = itksys::SystemTools::GetFilenameWithoutExtension(GetInputLocation());
     auto parentDir = itksys::SystemTools::GetParentDirectory(GetInputLocation());
@@ -617,14 +625,10 @@ namespace m2
     auto pathWithoutExtension = parentDir + "/" + filename;
     std::string ibdPath = pathWithoutExtension + ".ibd";
     std::string ibdPathUpper = pathWithoutExtension + ".IBD";
-    if (itksys::SystemTools::FileExists(ibdPath))
-    {
-      MITK_INFO << "Found binary file: " << ibdPath;
-    }
-    else if (itksys::SystemTools::FileExists(ibdPathUpper))
-    {
-      MITK_INFO << "Found binary file: " << ibdPathUpper;
-      ibdPath = ibdPathUpper;
+    
+    if(!itksys::SystemTools::FileExists(ibdPath)){
+      if (itksys::SystemTools::FileExists(ibdPathUpper))
+        ibdPath = ibdPathUpper;
     }
     else
     {

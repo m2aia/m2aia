@@ -51,6 +51,7 @@ namespace m2
     void SelectSingleSpectrumByPoint(mitk::StateMachineAction *, mitk::InteractionEvent *);
     bool IsOver(const mitk::InteractionEvent *);
     mitk::DataNode * FindSingleSpectrumDataNode(mitk::DataNode *);
+    mitk::DataNode * FindEmbeddingImageDataNode(mitk::DataNode *);
     
     mitk::DataStorage * m_DataStorage;
   };

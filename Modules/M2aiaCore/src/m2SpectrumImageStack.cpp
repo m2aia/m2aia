@@ -113,6 +113,13 @@ namespace m2
     // Clone the group image to keep it alive after the MultiLabelSegmentation goes out of scope
     this->SetMultilabelSegmentation(labelImage);
 
+    auto indexImage = mitk::Image::New();
+    indexImage->Initialize(mitk::MakeScalarPixelType<m2::IndexImagePixelType>(), 3, dims);
+    indexImage->GetGeometry()->SetSpacing(spacing);
+    indexImage->GetGeometry()->SetOrigin(this->GetGeometry()->GetOrigin());
+    indexImage->GetGeometry()->SetIndexToWorldTransform(this->GetGeometry()->GetIndexToWorldTransform());
+    this->SetIndexImage(indexImage);
+  
     // fill with data
     unsigned int sliceId = 0;
     for (auto &transformer : m_SliceTransformers)
@@ -126,13 +133,17 @@ namespace m2
           CopyWarpedImageToStackImage(warpedImage, this, sliceId);
 
           // selecting "short" as pixel type for nearest neighbor interpolation
-          auto warpedMask = transformer->WarpImage(movingImage->GetMultilabelSegmentation()->GetGroupImage(0), "short"); 
+          auto warpedMask = transformer->WarpImage(movingImage->GetMultilabelSegmentation()->GetGroupImage(0), "unsigned_short"); 
           CopyWarpedImageToStackImage(warpedMask, GetMultilabelSegmentation()->GetGroupImage(0), sliceId);
+          
+          auto warpedIndexdImage = transformer->WarpImage(movingImage->GetIndexImage(), "unsigned_int"); 
+          CopyWarpedImageToStackImage(warpedIndexdImage, GetIndexImage(), sliceId);
         }
         else
         {
           CopyWarpedImageToStackImage(movingImage, this, sliceId);
           CopyWarpedImageToStackImage(movingImage->GetMultilabelSegmentation()->GetGroupImage(0), GetMultilabelSegmentation()->GetGroupImage(0), sliceId);
+          CopyWarpedImageToStackImage(movingImage->GetIndexImage(), GetIndexImage(), sliceId);
         }
       }
       ++sliceId;
@@ -178,6 +189,10 @@ namespace m2
 
     for (auto &transformer : m_SliceTransformers)
     {
+      if(!transformer){
+        MITK_ERROR("SpectrumImageStack::InitializeImageAccess") << "Empty transformer found!";
+        continue;
+      }
       auto specImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer());
       auto xAxis = specImage->GetXAxis();
       min = std::min(min, xAxis.front());
@@ -198,6 +213,10 @@ namespace m2
 
     for (auto &transformer : m_SliceTransformers)
     {
+      if(!transformer){
+        MITK_ERROR("SpectrumImageStack::InitializeImageAccess") << "Empty transformer found!";
+        continue;
+      }
       auto specImage = dynamic_cast<m2::SpectrumImage *>(transformer->GetMovingImage().GetPointer());
       auto sliceXAxis = specImage->GetXAxis();
       auto sliceSumVec = specImage->GetSumSpectrum();

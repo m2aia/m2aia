@@ -11,11 +11,10 @@ found in the LICENSE file.
 ============================================================================*/
 
 #include "QmitkDataCompressionView.h"
-#include <QFileDialog>
 
 #include <QMessageBox>
-#include <berryISelectionService.h>
-#include <berryIWorkbenchWindow.h>
+// #include <berryISelectionService.h>
+// #include <berryIWorkbenchWindow.h>
 
 // m2
 #include <m2CoreCommon.h>
@@ -23,50 +22,34 @@ found in the LICENSE file.
 #include <m2MultiSliceFilter.h>
 #include <m2PcaImageFilter.h>
 #include <m2SpectrumImage.h>
-#include <m2SpectrumImageHelper.h>
 #include <m2TSNEImageFilter.h>
-#include <m2ImzMLImageIO.h>
-#include <m2SpectrumImageHelper.h>
+
 #include <m2KMeansImageFilter.h>
 #include <signal/m2SignalCommon.h>
 
 // mitk
-#include <mitkDockerHelper.h>
 #include <mitkImage.h>
-#include <mitkImageAccessByItk.h>
 #include <mitkImageCast.h>
-#include <mitkImagePixelReadAccessor.h>
-#include <mitkImagePixelWriteAccessor.h>
+#include <mitkImageReadAccessor.h>
+#include <mitkImageWriteAccessor.h>
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateFunction.h>
 #include <mitkNodePredicateNot.h>
-#include <mitkNodePredicateOr.h>
-#include <mitkNodePredicateProperty.h>
+#include <mitkIOUtil.h>
 #include <mitkProgressBar.h>
-#include <usModuleRegistry.h>
 
+// itksys
+#include <itksys/SystemTools.hxx>
 
 // itk
-#include <itkBinaryThresholdImageFilter.h>
 #include <itkIdentityTransform.h>
 #include <itkLinearInterpolateImageFunction.h>
 #include <itkResampleImageFilter.h>
 #include <itkShrinkImageFilter.h>
 #include <itkVectorImageToImageAdaptor.h>
 #include <itkVectorImage.h>
-#include <itkVectorIndexSelectionCastImageFilter.h>
-#include <itkImageKmeansModelEstimator.h>
-#include <itkImageRegionIterator.h>
 
-// boost
-#include <berryPlatformUI.h>
-#include <boost/algorithm/string.hpp>
-
-// Eigen
-// #include "Eigen/Dense"
-// OpenMP
-#include <omp.h>
 
 // Don't forget to initialize the VIEW_ID.
 const std::string QmitkDataCompressionView::VIEW_ID = "org.mitk.views.m2.datacompression";

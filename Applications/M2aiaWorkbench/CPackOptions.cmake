@@ -7,8 +7,8 @@ set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "M²aia - Mass spectrometry imaging applic
 if(M2AIA_PACKAGE_VERSION)
   set(CPACK_PACKAGE_VERSION "${M2AIA_PACKAGE_VERSION}")
 else()
-  set(CPACK_PACKAGE_VERSION_MAJOR "2025") # Major version is the year of release
-  set(CPACK_PACKAGE_VERSION_MINOR "07") # Minor version is the month of release
+  set(CPACK_PACKAGE_VERSION_MAJOR "2026") # Major version is the year of release
+  set(CPACK_PACKAGE_VERSION_MINOR "05") # Minor version is the month of release
   set(CPACK_PACKAGE_VERSION_PATCH "00") # Patch versioning
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 endif()

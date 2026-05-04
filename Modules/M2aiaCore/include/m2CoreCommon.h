@@ -24,6 +24,7 @@ namespace m2
 {
 
   itkEventMacroDeclaration(IntervalVectorModified, itk::AnyEvent);
+  itkEventMacroDeclaration(ImagePositionEvent, itk::AnyEvent);
 
   enum class SpectrumFormat : unsigned int
   {

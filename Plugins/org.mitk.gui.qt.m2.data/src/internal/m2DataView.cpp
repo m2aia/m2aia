@@ -58,6 +58,7 @@ See LICENSE.txt for details.
 #include <mitkImagePixelWriteAccessor.h>
 #include <mitkImageVtkMapper2D.h>
 #include <mitkImageAccessByItk.h>
+#include <mitkImagePixelReadAccessor.h>
 #include <m2ImzMLImageIO.h>
 #include <regex>
 // #include <Qm2AssociatedFilesDialog.h>
@@ -1339,6 +1340,113 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     auto helperNode = mitk::DataNode::New();
     helperNode->SetName(nodeName);
     helperNode->SetVisibility(m_Controls.showMaskImages->isChecked());
+    MITK_INFO << "Adding mask image to datastorage with name: " << nodeName;
+    // Reset mask labels if requested: remap single non-background label != 1 to value 1
+    if (m_Controls.ckResetMaskLabels->isChecked())
+    {
+      auto seg = spectrumImage->GetMultilabelSegmentation();
+      if (seg.IsNotNull())
+      {
+        auto allValues = seg->GetAllLabelValues();
+        MITK_INFO << "Mask image has " << allValues.size() << " label(s): ";
+        for (const auto &value : allValues)
+        {
+          MITK_INFO << "  - " << value;
+        }
+
+        if (allValues.size() == 1 && allValues[0] != 1)
+        {
+          const auto oldValue = static_cast<mitk::Label::PixelType>(allValues[0]);
+
+          // 1. Save label metadata before removal
+          MITK_INFO << "[ResetMaskLabels] Step 1: saving metadata for label value " << oldValue;
+          auto existingLabel = seg->GetLabel(oldValue);
+          auto newLabel = mitk::Label::New();
+          if (existingLabel.IsNotNull())
+          {
+            MITK_INFO << "[ResetMaskLabels]   found label '" << existingLabel->GetName() << "'";
+            newLabel->SetColor(existingLabel->GetColor());
+            newLabel->SetName(existingLabel->GetName());
+            newLabel->SetOpacity(existingLabel->GetOpacity());
+          }
+          else
+          {
+            MITK_INFO << "[ResetMaskLabels]   no existing label found, using defaults";
+            mitk::Color color;
+            color.Set(0.0f, 1.0f, 0.0f);
+            newLabel->SetColor(color);
+            newLabel->SetName("Valid");
+            newLabel->SetOpacity(0.0f);
+          }
+          newLabel->SetLocked(true);
+          newLabel->SetValue(1);
+
+          // 2. Remap pixels oldValue -> 1 BEFORE RemoveLabel, which would zero them out
+          MITK_INFO << "[ResetMaskLabels] Step 2: remapping pixel value " << oldValue << " -> 1";
+          auto groupImage = seg->GetGroupImage(0);
+          std::size_t remappedCount = 0;
+          {
+            mitk::ImagePixelWriteAccessor<mitk::Label::PixelType, 3> acc(groupImage);
+            auto *data = acc.GetData();
+            std::size_t size = 1;
+            for (unsigned int d = 0; d < groupImage->GetDimension(); ++d)
+              size *= groupImage->GetDimension(d);
+            for (std::size_t i = 0; i < size; ++i)
+              if (data[i] == oldValue)
+              {
+                data[i] = 1;
+                ++remappedCount;
+              }
+          }
+          MITK_INFO << "[ResetMaskLabels]   remapped " << remappedCount << " pixel(s)";
+
+          // Verify write is visible before handing off to MITK
+          {
+            mitk::ImagePixelReadAccessor<mitk::Label::PixelType, 3> racc(groupImage);
+            std::size_t size = 1;
+            for (unsigned int d = 0; d < groupImage->GetDimension(); ++d)
+              size *= groupImage->GetDimension(d);
+            std::size_t ones = 0, fours = 0, others = 0;
+            for (std::size_t i = 0; i < size; ++i)
+            {
+              if (racc.GetData()[i] == 1) ++ones;
+              else if (racc.GetData()[i] == oldValue) ++fours;
+              else if (racc.GetData()[i] != 0) ++others;
+            }
+            MITK_INFO << "[ResetMaskLabels]   verify after write: ones=" << ones << " oldValues=" << fours << " others=" << others;
+          }
+
+          // 3. Remove old label entry (EraseLabel inside finds no oldValue pixels now)
+          MITK_INFO << "[ResetMaskLabels] Step 3: removing label entry " << oldValue;
+          seg->RemoveLabel(oldValue);
+
+          // Verify write is still intact after RemoveLabel/EraseLabel
+          {
+            mitk::ImagePixelReadAccessor<mitk::Label::PixelType, 3> racc(seg->GetGroupImage(0));
+            std::size_t size = 1;
+            auto gi = seg->GetGroupImage(0);
+            for (unsigned int d = 0; d < gi->GetDimension(); ++d)
+              size *= gi->GetDimension(d);
+            std::size_t ones = 0, fours = 0, zeros = 0, others = 0;
+            for (std::size_t i = 0; i < size; ++i)
+            {
+              auto v = racc.GetData()[i];
+              if (v == 1) ++ones;
+              else if (v == static_cast<mitk::Label::PixelType>(oldValue)) ++fours;
+              else if (v == 0) ++zeros;
+              else ++others;
+            }
+            MITK_INFO << "[ResetMaskLabels]   verify after RemoveLabel: ones=" << ones << " oldValues=" << fours << " zeros=" << zeros << " others=" << others;
+          }
+
+          // 4. Register the new label with value 1
+          MITK_INFO << "[ResetMaskLabels] Step 4: adding new label with value 1";
+          seg->AddLabel(newLabel, 0, false, false);
+          MITK_INFO << "[ResetMaskLabels] Done.";
+        }
+      }
+    }
+
     helperNode->SetData(spectrumImage->GetMultilabelSegmentation());
     helperNode->SetStringProperty("m2aia.helper.image.name", "mask");
 

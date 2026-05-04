@@ -59,6 +59,7 @@ void m2BrowserPreferencesPage::CreateQtControl(QWidget *parent)
   // m_Preferences->PutBool("m2aia.view.spectrum.showSamplingPoints",v);
   m_Ui->showSamplingPoints->setChecked(m_Preferences->GetBool("m2aia.view.spectrum.showSamplingPoints", false));
   m_Ui->minimalImagingArea->setChecked(m_Preferences->GetBool("m2aia.view.image.minimal_area", true));
+  m_Ui->verboseOutput->setChecked(m_Preferences->GetBool("m2aia.spectrumimage.verbose_output", false));
 
 
   connect(m_Ui->spnBxBins, SIGNAL(valueChanged(int)), this, SLOT(OnBinsSpinBoxValueChanged(int)));
@@ -66,6 +67,7 @@ void m2BrowserPreferencesPage::CreateQtControl(QWidget *parent)
   connect(m_Ui->useMinIntensity, SIGNAL(toggled(bool)), this, SLOT(OnUseMinIntensity(bool)));
   connect(m_Ui->minimalImagingArea, SIGNAL(toggled(bool)), this, SLOT(OnUseMinimalImagingArea(bool)));
   connect(m_Ui->showSamplingPoints, SIGNAL(toggled(bool)), this, SLOT(OnUseSamplingPoints(bool)));
+  connect(m_Ui->verboseOutput, SIGNAL(toggled(bool)), this, SLOT(OnUseVerboseOutput(bool)));
 }
 
 void m2BrowserPreferencesPage::OnBinsSpinBoxValueChanged(int value)
@@ -106,6 +108,11 @@ void m2BrowserPreferencesPage::OnUseMinIntensity(bool v)
 void m2BrowserPreferencesPage::OnUseMinimalImagingArea(bool v)
 {
   m_Preferences->PutBool("m2aia.view.image.minimal_area", v);
+}
+
+void m2BrowserPreferencesPage::OnUseVerboseOutput(bool v)
+{
+  m_Preferences->PutBool("m2aia.spectrumimage.verbose_output", v);
 }
 
 void m2BrowserPreferencesPage::Update()

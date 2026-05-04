@@ -34,6 +34,23 @@ Otherwise: The image size is defined by the tag &quot;maximum number of pixels (
     </widget>
    </item>
    <item>
+    <widget class="QLabel" name="label_verboseOutput">
+     <property name="text">
+      <string>Enable verbose output for spectrum image handling (prints detailed info to the log on load).</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="verboseOutput">
+     <property name="text">
+      <string>Verbose spectrum image output</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="Line" name="line_3">
      <property name="orientation">
       <enum>Qt::Orientation::Horizontal</enum>
