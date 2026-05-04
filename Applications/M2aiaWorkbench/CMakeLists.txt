@@ -8,6 +8,7 @@ set(M2AIAAPP_PROVISIONING_FILE "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/M2aiaWorkbench
 
 # CPackConfig
 set(M2AIA_SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}")
+set(target_dir "${CMAKE_CURRENT_LIST_DIR}")
 if(EXISTS "${M2AIA_SOURCE_DIR}/CPackConfig.cmake.in")
   set(CPACK_PROJECT_CONFIG_FILE "${MITK_SOURCE_DIR}/CPackConfig.cmake")
   configure_file(${M2AIA_SOURCE_DIR}/CPackConfig.cmake.in
