@@ -885,6 +885,19 @@
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="ckResetMaskLabels">
+        <property name="toolTip">
+         <string>Remaps the foreground label value to 1. Only applies if the segmentation has exactly two labels (background + one foreground) and the foreground label value is not 1.</string>
+        </property>
+        <property name="text">
+         <string>Reset mask labels on import</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="Line" name="line">
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>
