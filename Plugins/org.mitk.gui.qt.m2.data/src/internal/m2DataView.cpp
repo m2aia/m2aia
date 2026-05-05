@@ -403,6 +403,9 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
     mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
     this->RequestRenderWindowUpdate();
   });
+
+  // hide MIR group box if not required
+  m_Controls.groupBoxMIR->setVisible(false);
 }
 
 void m2DataView::InitToleranceControls()
@@ -1475,7 +1478,7 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     helperNode->SetStringProperty("m2aia.helper.image.name", "mask");
 
     // add hidden to DS
-    helperNode->SetBoolProperty("helper object", true);
+    // helperNode->SetBoolProperty("helper object", true);
     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
     // consideration of the check boxes
     emit m_Controls.showMaskImages->toggled(m_Controls.showMaskImages->isChecked());
