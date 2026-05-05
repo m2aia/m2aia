@@ -629,10 +629,10 @@ namespace m2
     if(!itksys::SystemTools::FileExists(ibdPath)){
       if (itksys::SystemTools::FileExists(ibdPathUpper))
         ibdPath = ibdPathUpper;
-    }
-    else
-    {
-      MITK_WARN << "No binary file (.ibd/.IBD) found for: " << pathWithoutExtension;
+      else
+      {
+        MITK_WARN << "No binary file (.ibd/.IBD) found for: " << pathWithoutExtension;
+      }
     }
 
     // m2::ImzMLSpectrumImage::ImzMLImageSource source;
