@@ -711,28 +711,16 @@
         <item>
          <widget class="QCheckBox" name="CBUseFixedLevel">
           <property name="text">
-           <string>Fixed Level Window</string>
+           <string>Shared Level Window</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QDoubleSpinBox" name="spnBxLevel"/>
-        </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="spnBxWindow"/>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
+         <widget class="ctkRangeWidget" name="intensityRangeSlider" native="true">
+          <property name="toolTip">
+           <string>Set the lower and upper intensity bounds as percentages (0–100 %) of the auto-detected data range. Only active when "Shared Level Window" is checked.</string>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
+         </widget>
         </item>
        </layout>
       </item>
@@ -937,6 +925,14 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>ctkRangeWidget</class>
+   <extends>QWidget</extends>
+   <header>ctkRangeWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

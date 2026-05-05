@@ -20,6 +20,7 @@ See LICENSE.txt for details.
 #include "Qm2OpenSlideImageIOHelperDialog.h"
 #include <QColorDialog>
 #include <QComboBox>
+#include <ctkRangeWidget.h>
 #include <QInputDialog>
 #include <QmitkRenderWindow.h>
 #include <QMainWindow>
@@ -329,6 +330,24 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
   
   m_Controls.CBImageNormalization->setCurrentIndex(
     preferences->GetInt("m2aia.signal.ImageSmoothingStrategy", to_underlying(m2::ImageSmoothingStrategyType::None)));
+
+  // Intensity range slider (0–100 %)
+  m_Controls.intensityRangeSlider->setRange(0, 100);
+  m_Controls.intensityRangeSlider->setMinimumValue(15);
+  m_Controls.intensityRangeSlider->setMaximumValue(50);
+  m_Controls.intensityRangeSlider->setSuffix("%");
+  connect(m_Controls.intensityRangeSlider,
+          &ctkRangeWidget::valuesChanged,
+          this,
+          [this](int, int)
+          {
+            if (!m_Controls.CBUseFixedLevel->isChecked())
+              return;
+            auto nodesToProcess = m2::UIUtils::AllNodes(GetDataStorage());
+            for (auto &dataNode : *nodesToProcess)
+              UpdateLevelWindow(dataNode);
+            this->RequestRenderWindowUpdate();
+          });
 
   // Make sure, that data nodes added before this view
   // is initialized are handled correctly!!
@@ -1081,7 +1100,12 @@ void m2DataView::UpdateLevelWindow(const mitk::DataNode *node)
     lw.SetAuto(msImageBase);
     if (m_Controls.CBUseFixedLevel->isChecked())
     {
-      lw.SetLevelWindow(m_Controls.spnBxLevel->value(), m_Controls.spnBxWindow->value());
+      const double rangeMin = lw.GetRangeMin();
+      const double rangeMax = lw.GetRangeMax();
+      const double range = rangeMax - rangeMin;
+      const double lower = rangeMin + (m_Controls.intensityRangeSlider->minimumValue() / 100.0) * range;
+      const double upper = rangeMin + (m_Controls.intensityRangeSlider->maximumValue() / 100.0) * range;
+      lw.SetWindowBounds(lower, upper);
     }
     const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
   }
