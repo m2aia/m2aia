@@ -37,6 +37,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <itkNrrdImageIO.h>
 // #include <mitkImageWriter.h>
 #include <mitkItkImageIO.h>
+#include <mitkIOUtil.h>
 
 // m2aia
 #include "m2Reconstruction3D.h"
