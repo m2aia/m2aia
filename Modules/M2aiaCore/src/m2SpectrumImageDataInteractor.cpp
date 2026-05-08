@@ -102,16 +102,24 @@ bool m2::SpectrumImageDataInteractor::FilterEvents(mitk::InteractionEvent *inter
 
             singleSpectrumNode->InvokeEvent(m2::IntervalVectorModified());
           }
+        }
+      }
 
-          auto embeddingNode = FindEmbeddingImageDataNode(imageNode);
-          if (embeddingNode){
-            
-            embeddingNode->SetProperty("m2aia.event.position.x", mitk::IntProperty::New(index[0]));
-            embeddingNode->SetProperty("m2aia.event.position.y", mitk::IntProperty::New(index[1]));
-            embeddingNode->SetProperty("m2aia.event.position.z", mitk::IntProperty::New(index[2]));
-            embeddingNode->InvokeEvent(m2::ImagePositionEvent());
+      imageNodes = this->GetDataStorage()->GetSubset(mitk::TNodePredicateDataType<mitk::Image>::New());
+      for (auto imageNode : *imageNodes)
+      {
 
-          }
+        auto image = dynamic_cast<mitk::Image *>(imageNode->GetData());
+        itk::Index<3> index;
+
+        if (image->GetGeometry()->IsInside(pos))
+        {
+        
+          image->GetGeometry()->WorldToIndex(pos, index);
+          imageNode->SetProperty("m2aia.event.position.x", mitk::IntProperty::New(index[0]));
+          imageNode->SetProperty("m2aia.event.position.y", mitk::IntProperty::New(index[1]));
+          imageNode->SetProperty("m2aia.event.position.z", mitk::IntProperty::New(index[2]));
+          imageNode->InvokeEvent(m2::ImagePositionEvent());
         }
       }
       
