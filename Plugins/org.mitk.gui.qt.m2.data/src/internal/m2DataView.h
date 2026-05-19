@@ -151,7 +151,8 @@ protected:
   Ui::imsDataControls m_Controls;
   QWidget * m_Parent = nullptr;
   bool m_InitializeNewNode = false;
-
+  double m_GlobalMaximumInensity = 0.0;
+  double m_GlobalMinimumInensity = 0.0;
   QThreadPool m_pool;
   m2::SpectrumType m_CurrentOverviewSpectrumType = m2::SpectrumType::Maximum;
 

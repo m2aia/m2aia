@@ -88,14 +88,14 @@
       </item>
       <item>
        <widget class="QLabel" name="lblCentroidNormalizationWarning">
+        <property name="visible">
+         <bool>false</bool>
+        </property>
         <property name="text">
          <string/>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
-        </property>
-        <property name="visible">
-         <bool>false</bool>
         </property>
        </widget>
       </item>
@@ -371,29 +371,53 @@
      <layout class="QVBoxLayout" name="verticalLayout_MIR">
       <item>
        <widget class="QCheckBox" name="ckMIRVectorNormalization">
-        <property name="text"><string>Vector (L&#8322;) normalisation</string></property>
-        <property name="toolTip"><string>Divide each spectrum by its Euclidean norm to remove intensity variation caused by sample thickness or detector sensitivity differences.</string></property>
+        <property name="toolTip">
+         <string>Divide each spectrum by its Euclidean norm to remove intensity variation caused by sample thickness or detector sensitivity differences.</string>
+        </property>
+        <property name="text">
+         <string>Vector (L₂) normalisation</string>
+        </property>
        </widget>
       </item>
       <item>
        <widget class="Line" name="lineMIR3">
-        <property name="orientation"><enum>Qt::Orientation::Horizontal</enum></property>
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
        </widget>
       </item>
       <item>
        <layout class="QHBoxLayout" name="hLayoutMIRDeriv">
         <item>
          <widget class="QLabel" name="labelMIRDeriv">
-          <property name="minimumSize"><size><width>150</width><height>0</height></size></property>
-          <property name="maximumSize"><size><width>150</width><height>16777215</height></size></property>
-          <property name="text"><string>Derivative</string></property>
-          <property name="toolTip"><string>Apply a spectral derivative to each spectrum before image generation (Step 5).</string></property>
-          <property name="indent"><number>0</number></property>
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>150</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="toolTip">
+           <string>Apply a spectral derivative to each spectrum before image generation (Step 5).</string>
+          </property>
+          <property name="text">
+           <string>Derivative</string>
+          </property>
+          <property name="indent">
+           <number>0</number>
+          </property>
          </widget>
         </item>
         <item>
          <widget class="QComboBox" name="CBMIRDerivative">
-          <property name="toolTip"><string>None: off.  First: centred 1st-order finite difference.  Second: centred 2nd-order finite difference.</string></property>
+          <property name="toolTip">
+           <string>None: off.  First: centred 1st-order finite difference.  Second: centred 2nd-order finite difference.</string>
+          </property>
          </widget>
         </item>
        </layout>
@@ -404,7 +428,7 @@
    <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="toolTip">
-      <string>Create (ion) images by accumulation of intensities (pooling) along the spectral axis.</string>
+      <string/>
      </property>
      <property name="title">
       <string>Image generation</string>
@@ -701,6 +725,9 @@
           <height>16777215</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Create (ion) images by accumulation of intensities (pooling) along the spectral axis.</string>
+        </property>
         <property name="text">
          <string>Create image</string>
         </property>
@@ -710,29 +737,20 @@
        <layout class="QHBoxLayout" name="horizontalLayout_6">
         <item>
          <widget class="QCheckBox" name="CBUseFixedLevel">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the lower and upper intensity bounds as percentages (0–100 %) of the global intensity range. Only active when &amp;quot;Shared Level Window&amp;quot; is checked.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
-           <string>Fixed Level Window</string>
+           <string>Shared Level Window</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QDoubleSpinBox" name="spnBxLevel"/>
-        </item>
-        <item>
-         <widget class="QDoubleSpinBox" name="spnBxWindow"/>
-        </item>
-        <item>
-         <spacer name="horizontalSpacer_2">
-          <property name="orientation">
-           <enum>Qt::Orientation::Horizontal</enum>
+         <widget class="ctkRangeWidget" name="intensityRangeSlider" native="true">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the lower and upper intensity bounds as percentages (0–100 %) of the global intensity range. Only active when &amp;quot;Shared Level Window&amp;quot; is checked.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>40</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
+         </widget>
         </item>
        </layout>
       </item>
@@ -937,6 +955,14 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>ctkRangeWidget</class>
+   <extends>QWidget</extends>
+   <header>ctkRangeWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

@@ -20,6 +20,7 @@ See LICENSE.txt for details.
 #include "Qm2OpenSlideImageIOHelperDialog.h"
 #include <QColorDialog>
 #include <QComboBox>
+#include <ctkRangeWidget.h>
 #include <QInputDialog>
 #include <QmitkRenderWindow.h>
 #include <QMainWindow>
@@ -59,6 +60,7 @@ See LICENSE.txt for details.
 #include <mitkImageVtkMapper2D.h>
 #include <mitkImageAccessByItk.h>
 #include <mitkImagePixelReadAccessor.h>
+#include <mitkImageStatisticsHolder.h> 
 #include <m2ImzMLImageIO.h>
 #include <regex>
 // #include <Qm2AssociatedFilesDialog.h>
@@ -330,6 +332,24 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
   m_Controls.CBImageNormalization->setCurrentIndex(
     preferences->GetInt("m2aia.signal.ImageSmoothingStrategy", to_underlying(m2::ImageSmoothingStrategyType::None)));
 
+  // Intensity range slider (0–100 %)
+  m_Controls.intensityRangeSlider->setRange(0, 100);
+  m_Controls.intensityRangeSlider->setMinimumValue(15);
+  m_Controls.intensityRangeSlider->setMaximumValue(50);
+  m_Controls.intensityRangeSlider->setSuffix("%");
+  connect(m_Controls.intensityRangeSlider,
+          &ctkRangeWidget::valuesChanged,
+          this,
+          [this](int, int)
+          {
+            if (!m_Controls.CBUseFixedLevel->isChecked())
+              return;
+            auto nodesToProcess = m2::UIUtils::AllNodes(GetDataStorage());
+            for (auto &dataNode : *nodesToProcess)
+              UpdateLevelWindow(dataNode);
+            this->RequestRenderWindowUpdate();
+          });
+
   // Make sure, that data nodes added before this view
   // is initialized are handled correctly!!
   auto nodes = this->GetDataStorage()->GetAll();
@@ -384,6 +404,9 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
     mitk::RenderingManager::GetInstance()->InitializeViewsByBoundingObjects(this->GetDataStorage());
     this->RequestRenderWindowUpdate();
   });
+
+  // hide MIR group box if not required
+  m_Controls.groupBoxMIR->setVisible(false);
 }
 
 void m2DataView::InitToleranceControls()
@@ -887,10 +910,20 @@ void m2DataView::OnGenerateImageData(mitk::DataNode::Pointer node,
     const auto futureFinished = [future, node, this]() mutable
     {
       auto image = future->result();
+      image->Modified(); // trigger update of statistics
+      double newMax = image->GetStatistics()->GetScalarValue2ndMax();
+      double newMin = image->GetStatistics()->GetScalarValue2ndMin();
+      if(newMax > m_GlobalMaximumInensity)
+        m_GlobalMaximumInensity = newMax;
+      if(newMin < m_GlobalMinimumInensity)
+        m_GlobalMinimumInensity = newMin;
+      MITK_INFO << "Global intensity range across all images: [" << m_GlobalMinimumInensity << ", " << m_GlobalMaximumInensity << "]";
       UpdateLevelWindow(node);
       // UpdateSpectrumImageTable(node);
       node->SetProperty("m2aia.xs.selection.center", image->GetProperty("m2aia.xs.selection.center"));
       node->SetProperty("m2aia.xs.selection.tolerance", image->GetProperty("m2aia.xs.selection.tolerance"));
+
+
       this->RequestRenderWindowUpdate();
       future->disconnect();
     };
@@ -987,10 +1020,14 @@ void m2DataView::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
   // set GUI settings to the selected nodes
   ApplySettingsToNodes(nodesToProcess);
 
+  m_GlobalMaximumInensity = 0;
+  m_GlobalMinimumInensity = std::numeric_limits<double>::max();
   // process all nodes
   for (mitk::DataNode::Pointer dataNode : *nodesToProcess)
-    if (m2::SpectrumImage::Pointer data = dynamic_cast<m2::SpectrumImage *>(dataNode->GetData()))
+    if (m2::SpectrumImage::Pointer data = dynamic_cast<m2::SpectrumImage *>(dataNode->GetData())){
       OnGenerateImageData(dataNode, xRangeCenter, xRangeTol, false); // do not emit
+      
+    }
 }
 
 void m2DataView::UpdateSpectrumImageTable(const mitk::DataNode *node)
@@ -1081,7 +1118,9 @@ void m2DataView::UpdateLevelWindow(const mitk::DataNode *node)
     lw.SetAuto(msImageBase);
     if (m_Controls.CBUseFixedLevel->isChecked())
     {
-      lw.SetLevelWindow(m_Controls.spnBxLevel->value(), m_Controls.spnBxWindow->value());
+      const double lower = m_GlobalMinimumInensity + (m_Controls.intensityRangeSlider->minimumValue() / 100.0) * (m_GlobalMaximumInensity - m_GlobalMinimumInensity);
+      const double upper = m_GlobalMinimumInensity + (m_Controls.intensityRangeSlider->maximumValue() / 100.0) * (m_GlobalMaximumInensity - m_GlobalMinimumInensity);
+      lw.SetWindowBounds(lower, upper);
     }
     const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);
   }
@@ -1451,7 +1490,7 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     helperNode->SetStringProperty("m2aia.helper.image.name", "mask");
 
     // add hidden to DS
-    helperNode->SetBoolProperty("helper object", true);
+    // helperNode->SetBoolProperty("helper object", true);
     this->GetDataStorage()->Add(helperNode, const_cast<mitk::DataNode *>(node));
     // consideration of the check boxes
     emit m_Controls.showMaskImages->toggled(m_Controls.showMaskImages->isChecked());
