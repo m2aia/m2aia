@@ -60,6 +60,7 @@ See LICENSE.txt for details.
 #include <mitkImageVtkMapper2D.h>
 #include <mitkImageAccessByItk.h>
 #include <mitkImagePixelReadAccessor.h>
+#include <mitkImageStatisticsHolder.h> 
 #include <m2ImzMLImageIO.h>
 #include <regex>
 // #include <Qm2AssociatedFilesDialog.h>
@@ -909,10 +910,20 @@ void m2DataView::OnGenerateImageData(mitk::DataNode::Pointer node,
     const auto futureFinished = [future, node, this]() mutable
     {
       auto image = future->result();
+      image->Modified(); // trigger update of statistics
+      double newMax = image->GetStatistics()->GetScalarValue2ndMax();
+      double newMin = image->GetStatistics()->GetScalarValue2ndMin();
+      if(newMax > m_GlobalMaximumInensity)
+        m_GlobalMaximumInensity = newMax;
+      if(newMin < m_GlobalMinimumInensity)
+        m_GlobalMinimumInensity = newMin;
+      MITK_INFO << "Global intensity range across all images: [" << m_GlobalMinimumInensity << ", " << m_GlobalMaximumInensity << "]";
       UpdateLevelWindow(node);
       // UpdateSpectrumImageTable(node);
       node->SetProperty("m2aia.xs.selection.center", image->GetProperty("m2aia.xs.selection.center"));
       node->SetProperty("m2aia.xs.selection.tolerance", image->GetProperty("m2aia.xs.selection.tolerance"));
+
+
       this->RequestRenderWindowUpdate();
       future->disconnect();
     };
@@ -1009,10 +1020,14 @@ void m2DataView::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
   // set GUI settings to the selected nodes
   ApplySettingsToNodes(nodesToProcess);
 
+  m_GlobalMaximumInensity = 0;
+  m_GlobalMinimumInensity = std::numeric_limits<double>::max();
   // process all nodes
   for (mitk::DataNode::Pointer dataNode : *nodesToProcess)
-    if (m2::SpectrumImage::Pointer data = dynamic_cast<m2::SpectrumImage *>(dataNode->GetData()))
+    if (m2::SpectrumImage::Pointer data = dynamic_cast<m2::SpectrumImage *>(dataNode->GetData())){
       OnGenerateImageData(dataNode, xRangeCenter, xRangeTol, false); // do not emit
+      
+    }
 }
 
 void m2DataView::UpdateSpectrumImageTable(const mitk::DataNode *node)
@@ -1103,11 +1118,8 @@ void m2DataView::UpdateLevelWindow(const mitk::DataNode *node)
     lw.SetAuto(msImageBase);
     if (m_Controls.CBUseFixedLevel->isChecked())
     {
-      const double rangeMin = lw.GetRangeMin();
-      const double rangeMax = lw.GetRangeMax();
-      const double range = rangeMax - rangeMin;
-      const double lower = rangeMin + (m_Controls.intensityRangeSlider->minimumValue() / 100.0) * range;
-      const double upper = rangeMin + (m_Controls.intensityRangeSlider->maximumValue() / 100.0) * range;
+      const double lower = m_GlobalMinimumInensity + (m_Controls.intensityRangeSlider->minimumValue() / 100.0) * (m_GlobalMaximumInensity - m_GlobalMinimumInensity);
+      const double upper = m_GlobalMinimumInensity + (m_Controls.intensityRangeSlider->maximumValue() / 100.0) * (m_GlobalMaximumInensity - m_GlobalMinimumInensity);
       lw.SetWindowBounds(lower, upper);
     }
     const_cast<mitk::DataNode *>(node)->SetLevelWindow(lw);

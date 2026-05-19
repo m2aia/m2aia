@@ -428,7 +428,7 @@
    <item>
     <widget class="QGroupBox" name="groupBox">
      <property name="toolTip">
-      <string>Create (ion) images by accumulation of intensities (pooling) along the spectral axis.</string>
+      <string/>
      </property>
      <property name="title">
       <string>Image generation</string>
@@ -725,6 +725,9 @@
           <height>16777215</height>
          </size>
         </property>
+        <property name="toolTip">
+         <string>Create (ion) images by accumulation of intensities (pooling) along the spectral axis.</string>
+        </property>
         <property name="text">
          <string>Create image</string>
         </property>
@@ -734,6 +737,9 @@
        <layout class="QHBoxLayout" name="horizontalLayout_6">
         <item>
          <widget class="QCheckBox" name="CBUseFixedLevel">
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the lower and upper intensity bounds as percentages (0–100 %) of the global intensity range. Only active when &amp;quot;Shared Level Window&amp;quot; is checked.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
           <property name="text">
            <string>Shared Level Window</string>
           </property>
@@ -742,7 +748,7 @@
         <item>
          <widget class="ctkRangeWidget" name="intensityRangeSlider" native="true">
           <property name="toolTip">
-           <string>Set the lower and upper intensity bounds as percentages (0–100 %) of the auto-detected data range. Only active when "Shared Level Window" is checked.</string>
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the lower and upper intensity bounds as percentages (0–100 %) of the global intensity range. Only active when &amp;quot;Shared Level Window&amp;quot; is checked.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
