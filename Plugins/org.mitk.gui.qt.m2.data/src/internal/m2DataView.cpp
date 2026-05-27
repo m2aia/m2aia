@@ -26,6 +26,7 @@ See LICENSE.txt for details.
 #include <QMainWindow>
 #include <QStatusBar>
 #include <QtConcurrent>
+#include <cmath>
 #include <boost/format.hpp>
 #include <itkRescaleIntensityImageFilter.h>
 #include <itksys/SystemTools.hxx>
@@ -66,6 +67,21 @@ See LICENSE.txt for details.
 // #include <Qm2AssociatedFilesDialog.h>
 
 const std::string m2DataView::VIEW_ID = "org.mitk.views.m2.data";
+
+// namespace
+// {
+//   constexpr double kLargeSpacingDifferenceRatio = 3.0;
+
+//   double ComputeSpacingRatio(double lhs, double rhs)
+//   {
+//     if (lhs <= 0.0 || rhs <= 0.0)
+//       return 1.0;
+
+//     const double larger = lhs > rhs ? lhs : rhs;
+//     const double smaller = lhs > rhs ? rhs : lhs;
+//     return larger / smaller;
+//   }
+// }
 
 void m2DataView::CreateQtPartControl(QWidget *parent)
 {
@@ -638,18 +654,18 @@ m2::BaselineCorrectionType m2DataView::GuiToBaselineCorrectionStrategyType()
 void m2DataView::OnDecreaseTolerance()
 {
   m_Controls.spnBxTol->setValue(m_Controls.spnBxTol->value() * 0.9);
-  OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
+  OnGenerateImageData(GetCurrentMzCenter(), FROM_GUI);
 }
 
 void m2DataView::OnIncreaseTolerance()
 {
   m_Controls.spnBxTol->setValue(m_Controls.spnBxTol->value() * 1.1);
-  OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
+  OnGenerateImageData(GetCurrentMzCenter(), FROM_GUI);
 }
 
 void m2DataView::OnCreateNextImage()
 {
-  auto center = m_Controls.spnBxMz->value();
+  auto center = GetCurrentMzCenter();
   auto offset = m_Controls.spnBxTol->value();
   if (m_Controls.rbtnTolPPM->isChecked())
     offset = m2::PartPerMillionToFactor(offset) * .5 * center;
@@ -686,7 +702,7 @@ void m2DataView::OnCreateNextImage()
 
 void m2DataView::OnCreatePrevImage()
 {
-  auto center = m_Controls.spnBxMz->value();
+  auto center = GetCurrentMzCenter();
   auto offset = m_Controls.spnBxTol->value();
   if (m_Controls.rbtnTolPPM->isChecked())
     offset = m2::PartPerMillionToFactor(offset) * .5 * center;
@@ -726,7 +742,7 @@ void m2DataView::OnCreateNextPeakImage()
   auto predicate = mitk::TNodePredicateDataType<m2::IntervalVector>::New();
   auto processableNodes = GetDataStorage()->GetSubset(predicate)->CastToSTLConstContainer();
 
-  auto center = m_Controls.spnBxMz->value();
+  auto center = GetCurrentMzCenter();
   auto tolerance = m_Controls.spnBxTol->value();
   if (m_Controls.rbtnTolPPM->isChecked())
     tolerance = m2::PartPerMillionToFactor(tolerance) * .5 * center;
@@ -778,7 +794,7 @@ void m2DataView::OnCreatePrevPeakImage()
   auto predicate = mitk::TNodePredicateDataType<m2::IntervalVector>::New();
   auto processableNodes = GetDataStorage()->GetSubset(predicate)->CastToSTLConstContainer();
 
-  auto center = m_Controls.spnBxMz->value();
+  auto center = GetCurrentMzCenter();
   auto tolerance = m_Controls.spnBxTol->value();
   if (m_Controls.rbtnTolPPM->isChecked())
     tolerance = m2::PartPerMillionToFactor(tolerance) * .5 * center;
@@ -882,6 +898,7 @@ void m2DataView::OnGenerateImageData(mitk::DataNode::Pointer node,
   if (emitRangeChanged)
     emit m2::UIUtils::Instance()->RangeChanged(xRangeCenter, xRangeTol);
 
+  SetCurrentMzCenter(xRangeCenter);
   this->m_Controls.spnBxMz->setValue(xRangeCenter);
 
   
@@ -917,7 +934,7 @@ void m2DataView::OnGenerateImageData(mitk::DataNode::Pointer node,
         m_GlobalMaximumInensity = newMax;
       if(newMin < m_GlobalMinimumInensity)
         m_GlobalMinimumInensity = newMin;
-      MITK_INFO << "Global intensity range across all images: [" << m_GlobalMinimumInensity << ", " << m_GlobalMaximumInensity << "]";
+      // MITK_INFO << "Global intensity range across all images: [" << m_GlobalMinimumInensity << ", " << m_GlobalMaximumInensity << "]";
       UpdateLevelWindow(node);
       // UpdateSpectrumImageTable(node);
       node->SetProperty("m2aia.xs.selection.center", image->GetProperty("m2aia.xs.selection.center"));
@@ -1000,6 +1017,7 @@ void m2DataView::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
 
   
   emit m2::UIUtils::Instance()->RangeChanged(xRangeCenter, xRangeTol);
+  SetCurrentMzCenter(xRangeCenter);
   this->m_Controls.spnBxMz->setValue(xRangeCenter);
   auto flag = std::make_shared<std::atomic<bool>>(0);
 
@@ -1128,6 +1146,63 @@ void m2DataView::UpdateLevelWindow(const mitk::DataNode *node)
 
 void m2DataView::NodeAdded(const mitk::DataNode *node)
 {
+  if (m_Controls.ckOverrideOriginOnNodeAdded->isChecked())
+  {
+    if (auto image = dynamic_cast<mitk::Image *>(const_cast<mitk::DataNode *>(node)->GetData()))
+    {
+      if (auto *geometry = image->GetGeometry())
+      {
+        mitk::Point3D origin;
+        origin.Fill(0.0);
+        geometry->SetOrigin(origin);
+      }
+    }
+  }
+
+  // if (auto newImage = dynamic_cast<mitk::Image *>(node->GetData()))
+  // {
+  //   auto imageNodes = GetDataStorage()->GetSubset(mitk::TNodePredicateDataType<mitk::Image>::New());
+  //   // const auto newSpacing = newImage->GetGeometry()->GetSpacing();
+  //   bool resetOrigins = false;
+
+    // for (const auto &imageNode : *imageNodes)
+    // {
+    //   if (imageNode.GetPointer() == node)
+    //     continue;
+
+    //   auto existingImage = dynamic_cast<mitk::Image *>(imageNode->GetData());
+    //   if (existingImage == nullptr)
+    //     continue;
+
+    //   const auto existingSpacing = existingImage->GetGeometry()->GetSpacing();
+    //   for (unsigned int axis = 0; axis < 3; ++axis)
+    //   {
+    //     if (ComputeSpacingRatio(newSpacing[axis], existingSpacing[axis]) > kLargeSpacingDifferenceRatio)
+    //     {
+    //       resetOrigins = true;
+    //       break;
+    //     }
+    //   }
+
+    //   if (resetOrigins)
+    //     break;
+    // }
+
+  //   if (resetOrigins)
+  //   {
+  //     mitk::Point3D origin;
+  //     origin.Fill(0.0);
+
+  //     for (const auto &imageNode : *imageNodes)
+  //     {
+  //       if (auto image = dynamic_cast<mitk::Image *>(imageNode->GetData()))
+  //         image->SetOrigin(origin);
+  //     }
+
+  //     this->RequestRenderWindowUpdate();
+  //   }
+  // }
+
   if (dynamic_cast<mitk::PointSet *>(node->GetData()))
   {
     PointSetNodeAdded(node);
@@ -1149,8 +1224,22 @@ void m2DataView::NodeAdded(const mitk::DataNode *node)
     if(m_Controls.spnBxMz->value() == 0)
       this->OnGenerateImageData(xs[xs.size()/2], FROM_GUI);
     else
-      this->OnGenerateImageData(m_Controls.spnBxMz->value(), FROM_GUI);
+      this->OnGenerateImageData(GetCurrentMzCenter(), FROM_GUI);
   }
+}
+
+double m2DataView::GetCurrentMzCenter() const
+{
+  if (m_HasCurrentExactMz && std::isfinite(m_CurrentExactMz))
+    return m_CurrentExactMz;
+
+  return m_Controls.spnBxMz->value();
+}
+
+void m2DataView::SetCurrentMzCenter(double mz)
+{
+  m_CurrentExactMz = mz;
+  m_HasCurrentExactMz = std::isfinite(m_CurrentExactMz);
 }
 
 void m2DataView::PointSetNodeAdded(const mitk::DataNode *node)
@@ -1209,6 +1298,7 @@ void m2DataView::OpenSlideImageNodeAdded(const mitk::DataNode *node)
     const auto name = node->GetName();
     auto dialog = new Qm2OpenSlideImageIOHelperDialog(m_Parent);
     dialog->SetOpenSlideImageIOHelperObject(openSlideIOHelper);
+    dialog->SetDataStorage(this->GetDataStorage());
     auto result = dialog->exec();
     if (result == QDialog::Accepted)
     {
@@ -1217,6 +1307,10 @@ void m2DataView::OpenSlideImageNodeAdded(const mitk::DataNode *node)
         auto data = dialog->GetData();
         auto mx = dialog->GetMirrorX();
         auto my = dialog->GetMirrorY();
+        auto maxTextureSize = dialog->GetMaxTextureSize();
+        const auto regionName = dialog->GetRegionName();
+        const auto fileBaseName =
+          itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName());
         // auto preview = dialog->GetPreviwData();
         // mitk::DataNode::Pointer parent = nullptr;
         // if (preview)
@@ -1227,43 +1321,55 @@ void m2DataView::OpenSlideImageNodeAdded(const mitk::DataNode *node)
         // parent->SetData(dialog->GetPreviwData());
         // this->GetDataStorage()->Add(parent);
         // }
-        if (data.size() == 1)
+        for (const auto &imported : data)
         {
           auto filter = m2::SubdivideImage2DFilter::New();
           filter->SetMirrorX(mx);
           filter->SetMirrorY(my);
-          filter->SetInput(data.back());
-          filter->SetTileHeight((unsigned int)(1) << 13);
-          filter->SetTileWidth((unsigned int)(1) << 13);
+          filter->SetInput(imported.image);
+          filter->SetTileHeight(maxTextureSize);
+          filter->SetTileWidth(maxTextureSize);
           filter->Update();
 
           const auto nX = filter->GetNumberOfTilesInX();
           const auto nY = filter->GetNumberOfTilesInY();
           MITK_INFO << nX << " " << nY;
 
+          // auto importedBaseName = fileBaseName;
+          // if (!regionName.empty())
+          //   importedBaseName += "_" + regionName;
+          // if (!imported.nameSuffix.empty())
+          //   importedBaseName += "." + imported.nameSuffix;
+
+          const auto outputs = filter->GetOutputs();
+          if (outputs.size() == 1)
+          {
+            auto outImage = outputs.front();
+            if (m_Controls.ckOverrideOriginOnNodeAdded->isChecked())
+            {
+                if (auto *geometry = outImage->GetGeometry())
+                {
+                  mitk::Point3D origin;
+                  origin.Fill(0.0);
+                  geometry->SetOrigin(origin);
+                }
+            }
+            auto importedNode = mitk::DataNode::New();
+            importedNode->SetData(outImage);
+            importedNode->SetName(imported.nameSuffix);
+            this->GetDataStorage()->Add(importedNode);
+            continue;
+          }
+
           unsigned int k = 0;
-          for (auto I : filter->GetOutputs())
+          for (auto I : outputs)
           {
             auto node = mitk::DataNode::New();
             node->SetData(I);
-            node->SetName(name + "_tile_" + std::to_string(k));
+            node->SetName(imported.nameSuffix + "_tile_" + std::to_string(k));
             node->SetVisibility(k < 2, nullptr);
             this->GetDataStorage()->Add(node);
             ++k;
-          }
-        }
-        else
-        {
-          unsigned int i = 0;
-          for (auto &I : data)
-          {
-            auto node = mitk::DataNode::New();
-            node->SetData(I);
-            node->SetName(
-              itksys::SystemTools::GetFilenameWithoutExtension(openSlideIOHelper->GetOpenSlideIO()->GetFileName()) +
-              "_" + std::to_string(i++));
-            // node->SetVisibility(false, nullptr);
-            this->GetDataStorage()->Add(node);
           }
         }
       }

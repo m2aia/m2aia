@@ -170,7 +170,12 @@ protected:
   std::vector<mitk::ColorBarAnnotation::Pointer> m_ColorBarAnnotations;
   void UpdateTextAnnotations(std::string text);
 
+  double GetCurrentMzCenter() const;
+  void SetCurrentMzCenter(double mz);
+
   const int FROM_GUI = -1;
+  double m_CurrentExactMz = 0.0;
+  bool m_HasCurrentExactMz = false;
 
   mitk::IPreferences * m_M2aiaPreferences;
 };

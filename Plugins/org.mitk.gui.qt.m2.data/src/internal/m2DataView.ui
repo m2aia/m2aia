@@ -537,7 +537,7 @@
            <string/>
           </property>
           <property name="decimals">
-           <number>4</number>
+           <number>8</number>
           </property>
           <property name="maximum">
            <double>999999.000000000000000</double>
@@ -605,7 +605,7 @@
            <string/>
           </property>
           <property name="decimals">
-           <number>4</number>
+           <number>8</number>
           </property>
           <property name="minimum">
            <double>0.000000000000000</double>
@@ -734,25 +734,27 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_6">
-        <item>
-         <widget class="QCheckBox" name="CBUseFixedLevel">
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the lower and upper intensity bounds as percentages (0–100 %) of the global intensity range. Only active when &amp;quot;Shared Level Window&amp;quot; is checked.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-          <property name="text">
-           <string>Shared Level Window</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="ctkRangeWidget" name="intensityRangeSlider" native="true">
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the lower and upper intensity bounds as percentages (0–100 %) of the global intensity range. Only active when &amp;quot;Shared Level Window&amp;quot; is checked.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <widget class="QCheckBox" name="CBUseFixedLevel">
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the lower and upper intensity bounds as percentages (0–100 %) of the global intensity range. Only active when &amp;quot;Shared Level Window&amp;quot; is checked.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+        <property name="text">
+         <string>Shared Level Window</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="ctkRangeWidget" name="intensityRangeSlider" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>100</width>
+          <height>0</height>
+         </size>
+        </property>
+        <property name="toolTip">
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Set the lower and upper intensity bounds as percentages (0–100 %) of the global intensity range. Only active when &amp;quot;Shared Level Window&amp;quot; is checked.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+        </property>
+       </widget>
       </item>
      </layout>
     </widget>
@@ -909,6 +911,19 @@
         </property>
         <property name="text">
          <string>Reset mask labels on import</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QCheckBox" name="ckOverrideOriginOnNodeAdded">
+        <property name="toolTip">
+         <string>When enabled, newly added image nodes have their origin reset to 0,0,0 before further processing.</string>
+        </property>
+        <property name="text">
+         <string>Override origin to 0,0,0 on node added</string>
         </property>
         <property name="checked">
          <bool>false</bool>
