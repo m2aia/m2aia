@@ -225,7 +225,7 @@ QGroupBox#ckbMonoisotopic::title {
               <locale language="English" country="UnitedKingdom"/>
              </property>
              <property name="decimals">
-              <number>5</number>
+                            <number>8</number>
              </property>
              <property name="maximum">
               <double>1.000000000000000</double>
@@ -255,7 +255,7 @@ QGroupBox#ckbMonoisotopic::title {
               <locale language="English" country="UnitedKingdom"/>
              </property>
              <property name="decimals">
-              <number>5</number>
+                            <number>8</number>
              </property>
              <property name="maximum">
               <double>99.000000000000000</double>
@@ -320,6 +320,9 @@ QGroupBox#ckbMonoisotopic::title {
           <property name="suffix">
            <string>%</string>
           </property>
+                    <property name="decimals">
+                     <number>8</number>
+                    </property>
           <property name="singleStep">
            <double>0.001000000000000</double>
           </property>
@@ -345,7 +348,7 @@ QGroupBox#ckbMonoisotopic::title {
            <string>Binning Tolerance: maximal relative deviation of a peak position (mass) to be considered as identical. Must be multiplied by 10^-6 for ppm, e.g. use tolerance=5e-6 for 5 ppm.</string>
           </property>
           <property name="decimals">
-           <number>3</number>
+                     <number>8</number>
           </property>
           <property name="maximum">
            <double>1.000000000000000</double>

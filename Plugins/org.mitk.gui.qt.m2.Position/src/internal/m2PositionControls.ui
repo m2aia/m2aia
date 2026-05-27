@@ -54,6 +54,9 @@ Use numpad + / - to scale this value by ×1.1 / ×0.9.</string>
           <property name="suffix">
            <string>°</string>
           </property>
+                                        <property name="decimals">
+                                         <number>8</number>
+                                        </property>
           <property name="minimum">
            <double>-360.000000000000000</double>
           </property>

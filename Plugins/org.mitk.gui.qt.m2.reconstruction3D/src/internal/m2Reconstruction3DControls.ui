@@ -103,7 +103,7 @@
         <string> μm</string>
        </property>
        <property name="decimals">
-        <number>2</number>
+                <number>8</number>
        </property>
        <property name="maximum">
         <double>10000.000000000000000</double>
