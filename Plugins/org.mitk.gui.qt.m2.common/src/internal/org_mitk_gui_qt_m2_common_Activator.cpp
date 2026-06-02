@@ -73,7 +73,7 @@ void org_mitk_gui_qt_m2_common_Activator::start(ctkPluginContext *context)
   desc->AddAction(new QmitkDataNodeConvertPixelTypeAction(), false);
 
   desc = descriptorManager->GetDescriptor("SpectrumImage");
-  // desc->AddAction(new QmitkDataNodeConvertPixelTypeAction(), false);
+  desc->AddAction(new QmitkDataNodeConvertPixelTypeAction(), false);
   desc->AddAction(new QmitkDataNodePlotColorAction(), false);
   desc->AddAction(new QmitkDataNodeReimportImageAction(), false);
   desc->AddAction(new QmitkDataNodeCreateLabelSetRegionSpectraAction(), false);
