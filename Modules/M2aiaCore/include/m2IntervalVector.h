@@ -80,6 +80,10 @@ namespace m2
     Accumulator y;
     std::string description;
 
+    /// Hex colour from, e.g. "#eee685". Empty string if not set.
+    std::string color;
+
+
     /**
      * This tag can be used to indicate it's source. Can be used during processing and is not guaranteed to be unique.
      * Default:0
@@ -93,6 +97,35 @@ namespace m2
       // this->index(index);
       this->x.add(x);
       this->y.add(y);
+    }
+
+    /**
+     * @brief Construct an Interval from explicit lower/upper m/z bounds as stored in .sef files.
+     *
+     * After construction:
+     *   x.min()  == lower,  x.max()  == upper,
+     *   x.mean() == (lower+upper)/2,  x.count() == 2
+     *
+     * @param lower        m/z lower bound
+     * @param upper        m/z upper bound
+     * @param name         annotation name (stored in description)
+     * @param col          hex colour string, e.g. "#eee685"
+     */
+    static Interval FromBounds(double lower,
+                                double upper,
+                                const std::string &name     = {},
+                                const std::string &col      = {},
+                                double             mobLower = 0.0,
+                                double             mobUpper = 0.0)
+    {
+      Interval I;
+      I.x.add(lower);
+      I.x.add(upper);
+      I.description   = name;
+      I.color         = col;
+      I.mobilityLower = mobLower;
+      I.mobilityUpper = mobUpper;
+      return I;
     }
 
     Interval &operator+=(const Interval &rhs)
