@@ -183,9 +183,10 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
 
 
 void m2::ImzMLSpectrumImage::InitializeNormalizationImage(m2::NormalizationStrategyType type){
-  if(GetNormalizationImageStatus(type) == false){
-   m_SpectrumImageSource->InitializeNormalizationImage(type);   
-  }
+  MITK_INFO << "ImzMLSpectrumImage::InitializeNormalizationImage type=" << static_cast<int>(type);
+
+  if (m_SpectrumImageSource)
+    m_SpectrumImageSource->InitializeNormalizationImage(type);
 }
 
 // m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLSpectrumImage *A,

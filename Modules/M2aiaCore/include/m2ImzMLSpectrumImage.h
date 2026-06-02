@@ -49,8 +49,8 @@ namespace m2
     virtual std::vector<std::string> GetClassHierarchy() const override { return mitk::GetClassHierarchy<Self>(); }
 
     // Overwrite those methods to make MITK recognize this as default mitk::Image
-    static const char *GetStaticNameOfClass() { return "Image"; }
-    const char *GetNameOfClass() const override { return "Image"; }
+    static const char *GetStaticNameOfClass() { return "ImzMLSpectrumImage"; }
+    const char *GetNameOfClass() const override { return "ImzMLSpectrumImage"; }
 
     itkNewMacro(Self);
 
