@@ -27,6 +27,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <m2ImzMLImageIO.h>
 #include <m2OpenSlideIO.h>
 #include <m2IntervalVectorIO.h>
+#include <m2SefFileIO.h>
 #include <m2TabularDataIO.h>
 #include <m2HtmlDataIO.h>
 namespace m2
@@ -47,8 +48,10 @@ namespace m2
       m_FileIOs.push_back(new FSMImageIO());
       m_FileIOs.push_back(new MicroscopyTiffImageIO());
       m_FileIOs.push_back(new TabularDataIO());
+      m_FileIOs.push_back(new TabularDataIO(m2::IntervalVector::GetStaticNameOfClass()));
       m_FileIOs.push_back(new HtmlDataIO());
       m_FileIOs.push_back(new IntervalVectorIO());
+      m_FileIOs.push_back(new SefFileIO());
     }
     void Unload(us::ModuleContext *) override
     {

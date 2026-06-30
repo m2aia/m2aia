@@ -24,8 +24,8 @@ namespace m2
 {
   IntervalVectorIO::IntervalVectorIO() : AbstractFileIO(m2::IntervalVector::GetStaticNameOfClass(), INTERVALVECTOR_MIMETYPE(), "Centroid Data (M²aia)")
   {
-    AbstractFileWriter::SetRanking(10);
-    AbstractFileReader::SetRanking(10);
+    AbstractFileWriter::SetRanking(5);
+    AbstractFileReader::SetRanking(5);
     this->RegisterService();
   }
 
