@@ -56,13 +56,16 @@ mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage(m2::NormalizationS
         return image;
   }
 
-  const auto *pathProp = dynamic_cast<const mitk::StringProperty *>(this->GetProperty("path").GetPointer());
-  if (pathProp == nullptr)
-    return nullptr;
-
-  const std::string inputLocation = pathProp->GetValue();
-  if (inputLocation.empty())
-    return nullptr;
+  std::string inputLocation;
+  auto m2aiaDataPathProp = this->GetProperty("m2aia.IO.path");
+  auto dataPathProp = this->GetProperty("path");
+  if (m2aiaDataPathProp)
+    inputLocation = m2aiaDataPathProp->GetValueAsString();
+  else if (dataPathProp)
+    inputLocation = dataPathProp->GetValueAsString();
+  else{
+    MITK_ERROR << "Cannot determine input location for normalization image. Maybe you forgot to set the property 'm2aia.IO.path' or 'path'. Returning nullptr.";
+  }
   
   const std::string inputDir = itksys::SystemTools::GetFilenamePath(inputLocation);
   const std::string inputStem = itksys::SystemTools::GetFilenameWithoutLastExtension(inputLocation);
@@ -104,6 +107,7 @@ mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage(m2::NormalizationS
       mitk::CastToMitkImage(caster->GetOutput(), imagePointer);
     }));
 
+    SetImageGeometryInformation(this, imagePointer);
     SetNormalizationImage(imagePointer, type);
     return imagePointer;
   }
@@ -117,6 +121,10 @@ mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage(m2::NormalizationS
 
 void m2::SpectrumImage::SetNormalizationImage(mitk::Image::Pointer image, m2::NormalizationStrategyType type)
 {
+  image->GetGeometry()->SetOrigin(GetGeometry()->GetOrigin());
+  image->GetGeometry()->SetSpacing(GetGeometry()->GetSpacing());
+  image->GetGeometry()->SetIndexToWorldTransformByVtkMatrixWithoutChangingSpacing(GetGeometry()->GetVtkMatrix());
+
   m_NormalizationImages[type] = image;
 }
 

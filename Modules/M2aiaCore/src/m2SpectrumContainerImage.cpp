@@ -298,11 +298,8 @@ void m2::SpectrumContainerImage::InitializeGeometry()
 }
 
 void m2::SpectrumContainerImage::InitializeNormalizationImage(m2::NormalizationStrategyType type){
-  if (auto existingImage = GetNormalizationImage(type); existingImage.IsNotNull()){
-    MITK_WARN << "The normalization image is already available. type " << m2::to_string(type);
-    return;
-  }
-
+  MITK_INFO << "SpectrumContainerImage::InitializeNormalizationImage type=" << static_cast<int>(type);
+  
   auto image = mitk::Image::New();
   image->Initialize(this);
   {

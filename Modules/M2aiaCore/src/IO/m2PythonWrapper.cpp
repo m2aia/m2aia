@@ -88,7 +88,7 @@ extern "C"
   {
     auto type = static_cast<m2::NormalizationStrategyType>(m2::NORMALIZATION_MAPPINGS.at(typeName));
 
-    if (!handle->Image->GetNormalizationImageStatus(type))
+    if (handle->Image->GetNormalizationImage(type).IsNull())
       handle->Image->InitializeNormalizationImage(type);
 
     auto normImage = handle->Image->GetNormalizationImage(type);
