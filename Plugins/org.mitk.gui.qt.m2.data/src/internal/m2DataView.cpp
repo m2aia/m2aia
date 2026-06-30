@@ -1462,7 +1462,15 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     // -------------- add data interactor --------------
 
     std::string inputLocation;
-    node->GetStringProperty("MITK.IO.reader.inputlocation", inputLocation);
+    auto m2aiaDataPathProp = node->GetData()->GetProperty("m2aia.IO.path");
+    auto dataPathProp = node->GetData()->GetProperty("path");
+    if (m2aiaDataPathProp)
+      inputLocation = m2aiaDataPathProp->GetValueAsString();
+    else if (dataPathProp)
+      inputLocation = dataPathProp->GetValueAsString();
+    
+
+    MITK_INFO << "[m2DataView::SpectrumImageNodeAdded] " << node->GetName() << " from " << inputLocation; 
 
     auto interactor = m2::SpectrumImageDataInteractor::New();
     interactor->LoadStateMachine("PointSet.xml");
@@ -1476,11 +1484,11 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     m2::DefaultNodeProperties(node);
 
     // -------------- add Mask to datastorage --------------
-    auto nodeName = itksys::SystemTools::GetFilenameWithoutLastExtension(inputLocation) + ".mask";
+    auto nodeName = node->GetName() + ".mask";
     auto helperNode = mitk::DataNode::New();
     helperNode->SetName(nodeName);
     helperNode->SetVisibility(m_Controls.showMaskImages->isChecked());
-    MITK_INFO << "Adding mask image to datastorage with name: " << nodeName;
+    
     // Reset mask labels if requested: remap single non-background label != 1 to value 1
     if (m_Controls.ckResetMaskLabels->isChecked())
     {
@@ -1608,7 +1616,7 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     // -------------- add ShiftImage to datastorage --------------
     if (spectrumImage->GetShiftImage())
     {
-      nodeName = itksys::SystemTools::GetFilenameWithoutLastExtension(inputLocation) + ".shift";
+      nodeName = node->GetName() + ".shift";
       helperNode = mitk::DataNode::New();
       helperNode->SetName("ShiftImage");
       helperNode->SetVisibility(false);
@@ -1634,7 +1642,7 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     std::vector<std::string> suffixes = {".tSNE", ".PCA", ".UMAP"};
     for (const auto &suffix : suffixes)
     {
-      nodeName = itksys::SystemTools::GetFilenameWithoutLastExtension(inputLocation) + suffix;
+      nodeName = node->GetName() + suffix;
       auto fileName = resolveAssociatedNrrdPath(suffix);
       if (itksys::SystemTools::FileExists(fileName))
       {
@@ -1671,7 +1679,7 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     //   m2::to_string(type)).c_str())) emit checkBox->toggled(checkBox->isChecked());
     // }
 
-    nodeName = itksys::SystemTools::GetFilenameWithoutLastExtension(inputLocation) + ".def";
+    nodeName = node->GetName() + ".def";
     auto fileName = resolveAssociatedNrrdPath(".def");
     if (itksys::SystemTools::FileExists(fileName))
     {
@@ -1688,7 +1696,7 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
     }
 
     // -------------- add Index to datastorage --------------
-    nodeName = itksys::SystemTools::GetFilenameWithoutLastExtension(inputLocation) + ".index";
+    nodeName = node->GetName() + ".index";
     helperNode = mitk::DataNode::New();
     helperNode->SetName(nodeName);
     helperNode->SetVisibility(m_Controls.showIndexImages->isChecked());

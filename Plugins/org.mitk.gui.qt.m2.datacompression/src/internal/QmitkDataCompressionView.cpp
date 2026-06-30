@@ -114,7 +114,12 @@ void QmitkDataCompressionView::OnSaveDataCompressionResults()
   for (auto node : selectedNodes)
   {
     std::string inputLocation;
-    node->GetStringProperty("MITK.IO.reader.inputlocation", inputLocation);
+    auto m2aiaDataPathProp = node->GetData()->GetProperty("m2aia.IO.path");
+    auto dataPathProp = node->GetData()->GetProperty("path");
+    if (m2aiaDataPathProp)
+      inputLocation = m2aiaDataPathProp->GetValueAsString();
+    else if (dataPathProp)      
+      inputLocation = dataPathProp->GetValueAsString();
     
     
     if (auto child = this->GetDataStorage()->GetNamedDerivedNode((node->GetName() + ".PCA").c_str(), node)){
