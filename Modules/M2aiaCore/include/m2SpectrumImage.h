@@ -312,6 +312,14 @@ namespace m2
     }
   }
 
+  inline void SetImageGeometryInformation(const mitk::Image *sourceImage, mitk::Image *targetImage)
+  {
+    targetImage->GetGeometry()->SetOrigin(sourceImage->GetGeometry()->GetOrigin());
+    targetImage->GetGeometry()->SetSpacing(sourceImage->GetGeometry()->GetSpacing());
+    targetImage->GetGeometry()->SetIndexToWorldTransformByVtkMatrixWithoutChangingSpacing(sourceImage->GetGeometry()->GetVtkMatrix());
+    // targetImage->SetGeometry(sourceImage->GetGeometry());
+  }
+
   /**
    * Create default properties:
    * - spectrum.plot.color (=randomColor)

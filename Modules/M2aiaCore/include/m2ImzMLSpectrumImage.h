@@ -56,20 +56,20 @@ namespace m2
 
     std::string GetImzMLDataPath() const
     {
-      return GetProperty("path")->GetValueAsString();
+      return GetProperty("m2aia.IO.path")->GetValueAsString();
     }
 
     void SetImzMLDataPath(std::string imzMLDataPath){
-      this->SetProperty("path", mitk::StringProperty::New(imzMLDataPath));
+        this->SetProperty("m2aia.IO.path", mitk::StringProperty::New(imzMLDataPath));
     }
 
     std::string GetBinaryDataPath() const
     {
-      return GetProperty("path.binary")->GetValueAsString();
+      return GetProperty("m2aia.IO.path.ibd")->GetValueAsString();
     }
 
     void SetBinaryDataPath(std::string binaryDataPath){
-      this->SetProperty("path.binary", mitk::StringProperty::New(binaryDataPath));
+      this->SetProperty("m2aia.IO.path.ibd", mitk::StringProperty::New(binaryDataPath));
     }
 
     /// @brief Type representing the offset from file start in bytes 

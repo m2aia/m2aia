@@ -114,17 +114,13 @@ namespace m2
     static Interval FromBounds(double lower,
                                 double upper,
                                 const std::string &name     = {},
-                                const std::string &col      = {},
-                                double             mobLower = 0.0,
-                                double             mobUpper = 0.0)
+                                const std::string &col      = {})
     {
       Interval I;
       I.x.add(lower);
       I.x.add(upper);
       I.description   = name;
       I.color         = col;
-      I.mobilityLower = mobLower;
-      I.mobilityUpper = mobUpper;
       return I;
     }
 

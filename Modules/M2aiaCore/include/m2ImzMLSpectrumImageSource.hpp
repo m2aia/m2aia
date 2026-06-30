@@ -236,25 +236,22 @@ template <class MassAxisType, class IntensityType>
 void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeNormalizationImage(
   m2::NormalizationStrategyType type)
 {
-  MITK_INFO << p->IsInitialized() << " " << p->GetSpectra().size() << " " << p->GetDimensions()[0] << " " << p->GetDimensions()[1] << " " << p->GetDimensions()[2];
   if (p->GetVerboseOutput())
     MITK_INFO << "Start initialization of normalization image. type " << m2::to_string(type);
 
   auto image = mitk::Image::New();
-  image->Initialize(p);
+  image->Initialize(mitk::MakeScalarPixelType<NormImagePixelType>(), p->GetDimension(), p->GetDimensions(), 1);
   {
     mitk::ImagePixelWriteAccessor<NormImagePixelType, 3> acc(image);
     const auto numPixels = std::accumulate(p->GetDimensions(), p->GetDimensions() + p->GetDimension(), 1u, std::multiplies<unsigned int>());
     std::fill(acc.GetData(), acc.GetData() + numPixels, static_cast<NormImagePixelType>(1));
   }
+
   p->SetNormalizationImage(image, type);
 
   // create a write accessor
-  
   auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<NormImagePixelType, 3>>(image);
-  // auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<mitk::Label::PixelType, 3>>(p->GetMultilabelSegmentation()->GetGroupImage(0));
-
-  
+    
   // get individual spectrum meta data
   auto &spectra = p->GetSpectra();
   int threads = p->GetNumberOfThreads();
