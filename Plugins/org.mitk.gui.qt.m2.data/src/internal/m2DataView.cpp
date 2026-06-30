@@ -910,11 +910,6 @@ void m2DataView::OnGenerateImageData(mitk::DataNode::Pointer node,
 
   if (m2::SpectrumImage::Pointer data = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
-    const auto xMin = data->GetPropertyValue<double>("m2aia.xs.min");
-    const auto xMax = data->GetPropertyValue<double>("m2aia.xs.max");
-    if (xRangeCenter > xMax || xRangeCenter < xMin)
-      return;
-
     ApplySettingsToImage(data);
     if (!data->IsInitialized())
       mitkThrow() << "Trying to grab an ion image but data access was not initialized properly!";
