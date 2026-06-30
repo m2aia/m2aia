@@ -79,10 +79,11 @@ private:
   void ClearGroups();
   void AddGroupWidget(const QString &name, int minSize, int maxSize, const QColor &color, int absoluteMax = 999999);
   mitk::Image::Pointer ApplyMorphologyToImage(mitk::Image::Pointer inputImage, const std::string &operation, int radius);
+  mitk::Image* ResolveConnectedComponentImage(mitk::DataNode* node) const;
 
   /** Commits a morphology result back to the data-node.
    *  - mitk::MultiLabelSegmentation → converts binary result to LabelValueType and
-   *    adds the result as a new group via seg->AddGroup().
+   *    updates group image 0 in-place.
    *  - plain mitk::Image             → replaces node data directly.
    */
   void CommitMorphologyResult(mitk::DataNode *node, mitk::Image::Pointer result);
