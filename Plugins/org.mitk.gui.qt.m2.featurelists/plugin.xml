@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+
+  <extension point="org.blueberry.ui.views">
+    <view id="org.mitk.views.m2.featurelists"
+          name="Feature Lists"
+          class="m2FeatureListsView"
+          icon="resources/icon_featurelists.svg"
+          category="Spectral Imaging"
+          />
+  </extension>
+
+  <extension point="org.blueberry.ui.keywords">
+    <keyword id="org.mitk.views.m2.featurelists.ViewKeyword" label="Feature Lists" />
+    <keyword id="org.mitk.views.m2.featurelists.ViewKeyword" label="Intervals" />
+    <keyword id="org.mitk.views.m2.featurelists.ViewKeyword" label="Peak List" />
+  </extension>
+
+</plugin>
