@@ -1,13 +1,12 @@
 set(MITK_PLUGINS
 org.mitk.gui.qt.m2.common:ON
 org.mitk.gui.qt.m2.application:ON
-
 org.mitk.gui.qt.m2.data:ON
 org.mitk.gui.qt.m2.spectrum:ON
 org.mitk.gui.qt.m2.datacompression:ON
 org.mitk.gui.qt.m2.peakpicking:ON
 org.mitk.gui.qt.m2.featurelists:ON
 org.mitk.gui.qt.m2.connectedcomponents:ON
-org.mitk.gui.qt.m2.Position:ON
+org.mitk.gui.qt.m2.position:ON
 org.mitk.gui.qt.m2.reconstruction3D:ON
 )
