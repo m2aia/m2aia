@@ -26,8 +26,8 @@ set(target_libraries
   # org_mitk_gui_qt_m2_CombineImages
   org_mitk_gui_qt_m2_spectrum
   org_mitk_gui_qt_m2_peakpicking
-  org_mitk_gui_qt_m2_ImzMLExport
   org_mitk_gui_qt_m2_reconstruction3D
+  org_mitk_gui_qt_m2_featurelists
   org_mitk_gui_qt_m2_Position
   # org_mitk_gui_qt_m2_registration
   # org_mitk_gui_qt_matchpoint_algorithm_browser
