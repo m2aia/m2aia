@@ -1143,17 +1143,18 @@ void m2DataView::UpdateLevelWindow(const mitk::DataNode *node)
 
 void m2DataView::NodeAdded(const mitk::DataNode *node)
 {
-  if (m_Controls.ckOverrideOriginOnNodeAdded->isChecked())
+  if (auto image = dynamic_cast<mitk::Image *>(const_cast<mitk::DataNode *>(node)->GetData()))
   {
-    if (auto image = dynamic_cast<mitk::Image *>(const_cast<mitk::DataNode *>(node)->GetData()))
-    {
-      if (auto *geometry = image->GetGeometry())
-      {
-        mitk::Point3D origin;
-        origin.Fill(0.0);
-        geometry->SetOrigin(origin);
-      }
+    if (auto nameProp = image->GetProperty("m2aia.project.object.name")){
+      MITK_INFO << "[m2DataView::NodeAdded]" << nameProp->GetValueAsString();
+      const_cast<mitk::DataNode *>(node)->SetName(nameProp->GetValueAsString());
     }
+    
+    // // fix autoset path propertie with real location
+    // if (auto pathProp = image->GetProperty("m2aia.IO.reader.inputlocation.fix")){
+    //   MITK_INFO << "[m2DataView::NodeAdded]" << pathProp->GetValueAsString();
+    //   image->SetProperty("path", mitk::StringProperty::New(pathProp->GetValueAsString()));
+    // }
   }
 
   // if (auto newImage = dynamic_cast<mitk::Image *>(node->GetData()))
@@ -1339,15 +1340,6 @@ void m2DataView::OpenSlideImageNodeAdded(const mitk::DataNode *node)
           if (outputs.size() == 1)
           {
             auto outImage = outputs.front();
-            if (m_Controls.ckOverrideOriginOnNodeAdded->isChecked())
-            {
-              if (auto *geometry = outImage->GetGeometry())
-              {
-                mitk::Point3D origin;
-                origin.Fill(0.0);
-                geometry->SetOrigin(origin);
-              }
-            }
             auto importedNode = mitk::DataNode::New();
             importedNode->SetData(outImage);
             importedNode->SetName(imported.nameSuffix);
@@ -1772,6 +1764,8 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
 
 void m2DataView::NodeRemoved(const mitk::DataNode *node)
 {
+  
+
   if (dynamic_cast<m2::SpectrumImage *>(node->GetData()))
   {
     auto derivations = this->GetDataStorage()->GetDerivations(node);

@@ -918,19 +918,6 @@
        </widget>
       </item>
       <item>
-       <widget class="QCheckBox" name="ckOverrideOriginOnNodeAdded">
-        <property name="toolTip">
-         <string>When enabled, newly added image nodes have their origin reset to 0,0,0 before further processing.</string>
-        </property>
-        <property name="text">
-         <string>Override origin to 0,0,0 on node added</string>
-        </property>
-        <property name="checked">
-         <bool>false</bool>
-        </property>
-       </widget>
-      </item>
-      <item>
        <widget class="Line" name="line">
         <property name="orientation">
          <enum>Qt::Orientation::Horizontal</enum>
