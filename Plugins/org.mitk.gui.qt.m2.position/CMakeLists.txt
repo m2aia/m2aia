@@ -1,4 +1,4 @@
-project(org_mitk_gui_qt_m2_Position)
+project(org_mitk_gui_qt_m2_position)
 
 mitk_create_plugin(
   EXPORT_DIRECTIVE IMSPOSITION_EXPORT
