@@ -293,24 +293,24 @@ extern "C"
     delete p;
   }
 
-  M2AIACORE_EXPORT void WriteContinuousCentroidImzML(m2::sys::ImageHandle *handle,
-                                                     const char *s,
-                                                     double *centroids,
-                                                     int n)
-  {
-    m2::ImzMLImageIO io;
-    mitk::AbstractFileWriter *writer = &io;
-    auto intervals = m2::IntervalVector::New();
+  // M2AIACORE_EXPORT void WriteContinuousCentroidImzML(m2::sys::ImageHandle *handle,
+  //                                                    const char *s,
+  //                                                    double *centroids,
+  //                                                    int n)
+  // {
+  //   m2::ImzMLImageIO io;
+  //   mitk::AbstractFileWriter *writer = &io;
+  //   auto intervals = m2::IntervalVector::New();
 
-    for (int i = 0; i < n; ++i)
-      intervals->GetIntervals().push_back(m2::Interval(centroids[i], 0));
+  //   for (int i = 0; i < n; ++i)
+  //     intervals->GetIntervals().push_back(m2::Interval(centroids[i], 0));
 
-    writer->SetInput(handle->Image);
-    writer->SetOutputLocation(std::string(s));
-    io.SetIntervalVector(intervals);
-    io.SetSpectrumFormat(m2::SpectrumFormat::ContinuousCentroid);
-    io.Write();
-  }
+  //   writer->SetInput(handle->Image);
+  //   writer->SetOutputLocation(std::string(s));
+  //   io.SetIntervalVector(intervals);
+  //   io.SetSpectrumFormat(m2::SpectrumFormat::ContinuousCentroid);
+  //   io.Write();
+  // }
 
   M2AIACORE_EXPORT void Update(m2::sys::ImageHandle *p)
   {
