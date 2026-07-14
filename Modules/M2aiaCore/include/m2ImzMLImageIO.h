@@ -73,19 +73,19 @@ namespace m2
      *
      */
     void Write() override;
-    void SetIntervalVector(m2::IntervalVector::Pointer data);
+    // void SetIntervalVector(m2::IntervalVector::Pointer data);
     void SetDataTypeXAxis(m2::NumericType type){m_DataTypeXAxis = type;}
     void SetDataTypeYAxis(m2::NumericType type){m_DataTypeYAxis = type;}
     void SetSpectrumFormat(m2::SpectrumFormat type){m_SpectrumFormat = type;}
 
     ConfidenceLevel GetWriterConfidenceLevel() const override;
-    std::string GetIBDOutputPath() const;
+    std::string GetNamedOutputPath(std::string parentPathWithExtension, std::string newExtension) const;
     std::string GetImzMLOutputPath() const;
-    void WriteContinuousProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
-    void WriteContinuousCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
-    void WriteContinuousCentroid3DStack(const m2::SpectrumImageStack *) const;
-    void WriteProcessedProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
-    void WriteProcessedCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    // void WriteContinuousProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    // void WriteContinuousCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    // void WriteContinuousCentroid3DStack(const m2::SpectrumImageStack *) const;
+    // void WriteProcessedProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    // void WriteProcessedCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
 
     static inline bool CheckDimensions(mitk::Image * parent, const mitk::Image * child){
       auto dims_a = parent->GetDimensions();

@@ -35,6 +35,10 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkImageCast.h>
 #include <signal/m2PeakDetection.h>
 #include <signal/m2Pooling.h>
+#include <cstdio>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 
 template <class ConversionType, class ItFirst, class ItLast, class OStreamType>
 void writeData(ItFirst itFirst, ItLast itLast, OStreamType &os)
@@ -59,6 +63,213 @@ namespace m2
       std::string sidecarDir;
       std::string fileStem;
     };
+
+    std::string EscapeXmlAttribute(const std::string &value)
+    {
+      std::string escaped;
+      escaped.reserve(value.size());
+      for (const auto c : value)
+      {
+        switch (c)
+        {
+          case '&': escaped += "&amp;"; break;
+          case '<': escaped += "&lt;"; break;
+          case '>': escaped += "&gt;"; break;
+          case '"': escaped += "&quot;"; break;
+          case '\'': escaped += "&apos;"; break;
+          default: escaped.push_back(c); break;
+        }
+      }
+      return escaped;
+    }
+
+    bool ExtractAttributeValue(const std::string &line, const std::string &attribute, std::string &value)
+    {
+      const std::string key = attribute + "=\"";
+      const auto pos = line.find(key);
+      if (pos == std::string::npos)
+        return false;
+      const auto start = pos + key.size();
+      const auto end = line.find('"', start);
+      if (end == std::string::npos)
+        return false;
+      value.assign(line.data() + start, end - start);
+      return true;
+    }
+
+    std::string ReplaceAttributeValue(const std::string &line, const std::string &attribute, const std::string &newValue)
+    {
+      const std::string key = attribute + "=\"";
+      const auto pos = line.find(key);
+      if (pos == std::string::npos)
+        return line;
+      const auto start = pos + key.size();
+      const auto end = line.find('"', start);
+      if (end == std::string::npos)
+        return line;
+      std::string copy = line;
+      copy.replace(start, end - start, newValue);
+      return copy;
+    }
+
+    std::string FormatDouble(double value)
+    {
+      std::ostringstream oss;
+      oss << std::setprecision(std::numeric_limits<double>::digits10 + 1) << value;
+      return oss.str();
+    }
+
+    // std::string GetPropertyAsString(const m2::ImzMLSpectrumImage *image, const std::string &propertyName, const std::string &fallback = "")
+    // {
+    //   if (auto property = image->GetProperty(propertyName.c_str()))
+    //     return property->GetValueAsString();
+    //   return fallback;
+    // }
+
+    bool PatchImzMLMetadata(const std::string &imzmlPath, const m2::ImzMLSpectrumImage *image)
+    {
+      std::ifstream in(imzmlPath);
+      if (!in)
+        return false;
+
+      const std::string tempPath = imzmlPath + ".tmp";
+      std::ofstream out(tempPath);
+      if (!out)
+      {
+        in.close();
+        return false;
+      }
+
+      bool hasOriginalDirectionMatrix = false;
+      bool hasOriginalOffsetX = false;
+      bool hasOriginalOffsetY = false;
+      {
+        std::ifstream check(imzmlPath);
+        std::string checkLine;
+        while (std::getline(check, checkLine))
+        {
+          if (!hasOriginalDirectionMatrix && checkLine.find("userParam") != std::string::npos && checkLine.find("name=\"original direction matrix\"") != std::string::npos)
+          {
+            hasOriginalDirectionMatrix = true;
+          }
+          else if (!hasOriginalOffsetX && checkLine.find("userParam") != std::string::npos && checkLine.find("name=\"original absolute position offset x\"") != std::string::npos)
+          {
+            hasOriginalOffsetX = true;
+          }
+          else if (!hasOriginalOffsetY && checkLine.find("userParam") != std::string::npos && checkLine.find("name=\"original absolute position offset y\"") != std::string::npos)
+          {
+            hasOriginalOffsetY = true;
+          }
+          if (hasOriginalDirectionMatrix && hasOriginalOffsetX && hasOriginalOffsetY)
+            break;
+        }
+      }
+
+      std::string newDirectionMatrix;
+      if (auto geometry = image->GetGeometry())
+      {
+        const auto *vtkMatrix = geometry->GetVtkMatrix();
+        if (vtkMatrix)
+        {
+          std::ostringstream dirStream;
+          dirStream << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+          for (unsigned int row = 0; row < 3; ++row)
+          {
+            for (unsigned int col = 0; col < 3; ++col)
+            {
+              if (row != 0 || col != 0)
+                dirStream << ' ';
+              dirStream << vtkMatrix->GetElement(row, col);
+            }
+          }
+          newDirectionMatrix = dirStream.str();
+        }
+        else
+        {
+          newDirectionMatrix = "1 0 0 0 1 0 0 0 1";
+        }
+      }
+      else
+      {
+        newDirectionMatrix = "1 0 0 0 1 0 0 0 1";
+      }
+      const std::string newOffsetX = FormatDouble(m2::MilliMeterToMicroMeter(image->GetGeometry()->GetOrigin()[0]));
+      const std::string newOffsetY = FormatDouble(m2::MilliMeterToMicroMeter(image->GetGeometry()->GetOrigin()[1]));
+
+      bool patchedDirectionMatrix = false;
+      bool patchedOffsetX = false;
+      bool patchedOffsetY = false;
+      std::string line;
+
+      while (std::getline(in, line))
+      {
+        std::string outputLine = line;
+
+        if (!patchedDirectionMatrix && line.find("userParam") != std::string::npos && line.find("name=\"direction matrix\"") != std::string::npos)
+        {
+          std::string originalValue;
+          ExtractAttributeValue(line, "value", originalValue);
+          outputLine = ReplaceAttributeValue(line, "value", newDirectionMatrix);
+          out << outputLine << "\n";
+          if (!hasOriginalDirectionMatrix)
+          {
+            out << "      <userParam name=\"original direction matrix\" value=\"" << EscapeXmlAttribute(originalValue) << "\" type=\"xsd:string\"/>\n";
+          }
+          patchedDirectionMatrix = true;
+          continue;
+        }
+
+        if (!patchedOffsetX && line.find("cvParam") != std::string::npos && line.find("IMS:1000053") != std::string::npos && line.find("name=\"absolute position offset x\"") != std::string::npos)
+        {
+          std::string originalValue;
+          ExtractAttributeValue(line, "value", originalValue);
+          outputLine = ReplaceAttributeValue(line, "value", newOffsetX);
+          MITK_INFO << "[PatchImzMLMetadata] offset x: file=" << originalValue << " µm  ->  new=" << newOffsetX << " µm"
+                    << "  (property was " << image->GetPropertyValue<double>("[IMS:1000053] absolute position offset x") << " mm)";
+          out << outputLine << "\n";
+          if (!hasOriginalOffsetX)
+          {
+            out << "      <userParam name=\"original absolute position offset x\" value=\"" << EscapeXmlAttribute(originalValue) << "\" type=\"xsd:string\"/>\n";
+          }
+          patchedOffsetX = true;
+          continue;
+        }
+
+        if (!patchedOffsetY && line.find("cvParam") != std::string::npos && line.find("IMS:1000054") != std::string::npos && line.find("name=\"absolute position offset y\"") != std::string::npos)
+        {
+          std::string originalValue;
+          ExtractAttributeValue(line, "value", originalValue);
+          outputLine = ReplaceAttributeValue(line, "value", newOffsetY);
+          MITK_INFO << "[PatchImzMLMetadata] offset y: file=" << originalValue << " µm  ->  new=" << newOffsetY << " µm"
+                    << "  (property was " << image->GetPropertyValue<double>("[IMS:1000054] absolute position offset y") << " mm)";
+          out << outputLine << "\n";
+          if (!hasOriginalOffsetY)
+          {
+            out << "      <userParam name=\"original absolute position offset y\" value=\"" << EscapeXmlAttribute(originalValue) << "\" type=\"xsd:string\"/>\n";
+          }
+          patchedOffsetY = true;
+          continue;
+        }
+
+        out << outputLine << "\n";
+      }
+
+      in.close();
+      out.close();
+
+      if (patchedDirectionMatrix || patchedOffsetX || patchedOffsetY)
+      {
+        if (std::rename(tempPath.c_str(), imzmlPath.c_str()) != 0)
+        {
+          itksys::SystemTools::CopyFileAlways(tempPath, imzmlPath);
+          itksys::SystemTools::RemoveFile(tempPath);
+        }
+        return true;
+      }
+
+      itksys::SystemTools::RemoveFile(tempPath);
+      return false;
+    }
 
     ImzMLAssociatedPaths BuildAssociatedPaths(const std::string &imzmlPath)
     {
@@ -99,12 +310,12 @@ namespace m2
       return Unsupported;
   }
 
-  std::string ImzMLImageIO::GetIBDOutputPath() const
+  std::string ImzMLImageIO::GetNamedOutputPath(std::string parentPathWithExtension, std::string newExtension) const
   {
-    const auto outFile = GetImzMLOutputPath();
-    const auto name = itksys::SystemTools::GetFilenameWithoutExtension(outFile);
-    const auto path = itksys::SystemTools::GetParentDirectory(outFile);
-    const std::string ibdOutPath = path + "/" + name + ".ibd";
+
+    const auto path = itksys::SystemTools::GetParentDirectory(parentPathWithExtension);
+    const std::string ibdOutPath = path + "/" + itksys::SystemTools::GetFilenameWithoutExtension(parentPathWithExtension) + newExtension;
+
     return itksys::SystemTools::ConvertToOutputPath(ibdOutPath);
   }
 
@@ -169,236 +380,13 @@ namespace m2
   }
   */
 
-  void ImzMLImageIO::WriteContinuousProfile(m2::ImzMLSpectrumImage::SpectrumVectorType &spectra) const
-  {
-    const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
-
-    std::vector<float> mzs;
-    std::vector<float> ints;
-
-    std::ifstream ibd(input->GetBinaryDataPath(), std::ofstream::binary);
-    const std::string ibdOutputPath = GetIBDOutputPath();
-    itksys::SystemTools::MakeDirectory(itksys::SystemTools::GetParentDirectory(ibdOutputPath));
-    std::ofstream b(ibdOutputPath, std::ofstream::binary | std::ofstream::app);
-
-    unsigned sourceId = 0;
-    unsigned long long offset = 16;
-    unsigned long long offsetDelta = 0;
-
-    boost::progress_display show_progress(spectra.size() + 1);
-
-    // write mzs
-    {
-      input->GetSpectrumFloat(0, mzs, ints); // get x axis
-
-      spectra[0].mzOffset = 16;
-      spectra[0].mzLength = mzs.size();
-
-      auto start = std::begin(mzs);
-      auto end = std::end(mzs);
-      switch (m_DataTypeXAxis)
-      {
-        case m2::NumericType::Float:
-          // input->GetProcessor()
-          writeData<float>(start, end, b);
-          offsetDelta = mzs.size() * sizeof(float);
-          break;
-        case m2::NumericType::Double:
-          writeData<double>(start, end, b);
-          offsetDelta = mzs.size() * sizeof(double);
-          break;
-        case m2::NumericType::None:
-          mitkThrow() << "m2::NumericType of yAxisOutput not set";
-      }
-      offset += offsetDelta;
-      ++show_progress;
-    }
-
-    MITK_INFO("ImzMLImageIO::WriteContinuousProfile") << "Write x axis done!";
-
-    for (size_t id = 0; id < spectra.size(); ++id)
-    {
-      auto &s = spectra[id];
-      // update mz axis info
-      s.mzLength = spectra[0].mzLength;
-      s.mzOffset = spectra[0].mzOffset;
-
-      // write ints
-      {
-        input->GetSpectrumFloat(id, mzs, ints);
-
-        s.intOffset = offset;
-        s.intLength = ints.size();
-
-        auto start = std::begin(ints);
-        auto end = std::end(ints);
-
-        switch (m_DataTypeYAxis)
-        {
-          case m2::NumericType::Float:
-            writeData<float>(start, end, b);
-            offsetDelta = ints.size() * sizeof(float);
-            break;
-          case m2::NumericType::Double:
-            writeData<double>(start, end, b);
-            offsetDelta = ints.size() * sizeof(double);
-            break;
-          case m2::NumericType::None:
-            mitkThrow() << "m2::NumericType of yAxisOutput not set";
-        }
-
-        offset += offsetDelta;
-      }
-      b.flush();
-      ++show_progress;
-    }
-    ++sourceId;
-  }
-
-  void ImzMLImageIO::SetIntervalVector(m2::IntervalVector::Pointer intervals)
-  {
-    m_Intervals = intervals;
-  }
-
-  void ImzMLImageIO::WriteContinuousCentroid3DStack(const m2::SpectrumImageStack * ) const {
-
-    // 
-
-
-  }
-
-  void ImzMLImageIO::WriteContinuousCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType &spectra) const
-  {
-    if (m_Intervals.IsNull() || m_Intervals->GetIntervals().empty())
-      mitkThrow() << "No intervals provided!";
-
-    std::vector<float> mzs, mzsMasked;
-    std::vector<float> ints, intsMasked;
-
-    // Output file stream for ibd
-    const auto *input = static_cast<const m2::SpectrumImage *>(this->GetInput());
-    // auto nonConst_input = const_cast<m2::ImzMLSpectrumImage *>(input);
-    mitk::ImagePixelReadAccessor<mitk::Label::PixelType> macc(input->GetMultilabelSegmentation()->GetGroupImage(0));
-
-    auto numPixels =
-      std::accumulate(input->GetDimensions(), input->GetDimensions() + 3, 1, std::multiplies<unsigned int>());
-    auto numMaskedPixel = 0;
-    for (auto it = macc.GetData(); it <= macc.GetData() + numPixels; ++it)
-    {
-      if (*it > 0)
-        numMaskedPixel++;
-    }
-
-    const std::string ibdOutputPath = GetIBDOutputPath();
-    itksys::SystemTools::MakeDirectory(itksys::SystemTools::GetParentDirectory(ibdOutputPath));
-    std::ofstream b(ibdOutputPath, std::ofstream::binary | std::ofstream::app);
-
-    unsigned long long offset = 16;
-    unsigned long long offsetDelta = 0;
-    b.seekp(offset);
-
-    boost::progress_display show_progress(numMaskedPixel + 1);
-    // write mzs
-    {
-      // convert to float
-      const auto &xs = m_Intervals->GetXMean();
-      std::copy(std::begin(xs), std::end(xs), std::back_inserter(mzsMasked));
-
-      // update source spectra meta data to its actual values
-      spectra[0].mzOffset = 16;
-      spectra[0].mzLength = mzsMasked.size();
-
-      switch (m_DataTypeXAxis)
-      {
-        case NumericType::Float:
-          writeData<float>(std::begin(mzsMasked), std::end(mzsMasked), b);
-          offsetDelta = spectra[0].mzLength * sizeof(float);
-          break;
-        case NumericType::Double:
-          writeData<double>(std::begin(mzsMasked), std::end(mzsMasked), b);
-          offsetDelta = spectra[0].mzLength * sizeof(double);
-          break;
-        case NumericType::None:
-          mitkThrow() << "m2::NumericType of xAxisOutput not set";
-      }
-      offset += offsetDelta;
-      ++show_progress;
-    }
-
-    for (size_t id = 0; id < spectra.size(); ++id)
-    {
-      auto &s = spectra[id];
-
-      if (macc.GetPixelByIndex(s.index) > 0)
-      {
-        // update mz axis info
-        s.mzLength = spectra[0].mzLength;
-        s.mzOffset = spectra[0].mzOffset;
-
-        // write ints
-        {
-          input->GetSpectrumFloat(id, mzs, ints);
-          intsMasked.clear();
-
-          for (const Interval &I : m_Intervals->GetIntervals())
-          {
-            double val = 0;
-            const auto tol = input->ApplyTolerance(I.x.mean());
-            // MITK_INFO << "Tolerance: " << tol;
-            const auto [startIndex, rangeLength] = m2::Signal::Subrange(mzs, I.x.mean() - tol, I.x.mean() + tol);
-            const auto s = std::next(std::begin(ints), startIndex);
-            const auto e = std::next(s, rangeLength);
-            val = Signal::RangePooling<double>(s, e, input->GetRangePoolingStrategy());
-
-            intsMasked.push_back(val);
-          }
-
-          s.intOffset = offset;
-          s.intLength = intsMasked.size();
-
-          switch (m_DataTypeYAxis)
-          {
-            case m2::NumericType::Float:
-              writeData<float>(std::begin(intsMasked), std::end(intsMasked), b);
-              offsetDelta = s.intLength * sizeof(float);
-              break;
-            case m2::NumericType::Double:
-              writeData<double>(std::begin(intsMasked), std::end(intsMasked), b);
-              offsetDelta = s.intLength * sizeof(double);
-              break;
-            case m2::NumericType::None:
-              mitkThrow() << "m2::NumericType of yAxisOutput not set";
-          }
-
-          offset += offsetDelta;
-        }
-        b.flush();
-        ++show_progress;
-      }
-    }
-  }
-
-  void ImzMLImageIO::WriteProcessedProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & /*spectra*/) const
-  {
-    mitkThrow() << "Not implemented";
-  }
-
-  void ImzMLImageIO::WriteProcessedCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & /*spectra*/) const
-  {
-    mitkThrow() << "Not implemented";
-  }
 
   void ImzMLImageIO::Write()
   {
     mitk::LocaleSwitch localeSwitch("C");
     ValidateOutputLocation();
 
-    if (const auto input = dynamic_cast<const m2::SpectrumImageStack *>(this->GetInput()))
-    {
-      WriteContinuousCentroid3DStack(input);
-      return;
-    }
-    else if (const auto input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput()))
+    if (const auto input = dynamic_cast<const m2::ImzMLSpectrumImage *>(this->GetInput()))
     {
       const std::string srcImzML = input->GetImzMLDataPath();
       if (!itksys::SystemTools::FileExists(srcImzML))
@@ -411,36 +399,39 @@ namespace m2
       // Copy .imzML
       MITK_INFO << "[ImzMLImageIO::Write] Copy: " << srcImzML << " -> " << dstImzML;
       itksys::SystemTools::CopyFileAlways(srcImzML, dstImzML);
+      PatchImzMLMetadata(dstImzML, input);
 
-      
       const std::string srcIbd = input->GetBinaryDataPath();
       if (itksys::SystemTools::FileExists(srcIbd))
       {
-        const std::string dstIbd = GetIBDOutputPath(); 
+        const std::string dstIbd = GetNamedOutputPath(dstImzML, ".ibd"); 
         MITK_INFO << "[ImzMLImageIO::Write] Copy: " << srcIbd << " -> " << dstIbd;
         itksys::SystemTools::CopyFileAlways(srcIbd, dstIbd);
         }
 
-      // // Copy associated files if they exist at the source
-      // auto copyIfExists = [&](const std::string &suffix)
-      // {
-      //   const std::string src = srcBase + suffix;
-      //   if (itksys::SystemTools::FileExists(src))
-      //   {
-      //     const std::string dst = dstBase + suffix;
-      //     MITK_INFO << "[ImzMLImageIO::Write] Copy: " << src << " -> " << dst;
-      //     itksys::SystemTools::CopyFileAlways(src, dst);
-      //   }
-      // };
+      auto srcBase = itksys::SystemTools::GetFilenameWithoutExtension(srcImzML);
+      auto dstBase = itksys::SystemTools::GetFilenameWithoutExtension(dstImzML);
 
-      // copyIfExists(".mask.nrrd");
-      // copyIfExists(".shift.nrrd");
-      // copyIfExists(".mps");
-      // for (auto type : m2::NormalizationStrategyTypeList)
-      // {
-      //   const auto typeName = m2::NormalizationStrategyTypeNames[to_underlying(type)];
-      //   copyIfExists("." + typeName + ".nrrd");
-      // }
+      // Copy associated files if they exist at the source
+      auto copyIfExists = [&](const std::string &suffix)
+      {
+        const std::string src = srcBase + suffix;
+        if (itksys::SystemTools::FileExists(src))
+        {
+          const std::string dst = dstBase + suffix;
+          MITK_INFO << "[ImzMLImageIO::Write] Copy: " << src << " -> " << dst;
+          itksys::SystemTools::CopyFileAlways(src, dst);
+        }
+      };
+
+      copyIfExists(".mask.nrrd");
+      copyIfExists(".shift.nrrd");
+      copyIfExists(".mps");
+      for (auto type : m2::NormalizationStrategyTypeList)
+      {
+        const auto typeName = m2::NormalizationStrategyTypeNames[to_underlying(type)];
+        copyIfExists("." + typeName + ".nrrd");
+      }
     }
 
   } // namespace mitk
