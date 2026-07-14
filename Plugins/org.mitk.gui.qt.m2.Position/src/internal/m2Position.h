@@ -52,13 +52,21 @@ protected:
 
   /// \brief Called when the user clicks the GUI button
   void Rotate(float angleDeg);
-  void RotateImage(mitk::Image * image, float angleDeg);
+  void RotateData(mitk::BaseData *data, float angleDeg, const mitk::Point3D &center);
 
   void Mirror(int w);
-  void MirrorImage(mitk::Image * image, int w);
+  void MirrorData(mitk::BaseData *data, int w);
 
   void Move(std::array<float,2> vec);
-  void MoveImage(mitk::Image * image, std::array<float,2> vec);
+  void MoveData(mitk::BaseData *data, std::array<float,2> vec);
+
+  void ApplySpacing();
+  void ApplySpacingToData(mitk::BaseData *data, const mitk::Vector3D &spacing);
+
+  void ApplyOrigin();
+  void ApplyOriginToData(mitk::BaseData *data, const mitk::Point3D &origin);
+
+  void RefreshGeometryInfo();
 
   Ui::m2PositionControls m_Controls;
 };
