@@ -42,13 +42,7 @@ namespace m2
      */
     using SpectrumArtifactMapType = std::map<m2::SpectrumType, std::vector<double>>;
 
-    struct NormalizationImageData
-    {
-      mitk::Image::Pointer image;
-      bool isInitialized = false;
-    };
-
-    using NormalizationImageMapType = std::map<m2::NormalizationStrategyType, NormalizationImageData>;
+    using NormalizationImageMapType = std::map<m2::NormalizationStrategyType, mitk::Image::Pointer>;
     using TransformParameterVectorType = std::vector<std::string>;
 
     mitkClassMacro(SpectrumImage, mitk::Image);
@@ -154,12 +148,6 @@ namespace m2
 
     /// @brief Set/override the normalization image
     virtual void SetNormalizationImage(mitk::Image::Pointer, m2::NormalizationStrategyType type);
-
-    /// @brief Set/override the normalization image
-    virtual void SetNormalizationImageStatus(m2::NormalizationStrategyType type, bool initialized);
-
-    /// @brief Get the initialization status of normalization image
-    virtual bool GetNormalizationImageStatus(m2::NormalizationStrategyType type);
 
     // Initialize the SpectrumImages's processor object
     virtual void InitializeProcessor() = 0;
@@ -322,6 +310,14 @@ namespace m2
     {
       targetNode->SetProperty("spectrum.marker.size", markerSizeProp->Clone());
     }
+  }
+
+  inline void SetImageGeometryInformation(const mitk::Image *sourceImage, mitk::Image *targetImage)
+  {
+    targetImage->GetGeometry()->SetOrigin(sourceImage->GetGeometry()->GetOrigin());
+    targetImage->GetGeometry()->SetSpacing(sourceImage->GetGeometry()->GetSpacing());
+    targetImage->GetGeometry()->SetIndexToWorldTransformByVtkMatrixWithoutChangingSpacing(sourceImage->GetGeometry()->GetVtkMatrix());
+    // targetImage->SetGeometry(sourceImage->GetGeometry());
   }
 
   /**

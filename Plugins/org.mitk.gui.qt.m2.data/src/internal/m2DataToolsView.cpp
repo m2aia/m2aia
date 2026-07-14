@@ -201,7 +201,7 @@ void m2DataToolsView::OnAlignImages()
                                              spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0), 
                                              spectrumImage->GetPoints()};
     for (auto kv : spectrumImage->GetNormalizationImages())
-      imageList.push_back(kv.second.image);
+      imageList.push_back(kv.second);
   
     for (auto current : imageList)
       if (current && current->GetGeometry())
@@ -273,7 +273,7 @@ void m2DataToolsView::OnAlignImages()
                                                  mask, 
                                                  spectrumImage->GetPoints()};
         for (auto kv : spectrumImage->GetNormalizationImages())
-          imageList.push_back(kv.second.image);
+          imageList.push_back(kv.second);
       
         for (auto current : imageList)
           if (current && current->GetGeometry())
@@ -341,7 +341,7 @@ void m2DataToolsView::OnResetAlignment()
       std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), mask, image->GetPoints()};
 
       for (auto kv : image->GetNormalizationImages())
-        imageList.push_back(kv.second.image);
+        imageList.push_back(kv.second);
       
 
       for (auto current : imageList)
@@ -393,7 +393,7 @@ void m2DataToolsView::OnResetTiling()
       std::vector<mitk::BaseData *> imageList{image->GetIndexImage(), image->GetMultilabelSegmentation()->GetGroupImage(0), image->GetPoints()};
 
       for (auto kv : image->GetNormalizationImages())
-        imageList.push_back(kv.second.image);
+        imageList.push_back(kv.second);
       
 
       for (auto current : imageList)
@@ -485,7 +485,7 @@ void m2DataToolsView::OnApplyTiling()
       if(auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(node->GetData())){
         std::vector<mitk::BaseData *> imageList{spectrumImage->GetIndexImage(), spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0), spectrumImage->GetPoints()};
         for (auto kv : spectrumImage->GetNormalizationImages())
-          imageList.push_back(kv.second.image);
+          imageList.push_back(kv.second);
       
         for (auto current : imageList)
           if (current && current->GetGeometry())

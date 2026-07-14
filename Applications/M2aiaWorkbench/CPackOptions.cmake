@@ -8,8 +8,8 @@ if(M2AIA_PACKAGE_VERSION)
   set(CPACK_PACKAGE_VERSION "${M2AIA_PACKAGE_VERSION}")
 else()
   set(CPACK_PACKAGE_VERSION_MAJOR "2026") # Major version is the year of release
-  set(CPACK_PACKAGE_VERSION_MINOR "05") # Minor version is the month of release
-  set(CPACK_PACKAGE_VERSION_PATCH "01") # Patch versioning
+  set(CPACK_PACKAGE_VERSION_MINOR "07") # Minor version is the month of release
+  set(CPACK_PACKAGE_VERSION_PATCH "00") # Patch versioning
   set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 endif()
 
@@ -20,4 +20,3 @@ set(CPACK_PACKAGE_VENDOR "m2aia")
 set(CPACK_PACKAGE_FILE_NAME "M2aia-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_ARCH}")
 
 set(CPACK_PACKAGE_ICON "${PROJECT_SOURCE_DIR}/Applications/M2aiaWorkbench/icons/icon.png")
-

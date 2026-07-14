@@ -30,8 +30,16 @@ namespace m2
     : AbstractFileIO("TabularData", TABULAR_MIMETYPE(), "Tabular Data (M²aia)")
   {
     // Higher ranking than IntervalVectorIO so it gets priority
-    AbstractFileWriter::SetRanking(15);
-    AbstractFileReader::SetRanking(15);
+    AbstractFileWriter::SetRanking(20);
+    AbstractFileReader::SetRanking(20);
+    this->RegisterService();
+  }
+
+  TabularDataIO::TabularDataIO(const std::string &baseDataType)
+    : AbstractFileIO(baseDataType, TABULAR_MIMETYPE(), "Tabular Data (M²aia)")
+  {
+    AbstractFileWriter::SetRanking(20);
+    AbstractFileReader::SetRanking(20);
     this->RegisterService();
   }
 
@@ -40,7 +48,7 @@ namespace m2
     // Check if input is PlotData or IntervalVector
     const auto *plotData = dynamic_cast<const m2::PlotData *>(this->GetInput());
     const auto *intervalVector = dynamic_cast<const m2::IntervalVector *>(this->GetInput());
-    
+    MITK_INFO << "TabularDataIO::GetWriterConfidenceLevel - PlotData: " << (plotData != nullptr) << ", IntervalVector: " << (intervalVector != nullptr);
     if (plotData || intervalVector)
       return Supported;
     else

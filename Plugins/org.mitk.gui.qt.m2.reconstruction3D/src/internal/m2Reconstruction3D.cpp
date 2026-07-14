@@ -20,32 +20,32 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <berryPlatform.h>
 
 // Qt
+#include <QFileDialog>
 #include <QMessageBox>
 #include <QThreadPool>
-#include <QFileDialog>
 #include <QVBoxLayout>
 #include <QtConcurrent>
 
 // mitk
-#include <mitkNodePredicateDataType.h>
-#include <mitkNodePredicateDataProperty.h>
-#include <mitkProgressBar.h>
-#include <mitkNodePredicateOr.h>
+#include <itkNrrdImageIO.h>
 #include <mitkImageAccessByItk.h>
 #include <mitkImageCast.h>
+#include <mitkNodePredicateDataProperty.h>
+#include <mitkNodePredicateDataType.h>
+#include <mitkNodePredicateOr.h>
+#include <mitkProgressBar.h>
 #include <mitkStringProperty.h>
-#include <itkNrrdImageIO.h>
 // #include <mitkImageWriter.h>
-#include <mitkItkImageIO.h>
 #include <mitkIOUtil.h>
+#include <mitkItkImageIO.h>
 
 // m2aia
 #include "m2Reconstruction3D.h"
+#include <Qm2NameDialog.h>
 #include <m2DataNodePredicates.h>
 #include <m2ElxRegistrationHelper.h>
-#include <m2UIUtils.h>
 #include <m2ImzMLSpectrumImage.h>
-#include <Qm2NameDialog.h>
+#include <m2UIUtils.h>
 #include <signal/m2SignalCommon.h>
 
 const std::string m2Reconstruction3D::VIEW_ID = "org.mitk.views.m2.reconstruction3D";
@@ -63,11 +63,9 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
   m_Controls.centroidListSelector->SetPopUpTitel(QString("Centroid Spectrum"));
   m_Controls.centroidListSelector->SetNodePredicate(
     mitk::NodePredicateAnd::New(m2::DataNodePredicates::NoActiveHelper,
-                                mitk::NodePredicateOr::New(
-                                  m2::DataNodePredicates::IsOverviewSpectrum,
-                                  m2::DataNodePredicates::IsCentroidSpectrum,
-                                  m2::DataNodePredicates::IsProfileSpectrum)));
-
+                                mitk::NodePredicateOr::New(m2::DataNodePredicates::IsOverviewSpectrum,
+                                                           m2::DataNodePredicates::IsCentroidSpectrum,
+                                                           m2::DataNodePredicates::IsProfileSpectrum)));
 
   m_Controls.stackImageSelector->SetDataStorage(GetDataStorage());
   m_Controls.stackImageSelector->SetSelectionIsOptional(true);
@@ -75,8 +73,7 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
   m_Controls.stackImageSelector->SetEmptyInfo(QString("Stack Image"));
   m_Controls.stackImageSelector->SetPopUpTitel(QString("Stack Image"));
   m_Controls.stackImageSelector->SetNodePredicate(
-    mitk::NodePredicateAnd::New(m2::DataNodePredicates::NoActiveHelper,
-                                m2::DataNodePredicates::IsSpectrumImageStack));
+    mitk::NodePredicateAnd::New(m2::DataNodePredicates::NoActiveHelper, m2::DataNodePredicates::IsSpectrumImageStack));
 
   connect(m_Controls.btnUpdateList, &QPushButton::clicked, this, &m2Reconstruction3D::OnUpdateList);
   connect(m_Controls.btnStartStacking, SIGNAL(clicked()), this, SLOT(OnStartStacking()));
@@ -106,11 +103,10 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
   }
 
   QComboBox *imageTypeSelection = m_Controls.imageTypeSelection;
-  for(auto type : m2::NormalizationStrategyTypeList)
-    {
-      imageTypeSelection->addItem(QString::fromStdString(m2::to_string(type)), QVariant::fromValue(to_underlying(type)));
-    } 
-
+  for (auto type : m2::NormalizationStrategyTypeList)
+  {
+    imageTypeSelection->addItem(QString::fromStdString(m2::to_string(type)), QVariant::fromValue(to_underlying(type)));
+  }
 
   connect(m_Controls.btnRemove,
           &QAbstractButton::clicked,
@@ -144,7 +140,6 @@ void m2Reconstruction3D::CreateQtPartControl(QWidget *parent)
             }
           });
 
-
   // Install the registration parameter widget into the UI placeholder
   m_ElxParamWidget = new Qm2ElxParameterWidget(parent);
   auto *elxLayout = new QVBoxLayout(m_Controls.elxParamWidget);
@@ -167,44 +162,44 @@ std::shared_ptr<m2::ElxRegistrationHelper> m2Reconstruction3D::RegistrationStep(
 {
   auto fixedData = GetImageDataById(fixedId, fixedSource);
   auto movingData = GetImageDataById(movingId, movingSource);
-  
-  
+
   mitk::Image::Pointer fixedImage = fixedData.image;
   mitk::Image::Pointer movingImage = movingData.image;
   // Use the current combobox entry and its user data to determine NormalizationType
   int index = m_Controls.imageTypeSelection->currentIndex();
   QVariant userData = m_Controls.imageTypeSelection->itemData(index);
   m2::NormalizationStrategyType normType = static_cast<m2::NormalizationStrategyType>(userData.toInt());
-  
-  if(normType != m2::NormalizationStrategyType::None){
-    if(auto sImage = dynamic_cast<m2::SpectrumImage*>(fixedData.image.GetPointer()))
+
+  if (normType != m2::NormalizationStrategyType::None)
+  {
+    if (auto sImage = dynamic_cast<m2::SpectrumImage *>(fixedData.image.GetPointer()))
       fixedImage = sImage->GetNormalizationImage(normType);
-    
-    if(auto sImage = dynamic_cast<m2::SpectrumImage*>(movingData.image.GetPointer()))
+
+    if (auto sImage = dynamic_cast<m2::SpectrumImage *>(movingData.image.GetPointer()))
       movingImage = sImage->GetNormalizationImage(normType);
   }
 
-  
   // check if a transformer exist for fixed image and apply
   if (fixedTransformer && !fixedTransformer->GetTransformation().empty())
     fixedImage = fixedTransformer->WarpImage(fixedImage);
-  
+
   std::vector<std::string> parameters = GetParameters();
-  
+
   // start of the registration procedure
   auto elxHelper = std::make_shared<m2::ElxRegistrationHelper>();
   elxHelper->SetImageData(fixedImage, movingImage);
   elxHelper->SetRegistrationParameters(parameters);
-  MITK_INFO << "Registering " << movingData.node->GetName() << " to " << fixedData.node->GetName() ;
+  MITK_INFO << "Registering " << movingData.node->GetName() << " to " << fixedData.node->GetName();
   elxHelper->GetRegistration();
 
   // workaround to use NormalizationImages
-  if(normType != m2::NormalizationStrategyType::None){
+  if (normType != m2::NormalizationStrategyType::None)
+  {
     if (fixedTransformer && !fixedTransformer->GetTransformation().empty())
       fixedImage = fixedTransformer->WarpImage(fixedData.image);
     elxHelper->SetImageData(fixedImage, movingData.image);
   }
-  
+
   return elxHelper;
 }
 
@@ -215,7 +210,6 @@ std::vector<std::string> m2Reconstruction3D::GetParameters()
 
 void m2Reconstruction3D::OnStartStacking()
 {
-
   // check input data
   const auto numItems = m_List1->count();
   const bool doMultiModalImageRegistration = m_List1->count() == m_List2->count();
@@ -275,70 +269,78 @@ void m2Reconstruction3D::OnStartStacking()
   // prepare workbench
   mitk::ProgressBar::GetInstance()->AddStepsToDo(numItems - 1);
 
-
   // disconnect all signals
   disconnect(&m_ReconstructionFutureWatcher, &QFutureWatcher<void>::finished, nullptr, nullptr);
   disconnect(&m_ReconstructionFutureWatcher, &QFutureWatcher<void>::progressValueChanged, nullptr, nullptr);
-  
-   // Handle finished
-  connect(&m_ReconstructionFutureWatcher, &QFutureWatcher<void>::finished, this, [spacingZ, stackSize, doMultiModalImageRegistration, stackNames, spectrumImageStack1, spectrumImageStack2, this]() mutable {
-    QMessageBox::information(m_Parent, "Reconstruction Complete", "Reconstruction complete!");
-    mitk::ProgressBar::GetInstance()->Reset();
 
-    auto node = mitk::DataNode::New();
-    node->SetData(spectrumImageStack1);
-    node->SetName(stackNames[0]);
-    GetDataStorage()->Add(node);
+  // Handle finished
+  connect(&m_ReconstructionFutureWatcher,
+          &QFutureWatcher<void>::finished,
+          this,
+          [spacingZ,
+           stackSize,
+           doMultiModalImageRegistration,
+           stackNames,
+           spectrumImageStack1,
+           spectrumImageStack2,
+           this]() mutable
+          {
+            QMessageBox::information(m_Parent, "Reconstruction Complete", "Reconstruction complete!");
+            mitk::ProgressBar::GetInstance()->Reset();
 
-    // auto transformers = spectrumImageStack1->GetSliceTransformers();
-    // unsigned int i = 0;
-    // for(auto t: transformers){
-    //   if(t){
-    //     auto node2 = mitk::DataNode::New();
-    //     node2->SetData(t->GetDeformationField());
-    //     node2->SetName("Transform " + std::to_string(i));
-    //     node2->SetVisibility(false);
-    //     node2->SetBoolProperty("helper object", true);
-    //     GetDataStorage()->Add(node2);
-    //   }
-    // }
+            auto node = mitk::DataNode::New();
+            node->SetData(spectrumImageStack1);
+            node->SetName(stackNames[0]);
+            GetDataStorage()->Add(node);
 
-    if (doMultiModalImageRegistration)
+            // auto transformers = spectrumImageStack1->GetSliceTransformers();
+            // unsigned int i = 0;
+            // for(auto t: transformers){
+            //   if(t){
+            //     auto node2 = mitk::DataNode::New();
+            //     node2->SetData(t->GetDeformationField());
+            //     node2->SetName("Transform " + std::to_string(i));
+            //     node2->SetVisibility(false);
+            //     node2->SetBoolProperty("helper object", true);
+            //     GetDataStorage()->Add(node2);
+            //   }
+            // }
+
+            if (doMultiModalImageRegistration)
+            {
+              spectrumImageStack2 = m2::SpectrumImageStack::New(stackSize, spacingZ);
+              spectrumImageStack2->InitializeProcessor();
+              spectrumImageStack2->InitializeGeometry();
+
+              node = mitk::DataNode::New();
+              node->SetData(spectrumImageStack2);
+              node->SetName(stackNames[1] + "(2)");
+              GetDataStorage()->Add(node);
+
+              // auto transformers = spectrumImageStack2->GetSliceTransformers();
+              // unsigned int i = 0;
+              // for(auto t: transformers){
+              //   if(t){
+              //     auto node2 = mitk::DataNode::New();
+              //     node2->SetData(t->GetDeformationField());
+              //     node2->SetName("Transform " + std::to_string(i));
+              //     node2->SetVisibility(false);
+              //     node2->SetBoolProperty("helper object", true);
+              //     GetDataStorage()->Add(node2);
+              //   }
+              // }
+            }
+          });
+
+  connect(&m_ReconstructionFutureWatcher,
+          &QFutureWatcher<void>::progressValueChanged,
+          this,
+          [&](int) { mitk::ProgressBar::GetInstance()->Progress(); });
+
+  m_ReconstructionFutureWatcher.setFuture(QtConcurrent::run(
+    [stackNames, spectrumImageStack1, spectrumImageStack2, numItems, doMultiModalImageRegistration, this]()
     {
-      spectrumImageStack2 = m2::SpectrumImageStack::New(stackSize, spacingZ);
-      spectrumImageStack2->InitializeProcessor();
-      spectrumImageStack2->InitializeGeometry();
-
-      node = mitk::DataNode::New();
-      node->SetData(spectrumImageStack2);
-      node->SetName(stackNames[1] + "(2)");
-      GetDataStorage()->Add(node);
-
-      // auto transformers = spectrumImageStack2->GetSliceTransformers();
-      // unsigned int i = 0;
-      // for(auto t: transformers){
-      //   if(t){
-      //     auto node2 = mitk::DataNode::New();
-      //     node2->SetData(t->GetDeformationField());
-      //     node2->SetName("Transform " + std::to_string(i));
-      //     node2->SetVisibility(false);
-      //     node2->SetBoolProperty("helper object", true);
-      //     GetDataStorage()->Add(node2);
-      //   }
-      // }
-    }
-  });
-
-  connect(&m_ReconstructionFutureWatcher, &QFutureWatcher<void>::progressValueChanged, this, [&](int){
-    mitk::ProgressBar::GetInstance()->Progress();
-  });
-  
-
-
-  m_ReconstructionFutureWatcher.setFuture(
-      QtConcurrent::run([stackNames, spectrumImageStack1, spectrumImageStack2, numItems, doMultiModalImageRegistration, this](){
-      
-      // int progress = 0; 
+      // int progress = 0;
 
       const bool UseSubsequentOrdering = !m_Controls.chkBxCoRegistrationToSelected->isChecked();
       const auto currentRow = m_List1->currentRow() < 0 ? numItems / 2 : m_List1->currentRow();
@@ -360,59 +362,55 @@ void m2Reconstruction3D::OnStartStacking()
         spectrumImageStack2->Insert(currentRow, elxHelper);
         // futureInterface.setProgressValue(++progress);
       }
-        
+
       // QFutureWatcher<void> watcher0;
       // watcher0.setFuture(
-        // auto td0 = QtConcurrent::run(
-        // [&]()
-        // {
-        
-          for (int movingId = currentRow - 1; movingId >= 0; --movingId)
-          {
-            // stack 1
-            int fixedId = UseSubsequentOrdering ? movingId + 1 : currentRow;
-            auto fixedTransformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
-            auto elxHelper = RegistrationStep(fixedId, m_List1, fixedTransformer, movingId, m_List1);
-            spectrumImageStack1->Insert(movingId, elxHelper);
+      // auto td0 = QtConcurrent::run(
+      // [&]()
+      // {
 
-            // stack 2
-            if (doMultiModalImageRegistration)
-            {
-                elxHelper = RegistrationStep(movingId, m_List1, elxHelper, movingId, m_List2);
+      for (int movingId = currentRow - 1; movingId >= 0; --movingId)
+      {
+        // stack 1
+        int fixedId = UseSubsequentOrdering ? movingId + 1 : currentRow;
+        auto fixedTransformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
+        auto elxHelper = RegistrationStep(fixedId, m_List1, fixedTransformer, movingId, m_List1);
+        spectrumImageStack1->Insert(movingId, elxHelper);
 
-              spectrumImageStack2->Insert(movingId, elxHelper);
-            }
-         
-            
-          }
-        // });
+        // stack 2
+        if (doMultiModalImageRegistration)
+        {
+          elxHelper = RegistrationStep(movingId, m_List1, elxHelper, movingId, m_List2);
 
-        // auto td1 = QtConcurrent::run(
-        // [&]()
-        //     {
-              for (int movingId = currentRow + 1; movingId < numItems; ++movingId)
-              {
-                // stack 1
-                int fixedId = UseSubsequentOrdering ? movingId - 1 : currentRow;
-                auto fixedTransformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
-                auto elxHelper = RegistrationStep(fixedId, m_List1, fixedTransformer, movingId, m_List1);
-                spectrumImageStack1->Insert(movingId, elxHelper);
+          spectrumImageStack2->Insert(movingId, elxHelper);
+        }
+      }
+      // });
 
-                // stack 2
-                if (doMultiModalImageRegistration)
-                {
-                  elxHelper = RegistrationStep(movingId, m_List1, elxHelper, movingId, m_List2);
-                  spectrumImageStack2->Insert(movingId, elxHelper);
-                }
+      // auto td1 = QtConcurrent::run(
+      // [&]()
+      //     {
+      for (int movingId = currentRow + 1; movingId < numItems; ++movingId)
+      {
+        // stack 1
+        int fixedId = UseSubsequentOrdering ? movingId - 1 : currentRow;
+        auto fixedTransformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
+        auto elxHelper = RegistrationStep(fixedId, m_List1, fixedTransformer, movingId, m_List1);
+        spectrumImageStack1->Insert(movingId, elxHelper);
 
-              }
-            // }
-        // );
+        // stack 2
+        if (doMultiModalImageRegistration)
+        {
+          elxHelper = RegistrationStep(movingId, m_List1, elxHelper, movingId, m_List2);
+          spectrumImageStack2->Insert(movingId, elxHelper);
+        }
+      }
+      // }
+      // );
 
       // td0.waitForFinished();
       // td1.waitForFinished();
 
-      
       spectrumImageStack1->InitializeProcessor();
       spectrumImageStack1->InitializeGeometry();
 
@@ -423,7 +421,7 @@ void m2Reconstruction3D::OnStartStacking()
       }
 
       // futureInterface.reportFinished();
-  }));
+    }));
 }
 
 void m2Reconstruction3D::OnUpdateList()
@@ -447,8 +445,6 @@ void m2Reconstruction3D::OnUpdateList()
       item->setText((node->GetName()).c_str());
       item->setData(Qt::UserRole, QVariant::fromValue(i));
 
-          
-      
       DataTuple tuple;
       tuple.node = node;
       tuple.image = data;
@@ -463,137 +459,158 @@ void m2Reconstruction3D::OnUpdateList()
   }
 }
 
-
-void m2Reconstruction3D::OnStartExport(){
-
-  if(m_ExportProcessFutureWatcher.future().isRunning()) return;
+void m2Reconstruction3D::OnStartExport()
+{
+  if (m_ExportProcessFutureWatcher.future().isRunning())
+    return;
 
   auto centroidsNode = m_Controls.centroidListSelector->GetSelectedNode();
   auto stackImageNode = m_Controls.stackImageSelector->GetSelectedNode();
-  
-  if(!centroidsNode || !stackImageNode){
+
+  if (!centroidsNode || !stackImageNode)
+  {
     QMessageBox::warning(m_Parent, "No data available!", "Please select a centroid spectrum and a stack image.");
     return;
   }
-
 
   // disconnect all signals
   disconnect(&m_ExportProcessFutureWatcher, &QFutureWatcher<void>::finished, nullptr, nullptr);
   disconnect(&m_ExportProcessFutureWatcher, &QFutureWatcher<void>::progressValueChanged, nullptr, nullptr);
 
-  QString dir = QFileDialog::getExistingDirectory(m_Parent, tr("Select Directory"), "",
-                                                  QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+  QString dir = QFileDialog::getExistingDirectory(
+    m_Parent, tr("Select Directory"), "", QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
   if (dir.isEmpty())
     return;
-  
-  // Handle finished
-  connect(&m_ExportProcessFutureWatcher, &QFutureWatcher<void>::finished, this, [&](){
-    QMessageBox::information(m_Parent, "Export Complete", "All images have been exported successfully.");
-    mitk::ProgressBar::GetInstance()->Reset();
-  });
 
-  connect(&m_ExportProcessFutureWatcher, &QFutureWatcher<void>::progressValueChanged, this, [&](int){
-    mitk::ProgressBar::GetInstance()->Progress();
-  });
-  
+  // Handle finished
+  connect(&m_ExportProcessFutureWatcher,
+          &QFutureWatcher<void>::finished,
+          this,
+          [&]()
+          {
+            QMessageBox::information(m_Parent, "Export Complete", "All images have been exported successfully.");
+            mitk::ProgressBar::GetInstance()->Reset();
+          });
+
+  connect(&m_ExportProcessFutureWatcher,
+          &QFutureWatcher<void>::progressValueChanged,
+          this,
+          [&](int) { mitk::ProgressBar::GetInstance()->Progress(); });
+
   // auto intervals = dynamic_cast<m2::IntervalVector*>(centroidsNode->GetData());
   // mitk::ProgressBar::GetInstance()->AddStepsToDo(intervals->GetIntervals().size());
   // auto stackImage = dynamic_cast<m2::SpectrumImageStack*>(stackImageNode->GetData());
   // auto intervals = dynamic_cast<m2::IntervalVector*>(centroidsNode->GetData());
   // for(std::shared_ptr<m2::ElxRegistrationHelper> t : stackImage->GetSliceTransformers()){
-    // if(t->GetDeformationField()){
-      // auto prop = t->GetMovingImage()->GetPropertyList()->GetProperty("path");
-      // if(prop){
-      //   auto path = prop->GetValueAsString();
-      //   if(path.empty()) continue;
-        
-        // auto pos = path.find_last_of("/");
-        // if(pos != std::string::npos){
-          // auto fileName = path.substr(pos + 1);
-          // auto fileNameWithoutExtension = fileName.substr(0, fileName.find_last_of("."));
-          // mitk::Image::Pointer deformationfield = t->GetDeformationField();
-          // auto node = mitk::DataNode::New();
-          // node->SetData(deformationfield);
-          // node->SetName(fileNameWithoutExtension + ".def");
-          // auto ref = GetDataStorage()->GetNamedNode(fileNameWithoutExtension);
-          // GetDataStorage()->Add(node, ref);
-              
-        // }
-      // }
+  // if(t->GetDeformationField()){
+  // auto prop = t->GetMovingImage()->GetPropertyList()->GetProperty("path");
+  // if(prop){
+  //   auto path = prop->GetValueAsString();
+  //   if(path.empty()) continue;
+
+  // auto pos = path.find_last_of("/");
+  // if(pos != std::string::npos){
+  // auto fileName = path.substr(pos + 1);
+  // auto fileNameWithoutExtension = fileName.substr(0, fileName.find_last_of("."));
+  // mitk::Image::Pointer deformationfield = t->GetDeformationField();
+  // auto node = mitk::DataNode::New();
+  // node->SetData(deformationfield);
+  // node->SetName(fileNameWithoutExtension + ".def");
+  // auto ref = GetDataStorage()->GetNamedNode(fileNameWithoutExtension);
+  // GetDataStorage()->Add(node, ref);
+
+  // }
+  // }
   //   }
   // }
-  
+
   // Start the export
   m_ExportProcessFutureWatcher.setFuture(QtConcurrent::run(
   [dir, centroidsNode, stackImageNode](){
     QFutureInterface<void> futureInterface;
-  
-    auto stackImage = dynamic_cast<m2::SpectrumImageStack*>(stackImageNode->GetData());
-    auto intervals = dynamic_cast<m2::IntervalVector*>(centroidsNode->GetData());
+
+    auto stackImage = dynamic_cast<m2::SpectrumImageStack *>(stackImageNode->GetData());
+    auto intervals = dynamic_cast<m2::IntervalVector *>(centroidsNode->GetData());
 
     std::ofstream logs(dir.toStdString() + "/logs.txt");
     logs << "Exporting stack image to " << dir.toStdString() << std::endl;
     logs << "Number of intervals: " << intervals->GetIntervals().size() << std::endl;
     logs << "3D Recon. at m/z " << stackImageNode->GetName() << std::endl;
-    logs << "Baseline correction: " << m2::BaselineCorrectionTypeNames.at(to_underlying(stackImage->GetBaselineCorrectionStrategy())) << std::endl;
+    logs << "Baseline correction: "
+         << m2::BaselineCorrectionTypeNames.at(to_underlying(stackImage->GetBaselineCorrectionStrategy())) << std::endl;
     logs << "Baseline correction half window size: " << stackImage->GetBaseLineCorrectionHalfWindowSize() << std::endl;
-    logs << "Normalization strategy: " << m2::NormalizationStrategyTypeNames.at(to_underlying(stackImage->GetNormalizationStrategy())) << std::endl;
-    logs << "Smoothing strategy: " << m2::SmoothingTypeNames.at(to_underlying(stackImage->GetSmoothingStrategy())) << std::endl;
+    logs << "Normalization strategy: "
+         << m2::NormalizationStrategyTypeNames.at(to_underlying(stackImage->GetNormalizationStrategy())) << std::endl;
+    logs << "Smoothing strategy: " << m2::SmoothingTypeNames.at(to_underlying(stackImage->GetSmoothingStrategy()))
+         << std::endl;
     logs << "Smoothing half window size: " << stackImage->GetSmoothingHalfWindowSize() << std::endl;
-    logs << "Intensity transformation strategy: " << m2::IntensityTransformationTypeNames.at(to_underlying(stackImage->GetIntensityTransformationStrategy())) << std::endl;
-    logs << "Image smoothing strategy: " << m2::ImageNormalizationStrategyTypeNames.at(to_underlying(stackImage->GetImageSmoothingStrategy())) << std::endl;
-    logs << "Image normalization strategy: " << m2::ImageNormalizationStrategyTypeNames.at(to_underlying(stackImage->GetImageNormalizationStrategy())) << std::endl;
-    
+    logs << "Intensity transformation strategy: "
+         << m2::IntensityTransformationTypeNames.at(to_underlying(stackImage->GetIntensityTransformationStrategy()))
+         << std::endl;
+    logs << "Image smoothing strategy: "
+         << m2::ImageNormalizationStrategyTypeNames.at(to_underlying(stackImage->GetImageSmoothingStrategy()))
+         << std::endl;
+    logs << "Image normalization strategy: "
+         << m2::ImageNormalizationStrategyTypeNames.at(to_underlying(stackImage->GetImageNormalizationStrategy()))
+         << std::endl;
+
     auto now = std::chrono::system_clock::now();
     std::time_t currentTime = std::chrono::system_clock::to_time_t(now);
     logs << "Export started at " << std::ctime(&currentTime) << std::endl;
-  
-              
-    
-    mitk::IOUtil::Save(stackImage->GetMultilabelSegmentation()->GetGroupImage(0), dir.toStdString() + "/MaskImage.nrrd");
+
+    mitk::IOUtil::Save(stackImage->GetMultilabelSegmentation()->GetGroupImage(0),
+                       dir.toStdString() + "/MaskImage.nrrd");
     unsigned i = 0;
     unsigned n = stackImage->GetSliceTransformers().size();
-    for(std::shared_ptr<m2::ElxRegistrationHelper> t : stackImage->GetSliceTransformers()){
-      if(t->GetDeformationField()){
-        auto prop = t->GetMovingImage()->GetPropertyList()->GetProperty("path");
-        if(prop){
-          auto path = prop->GetValueAsString();
-          if(path.empty()) continue;
-          
-          auto pos = path.find_last_of("/");
-          if(pos != std::string::npos){
-            auto fileName = path.substr(pos + 1);
-            auto fileNameWithoutExtension = fileName.substr(0, fileName.find_last_of("."));
-            mitk::Image::Pointer deformationfield = t->GetDeformationField();
-            
-            deformationfield->SetProperty("m2aia.stack.index", mitk::StringProperty::New(std::to_string(++i) + "/" + std::to_string(n)));
-            // deformationfield->SetMetaDataDictionary(metaData);
-            // itk::NrrdImageIO::Pointer io = itk::NrrdImageIO::New();
-            // io->SetFileName(dir.toStdString() + "/" + fileNameWithoutExtension + ".def.nrrd");
-            // io->Write
-            // auto & dict = io->GetMetaDataDictionary();
-            // itk::EncapsulateMetaData<std::string>(dict, "m2aia.stack.index", std::to_string(i) + "/" + std::to_string(n));
-            
-            // mitk::ItkImageIO io2(io);
-            // io2.SetOutputLocation(dir.toStdString() + "/" + fileNameWithoutExtension + ".def.nrrd");
-            // io2.mitk::AbstractFileIOWriter::SetInput(deformationfield);
-            // io2.Write();
-            
-            mitk::IOUtil::Save(deformationfield, dir.toStdString() + "/" + fileNameWithoutExtension + ".def.nrrd"); 
-
-            
-            
-            
-            // AccessByItk(deformationfield, ([&](auto I){
-            //   auto & dict = I->GetMetaDataDictionary();
-            //   itk::EncapsulateMetaData<std::string>(dict, "m2aia.stack.index", std::to_string(i) + "/" + std::to_string(n));
-            //   mitk::CastToMitkImage(I, deformationfield);
-            // }));
-                
-
-          }
+    for (std::shared_ptr<m2::ElxRegistrationHelper> t : stackImage->GetSliceTransformers())
+    {
+      if (t->GetDeformationField())
+      {
+        std::string movingPath;
+        auto m2aiaDataPathProp = t->GetMovingImage()->GetProperty("m2aia.IO.path");
+        auto dataPathProp = t->GetMovingImage()->GetProperty("path");
+        if (m2aiaDataPathProp)
+          movingPath = m2aiaDataPathProp->GetValueAsString();
+        else if (dataPathProp)
+          movingPath = dataPathProp->GetValueAsString();
+        else
+        {
+          MITK_WARN << "No path property found for moving image. Skipping deformation field export";
+          continue;
         }
-        
+
+
+
+        auto pos = movingPath.find_last_of("/");
+        if (pos != std::string::npos)
+        {
+          auto fileName = movingPath.substr(pos + 1);
+          auto fileNameWithoutExtension = fileName.substr(0, fileName.find_last_of("."));
+          mitk::Image::Pointer deformationfield = t->GetDeformationField();
+
+          deformationfield->SetProperty("m2aia.stack.index",
+                                        mitk::StringProperty::New(std::to_string(++i) + "/" + std::to_string(n)));
+          // deformationfield->SetMetaDataDictionary(metaData);
+          // itk::NrrdImageIO::Pointer io = itk::NrrdImageIO::New();
+          // io->SetFileName(dir.toStdString() + "/" + fileNameWithoutExtension + ".def.nrrd");
+          // io->Write
+          // auto & dict = io->GetMetaDataDictionary();
+          // itk::EncapsulateMetaData<std::string>(dict, "m2aia.stack.index", std::to_string(i) + "/" +
+          // std::to_string(n));
+
+          // mitk::ItkImageIO io2(io);
+          // io2.SetOutputLocation(dir.toStdString() + "/" + fileNameWithoutExtension + ".def.nrrd");
+          // io2.mitk::AbstractFileIOWriter::SetInput(deformationfield);
+          // io2.Write();
+
+          mitk::IOUtil::Save(deformationfield, dir.toStdString() + "/" + fileNameWithoutExtension + ".def.nrrd");
+
+          // AccessByItk(deformationfield, ([&](auto I){
+          //   auto & dict = I->GetMetaDataDictionary();
+          //   itk::EncapsulateMetaData<std::string>(dict, "m2aia.stack.index", std::to_string(i) + "/" +
+          //   std::to_string(n)); mitk::CastToMitkImage(I, deformationfield);
+          // }));
+        }
       }
     }
 
@@ -607,28 +624,26 @@ void m2Reconstruction3D::OnStartExport(){
 
     for (auto I : intervals->GetIntervals())
     {
-      auto center = I.x.mean();
-      // tolerance in 5 ppm
-      auto tol = center * 5e-6;
-      
-      stackImage->GetImage(center, tol, nullptr, localStackImage);
+    auto center = I.x.mean();
+    // tolerance in 5 ppm
+    auto tol = center * 5e-6;
 
-      auto fileName = dir + "/Stack3D_" + QString("%1").arg(center, 6, 'f', 2) + ".nrrd";
-      mitk::IOUtil::Save(localStackImage, fileName.toStdString());
+    stackImage->GetImage(center, tol, nullptr, localStackImage);
 
-      if (futureInterface.isCanceled()) {
-        qDebug() << "Task canceled!";
-        break;
-      }
-      futureInterface.setProgressValue(++progress);
+    auto fileName = dir + "/Stack3D_" + QString("%1").arg(center, 6, 'f', 2) + ".nrrd";
+    mitk::IOUtil::Save(localStackImage, fileName.toStdString());
+
+    if (futureInterface.isCanceled())
+    {
+      qDebug() << "Task canceled!";
+      break;
+    }
+    futureInterface.setProgressValue(++progress);
     }
 
     now = std::chrono::system_clock::now();
     currentTime = std::chrono::system_clock::to_time_t(now);
     logs << "Export finished at " << std::ctime(&currentTime) << std::endl;
     futureInterface.reportFinished();
-
-  }));
-
-  
+}));
 }

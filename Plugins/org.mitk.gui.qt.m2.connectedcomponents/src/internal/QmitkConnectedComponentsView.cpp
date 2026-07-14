@@ -80,7 +80,7 @@ const std::string QmitkConnectedComponentsView::VIEW_ID = "org.mitk.views.m2.con
 // ---------------------------------------------------------------------------
 using PixelType          = unsigned short;
 using LabelImageType     = itk::Image<PixelType,      3>;
-using CCLabelImageType   = itk::Image<unsigned long,  3>;
+using CCLabelImageType   = itk::Image<unsigned long,   3>;
 using StructElemType     = itk::BinaryBallStructuringElement<PixelType, 3>;
 
 // ---------------------------------------------------------------------------
@@ -185,8 +185,8 @@ void QmitkConnectedComponentsView::CommitMorphologyResult(
 
   if (auto *seg = dynamic_cast<mitk::MultiLabelSegmentation *>(node->GetData()))
   {
-    // Threshold result in-place (>0 → 1) directly via write accessor on the result image,
-    // then hand it straight to AddGroup(Image*) — no temporary image, no UpdateGroupImage.
+    // Threshold result in-place (>0 -> 1) directly via write accessor on the result image,
+    // then update the active segmentation group image.
     const auto dims  = result->GetDimensions();
     const std::size_t total = std::accumulate(dims, dims + result->GetDimension(),
                                               std::size_t{1}, std::multiplies<std::size_t>{});
@@ -196,9 +196,7 @@ void QmitkConnectedComponentsView::CommitMorphologyResult(
       std::transform(data, data + total, data,
                      [](PixelType v) -> PixelType { return v > 0 ? 1 : 0; });
     }
-    // AddGroup(Image*) copies the image buffer using SetVolume internally —
-    // geometry must match the segmentation (already cloned from group 0).
-    seg->AddGroup(result.GetPointer());
+    seg->UpdateGroupImage(0, result.GetPointer(), 0);
   }
   else
   {
@@ -215,6 +213,15 @@ mitk::Image* QmitkConnectedComponentsView::ResolveInputImage(mitk::DataNode* nod
   if (!node)
     return nullptr;
   // Prefer MultiLabelSegmentation: use group 0 as the working image
+  if (auto *seg = dynamic_cast<mitk::MultiLabelSegmentation *>(node->GetData()))
+    return seg->GetGroupImage(0);
+  return dynamic_cast<mitk::Image *>(node->GetData());
+}
+
+mitk::Image* QmitkConnectedComponentsView::ResolveConnectedComponentImage(mitk::DataNode* node) const
+{
+  if (!node)
+    return nullptr;
   if (auto *seg = dynamic_cast<mitk::MultiLabelSegmentation *>(node->GetData()))
     return seg->GetGroupImage(0);
   return dynamic_cast<mitk::Image *>(node->GetData());
@@ -423,6 +430,7 @@ void QmitkConnectedComponentsView::OnCreateConnectedComponents()
 
   try
   {
+    MITK_INFO << "Running connected components on image: " << node->GetName();
     // ---- Cast input to unsigned short (PixelType) 3D ----
     LabelImageType::Pointer itkImg;
     mitk::CastToItkImage(mitkImg, itkImg);
@@ -438,9 +446,8 @@ void QmitkConnectedComponentsView::OnCreateConnectedComponents()
 
     mitk::ProgressBar::GetInstance()->Progress();
 
-    // ---- Count voxels per label via raw ITK buffer pointer ----
-    // CCLabelImageType uses unsigned long; we read directly from the ITK buffer
-    // (no need to convert to a MITK image for counting).
+    // Count and relabel objects by descending size. The rest of the view uses
+    // label N -> m_ComponentSizes[N - 1], so this mapping must stay stable.
     CCLabelImageType::Pointer ccOut = ccFilter->GetOutput();
     const std::size_t total = ccOut->GetLargestPossibleRegion().GetNumberOfPixels();
     const unsigned long *rawCC = ccOut->GetBufferPointer();
@@ -448,31 +455,37 @@ void QmitkConnectedComponentsView::OnCreateConnectedComponents()
     std::map<unsigned long, unsigned long> labelCount;
     std::for_each(rawCC, rawCC + total, [&labelCount](unsigned long lbl)
     {
-      if (lbl > 0) ++labelCount[lbl];
+      if (lbl > 0)
+        ++labelCount[lbl];
     });
 
-    // Build sorted list: (size, oldLabel) descending by size
     std::vector<std::pair<unsigned long, unsigned long>> sizeLabel;
     sizeLabel.reserve(labelCount.size());
-    for (auto &kv : labelCount)
+    for (const auto &kv : labelCount)
       sizeLabel.emplace_back(kv.second, kv.first);
     std::sort(sizeLabel.begin(), sizeLabel.end(),
               [](const auto &a, const auto &b){ return a.first > b.first; });
 
-    // Build remap: oldLabel -> newLabel (1-based rank by size)
+    const std::size_t maxComponents = static_cast<std::size_t>(std::numeric_limits<PixelType>::max());
+    if (sizeLabel.size() > maxComponents)
+    {
+      MITK_WARN << "Connected components found " << sizeLabel.size()
+                << " objects; only the first " << maxComponents
+                << " can be represented in the unsigned-short label image.";
+      sizeLabel.resize(maxComponents);
+    }
+
     std::unordered_map<unsigned long, PixelType> remap;
     remap.reserve(sizeLabel.size());
     m_ComponentSizes.clear();
     m_ComponentSizes.reserve(sizeLabel.size());
-    for (PixelType rank = 1;
-         rank <= static_cast<PixelType>(sizeLabel.size()); ++rank)
+    for (std::size_t i = 0; i < sizeLabel.size(); ++i)
     {
-      remap[sizeLabel[rank - 1].second] = rank;
-      m_ComponentSizes.push_back(sizeLabel[rank - 1].first);
+      const auto newLabel = static_cast<PixelType>(i + 1);
+      remap[sizeLabel[i].second] = newLabel;
+      m_ComponentSizes.push_back(sizeLabel[i].first);
     }
 
-    // Build relabeled unsigned-short MITK image via ImagePixelWriteAccessor.
-    // Initialize with same geometry as the input.
     auto ccMitkImage = mitk::Image::New();
     ccMitkImage->Initialize(mitk::MakeScalarPixelType<PixelType>(),
                             *mitkImg->GetTimeGeometry());
@@ -482,7 +495,8 @@ void QmitkConnectedComponentsView::OnCreateConnectedComponents()
       PixelType *dst = writer.GetData();
       std::transform(rawCC, rawCC + total, dst, [&remap](unsigned long lbl) -> PixelType
       {
-        if (lbl == 0) return 0;
+        if (lbl == 0)
+          return 0;
         auto it = remap.find(lbl);
         return it != remap.end() ? it->second : static_cast<PixelType>(0);
       });
@@ -500,7 +514,7 @@ void QmitkConnectedComponentsView::OnCreateConnectedComponents()
       GetDataStorage()->Add(outNode, node);
     }
     outNode->SetData(ccMitkImage);
-    outNode->SetProperty("binary", mitk::BoolProperty::New(false));
+    outNode->SetBoolProperty("binary", false);
     m_CCNode = outNode;
 
     mitk::RenderingManager::GetInstance()->RequestUpdateAll();
@@ -536,6 +550,13 @@ void QmitkConnectedComponentsView::OnCreateConnectedComponents()
 
 void QmitkConnectedComponentsView::OnSuggestGroups()
 {
+  if (!m_CCNode)
+  {
+    QMessageBox::information(m_Parent, "Nothing to apply",
+                             "Please create connected components and define at least one group.");
+    return;
+  }
+
   if (m_ComponentSizes.empty())
   {
     QMessageBox::information(m_Parent, "No data",
@@ -543,22 +564,35 @@ void QmitkConnectedComponentsView::OnSuggestGroups()
     return;
   }
 
+  auto ccImage = ResolveConnectedComponentImage(m_CCNode);
+  if (!ccImage)
+  {
+    QMessageBox::warning(m_Parent, "Error", "Connected component image is invalid.");
+    return;
+  }
+
   ClearGroups();
 
-  // m_ComponentSizes is sorted descending. Build ascending copy for quantile math.
-  std::vector<unsigned long> sorted = m_ComponentSizes;
-  std::sort(sorted.begin(), sorted.end());
+  const auto minSize = static_cast<long long>(*std::min_element(m_ComponentSizes.begin(), m_ComponentSizes.end()));
+  const auto maxSize = static_cast<long long>(*std::max_element(m_ComponentSizes.begin(), m_ComponentSizes.end()));
+  const auto span = maxSize - minSize + 1;
 
-  const int n = static_cast<int>(sorted.size());
-  unsigned long q33 = sorted[static_cast<size_t>(std::floor(n * 0.33))];
-  unsigned long q67 = sorted[static_cast<size_t>(std::floor(n * 0.67))];
-  unsigned long qMax = sorted.back();
+  auto lowerBound = [minSize, span](int interval) -> int
+  {
+    return static_cast<int>(minSize + (span * interval) / 3);
+  };
+  auto upperBound = [minSize, span](int interval) -> int
+  {
+    const auto lo = minSize + (span * interval) / 3;
+    const auto hi = minSize + (span * (interval + 1)) / 3 - 1;
+    return static_cast<int>(std::max(lo, hi));
+  };
 
-  int absMax = static_cast<int>(qMax);
+  int absMax = static_cast<int>(maxSize);
 
-  AddGroupWidget("Small",  0,                 static_cast<int>(q33), QColor(0x4e, 0xa3, 0xd4), absMax);
-  AddGroupWidget("Medium", static_cast<int>(q33) + 1, static_cast<int>(q67), QColor(0x6a, 0xbf, 0x69), absMax);
-  AddGroupWidget("Large",  static_cast<int>(q67) + 1, absMax,           QColor(0xe0, 0x7b, 0x39), absMax);
+  AddGroupWidget("Small",  lowerBound(0), upperBound(0), QColor(0x4e, 0xa3, 0xd4), absMax);
+  AddGroupWidget("Medium", lowerBound(1), upperBound(1), QColor(0x6a, 0xbf, 0x69), absMax);
+  AddGroupWidget("Large",  lowerBound(2), upperBound(2), QColor(0xe0, 0x7b, 0x39), absMax);
 
   UpdateGroupCountLabels();
 }
@@ -654,7 +688,7 @@ void QmitkConnectedComponentsView::OnApplyGroups()
     return;
   }
 
-  auto ccImage = dynamic_cast<mitk::Image *>(m_CCNode->GetData());
+  auto ccImage = ResolveConnectedComponentImage(m_CCNode);
   if (!ccImage)
   {
     QMessageBox::warning(m_Parent, "Error", "Connected component image is invalid.");
@@ -769,7 +803,7 @@ void QmitkConnectedComponentsView::ExportCSV(bool pixelWise)
     return;
   }
 
-  auto *ccImage = dynamic_cast<mitk::Image *>(m_CCNode->GetData());
+  auto *ccImage = ResolveConnectedComponentImage(m_CCNode);
   if (!ccImage)
   {
     QMessageBox::warning(m_Parent, "Error", "Connected component image is invalid.");

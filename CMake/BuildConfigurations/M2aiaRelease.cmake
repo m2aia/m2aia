@@ -29,7 +29,7 @@ set(MITK_CONFIG_PLUGINS
   org.mitk.gui.qt.m2.peakpicking
   org.mitk.gui.qt.m2.ImzMLExport
   org.mitk.gui.qt.m2.reconstruction3D
-  org.mitk.gui.qt.m2.Position
+  org.mitk.gui.qt.m2.position
   org.mitk.gui.qt.m2.registration
   org.mitk.gui.qt.matchpoint.evaluator
   # org.mitk.gui.qt.dicombrowser

@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Image Position</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,1">
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,0,0,0,0,0,0,1">
    <property name="spacing">
     <number>6</number>
    </property>
@@ -37,6 +37,20 @@
      </property>
      <layout class="QVBoxLayout">
       <item>
+       <widget class="QCheckBox" name="chkRotateLocally">
+        <property name="toolTip">
+         <string>Local: each image rotates around its own centre.
+Global: all selected images rotate around their shared bounding-box centre.</string>
+        </property>
+        <property name="text">
+         <string>Rotate locally (around own centre)</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
        <layout class="QHBoxLayout">
         <item>
          <widget class="QLabel" name="lblAngle">
@@ -54,6 +68,9 @@ Use numpad + / - to scale this value by ×1.1 / ×0.9.</string>
           <property name="suffix">
            <string>°</string>
           </property>
+                                        <property name="decimals">
+                                         <number>8</number>
+                                        </property>
           <property name="minimum">
            <double>-360.000000000000000</double>
           </property>
@@ -306,6 +323,187 @@ Shortcuts: S or ↓</string>
           <height>36</height>
          </size>
         </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="grpSpacing">
+     <property name="title">
+      <string>Spacing (mm)</string>
+     </property>
+     <layout class="QVBoxLayout">
+      <item>
+       <layout class="QHBoxLayout">
+        <item>
+         <widget class="QLabel" name="lblSX">
+          <property name="text"><string>X:</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="spnSpacingX">
+          <property name="toolTip"><string>Pixel spacing along the X axis in millimetres.</string></property>
+          <property name="decimals"><number>6</number></property>
+          <property name="minimum"><double>0.000001</double></property>
+          <property name="maximum"><double>1000.0</double></property>
+          <property name="value"><double>1.0</double></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblSY">
+          <property name="text"><string>Y:</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="spnSpacingY">
+          <property name="toolTip"><string>Pixel spacing along the Y axis in millimetres.</string></property>
+          <property name="decimals"><number>6</number></property>
+          <property name="minimum"><double>0.000001</double></property>
+          <property name="maximum"><double>1000.0</double></property>
+          <property name="value"><double>1.0</double></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblSZ">
+          <property name="text"><string>Z:</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="spnSpacingZ">
+          <property name="toolTip"><string>Pixel spacing along the Z axis in millimetres.</string></property>
+          <property name="decimals"><number>6</number></property>
+          <property name="minimum"><double>0.000001</double></property>
+          <property name="maximum"><double>1000.0</double></property>
+          <property name="value"><double>1.0</double></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnApplySpacing">
+        <property name="toolTip"><string>Apply the spacing values above to all selected images (and their derived nodes).</string></property>
+        <property name="text"><string>Apply Spacing</string></property>
+        <property name="minimumSize"><size><width>0</width><height>30</height></size></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="grpOrigin">
+     <property name="title">
+      <string>Origin (mm)</string>
+     </property>
+     <layout class="QVBoxLayout">
+      <item>
+       <layout class="QHBoxLayout">
+        <item>
+         <widget class="QLabel" name="lblOX">
+          <property name="text"><string>X:</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="spnOriginX">
+          <property name="toolTip"><string>World-space origin X coordinate in millimetres.</string></property>
+          <property name="decimals"><number>4</number></property>
+          <property name="minimum"><double>-100000.0</double></property>
+          <property name="maximum"><double>100000.0</double></property>
+          <property name="value"><double>0.0</double></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblOY">
+          <property name="text"><string>Y:</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="spnOriginY">
+          <property name="toolTip"><string>World-space origin Y coordinate in millimetres.</string></property>
+          <property name="decimals"><number>4</number></property>
+          <property name="minimum"><double>-100000.0</double></property>
+          <property name="maximum"><double>100000.0</double></property>
+          <property name="value"><double>0.0</double></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="lblOZ">
+          <property name="text"><string>Z:</string></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QDoubleSpinBox" name="spnOriginZ">
+          <property name="toolTip"><string>World-space origin Z coordinate in millimetres.</string></property>
+          <property name="decimals"><number>4</number></property>
+          <property name="minimum"><double>-100000.0</double></property>
+          <property name="maximum"><double>100000.0</double></property>
+          <property name="value"><double>0.0</double></property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnApplyOrigin">
+        <property name="toolTip"><string>Apply the origin values above to all selected images (and their derived nodes).</string></property>
+        <property name="text"><string>Apply Origin</string></property>
+        <property name="minimumSize"><size><width>0</width><height>30</height></size></property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="grpDirection">
+     <property name="title">
+      <string>Direction Matrix (read-only)</string>
+     </property>
+     <layout class="QVBoxLayout">
+      <item>
+       <widget class="QLabel" name="lblDirectionHint">
+        <property name="text"><string>Columns = world direction of each image axis (I, J, K), normalised by spacing.</string></property>
+        <property name="wordWrap"><bool>true</bool></property>
+        <property name="styleSheet"><string>color: gray; font-style: italic; font-size: 9pt;</string></property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QTableWidget" name="tblDirection">
+        <property name="toolTip"><string>3×3 direction cosine matrix. Each column is the unit world-direction of image axis I, J, K respectively.</string></property>
+        <property name="editTriggers">
+         <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+        </property>
+        <property name="selectionMode">
+         <enum>QAbstractItemView::SelectionMode::NoSelection</enum>
+        </property>
+        <property name="rowCount"><number>3</number></property>
+        <property name="columnCount"><number>3</number></property>
+        <attribute name="horizontalHeaderDefaultSectionSize">
+         <number>60</number>
+        </attribute>
+        <column>
+         <property name="text"><string>I</string></property>
+        </column>
+        <column>
+         <property name="text"><string>J</string></property>
+        </column>
+        <column>
+         <property name="text"><string>K</string></property>
+        </column>
+        <row>
+         <property name="text"><string>X</string></property>
+        </row>
+        <row>
+         <property name="text"><string>Y</string></property>
+        </row>
+        <row>
+         <property name="text"><string>Z</string></property>
+        </row>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnRefreshGeometry">
+        <property name="toolTip"><string>Reload spacing, origin and direction matrix from the currently selected image.</string></property>
+        <property name="text"><string>Refresh from Selection</string></property>
+        <property name="minimumSize"><size><width>0</width><height>30</height></size></property>
        </widget>
       </item>
      </layout>

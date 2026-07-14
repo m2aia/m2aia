@@ -73,19 +73,19 @@ namespace m2
      *
      */
     void Write() override;
-    void SetIntervalVector(m2::IntervalVector::Pointer data);
+    // void SetIntervalVector(m2::IntervalVector::Pointer data);
     void SetDataTypeXAxis(m2::NumericType type){m_DataTypeXAxis = type;}
     void SetDataTypeYAxis(m2::NumericType type){m_DataTypeYAxis = type;}
     void SetSpectrumFormat(m2::SpectrumFormat type){m_SpectrumFormat = type;}
 
     ConfidenceLevel GetWriterConfidenceLevel() const override;
-    std::string GetIBDOutputPath() const;
+    std::string GetNamedOutputPath(std::string parentPathWithExtension, std::string newExtension) const;
     std::string GetImzMLOutputPath() const;
-    void WriteContinuousProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
-    void WriteContinuousCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
-    void WriteContinuousCentroid3DStack(const m2::SpectrumImageStack *) const;
-    void WriteProcessedProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
-    void WriteProcessedCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    // void WriteContinuousProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    // void WriteContinuousCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    // void WriteContinuousCentroid3DStack(const m2::SpectrumImageStack *) const;
+    // void WriteProcessedProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
+    // void WriteProcessedCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & spectra) const;
 
     static inline bool CheckDimensions(mitk::Image * parent, const mitk::Image * child){
       auto dims_a = parent->GetDimensions();
@@ -113,34 +113,37 @@ namespace m2
       }
       
       {
-        auto prop = child->GetProperty("path");
-  
+        std::string parentPath = parent->GetProperty("m2aia.IO.path") ? parent->GetProperty("m2aia.IO.path")->GetValueAsString() : parent->GetProperty("path") ? parent->GetProperty("path")->GetValueAsString() : "unknown path";
+        std::string childPath = child->GetProperty("m2aia.IO.path") ? child->GetProperty("m2aia.IO.path")->GetValueAsString() : child->GetProperty("path") ? child->GetProperty("path")->GetValueAsString() : "unknown path";
+
         if(CheckDimensions(parent, child)){
           if (!CheckSpacing(parent, child))
           {
-            MITK_WARN << "Image spacing of [" << prop->GetValueAsString() << "] is not equal to the spacing definen in ["
-            << parent->GetProperty("path")->GetValueAsString() << "]";
+            MITK_WARN << "Image spacing of [" << childPath << "] is not equal to the spacing definen in ["
+            << parentPath << "]";
             child->GetGeometry()->SetSpacing(parent->GetGeometry()->GetSpacing());
             MITK_WARN << "Image spacing was set to the spacing defined in the imzML data.";
           }
           
           if (!CheckOrigin(parent, child))
           {
-            MITK_WARN << "Image origin of [" << prop->GetValueAsString() << "] is not equal to the origin definen in ["
-            << parent->GetProperty("path")->GetValueAsString() << "]";
+            MITK_WARN << "Image origin of [" << childPath << "] is not equal to the origin definen in ["
+            << parentPath << "]";
             child->GetGeometry()->SetOrigin(parent->GetGeometry()->GetOrigin());
             MITK_WARN << "Image origin was set to the origin defined in the imzML data.";
           }
+
+          child->GetGeometry()->SetIndexToWorldTransformByVtkMatrixWithoutChangingSpacing(parent->GetGeometry()->GetVtkMatrix());
   
           return true;
         }else{
           auto dims_a = parent->GetDimensions();
           auto dims_b = child->GetDimensions();
           MITK_ERROR << "Image dimension mismatch: ["
-            << prop->GetValueAsString() << "] is "
+            << childPath << "] is "
             << dims_b[0] << "x" << dims_b[1] << "x" << dims_b[2]
             << ", but the imzML data ["
-            << parent->GetProperty("path")->GetValueAsString() << "] expects "
+            << parentPath << "] expects "
             << dims_a[0] << "x" << dims_a[1] << "x" << dims_a[2]
             << ". The associated image cannot be used — verify that it was generated from the same imzML file.";
           return false;

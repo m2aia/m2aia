@@ -2,7 +2,7 @@
 <plugin>
 
   <extension point="org.blueberry.ui.views">
-    <view id="org.mitk.views.m2.Position"
+    <view id="org.mitk.views.m2.position"
           name="Position"
           class="m2Position"
           icon="resources/noun_arrows_647047.svg" 

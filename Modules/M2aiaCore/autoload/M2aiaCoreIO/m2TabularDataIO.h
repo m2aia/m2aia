@@ -67,6 +67,7 @@ namespace m2
   {
   public:
     TabularDataIO();
+    explicit TabularDataIO(const std::string &baseDataType);
 
     std::string TABULAR_MIMETYPE_NAME()
     {

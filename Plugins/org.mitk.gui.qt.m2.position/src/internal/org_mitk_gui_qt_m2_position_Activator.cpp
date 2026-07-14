@@ -15,15 +15,15 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 
-#include "org_mitk_gui_qt_m2_Position_Activator.h"
+#include "org_mitk_gui_qt_m2_position_Activator.h"
 #include "m2Position.h"
 
 namespace mitk
 {
-  void org_mitk_gui_qt_m2_Position_Activator::start(ctkPluginContext *context)
+  void org_mitk_gui_qt_m2_position_Activator::start(ctkPluginContext *context)
   {
     BERRY_REGISTER_EXTENSION_CLASS(m2Position, context)
   }
 
-  void org_mitk_gui_qt_m2_Position_Activator::stop(ctkPluginContext *context) { Q_UNUSED(context) }
+  void org_mitk_gui_qt_m2_position_Activator::stop(ctkPluginContext *context) { Q_UNUSED(context) }
 }

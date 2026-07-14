@@ -3,7 +3,7 @@ set(SRC_CPP_FILES
 )
 
 set(INTERNAL_CPP_FILES
-  org_mitk_gui_qt_m2_Position_Activator.cpp
+  org_mitk_gui_qt_m2_position_Activator.cpp
   m2Position.cpp
 )
 
@@ -12,7 +12,7 @@ set(UI_FILES
 )
 
 set(MOC_H_FILES
-  src/internal/org_mitk_gui_qt_m2_Position_Activator.h
+  src/internal/org_mitk_gui_qt_m2_position_Activator.h
   src/internal/m2Position.h
 )
 

@@ -49,27 +49,27 @@ namespace m2
     virtual std::vector<std::string> GetClassHierarchy() const override { return mitk::GetClassHierarchy<Self>(); }
 
     // Overwrite those methods to make MITK recognize this as default mitk::Image
-    static const char *GetStaticNameOfClass() { return "Image"; }
-    const char *GetNameOfClass() const override { return "Image"; }
+    static const char *GetStaticNameOfClass() { return "ImzMLSpectrumImage"; }
+    const char *GetNameOfClass() const override { return "ImzMLSpectrumImage"; }
 
     itkNewMacro(Self);
 
     std::string GetImzMLDataPath() const
     {
-      return GetProperty("path")->GetValueAsString();
+      return GetProperty("m2aia.IO.path")->GetValueAsString();
     }
 
     void SetImzMLDataPath(std::string imzMLDataPath){
-      this->SetProperty("path", mitk::StringProperty::New(imzMLDataPath));
+        this->SetProperty("m2aia.IO.path", mitk::StringProperty::New(imzMLDataPath));
     }
 
     std::string GetBinaryDataPath() const
     {
-      return GetProperty("path.binary")->GetValueAsString();
+      return GetProperty("m2aia.IO.path.ibd")->GetValueAsString();
     }
 
     void SetBinaryDataPath(std::string binaryDataPath){
-      this->SetProperty("path.binary", mitk::StringProperty::New(binaryDataPath));
+      this->SetProperty("m2aia.IO.path.ibd", mitk::StringProperty::New(binaryDataPath));
     }
 
     /// @brief Type representing the offset from file start in bytes 

@@ -286,22 +286,6 @@ void m2::SpectrumContainerImage::InitializeGeometry()
     SetMultilabelSegmentation(image);
   }
 
-  for( auto type : m2::NormalizationStrategyTypeList){
-  
-    using LocalImageType = itk::Image<m2::NormImagePixelType, 3>;
-    auto caster = itk::CastImageFilter<ImageType, LocalImageType>::New();
-    caster->SetInput(itkIonImage);
-    caster->Update();
-
-    auto normImage = mitk::Image::New();
-    normImage->InitializeByItk(caster->GetOutput());
-
-    mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(normImage);
-    std::memset(acc.GetData(), 0, imageSize[0] * imageSize[1] * imageSize[2] * sizeof(m2::NormImagePixelType));
-    this->SetNormalizationImage(normImage, type);
-  }
-
-
   mitk::ImagePixelWriteAccessor<m2::DisplayImagePixelType, 3> acc(this);
   auto max_dim0 = GetDimensions()[0];
   auto max_dim1 = GetDimensions()[1];
@@ -314,14 +298,16 @@ void m2::SpectrumContainerImage::InitializeGeometry()
 }
 
 void m2::SpectrumContainerImage::InitializeNormalizationImage(m2::NormalizationStrategyType type){
-  if(GetNormalizationImageStatus(type)){
-    MITK_WARN << "The normalization image is already initialized. " << "type " << m2::to_string(type);
-    return;
+  MITK_INFO << "SpectrumContainerImage::InitializeNormalizationImage type=" << static_cast<int>(type);
+  
+  auto image = mitk::Image::New();
+  image->Initialize(this);
+  {
+    mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> acc(image);
+    const auto numPixels = std::accumulate(GetDimensions(), GetDimensions() + GetDimension(), 1u, std::multiplies<unsigned int>());
+    std::fill(acc.GetData(), acc.GetData() + numPixels, static_cast<m2::NormImagePixelType>(1));
   }
-  // initialize the normalization iamge
-  auto image = GetNormalizationImage(type);
-  // auto normImageRef = p->GetNormalizationImage(m2::NormalizationStrategyType::None);
-  // image->Initialize(normImageRef);
+  SetNormalizationImage(image, type);
   
   // create a write accessor
   using WriteAccessorType = mitk::ImagePixelWriteAccessor<NormImagePixelType, 3>;
@@ -353,7 +339,6 @@ void m2::SpectrumContainerImage::InitializeNormalizationImage(m2::NormalizationS
                    accNorm->SetPixelByIndex(spectrum.index, v);
                  }
                });
-  SetNormalizationImageStatus(type, true);
 }
 
 void m2::SpectrumContainerImage::InitializeImageAccess()
@@ -364,11 +349,15 @@ void m2::SpectrumContainerImage::InitializeImageAccess()
   auto accMask = std::make_shared<mitk::ImagePixelWriteAccessor<mitk::Label::PixelType, 3>>(GetMultilabelSegmentation()->GetGroupImage(0));
   auto accIndex = std::make_shared<mitk::ImagePixelWriteAccessor<m2::IndexImagePixelType, 3>>(GetIndexImage());
 
-    const auto currentType = GetNormalizationStrategy();
-  if (!GetNormalizationImageStatus(currentType))
+  const auto currentType = GetNormalizationStrategy();
+  auto normalizationImage = GetNormalizationImage(currentType);
+  if (normalizationImage.IsNull())
+  {
     InitializeNormalizationImage(currentType);
+    normalizationImage = GetNormalizationImage(currentType);
+  }
 
-  auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(GetNormalizationImage(currentType));
+  auto accNorm = std::make_shared<mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3>>(normalizationImage);
 
   auto &xs = GetXAxis();
 

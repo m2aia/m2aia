@@ -15,6 +15,9 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #include "Qm2Perspective.h"
+#include <berryIPageLayout.h>
+
+
 
 
 void Qm2Perspective::CreateInitialLayout(berry::IPageLayout::Pointer layout)
@@ -28,7 +31,16 @@ void Qm2Perspective::CreateInitialLayout(berry::IPageLayout::Pointer layout)
   folder->AddView("org.mitk.views.m2.data");
   folder->AddView("org.mitk.views.viewnavigator");
 
-  layout->AddStandaloneView("org.mitk.views.m2.spectrum", false, berry::IPageLayout::BOTTOM, 0.68f, editorArea);
+  layout->AddStandaloneView("org.mitk.views.m2.spectrum", false, berry::IPageLayout::BOTTOM, 0.75f, editorArea);
+  layout->AddStandaloneView("org.mitk.views.m2.featurelists", false, berry::IPageLayout::RIGHT, 0.72f, "org.mitk.views.m2.spectrum");
+
+  auto view = layout->GetViewLayout("org.mitk.views.m2.spectrum");
+  view->SetMoveable(false);
+  view->SetCloseable(false);
+
+  view = layout->GetViewLayout("org.mitk.views.m2.featurelists");
+  view->SetMoveable(false);
+  view->SetCloseable(false);
   
   folder = layout->CreateFolder("left", berry::IPageLayout::LEFT, 0.29f, editorArea);
   folder->AddView("org.mitk.views.datamanager");

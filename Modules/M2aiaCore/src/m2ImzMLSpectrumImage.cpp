@@ -139,7 +139,7 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
   // Reset Normalization strategy type if set to external but no external image was found
   if(GetNormalizationStrategy() == m2::NormalizationStrategyType::External && GetNormalizationImage(m2::NormalizationStrategyType::External).IsNull()){
     SetNormalizationStrategy(m2::NormalizationStrategyType::None);
-    MITK_ERROR << "'External' Normalization strategy chosen but no External image exist.\n"
+    MITK_ERROR("ImzMLSpectrumImage::InitializeImageAccess") << "'External' Normalization strategy chosen but no External image exist.\n"
     "To use external normalization provide an image in the NRRD file format.\n"
     "This image requires the same name as the imzML file, with file ending *.norm.nrrd, pixel type double, identical pixel spacing, and image dimensions.";
   }
@@ -183,9 +183,10 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
 
 
 void m2::ImzMLSpectrumImage::InitializeNormalizationImage(m2::NormalizationStrategyType type){
-  if(GetNormalizationImageStatus(type) == false){
-   m_SpectrumImageSource->InitializeNormalizationImage(type);   
-  }
+  MITK_INFO("ImzMLSpectrumImage::InitializeNormalizationImage") << "type=" << m2::to_string(type);
+
+  if (m_SpectrumImageSource)
+    m_SpectrumImageSource->InitializeNormalizationImage(type);
 }
 
 // m2::ImzMLSpectrumImage::Pointer m2::ImzMLSpectrumImage::Combine(const m2::ImzMLSpectrumImage *A,

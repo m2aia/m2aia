@@ -1,5 +1,6 @@
 set(SRC_CPP_FILES
   Qm2OpenSlideImageIOHelperDialog.cpp
+  Qm2ThumbnailWidget.cpp
 )
 
 set(INTERNAL_CPP_FILES
@@ -22,6 +23,7 @@ set(MOC_H_FILES
   src/internal/m2DataToolsView.h
   src/internal/m2DataPlotView.h
   src/Qm2OpenSlideImageIOHelperDialog.h
+  src/Qm2ThumbnailWidget.h
 )
 
 # list of resource files which can be used by the plug-in

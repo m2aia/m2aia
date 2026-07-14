@@ -35,6 +35,10 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkImageCast.h>
 #include <signal/m2PeakDetection.h>
 #include <signal/m2Pooling.h>
+#include <cstdio>
+#include <iomanip>
+#include <limits>
+#include <sstream>
 
 template <class ConversionType, class ItFirst, class ItLast, class OStreamType>
 void writeData(ItFirst itFirst, ItLast itLast, OStreamType &os)
@@ -50,17 +54,251 @@ void writeData(ItFirst itFirst, ItLast itLast, OStreamType &os)
 
 namespace m2
 {
+  namespace
+  {
+    struct ImzMLAssociatedPaths
+    {
+      std::string legacyBase;
+      std::string sidecarBase;
+      std::string sidecarDir;
+      std::string fileStem;
+    };
+
+    std::string EscapeXmlAttribute(const std::string &value)
+    {
+      std::string escaped;
+      escaped.reserve(value.size());
+      for (const auto c : value)
+      {
+        switch (c)
+        {
+          case '&': escaped += "&amp;"; break;
+          case '<': escaped += "&lt;"; break;
+          case '>': escaped += "&gt;"; break;
+          case '"': escaped += "&quot;"; break;
+          case '\'': escaped += "&apos;"; break;
+          default: escaped.push_back(c); break;
+        }
+      }
+      return escaped;
+    }
+
+    bool ExtractAttributeValue(const std::string &line, const std::string &attribute, std::string &value)
+    {
+      const std::string key = attribute + "=\"";
+      const auto pos = line.find(key);
+      if (pos == std::string::npos)
+        return false;
+      const auto start = pos + key.size();
+      const auto end = line.find('"', start);
+      if (end == std::string::npos)
+        return false;
+      value.assign(line.data() + start, end - start);
+      return true;
+    }
+
+    std::string ReplaceAttributeValue(const std::string &line, const std::string &attribute, const std::string &newValue)
+    {
+      const std::string key = attribute + "=\"";
+      const auto pos = line.find(key);
+      if (pos == std::string::npos)
+        return line;
+      const auto start = pos + key.size();
+      const auto end = line.find('"', start);
+      if (end == std::string::npos)
+        return line;
+      std::string copy = line;
+      copy.replace(start, end - start, newValue);
+      return copy;
+    }
+
+    std::string FormatDouble(double value)
+    {
+      std::ostringstream oss;
+      oss << std::setprecision(std::numeric_limits<double>::digits10 + 1) << value;
+      return oss.str();
+    }
+
+    // std::string GetPropertyAsString(const m2::ImzMLSpectrumImage *image, const std::string &propertyName, const std::string &fallback = "")
+    // {
+    //   if (auto property = image->GetProperty(propertyName.c_str()))
+    //     return property->GetValueAsString();
+    //   return fallback;
+    // }
+
+    bool PatchImzMLMetadata(const std::string &imzmlPath, const m2::ImzMLSpectrumImage *image)
+    {
+      std::ifstream in(imzmlPath);
+      if (!in)
+        return false;
+
+      const std::string tempPath = imzmlPath + ".tmp";
+      std::ofstream out(tempPath);
+      if (!out)
+      {
+        in.close();
+        return false;
+      }
+
+      bool hasOriginalDirectionMatrix = false;
+      bool hasOriginalOffsetX = false;
+      bool hasOriginalOffsetY = false;
+      {
+        std::ifstream check(imzmlPath);
+        std::string checkLine;
+        while (std::getline(check, checkLine))
+        {
+          if (!hasOriginalDirectionMatrix && checkLine.find("userParam") != std::string::npos && checkLine.find("name=\"original direction matrix\"") != std::string::npos)
+          {
+            hasOriginalDirectionMatrix = true;
+          }
+          else if (!hasOriginalOffsetX && checkLine.find("userParam") != std::string::npos && checkLine.find("name=\"original absolute position offset x\"") != std::string::npos)
+          {
+            hasOriginalOffsetX = true;
+          }
+          else if (!hasOriginalOffsetY && checkLine.find("userParam") != std::string::npos && checkLine.find("name=\"original absolute position offset y\"") != std::string::npos)
+          {
+            hasOriginalOffsetY = true;
+          }
+          if (hasOriginalDirectionMatrix && hasOriginalOffsetX && hasOriginalOffsetY)
+            break;
+        }
+      }
+
+      std::string newDirectionMatrix;
+      if (auto geometry = image->GetGeometry())
+      {
+        const auto *vtkMatrix = geometry->GetVtkMatrix();
+        if (vtkMatrix)
+        {
+          std::ostringstream dirStream;
+          dirStream << std::setprecision(std::numeric_limits<double>::digits10 + 1);
+          for (unsigned int row = 0; row < 3; ++row)
+          {
+            for (unsigned int col = 0; col < 3; ++col)
+            {
+              if (row != 0 || col != 0)
+                dirStream << ' ';
+              dirStream << vtkMatrix->GetElement(row, col);
+            }
+          }
+          newDirectionMatrix = dirStream.str();
+        }
+        else
+        {
+          newDirectionMatrix = "1 0 0 0 1 0 0 0 1";
+        }
+      }
+      else
+      {
+        newDirectionMatrix = "1 0 0 0 1 0 0 0 1";
+      }
+      const std::string newOffsetX = FormatDouble(m2::MilliMeterToMicroMeter(image->GetGeometry()->GetOrigin()[0]));
+      const std::string newOffsetY = FormatDouble(m2::MilliMeterToMicroMeter(image->GetGeometry()->GetOrigin()[1]));
+
+      bool patchedDirectionMatrix = false;
+      bool patchedOffsetX = false;
+      bool patchedOffsetY = false;
+      std::string line;
+
+      while (std::getline(in, line))
+      {
+        std::string outputLine = line;
+
+        if (!patchedDirectionMatrix && line.find("userParam") != std::string::npos && line.find("name=\"direction matrix\"") != std::string::npos)
+        {
+          std::string originalValue;
+          ExtractAttributeValue(line, "value", originalValue);
+          outputLine = ReplaceAttributeValue(line, "value", newDirectionMatrix);
+          out << outputLine << "\n";
+          if (!hasOriginalDirectionMatrix)
+          {
+            out << "      <userParam name=\"original direction matrix\" value=\"" << EscapeXmlAttribute(originalValue) << "\" type=\"xsd:string\"/>\n";
+          }
+          patchedDirectionMatrix = true;
+          continue;
+        }
+
+        if (!patchedOffsetX && line.find("cvParam") != std::string::npos && line.find("IMS:1000053") != std::string::npos && line.find("name=\"absolute position offset x\"") != std::string::npos)
+        {
+          std::string originalValue;
+          ExtractAttributeValue(line, "value", originalValue);
+          outputLine = ReplaceAttributeValue(line, "value", newOffsetX);
+          MITK_INFO << "[PatchImzMLMetadata] offset x: file=" << originalValue << " µm  ->  new=" << newOffsetX << " µm"
+                    << "  (property was " << image->GetPropertyValue<double>("[IMS:1000053] absolute position offset x") << " mm)";
+          out << outputLine << "\n";
+          if (!hasOriginalOffsetX)
+          {
+            out << "      <userParam name=\"original absolute position offset x\" value=\"" << EscapeXmlAttribute(originalValue) << "\" type=\"xsd:string\"/>\n";
+          }
+          patchedOffsetX = true;
+          continue;
+        }
+
+        if (!patchedOffsetY && line.find("cvParam") != std::string::npos && line.find("IMS:1000054") != std::string::npos && line.find("name=\"absolute position offset y\"") != std::string::npos)
+        {
+          std::string originalValue;
+          ExtractAttributeValue(line, "value", originalValue);
+          outputLine = ReplaceAttributeValue(line, "value", newOffsetY);
+          MITK_INFO << "[PatchImzMLMetadata] offset y: file=" << originalValue << " µm  ->  new=" << newOffsetY << " µm"
+                    << "  (property was " << image->GetPropertyValue<double>("[IMS:1000054] absolute position offset y") << " mm)";
+          out << outputLine << "\n";
+          if (!hasOriginalOffsetY)
+          {
+            out << "      <userParam name=\"original absolute position offset y\" value=\"" << EscapeXmlAttribute(originalValue) << "\" type=\"xsd:string\"/>\n";
+          }
+          patchedOffsetY = true;
+          continue;
+        }
+
+        out << outputLine << "\n";
+      }
+
+      in.close();
+      out.close();
+
+      if (patchedDirectionMatrix || patchedOffsetX || patchedOffsetY)
+      {
+        if (std::rename(tempPath.c_str(), imzmlPath.c_str()) != 0)
+        {
+          itksys::SystemTools::CopyFileAlways(tempPath, imzmlPath);
+          itksys::SystemTools::RemoveFile(tempPath);
+        }
+        return true;
+      }
+
+      itksys::SystemTools::RemoveFile(tempPath);
+      return false;
+    }
+
+    ImzMLAssociatedPaths BuildAssociatedPaths(const std::string &imzmlPath)
+    {
+      const std::string parentDir = itksys::SystemTools::GetParentDirectory(imzmlPath);
+      const std::string stem = itksys::SystemTools::GetFilenameWithoutExtension(imzmlPath);
+      const std::string legacyBase = parentDir + "/" + stem;
+      const std::string sidecarDir = legacyBase;
+      const std::string sidecarBase = sidecarDir + "/" + stem;
+      return {legacyBase, sidecarBase, sidecarDir, stem};
+    }
+
+    std::string PreferSidecarThenLegacy(const std::string &sidecarPath, const std::string &legacyPath)
+    {
+      if (itksys::SystemTools::FileExists(sidecarPath))
+        return sidecarPath;
+      return legacyPath;
+    }
+  }
+
   ImzMLImageIO::ImzMLImageIO() : AbstractFileIO(mitk::Image::GetStaticNameOfClass(), IMZML_MIMETYPE(), "imzML Image")
   {
-    AbstractFileWriter::SetRanking(10);
+    AbstractFileWriter::SetRanking(1);
     AbstractFileReader::SetRanking(10);
     this->RegisterService();
   }
 
   mitk::IFileIO::ConfidenceLevel ImzMLImageIO::GetWriterConfidenceLevel() const
   {
-    if (AbstractFileIO::GetWriterConfidenceLevel() == Unsupported)
-      return Unsupported;
+    
 
     auto input1 = dynamic_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
     auto input2 = dynamic_cast<const m2::SpectrumImageStack *>(this->GetInput());
@@ -72,11 +310,12 @@ namespace m2
       return Unsupported;
   }
 
-  std::string ImzMLImageIO::GetIBDOutputPath() const
+  std::string ImzMLImageIO::GetNamedOutputPath(std::string parentPathWithExtension, std::string newExtension) const
   {
-    auto outFile = GetImzMLOutputPath();
-    std::string ibdOutPath = itksys::SystemTools::GetParentDirectory(outFile) + "/" +
-                             itksys::SystemTools::GetFilenameWithoutExtension(outFile) + ".ibd";
+
+    const auto path = itksys::SystemTools::GetParentDirectory(parentPathWithExtension);
+    const std::string ibdOutPath = path + "/" + itksys::SystemTools::GetFilenameWithoutExtension(parentPathWithExtension) + newExtension;
+
     return itksys::SystemTools::ConvertToOutputPath(ibdOutPath);
   }
 
@@ -141,461 +380,58 @@ namespace m2
   }
   */
 
-  void ImzMLImageIO::WriteContinuousProfile(m2::ImzMLSpectrumImage::SpectrumVectorType &spectra) const
-  {
-    const auto *input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput());
-
-    std::vector<float> mzs;
-    std::vector<float> ints;
-
-    std::ifstream ibd(input->GetBinaryDataPath(), std::ofstream::binary);
-    std::ofstream b(GetIBDOutputPath(), std::ofstream::binary | std::ofstream::app);
-
-    unsigned sourceId = 0;
-    unsigned long long offset = 16;
-    unsigned long long offsetDelta = 0;
-
-    boost::progress_display show_progress(spectra.size() + 1);
-
-    // write mzs
-    {
-      input->GetSpectrumFloat(0, mzs, ints); // get x axis
-
-      spectra[0].mzOffset = 16;
-      spectra[0].mzLength = mzs.size();
-
-      auto start = std::begin(mzs);
-      auto end = std::end(mzs);
-      switch (m_DataTypeXAxis)
-      {
-        case m2::NumericType::Float:
-          // input->GetProcessor()
-          writeData<float>(start, end, b);
-          offsetDelta = mzs.size() * sizeof(float);
-          break;
-        case m2::NumericType::Double:
-          writeData<double>(start, end, b);
-          offsetDelta = mzs.size() * sizeof(double);
-          break;
-        case m2::NumericType::None:
-          mitkThrow() << "m2::NumericType of yAxisOutput not set";
-      }
-      offset += offsetDelta;
-      ++show_progress;
-    }
-
-    MITK_INFO("ImzMLImageIO::WriteContinuousProfile") << "Write x axis done!";
-
-    for (size_t id = 0; id < spectra.size(); ++id)
-    {
-      auto &s = spectra[id];
-      // update mz axis info
-      s.mzLength = spectra[0].mzLength;
-      s.mzOffset = spectra[0].mzOffset;
-
-      // write ints
-      {
-        input->GetSpectrumFloat(id, mzs, ints);
-
-        s.intOffset = offset;
-        s.intLength = ints.size();
-
-        auto start = std::begin(ints);
-        auto end = std::end(ints);
-
-        switch (m_DataTypeYAxis)
-        {
-          case m2::NumericType::Float:
-            writeData<float>(start, end, b);
-            offsetDelta = ints.size() * sizeof(float);
-            break;
-          case m2::NumericType::Double:
-            writeData<double>(start, end, b);
-            offsetDelta = ints.size() * sizeof(double);
-            break;
-          case m2::NumericType::None:
-            mitkThrow() << "m2::NumericType of yAxisOutput not set";
-        }
-
-        offset += offsetDelta;
-      }
-      b.flush();
-      ++show_progress;
-    }
-    ++sourceId;
-  }
-
-  void ImzMLImageIO::SetIntervalVector(m2::IntervalVector::Pointer intervals)
-  {
-    m_Intervals = intervals;
-  }
-
-  void ImzMLImageIO::WriteContinuousCentroid3DStack(const m2::SpectrumImageStack * ) const {
-
-    // 
-
-
-  }
-
-  void ImzMLImageIO::WriteContinuousCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType &spectra) const
-  {
-    if (m_Intervals.IsNull() || m_Intervals->GetIntervals().empty())
-      mitkThrow() << "No intervals provided!";
-
-    std::vector<float> mzs, mzsMasked;
-    std::vector<float> ints, intsMasked;
-
-    // Output file stream for ibd
-    const auto *input = static_cast<const m2::SpectrumImage *>(this->GetInput());
-    // auto nonConst_input = const_cast<m2::ImzMLSpectrumImage *>(input);
-    mitk::ImagePixelReadAccessor<mitk::Label::PixelType> macc(input->GetMultilabelSegmentation()->GetGroupImage(0));
-
-    auto numPixels =
-      std::accumulate(input->GetDimensions(), input->GetDimensions() + 3, 1, std::multiplies<unsigned int>());
-    auto numMaskedPixel = 0;
-    for (auto it = macc.GetData(); it <= macc.GetData() + numPixels; ++it)
-    {
-      if (*it > 0)
-        numMaskedPixel++;
-    }
-
-    std::ofstream b(GetIBDOutputPath(), std::ofstream::binary | std::ofstream::app);
-
-    unsigned long long offset = 16;
-    unsigned long long offsetDelta = 0;
-    b.seekp(offset);
-
-    boost::progress_display show_progress(numMaskedPixel + 1);
-    // write mzs
-    {
-      // convert to float
-      const auto &xs = m_Intervals->GetXMean();
-      std::copy(std::begin(xs), std::end(xs), std::back_inserter(mzsMasked));
-
-      // update source spectra meta data to its actual values
-      spectra[0].mzOffset = 16;
-      spectra[0].mzLength = mzsMasked.size();
-
-      switch (m_DataTypeXAxis)
-      {
-        case NumericType::Float:
-          writeData<float>(std::begin(mzsMasked), std::end(mzsMasked), b);
-          offsetDelta = spectra[0].mzLength * sizeof(float);
-          break;
-        case NumericType::Double:
-          writeData<double>(std::begin(mzsMasked), std::end(mzsMasked), b);
-          offsetDelta = spectra[0].mzLength * sizeof(double);
-          break;
-        case NumericType::None:
-          mitkThrow() << "m2::NumericType of xAxisOutput not set";
-      }
-      offset += offsetDelta;
-      ++show_progress;
-    }
-
-    for (size_t id = 0; id < spectra.size(); ++id)
-    {
-      auto &s = spectra[id];
-
-      if (macc.GetPixelByIndex(s.index) > 0)
-      {
-        // update mz axis info
-        s.mzLength = spectra[0].mzLength;
-        s.mzOffset = spectra[0].mzOffset;
-
-        // write ints
-        {
-          input->GetSpectrumFloat(id, mzs, ints);
-          intsMasked.clear();
-
-          for (const Interval &I : m_Intervals->GetIntervals())
-          {
-            double val = 0;
-            const auto tol = input->ApplyTolerance(I.x.mean());
-            // MITK_INFO << "Tolerance: " << tol;
-            const auto [startIndex, rangeLength] = m2::Signal::Subrange(mzs, I.x.mean() - tol, I.x.mean() + tol);
-            const auto s = std::next(std::begin(ints), startIndex);
-            const auto e = std::next(s, rangeLength);
-            val = Signal::RangePooling<double>(s, e, input->GetRangePoolingStrategy());
-
-            intsMasked.push_back(val);
-          }
-
-          s.intOffset = offset;
-          s.intLength = intsMasked.size();
-
-          switch (m_DataTypeYAxis)
-          {
-            case m2::NumericType::Float:
-              writeData<float>(std::begin(intsMasked), std::end(intsMasked), b);
-              offsetDelta = s.intLength * sizeof(float);
-              break;
-            case m2::NumericType::Double:
-              writeData<double>(std::begin(intsMasked), std::end(intsMasked), b);
-              offsetDelta = s.intLength * sizeof(double);
-              break;
-            case m2::NumericType::None:
-              mitkThrow() << "m2::NumericType of yAxisOutput not set";
-          }
-
-          offset += offsetDelta;
-        }
-        b.flush();
-        ++show_progress;
-      }
-    }
-  }
-
-  void ImzMLImageIO::WriteProcessedProfile(m2::ImzMLSpectrumImage::SpectrumVectorType & /*spectra*/) const
-  {
-    mitkThrow() << "Not implemented";
-  }
-
-  void ImzMLImageIO::WriteProcessedCentroid(m2::ImzMLSpectrumImage::SpectrumVectorType & /*spectra*/) const
-  {
-    mitkThrow() << "Not implemented";
-  }
 
   void ImzMLImageIO::Write()
   {
     mitk::LocaleSwitch localeSwitch("C");
     ValidateOutputLocation();
 
-    
-
-    std::string uuidString;
+    if (const auto input = dynamic_cast<const m2::ImzMLSpectrumImage *>(this->GetInput()))
     {
-      // Write UUID string to ibd
-      std::ofstream b(GetIBDOutputPath(), std::ofstream::binary);
-      boost::uuids::basic_random_generator<boost::mt19937> gen;
-      boost::uuids::uuid u = gen();
-      uuidString = boost::uuids::to_string(u);
-      b.seekp(0);
-      b.write((char *)(u.data), u.static_size());
-      b.flush();
-      MITK_INFO << u.data;
-    }
-
-    if (const auto input = dynamic_cast<const m2::SpectrumImageStack *>(this->GetInput()))
-    {
-      WriteContinuousCentroid3DStack(input);
-      return;
-    }
-    else if (const auto input = static_cast<const m2::ImzMLSpectrumImage *>(this->GetInput()))
-    {
-      input->SaveModeOn();
-      try
+      const std::string srcImzML = input->GetImzMLDataPath();
+      if (!itksys::SystemTools::FileExists(srcImzML))
       {
-        using m2::SpectrumFormat;
-
-        // copy the whole spectra meta data container; spectra information is
-        // updated based on the save mode.
-        // mz and ints meta data is manipulated to write a correct imzML xml structure
-        // copy of sources is discared after writing
-        m2::ImzMLSpectrumImage::SpectrumVectorType spectraCopy(input->GetSpectra());
-
-        std::string sha1;
-        switch (m_SpectrumFormat)
-        {
-          case SpectrumFormat::ContinuousProfile:
-            this->WriteContinuousProfile(spectraCopy);
-            break;
-          case SpectrumFormat::ProcessedCentroid:
-            mitkThrow() << "ProcessedCentroid export type is not supported!";
-            // this->WriteProcessedCentroid(spectraCopy);
-            break;
-          case SpectrumFormat::ContinuousCentroid:
-            this->WriteContinuousCentroid(spectraCopy);
-            break;
-          case SpectrumFormat::ProcessedProfile:
-            mitkThrow() << "ProcessedProfile export type is not supported!";
-            break;
-          default:
-            break;
+        mitkThrow() << "[ImzMLImageIO::Write] Source imzML file does not exist: " << srcImzML;
         }
 
-        Poco::SHA1Engine generator;
-        std::ifstream bf(GetIBDOutputPath(), std::fstream::binary);
-        char *c = new char[2048];
-        unsigned long long l = 0;
-        while (bf)
-        {
-          bf.read(c, 2048);
-          generator.update(c, bf.gcount());
-          l += bf.gcount();
-        }
+      const std::string dstImzML = GetImzMLOutputPath();
+      
+      // Copy .imzML
+      MITK_INFO << "[ImzMLImageIO::Write] Copy: " << srcImzML << " -> " << dstImzML;
+      itksys::SystemTools::CopyFileAlways(srcImzML, dstImzML);
+      PatchImzMLMetadata(dstImzML, input);
 
-        MITK_INFO << "bytes " << l;
-
-        std::map<std::string, std::string> context;
-
-        switch (m_SpectrumFormat)
-        {
-          case SpectrumFormat::None:
-            mitkThrow() << "SpectrumFormatType::None type is not supported!";
-            break;
-          case SpectrumFormat::ContinuousCentroid:
-          case SpectrumFormat::Centroid:
-            context["spectrumtype"] = "centroid spectrum";
-            context["mode"] = "continuous";
-            break;
-          case SpectrumFormat::ContinuousProfile:
-            context["spectrumtype"] = "profile spectrum";
-            context["mode"] = "continuous";
-            break;
-          case SpectrumFormat::ProcessedCentroid:
-            context["spectrumtype"] = "centroid spectrum";
-            context["mode"] = "processed";
-            break;
-          case SpectrumFormat::ProcessedProfile:
-            context["spectrumtype"] = "profile spectrum";
-            context["mode"] = "processed";
-            break;
-          default:
-            break;
-        }
-        std::string sha1string = Poco::SHA1Engine::digestToHex(generator.digest());
-        MITK_INFO << "[ibd SHA1] " << sha1string << "\n";
-        MITK_INFO << "[uuid] " << uuidString << "\n";
-        // context["mode"] = "[IMS:1000030] continuous";
-        context["uuid"] = uuidString;
-        context["sha1sum"] = sha1string;
-        unsigned mzBytes = 0;
-        unsigned intBytes = 0;
-
-        switch (m_DataTypeXAxis)
-        {
-          case m2::NumericType::Double:
-            context["mz_data_type"] = "64-bit float";
-            mzBytes = 8;
-            break;
-          case m2::NumericType::Float:
-            context["mz_data_type"] = "32-bit float";
-            mzBytes = 4;
-            break;
-          case m2::NumericType::None:
-            mitkThrow() << "m2::NumericType of xAxisOutput not set";
-        }
-
-        switch (m_DataTypeYAxis)
-        {
-          case m2::NumericType::Double:
-            context["int_data_type"] = "64-bit float";
-            intBytes = 8;
-            break;
-          case m2::NumericType::Float:
-            context["int_data_type"] = "32-bit float";
-            intBytes = 4;
-            break;
-          case m2::NumericType::None:
-            mitkThrow() << "m2::NumericType of yAxisOutput not set";
-        }
-
-        auto nonConst_input = const_cast<m2::ImzMLSpectrumImage *>(input);
-        mitk::ImagePixelReadAccessor<mitk::Label::PixelType> macc(nonConst_input->GetMultilabelSegmentation()->GetGroupImage(0));
-
-        context["mz_data_type_code"] = TextToCodeMap[context["mz_data_type"]];
-        context["int_data_type_code"] = TextToCodeMap[context["int_data_type"]];
-        context["mz_compression"] = "no compression";
-        context["int_compression"] = "no compression";
-
-        context["mode_code"] = TextToCodeMap[context["mode"]];
-        context["spectrumtype_code"] = TextToCodeMap[context["spectrumtype"]];
-
-        context["size_x"] = std::to_string(input->GetDimensions()[0]);
-        context["size_y"] = std::to_string(input->GetDimensions()[1]);
-        context["size_z"] = std::to_string(input->GetDimensions()[2]);
-
-        auto xs = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetSpacing()[0]);
-        auto ys = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetSpacing()[1]);
-        auto zs = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetSpacing()[2]);
-
-        context["max dimension x"] = std::to_string(unsigned(input->GetDimensions()[0] * xs));
-        context["max dimension y"] = std::to_string(unsigned(input->GetDimensions()[1] * ys));
-        context["max dimension z"] = std::to_string(unsigned(input->GetDimensions()[2] * zs));
-
-        context["pixel size x"] = std::to_string(xs);
-        context["pixel size y"] = std::to_string(ys);
-        context["pixel size z"] = std::to_string(zs);
-
-        auto xo = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetOrigin()[0]);
-        auto yo = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetOrigin()[1]);
-        auto zo = m2::MilliMeterToMicroMeter(input->GetGeometry()->GetOrigin()[2]);
-
-        context["origin x"] = std::to_string(xo);
-        context["origin y"] = std::to_string(yo);
-        context["origin z"] = std::to_string(zo);
-
-        context["run_id"] = std::to_string(0);
-
-        auto numPixels =
-          std::accumulate(input->GetDimensions(), input->GetDimensions() + 3, 1, std::multiplies<unsigned int>());
-        auto numMaskedPixel = 0;
-        for (auto it = macc.GetData(); it <= macc.GetData() + numPixels; ++it)
-        {
-          if (*it > 0)
-            numMaskedPixel++;
-        }
-        MITK_INFO << "numMaskedPixel: " << numMaskedPixel;
-        // auto N = spectraCopy.size();
-        context["num_spectra"] = std::to_string(numMaskedPixel);
-
-        context["int_compression_code"] = TextToCodeMap[context["int_compression"]];
-        context["mz_compression_code"] = TextToCodeMap[context["mz_compression"]];
-
-        // Output file stream for imzML
-        std::ofstream f(GetImzMLOutputPath(), std::ofstream::binary);
-
-        std::string view = IMZML_TEMPLATE_START;
-        f << m2::TemplateEngine::render(view, context);
-
-        view = IMZML_SPECTRUM_TEMPLATE;
-        unsigned long id = 1;
-
-        MITK_INFO << "Write imzML data ...";
-        boost::progress_display show_progress(numMaskedPixel);
-        mitk::ImagePixelReadAccessor<m2::NormImagePixelType> nacc(nonConst_input->GetNormalizationImage());
-
-        for (auto &s : spectraCopy)
-        {
-          if (macc.GetPixelByIndex(s.index) > 0)
-          {
-            auto x = s.index[0] + 1; // start by 1
-            auto y = s.index[1] + 1; // start by 1
-            auto z = s.index[2] + 1; // start by 1
-
-            context = {{"index", std::to_string(id++)},
-                       {"x", std::to_string(x)},
-                       {"y", std::to_string(y)},
-                       {"z", std::to_string(z)},
-                       {"mz_len", std::to_string(s.mzLength)},
-                       {"mz_enc_len", std::to_string(s.mzLength * mzBytes)},
-                       {"mz_offset", std::to_string(s.mzOffset)},
-                       {"int_len", std::to_string(s.intLength)},
-                       {"int_enc_len", std::to_string(s.intLength * intBytes)},
-                       {"int_offset", std::to_string(s.intOffset)}};
-
-            // if (nacc.GetPixelByIndex(s.index) != 1)
-            // {
-            //   context["tic"] = std::to_string(nacc.GetPixelByIndex(s.index));
-            // }
-            f << m2::TemplateEngine::render(view, context);
-            f.flush();
-            ++show_progress;
-          }
-        }
-
-        MITK_INFO << "numMaskedPixel: " << numMaskedPixel << " id: " << id;
-
-        f << IMZML_TEMPLATE_END;
-        f.close();
-      }
-      catch (std::exception &e)
+      const std::string srcIbd = input->GetBinaryDataPath();
+      if (itksys::SystemTools::FileExists(srcIbd))
       {
-        input->SaveModeOff();
-        MITK_ERROR << "Writing ImzML Faild! " + std::string(e.what());
+        const std::string dstIbd = GetNamedOutputPath(dstImzML, ".ibd"); 
+        MITK_INFO << "[ImzMLImageIO::Write] Copy: " << srcIbd << " -> " << dstIbd;
+        itksys::SystemTools::CopyFileAlways(srcIbd, dstIbd);
+        }
+
+      auto srcBase = itksys::SystemTools::GetFilenameWithoutExtension(srcImzML);
+      auto dstBase = itksys::SystemTools::GetFilenameWithoutExtension(dstImzML);
+
+      // Copy associated files if they exist at the source
+      auto copyIfExists = [&](const std::string &suffix)
+      {
+        const std::string src = srcBase + suffix;
+        if (itksys::SystemTools::FileExists(src))
+        {
+          const std::string dst = dstBase + suffix;
+          MITK_INFO << "[ImzMLImageIO::Write] Copy: " << src << " -> " << dst;
+          itksys::SystemTools::CopyFileAlways(src, dst);
+        }
+      };
+
+      copyIfExists(".mask.nrrd");
+      copyIfExists(".shift.nrrd");
+      copyIfExists(".mps");
+      for (auto type : m2::NormalizationStrategyTypeList)
+      {
+        const auto typeName = m2::NormalizationStrategyTypeNames[to_underlying(type)];
+        copyIfExists("." + typeName + ".nrrd");
       }
-      input->SaveModeOff();
     }
 
   } // namespace mitk
@@ -757,10 +593,12 @@ namespace m2
 
   void ImzMLImageIO::LoadAssociatedData(m2::ImzMLSpectrumImage *object)
   {
-    auto pathWithoutExtension = itksys::SystemTools::GetParentDirectory(GetInputLocation()) + "/" +
-                             itksys::SystemTools::GetFilenameWithoutExtension(GetInputLocation());
+    const auto paths = BuildAssociatedPaths(GetInputLocation());
+    const auto resolveAssociatedPath = [&](const std::string &suffix) {
+      return PreferSidecarThenLegacy(paths.sidecarBase + suffix, paths.legacyBase + suffix);
+    };
 
-    auto maskPath = pathWithoutExtension + ".mask.nrrd";
+    auto maskPath = resolveAssociatedPath(".mask.nrrd");
     if (itksys::SystemTools::FileExists(maskPath))
     {
       auto maskData = mitk::IOUtil::Load(maskPath).at(0);
@@ -788,57 +626,46 @@ namespace m2
       }
     }
 
-    auto shiftImagePath = pathWithoutExtension + ".shift.nrrd";
+    auto shiftImagePath = resolveAssociatedPath(".shift.nrrd");
     if (itksys::SystemTools::FileExists(shiftImagePath))
     {
       auto data = mitk::IOUtil::Load(shiftImagePath).at(0);
       object->SetShiftImage(dynamic_cast<mitk::Image *>(data.GetPointer()));
       data->GetGeometry()->SetOrigin(object->GetGeometry()->GetOrigin());
       data->GetGeometry()->SetSpacing(object->GetGeometry()->GetSpacing());
+      data->GetGeometry()->SetIndexToWorldTransformByVtkMatrixWithoutChangingSpacing(object->GetGeometry()->GetVtkMatrix());
     }
 
-    for (auto type : m2::NormalizationStrategyTypeList)
-    {
-      auto typeName = m2::NormalizationStrategyTypeNames[to_underlying(type)];
-      auto fileName = pathWithoutExtension + "." + typeName + ".nrrd";
-      
-      if(itksys::SystemTools::FileExists(fileName)){ 
-        auto dataVector = mitk::IOUtil::Load(fileName);
-        auto externalImage = dynamic_cast<mitk::Image *>(dataVector[0].GetPointer());
+    // for (auto type : m2::NormalizationStrategyTypeList)
+    // {
+    //   if (type == m2::NormalizationStrategyType::None)
+    //     continue;
 
-        
-        auto numPixels = std::accumulate(object->GetDimensions(), object->GetDimensions() + externalImage->GetDimension(), 1, std::multiplies<unsigned int>());
-        auto numPixelsExternal = std::accumulate(externalImage->GetDimensions(), externalImage->GetDimensions() + externalImage->GetDimension(), 1, std::multiplies<unsigned int>());
+    //   auto normalizationImage = object->GetNormalizationImage(type);
+    //   if (normalizationImage.IsNull())
+    //     continue;
 
-        if(numPixels != numPixelsExternal){
-          MITK_ERROR << "Normalization image size does not match the data size! Skip loading the normalization image: " << fileName;
-          continue;
-        }
+    //   const auto numPixels = std::accumulate(
+    //     object->GetDimensions(),
+    //     object->GetDimensions() + object->GetDimension(),
+    //     1u,
+    //     std::multiplies<unsigned int>());
+    //   const auto numPixelsLoaded = std::accumulate(
+    //     normalizationImage->GetDimensions(),
+    //     normalizationImage->GetDimensions() + normalizationImage->GetDimension(),
+    //     1u,
+    //     std::multiplies<unsigned int>());
 
-    
-        // m2::NormImagePixelType is either double or float 
-        // TODO: add cmake variable to select the pixel type
-        if (externalImage->GetPixelType().GetComponentType() == mitk::MakeScalarPixelType<m2::NormImagePixelType>().GetComponentType() &&
-        externalImage->GetDimension() == 3)
-        {
-          object->SetNormalizationImage(externalImage, type);
-          object->SetNormalizationImageStatus(type, true);
-        }
-        else {
-          mitk::ImageReadAccessor racc(externalImage);
-          mitk::ImagePixelWriteAccessor<m2::NormImagePixelType, 3> wacc(object->GetNormalizationImage(type));
-          if (externalImage->GetPixelType().GetComponentType() == mitk::MakeScalarPixelType<double>().GetComponentType())
-          {
-            std::copy(static_cast<const double *>(racc.GetData()), static_cast<const double *>(racc.GetData()) + numPixelsExternal, wacc.GetData());
-            object->SetNormalizationImageStatus(type, true);
-          }else if(externalImage->GetPixelType().GetComponentType() == mitk::MakeScalarPixelType<float>().GetComponentType())
-          {
-            std::copy(static_cast<const float *>(racc.GetData()), static_cast<const float *>(racc.GetData()) + numPixelsExternal, wacc.GetData());
-            object->SetNormalizationImageStatus(type, true);
-          }
-        }
-      }
-    }
+    //   const auto expectedComponentType = mitk::MakeScalarPixelType<m2::NormImagePixelType>().GetComponentType();
+    //   const auto loadedComponentType = normalizationImage->GetPixelType().GetComponentType();
+
+    //   if (numPixels != numPixelsLoaded || normalizationImage->GetDimension() != 3 || loadedComponentType != expectedComponentType)
+    //   {
+    //     MITK_WARN << "Normalization image does not match the expected float 3D layout for type "
+    //               << m2::to_string(type) << ". Using lazy regeneration instead.";
+    //     object->SetNormalizationImage(nullptr, type);
+    //   }
+    // }
 
     // auto normPath = pathWithoutExtension + ".norm.nrrd";
     // if (itksys::SystemTools::FileExists(normPath))
@@ -857,7 +684,7 @@ namespace m2
     //   }
     // }
 
-    auto pointsPath = pathWithoutExtension + ".mps";
+    auto pointsPath = resolveAssociatedPath(".mps");
     if (itksys::SystemTools::FileExists(pointsPath))
     {
       auto data = mitk::IOUtil::Load(pointsPath).at(0);
