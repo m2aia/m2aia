@@ -1,10 +1,9 @@
 set(MITK_MODULE_NAME_PREFIX "")
-set(boost_depends "Boost|filesystem")
 
 MITK_CREATE_MODULE(
   DEPENDS MitkCore MitkMultilabel MitkElastix
   PACKAGE_DEPENDS
-    PUBLIC Poco ${boost_depends}
+    PUBLIC Poco
   )
     
   add_subdirectory(autoload/M2aiaCoreIO)
