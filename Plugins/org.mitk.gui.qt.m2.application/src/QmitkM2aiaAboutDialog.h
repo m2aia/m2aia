@@ -36,9 +36,6 @@ public:
   void SetAboutText(const QString &text);
   void SetCaptionText(const QString &text);
 
-protected slots:
-  void ShowModules();
-
 private:
   Ui::QmitkM2aiaAboutDialog m_GUI;
 };

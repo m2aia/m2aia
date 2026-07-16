@@ -21,7 +21,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 //#include "src/internal/QmitkM2aiaAppIntroPart.h"
 
 #include <mitkVersion.h>
-#include <mitkLogMacros.h>
+#include <mitkLog.h>
 
 #include <service/cm/ctkConfigurationAdmin.h>
 #include <service/cm/ctkConfiguration.h>

@@ -28,8 +28,6 @@ m2::CoreObjectFactory::CoreObjectFactory() : mitk::CoreObjectFactoryBase()
   {
     MITK_DEBUG << "ImagingMassSpectrometryObjectFactory c'tor" << std::endl;
 
-    CreateFileExtensionsMap();
-
     alreadyDone = true;
   }
 }
@@ -43,32 +41,6 @@ mitk::Mapper::Pointer m2::CoreObjectFactory::CreateMapper(mitk::DataNode * /*nod
 }
 
 void m2::CoreObjectFactory::SetDefaultProperties(mitk::DataNode * /*node*/) {}
-
-std::string m2::CoreObjectFactory::GetFileExtensions()
-{
-  std::string fileExtension;
-  this->CreateFileExtensions(m_FileExtensionsMap, fileExtension);
-  return fileExtension.c_str();
-}
-
-mitk::CoreObjectFactoryBase::MultimapType m2::CoreObjectFactory::GetFileExtensionsMap()
-{
-  return m_FileExtensionsMap;
-}
-
-mitk::CoreObjectFactoryBase::MultimapType m2::CoreObjectFactory::GetSaveFileExtensionsMap()
-{
-  return m_SaveFileExtensionsMap;
-}
-
-void m2::CoreObjectFactory::CreateFileExtensionsMap() {}
-
-std::string m2::CoreObjectFactory::GetSaveFileExtensions()
-{
-  std::string fileExtension;
-  this->CreateFileExtensions(m_SaveFileExtensionsMap, fileExtension);
-  return fileExtension.c_str();
-}
 
 struct Register_m2CoreObjectFactory
 {

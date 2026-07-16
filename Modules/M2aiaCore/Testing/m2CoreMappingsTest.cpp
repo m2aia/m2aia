@@ -31,8 +31,8 @@ class m2CoreMappingsTestSuite : public m2::TestFixture
 private:
   void Switch(m2::SpectrumFormat e)
   {
-#pragma push
 #ifdef _WIN32
+#pragma warning(push)
 #pragma warning(error : 4062)
 #else
 #pragma GCC diagnostic push
@@ -63,14 +63,17 @@ private:
           //////////////////////////////////////////////////////////////////////
         }
     }
-#pragma pop
+#ifdef _WIN32
+#pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
+#endif
   }
 
   void Switch(m2::SpectrumType e)
   {
-#pragma push
 #ifdef _WIN32
+#pragma warning(push)
 #pragma warning(error : 4062)
 #else
 #pragma GCC diagnostic push
@@ -98,14 +101,17 @@ private:
           //////////////////////////////////////////////////////////////////////
         }
     }
-#pragma pop
+#ifdef _WIN32
+#pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
+#endif
   }
 
   void Switch(m2::NumericType e)
   {
-#pragma push
 #ifdef _WIN32
+#pragma warning(push)
 #pragma warning(error : 4062)
 #else
 #pragma GCC diagnostic push
@@ -131,8 +137,11 @@ private:
           //////////////////////////////////////////////////////////////////////
         }
     }
-#pragma pop
+#ifdef _WIN32
+#pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
+#endif
   }
 
   

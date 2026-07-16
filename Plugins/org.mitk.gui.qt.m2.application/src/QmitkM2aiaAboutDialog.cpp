@@ -15,9 +15,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #include "QmitkM2aiaAboutDialog.h"
-#include "QmitkModulesDialog.h"
 #include <qdialogbuttonbox.h>
-#include <QPushButton>
 #include <itkConfigure.h>
 #include <mitkVersion.h>
 #include <vtkVersionMacros.h>
@@ -32,21 +30,11 @@ QmitkM2aiaAboutDialog::QmitkM2aiaAboutDialog(QWidget *parent, Qt::WindowFlags f)
   
  
 
-  QPushButton *btnModules = new QPushButton(QIcon(":/M2aiaApplication/ModuleView.png"), "Modules");
-  m_GUI.m_ButtonBox->addButton(btnModules, QDialogButtonBox::ActionRole);
-
-  connect(btnModules, SIGNAL(clicked()), this, SLOT(ShowModules()));
   connect(m_GUI.m_ButtonBox, SIGNAL(rejected()), this, SLOT(reject()));
 }
 
 QmitkM2aiaAboutDialog::~QmitkM2aiaAboutDialog()
 {
-}
-
-void QmitkM2aiaAboutDialog::ShowModules()
-{
-  QmitkModulesDialog dialog(this);
-  dialog.exec();
 }
 
 QString QmitkM2aiaAboutDialog::GetAboutText() const
@@ -70,4 +58,3 @@ void QmitkM2aiaAboutDialog::SetCaptionText(const QString &/*text*/)
 {
   //m_GUI.m_CaptionLabel->setText(text);
 }
-

@@ -31,8 +31,8 @@ class m2SignalMappingsTestSuite : public mitk::TestFixture
 private:
   void Switch(m2::NormalizationStrategyType e)
   {
-#pragma push
 #ifdef _WIN32
+#pragma warning(push)
 #pragma warning(error : 4062)
 #else
 #pragma GCC diagnostic push
@@ -59,14 +59,17 @@ private:
           //////////////////////////////////////////////////////////////////////
         }
     }
-#pragma pop
+#ifdef _WIN32
+#pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
+#endif
   }
 
   void Switch(m2::SmoothingType e)
   {
-#pragma push
 #ifdef _WIN32
+#pragma warning(push)
 #pragma warning(error : 4062)
 #else
 #pragma GCC diagnostic push
@@ -91,14 +94,17 @@ private:
           //////////////////////////////////////////////////////////////////////
         }
     }
-#pragma pop
+#ifdef _WIN32
+#pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
+#endif
   }
 
   void Switch(m2::RangePoolingStrategyType e)
   {
-#pragma push
 #ifdef _WIN32
+#pragma warning(push)
 #pragma warning(error : 4062)
 #else
 #pragma GCC diagnostic push
@@ -125,14 +131,17 @@ private:
           //////////////////////////////////////////////////////////////////////
         }
     }
-#pragma pop
+#ifdef _WIN32
+#pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
+#endif
   }
 
   void Switch(m2::BaselineCorrectionType e)
   {
-#pragma push
 #ifdef _WIN32
+#pragma warning(push)
 #pragma warning(error : 4062)
 #else
 #pragma GCC diagnostic push
@@ -158,8 +167,11 @@ private:
           //////////////////////////////////////////////////////////////////////
         }
     }
-#pragma pop
+#ifdef _WIN32
+#pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
+#endif
   }
 
 public:

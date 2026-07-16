@@ -491,7 +491,8 @@ void SPTree::print()
   }
 }
 
-#ifndef WIN32
+#ifdef WIN32
 #pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
-#endif
+#endif // WIN32

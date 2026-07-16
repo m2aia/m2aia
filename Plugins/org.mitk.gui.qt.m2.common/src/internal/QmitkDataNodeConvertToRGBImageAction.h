@@ -89,37 +89,8 @@ static void _ConvertToRGB(const itk::VectorImage<TPixel, VDimensions>* image, do
     composer->SetInput3(rgbChannelImages[2]);
     composer->Update();
 
-        
-    typename itk::Image<RGBPixel, VDimensions>::Pointer rgbImage = itk::Image<RGBPixel, VDimensions>::New();
-    
-    typename itk::Image<RGBPixel, VDimensions>::IndexType start;
-    start[0] = 0;
-    start[1] = 0;
-    start[2] = 0;
-    
-    typename itk::Image<RGBPixel, VDimensions>::SizeType size;
-    auto dimensions = composer->GetOutput()->GetLargestPossibleRegion().GetSize();
-    size[0] = dimensions[0];
-    size[1] = dimensions[1];
-    size[2] = dimensions[2];
-    typename itk::Image<RGBPixel, VDimensions>::RegionType region;
-    region.SetSize(size);
-    region.SetIndex(start);
-    
-    rgbImage->SetRegions(region);
-    rgbImage->Allocate();
-    
-    rgbImage->SetOrigin(composer->GetOutput()->GetOrigin());
-    rgbImage->SetSpacing(composer->GetOutput()->GetSpacing());
-    rgbImage->SetDirection(composer->GetOutput()->GetDirection());
-   
-   
-   
-    memcpy(
-      rgbImage->GetBufferPointer(), composer->GetOutput()->GetBufferPointer(), sizeof(RGBPixel) * size[0] * size[1] * size[2]);
-
     mitk::Image::Pointer rgbImageMitk;
-    mitk::CastToMitkImage(rgbImage, rgbImageMitk);
+    mitk::CastToMitkImage(composer->GetOutput(), rgbImageMitk);
     
     result.push_back(rgbImageMitk);
   }

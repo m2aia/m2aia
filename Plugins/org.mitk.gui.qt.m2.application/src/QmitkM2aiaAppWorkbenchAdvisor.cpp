@@ -64,7 +64,7 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::loadDataFromDisk(const QStringList &ar
     if (serviceRef)
     {
       mitk::IDataStorageService* dataStorageService = _context->getService<mitk::IDataStorageService>(serviceRef);
-      mitk::DataStorage::Pointer dataStorage = dataStorageService->GetDefaultDataStorage()->GetDataStorage();
+      mitk::DataStorage::Pointer dataStorage = dataStorageService->GetDefaultDataStorage();
 
       int argumentsAdded = 0;
       for (int i = 0; i < arguments.size(); ++i)
@@ -217,10 +217,12 @@ void QmitkM2aiaAppWorkbenchWindowAdvisor::PostWindowOpen()
               {
                 if (QStringLiteral("qt_toolbar_ext_button") == widget->objectName() && widget->isVisible())
                 {
+                  const QPointF localPos(0.0, 0.0);
+                  const QPointF globalPos = widget->mapToGlobal(QPoint(0, 0));
                   QMouseEvent pressEvent(
-                    QEvent::MouseButtonPress, QPointF(0.0f, 0.0f), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                    QEvent::MouseButtonPress, localPos, globalPos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
                   QMouseEvent releaseEvent(
-                    QEvent::MouseButtonRelease, QPointF(0.0f, 0.0f), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                    QEvent::MouseButtonRelease, localPos, globalPos, Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
                   QApplication::sendEvent(widget, &pressEvent);
                   QApplication::sendEvent(widget, &releaseEvent);
                 }

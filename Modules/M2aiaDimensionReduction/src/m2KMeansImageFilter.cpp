@@ -119,8 +119,8 @@ void m2::KMeansImageFilter::GenerateData()
 
   auto N = std::accumulate(m_ValidIndicesMap.begin(),
                            m_ValidIndicesMap.end(),
-                           0,
-                           [](auto &acc, auto &pair) { return acc + pair.second.size(); });
+                           std::size_t{0},
+                           [](std::size_t acc, const auto &pair) { return acc + pair.second.size(); });
   MITK_INFO << "N: " << N;
 
   Eigen::MatrixXd data(N, m_Intervals.size());

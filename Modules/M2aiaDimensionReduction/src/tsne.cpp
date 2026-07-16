@@ -933,7 +933,8 @@ void TSNE::TSNE::save_data(double *data, int *landmarks, double *costs, int n, i
   printf("Wrote the %i x %i data matrix successfully!\n", n, d);
 }
 
-#ifndef WIN32
+#ifdef WIN32
 #pragma warning(pop)
+#else
 #pragma GCC diagnostic pop
 #endif // WIN32

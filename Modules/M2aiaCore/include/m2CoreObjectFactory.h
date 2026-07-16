@@ -29,17 +29,10 @@ namespace m2
     itkFactorylessNewMacro(Self) itkCloneMacro(Self) mitk::Mapper::Pointer
       CreateMapper(mitk::DataNode *node, MapperSlotId slotId) override;
     void SetDefaultProperties(mitk::DataNode *node) override;
-	std::string GetFileExtensions() override;
-    mitk::CoreObjectFactory::MultimapType GetFileExtensionsMap() override;
-	std::string GetSaveFileExtensions() override;
-    mitk::CoreObjectFactory::MultimapType GetSaveFileExtensionsMap() override;
 
   protected:
     CoreObjectFactory();
     ~CoreObjectFactory() override;
-    void CreateFileExtensionsMap();
-    MultimapType m_FileExtensionsMap;
-    MultimapType m_SaveFileExtensionsMap;
 
   private:
     std::vector<mitk::AbstractFileIO *> m_FileIOs;
