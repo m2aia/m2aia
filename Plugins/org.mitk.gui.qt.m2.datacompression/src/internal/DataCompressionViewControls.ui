@@ -21,6 +21,33 @@
     <widget class="QmitkSingleNodeSelectionWidget" name="peakListSelection" native="true"/>
    </item>
    <item>
+    <widget class="QmitkMultiNodeSelectionWidget" name="maskSelection" native="true"/>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_maskLabel">
+     <item>
+      <widget class="QLabel" name="label_maskLabel">
+       <property name="text">
+        <string>Label</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="boxMaskLabelValue">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="toolTip">
+        <string>Only pixels of the chosen label value are used. The list contains the unique label values of the selected masks, the number in brackets is the number of selected masks containing this label value.</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
     <widget class="QTabWidget" name="TabWidget">
      <property name="enabled">
       <bool>true</bool>

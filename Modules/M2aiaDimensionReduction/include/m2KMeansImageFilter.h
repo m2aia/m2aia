@@ -49,6 +49,9 @@ private:
     std::map<int, mitk::Image::Pointer> m_Outputs;
     std::map<int, mitk::Image::Pointer> m_Inputs;
 
+    // optional mask per input; if none is set the segmentation of the input image is used
+    std::map<int, mitk::Image::Pointer> m_Masks;
+
     // stores for each input the valid indices (masked pixels are valid)
     std::map<int, std::vector<itk::Index<3>>> m_ValidIndicesMap;
 
@@ -82,6 +85,13 @@ public:
     {
         m_Inputs[idx] = image;
     }
+
+    /** Restricts the input with the given id to the non-zero pixels of the mask.
+        Without a mask the segmentation of the input image is used. */
+    void SetMaskImage(mitk::Image::Pointer mask, int idx = 0)
+    {
+        m_Masks[idx] = mask;
+    }
     
     void SetIntervals(std::vector<m2::Interval> intervals){
         m_Intervals = intervals;
@@ -103,6 +113,9 @@ private:
                         int k, 
                         std::vector<int>& clusterAssignments);
     
+    /** Mask of the input with the given id, falling back to the segmentation of that input image. */
+    mitk::Image::Pointer GetMaskImage(int imageId) const;
+
     double ComputeDistance(const Eigen::VectorXd& point1, const Eigen::VectorXd& point2) const;
     double ComputeSpatialDistance(const itk::Index<3>& coord1, const itk::Index<3>& coord2) const;
     

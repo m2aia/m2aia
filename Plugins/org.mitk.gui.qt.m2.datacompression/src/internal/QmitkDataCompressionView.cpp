@@ -30,14 +30,19 @@ found in the LICENSE file.
 // mitk
 #include <mitkImage.h>
 #include <mitkImageCast.h>
+#include <mitkImagePixelWriteAccessor.h>
 #include <mitkImageReadAccessor.h>
 #include <mitkImageWriteAccessor.h>
 #include <mitkNodePredicateAnd.h>
 #include <mitkNodePredicateDataType.h>
 #include <mitkNodePredicateFunction.h>
 #include <mitkNodePredicateNot.h>
+#include <mitkLabelSetImage.h>
 #include <mitkIOUtil.h>
 #include <mitkProgressBar.h>
+
+// std
+#include <algorithm>
 
 // itksys
 #include <itksys/SystemTools.hxx>
@@ -88,6 +93,13 @@ void QmitkDataCompressionView::CreateQtPartControl(QWidget *parent)
   m_Controls.peakListSelection->SetSelectionIsOptional(true);
   m_Controls.peakListSelection->SetEmptyInfo(QString("PeakList selection"));
   m_Controls.peakListSelection->SetPopUpTitel(QString("PeakList"));
+
+  m_Controls.maskSelection->SetDataStorage(GetDataStorage());
+  m_Controls.maskSelection->SetNodePredicate(mitk::NodePredicateAnd::New(
+    mitk::TNodePredicateDataType<mitk::MultiLabelSegmentation>::New(), NodePredicateNoActiveHelper));
+  m_Controls.maskSelection->SetSelectionIsOptional(true);
+  m_Controls.maskSelection->SetEmptyInfo(QString("Mask selection"));
+  m_Controls.maskSelection->SetPopUpTitel(QString("Mask"));
   
   m_Controls.boxKMeansDistanceMetric->addItem("Euclidean", QVariant(to_underlying(m2::DistanceMetric::EUCLIDEAN)));
   m_Controls.boxKMeansDistanceMetric->addItem("Cosine", QVariant(to_underlying(m2::DistanceMetric::COSINE)));
@@ -100,6 +112,12 @@ void QmitkDataCompressionView::CreateQtPartControl(QWidget *parent)
   // m_Controls.boxKMeansVariant->addItem("Bisecting", QVariant(to_underlying(m2::KMeansVariant::BISECTING)));
   // m_Controls.boxKMeansVariant->addItem("Spectral-Spatial", QVariant(to_underlying(m2::KMeansVariant::SPECTRAL_SPATIAL)));
   m_Controls.boxKMeansVariant->setCurrentIndex(0);
+
+  connect(m_Controls.maskSelection,
+          &QmitkAbstractNodeSelectionWidget::CurrentSelectionChanged,
+          this,
+          &QmitkDataCompressionView::OnMaskSelectionChanged);
+  OnMaskSelectionChanged();
 
   connect(m_Controls.btnRunPCA, SIGNAL(clicked()), this, SLOT(OnStartPCA()));
   connect(m_Controls.btnRunKMeans, SIGNAL(clicked()), this, SLOT(OnStartKMeans()));
@@ -153,6 +171,135 @@ void QmitkDataCompressionView::OnSaveDataCompressionResults()
   }
 
 
+void QmitkDataCompressionView::OnMaskSelectionChanged()
+{
+  using LabelValueType = mitk::MultiLabelSegmentation::LabelValueType;
+
+  // keep the current choice if that label value is still available
+  const auto previousData = m_Controls.boxMaskLabelValue->currentData();
+
+  // count for each label value in how many of the selected masks it occurs
+  std::map<LabelValueType, unsigned int> labelValueCounts;
+  for (auto maskNode : m_Controls.maskSelection->GetSelectedNodesStdVector())
+  {
+    auto mask = dynamic_cast<mitk::MultiLabelSegmentation *>(maskNode->GetData());
+    if (!mask)
+      continue;
+
+    // a label value is unique within a segmentation, but may be used by several of its groups
+    const auto labelValues = mask->GetAllLabelValues();
+    for (auto labelValue : std::set<LabelValueType>(labelValues.begin(), labelValues.end()))
+      ++labelValueCounts[labelValue];
+  }
+
+  m_Controls.boxMaskLabelValue->clear();
+  for (const auto &kv : labelValueCounts)
+    m_Controls.boxMaskLabelValue->addItem(QString("%1 (%2)").arg(kv.first).arg(kv.second),
+                                          QVariant::fromValue(kv.first));
+
+  m_Controls.boxMaskLabelValue->setEnabled(!labelValueCounts.empty());
+  if (labelValueCounts.empty())
+    return;
+
+  const auto previousIndex = m_Controls.boxMaskLabelValue->findData(previousData);
+  m_Controls.boxMaskLabelValue->setCurrentIndex(previousIndex < 0 ? 0 : previousIndex);
+}
+
+namespace
+{
+  /** A mask can only be applied to an image if both cover the same pixel grid. */
+  bool HasMatchingGrid(const mitk::Image *image, const mitk::MultiLabelSegmentation *mask)
+  {
+    const auto &maskDimensions = mask->GetDimensions();
+    if (image->GetDimension() != maskDimensions.size())
+      return false;
+
+    for (unsigned int i = 0; i < image->GetDimension(); ++i)
+      if (image->GetDimensions()[i] != maskDimensions[i])
+        return false;
+
+    return true;
+  }
+}
+
+mitk::MultiLabelSegmentation::LabelValueType QmitkDataCompressionView::GetSelectedMaskLabelValue() const
+{
+  const auto data = m_Controls.boxMaskLabelValue->currentData();
+  return data.isValid() ? data.value<mitk::MultiLabelSegmentation::LabelValueType>()
+                        : mitk::MultiLabelSegmentation::UNLABELED_VALUE;
+}
+
+mitk::DataNode::ConstPointer QmitkDataCompressionView::GetMaskNode(const mitk::DataNode *imageNode)
+{
+  auto image = dynamic_cast<mitk::Image *>(imageNode->GetData());
+  if (!image)
+    return nullptr;
+
+  const auto &derivations = this->GetDataStorage()->GetDerivations(imageNode)->CastToSTLConstContainer();
+
+  mitk::DataNode::ConstPointer candidate;
+  for (auto maskNode : m_Controls.maskSelection->GetSelectedNodesStdVector())
+  {
+    auto mask = dynamic_cast<mitk::MultiLabelSegmentation *>(maskNode->GetData());
+    if (!mask || !HasMatchingGrid(image, mask))
+      continue;
+
+    // a mask below the image in the data hierarchy belongs to it unambiguously
+    const auto isDerivation = std::any_of(derivations.begin(),
+                                          derivations.end(),
+                                          [&maskNode](const auto &node) { return node.GetPointer() == maskNode.GetPointer(); });
+    if (isDerivation)
+      return maskNode;
+
+    if (candidate.IsNull())
+      candidate = maskNode;
+  }
+
+  return candidate;
+}
+
+mitk::Image::Pointer QmitkDataCompressionView::GetMaskImage(const mitk::DataNode *imageNode)
+{
+  auto image = dynamic_cast<m2::SpectrumImage *>(imageNode->GetData());
+  if (!image)
+    return nullptr;
+
+  auto maskNode = GetMaskNode(imageNode);
+  if (maskNode.IsNull())
+  {
+    if (!m_Controls.maskSelection->GetSelectedNodesStdVector().empty())
+      MITK_WARN << "None of the selected masks covers the grid of image [" << imageNode->GetName()
+                << "]; its own segmentation is used instead.";
+    return image->GetMultilabelSegmentation()->GetGroupImage(0);
+  }
+
+  auto mask = dynamic_cast<mitk::MultiLabelSegmentation *>(maskNode->GetData());
+  const auto labelValue = GetSelectedMaskLabelValue();
+  if (!mask->ExistLabel(labelValue))
+  {
+    MITK_WARN << "The mask [" << maskNode->GetName() << "] of image [" << imageNode->GetName()
+              << "] does not contain the label value " << labelValue << "; the image is skipped.";
+    return nullptr;
+  }
+
+  // only the pixels of the chosen label value are kept, all others are masked out
+  mitk::Image::Pointer groupImage = mask->GetGroupImage(mask->GetGroupIndexOfLabel(labelValue));
+  auto labelValueMask = groupImage->Clone();
+  {
+    mitk::ImagePixelWriteAccessor<mitk::MultiLabelSegmentation::LabelValueType, 3> acc(labelValueMask);
+    auto data = acc.GetData();
+    const auto dimensions = labelValueMask->GetDimensions();
+    const auto n = dimensions[0] * dimensions[1] * dimensions[2];
+    std::transform(data,
+                   data + n,
+                   data,
+                   [labelValue](const auto value) -> mitk::MultiLabelSegmentation::LabelValueType
+                   { return value == labelValue ? 1 : 0; });
+  }
+
+  return labelValueMask;
+}
+
 void QmitkDataCompressionView::SetFocus() {}
 
 void QmitkDataCompressionView::OnStartKMeans()
@@ -173,6 +320,25 @@ void QmitkDataCompressionView::OnStartKMeans()
   filter->SetKMeansVariant(variantType);
   filter->SetSpatialWeight(m_Controls.spatialWeight->value());
 
+  // only the pixels of the chosen mask value contribute to the clusters
+  std::vector<mitk::DataNode::ConstPointer> selectedNodes;
+  unsigned int imageId = 0;
+  for (auto imageNode : m_Controls.imageSelection->GetSelectedNodesStdVector())
+  {
+    auto image = dynamic_cast<m2::ImzMLSpectrumImage *>(imageNode->GetData());
+    if (!image)
+      continue;
+
+    auto mask = GetMaskImage(imageNode);
+    if (mask.IsNull())
+      continue;
+
+    filter->SetInput(image, imageId);
+    filter->SetMaskImage(mask, imageId);
+    ++imageId;
+    selectedNodes.push_back(imageNode);
+  }
+
   std::string vectorNodeNames = "";
   auto vectorNodes = m_Controls.peakListSelection->GetSelectedNodesStdVector();
   // for each selected peak list different clusters are cerated
@@ -180,22 +346,16 @@ void QmitkDataCompressionView::OnStartKMeans()
   {
     auto vector = dynamic_cast<m2::IntervalVector *>(vectorNode->GetData());
     filter->SetIntervals(vector->GetIntervals());
-      
-    // all pixels of all images are used to create the clusters
-    unsigned int imageId = 0;
-    for (auto imageNode : m_Controls.imageSelection->GetSelectedNodesStdVector())
-    {
-      auto image = dynamic_cast<m2::ImzMLSpectrumImage *>(imageNode->GetData());
-      filter->SetInput(image, imageId++);
-    }
     vectorNodeNames += vectorNode->GetName() + "_";
   }
+
+  if (selectedNodes.empty() || vectorNodeNames.empty())
+    return;
+
   vectorNodeNames.pop_back();
   filter->GenerateData();
 
-  auto selectedNodes = m_Controls.imageSelection->GetSelectedNodesStdVector();
   mitk::MultiLabelSegmentation::ConstLabelVectorType labelVector;
-  int i = 0;
   for( int i = 0; i <= m_Controls.kmeans_clusters->value(); ++i){
     auto label = mitk::Label::New(i, "Cluster " + std::to_string(i));
     if(i == 0){
@@ -207,12 +367,21 @@ void QmitkDataCompressionView::OnStartKMeans()
   }
   
 
+  // the filter keys its outputs by the input id assigned above, so walk the
+  // inputs in the same order to pair each image with its own cluster image
+  imageId = 0;
   for(auto s : selectedNodes)
   { 
+    const auto currentId = imageId++;
     if(auto specImage = dynamic_cast<m2::SpectrumImage* >(s->GetData())){
+      auto clusterImage = filter->GetOutput(currentId);
+      if(clusterImage.IsNull() || !clusterImage->IsInitialized()){
+        MITK_WARN << "No KMeans result for image " << s->GetName() << "; skipping.";
+        continue;
+      }
       auto mlSeg = specImage->GetMultilabelSegmentation()->Clone();
       mlSeg->RemoveGroup(0);
-      mlSeg->InsertGroup(0, filter->GetOutput(i).GetPointer(), labelVector, "KMeans_" + std::to_string(m_Controls.kmeans_clusters->value()) + "_" + vectorNodeNames);
+      mlSeg->InsertGroup(0, clusterImage.GetPointer(), labelVector, "KMeans_" + std::to_string(m_Controls.kmeans_clusters->value()) + "_" + vectorNodeNames);
       auto outputNode = mitk::DataNode::New();
       outputNode->SetData(mlSeg);
       outputNode->SetName("KMeans_" + std::to_string(m_Controls.kmeans_clusters->value()) + "_" + vectorNodeNames);
@@ -234,8 +403,13 @@ void QmitkDataCompressionView::OnStartPCA()
       if (!image->GetImageAccessInitialized())
         continue;
 
+      // only the pixels of the chosen mask value contribute to the components
+      auto maskImage = GetMaskImage(imageNode);
+      if (maskImage.IsNull())
+        continue;
+
       auto filter = m2::PcaImageFilter::New();
-      filter->SetMaskImage(image->GetMultilabelSegmentation()->GetGroupImage(0));
+      filter->SetMaskImage(maskImage);
 
       std::vector<mitk::Image::Pointer> temporaryImages;
       auto progressBar = mitk::ProgressBar::GetInstance();
@@ -247,7 +421,7 @@ void QmitkDataCompressionView::OnStartPCA()
         temporaryImages.push_back(mitk::Image::New());
         temporaryImages.back()->Initialize(image);
         const auto mz = intervals.at(row).x.mean();
-        image->GetImage(mz, image->ApplyTolerance(mz), image->GetMultilabelSegmentation()->GetGroupImage(0), temporaryImages.back().GetPointer());
+        image->GetImage(mz, image->ApplyTolerance(mz), maskImage, temporaryImages.back().GetPointer());
         filter->SetInput(inputIdx, temporaryImages.back());
         ++inputIdx;
       }
@@ -301,8 +475,12 @@ void QmitkDataCompressionView::OnStartTSNE()
       filter->SetTheta(m_Controls.tsne_theta->value());
 
       using MaskImageType = itk::Image<mitk::MultiLabelSegmentation::LabelValueType, 3>;
-      auto maskImage = image->GetMultilabelSegmentation()->GetGroupImage(0);
-      
+
+      // only the pixels of the chosen mask value are embedded
+      mitk::Image::Pointer maskImage = GetMaskImage(node);
+      if (maskImage.IsNull())
+        continue;
+
       if(m_Controls.tsne_shrink->value() > 1){
         MaskImageType::Pointer maskImageItk;
         mitk::CastToItkImage(maskImage, maskImageItk);
@@ -312,9 +490,10 @@ void QmitkDataCompressionView::OnStartTSNE()
         caster->SetShrinkFactor(1, m_Controls.tsne_shrink->value());
         caster->SetShrinkFactor(2, 1);
         caster->Update();
-        mitk::Image::Pointer maskImagePtr = maskImage;
-        mitk::CastToMitkImage(caster->GetOutput(), maskImagePtr);
-        maskImage = maskImagePtr.GetPointer();
+        // write into a new image, casting into maskImage would modify the mask itself
+        mitk::Image::Pointer shrunkMaskImage;
+        mitk::CastToMitkImage(caster->GetOutput(), shrunkMaskImage);
+        maskImage = shrunkMaskImage;
       }
 
       filter->SetMaskImage(maskImage);

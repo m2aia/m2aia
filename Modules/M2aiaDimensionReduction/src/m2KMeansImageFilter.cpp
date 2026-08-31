@@ -82,6 +82,18 @@ double m2::KMeansImageFilter::ComputeSpatialDistance(const itk::Index<3> &coord1
   return std::sqrt(sum);
 }
 
+mitk::Image::Pointer m2::KMeansImageFilter::GetMaskImage(int imageId) const
+{
+  const auto mask = m_Masks.find(imageId);
+  if (mask != m_Masks.end() && mask->second.IsNotNull())
+    return mask->second;
+
+  // without an explicitly set mask all pixels covered by the segmentation of the image are used
+  auto image = m_Inputs.at(imageId);
+  auto spectrumImage = dynamic_cast<m2::SpectrumImage *>(image.GetPointer());
+  return spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0);
+}
+
 void m2::KMeansImageFilter::GenerateData()
 {
   m_ValidIndicesMap.clear();
@@ -105,7 +117,7 @@ void m2::KMeansImageFilter::GenerateData()
         MITK_INFO << "Mask image not set";
 
       std::vector<itk::Index<3>> validIndices;
-      auto maskImage = spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0);
+      mitk::Image::Pointer maskImage = GetMaskImage(imageId);
       mitk::ImagePixelReadAccessor<mitk::MultiLabelSegmentation::LabelValueType, 3> maskAcc(maskImage);
 
       for (auto s : spectrumImage->GetSpectra())
@@ -138,7 +150,7 @@ void m2::KMeansImageFilter::GenerateData()
     for (size_t col = 0; col < m_Intervals.size(); ++col)
     {
       const auto mz = m_Intervals.at(col).x.mean();
-      spectrumImage->GetImage(mz, spectrumImage->ApplyTolerance(mz), spectrumImage->GetMultilabelSegmentation()->GetGroupImage(0), ionImage);
+      spectrumImage->GetImage(mz, spectrumImage->ApplyTolerance(mz), GetMaskImage(imageId), ionImage);
 
       size_t v = offset;
       for (auto index : validIndices)

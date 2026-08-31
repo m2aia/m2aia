@@ -46,20 +46,36 @@ void PcaImageFilter::initMatrix()
     return;
   }
   
-  // Calculate total number of pixels
-  size_t totalPixels = 1;
-  for (unsigned int i = 0; i < mitkImage->GetDimension(); ++i) {
-    totalPixels *= mitkImage->GetDimensions()[i];
+  // Only the pixels covered by the mask take part in the decomposition; without a
+  // mask all pixels of the image are used.
+  m_ValidIndices.clear();
+  if (m_MaskImage.IsNotNull())
+  {
+    this->GetValidIndices();
   }
-  
+  else
+  {
+    const auto dimensions = mitkImage->GetDimensions();
+    for (unsigned int x = 0; x < dimensions[0]; ++x)
+      for (unsigned int y = 0; y < dimensions[1]; ++y)
+        for (unsigned int z = 0; z < dimensions[2]; ++z)
+          m_ValidIndices.push_back({x, y, z});
+  }
+
+  if (m_ValidIndices.empty()) {
+    MITK_ERROR << "The mask of the PCA filter does not contain any pixel";
+    m_DataMatrix.resize(0, 0);
+    return;
+  }
+
   // Set up data matrix dimensions (pixels × images)
-  const unsigned long numRows = totalPixels;
+  const unsigned long numRows = m_ValidIndices.size();
   const unsigned long numColumns = input.size();
   
   MITK_INFO << "Creating data matrix with dimensions " << numRows << " x " << numColumns;
   m_DataMatrix.resize(numRows, numColumns);
   
-  // Fill data matrix - each column contains one flattened image
+  // Fill data matrix - each column contains the masked pixels of one image
   unsigned int columnIndex = 0;
   for (auto it = input.begin(); it != input.end(); ++it, ++columnIndex) {
     mitkImage = dynamic_cast<mitk::Image*>(it->GetPointer());
@@ -70,7 +86,8 @@ void PcaImageFilter::initMatrix()
     
     try {
       mitk::ImagePixelReadAccessor<m2::DisplayImagePixelType, 3> accessor(mitkImage);
-      std::copy(accessor.GetData(), accessor.GetData() + totalPixels, m_DataMatrix.col(columnIndex).data());
+      for (unsigned long row = 0; row < numRows; ++row)
+        m_DataMatrix(row, columnIndex) = accessor.GetPixelByIndex(m_ValidIndices[row]);
     }
     catch (mitk::Exception& e) {
       MITK_ERROR << "Error accessing pixel data for image " << columnIndex << ": " << e.what();
@@ -139,11 +156,15 @@ void PcaImageFilter::GenerateData()
   auto eigenIonVectorImage = initializeItkVectorImage(numComponentsToOutput);
   m2::DisplayImagePixelType* outputData = eigenIonVectorImage->GetBufferPointer();
   
-  // Fill the output image with principal components
+  // Fill the output image with principal components; the rows of the decomposition
+  // are the masked pixels, all other pixels of the output stay zero
+  const auto size = eigenIonVectorImage->GetLargestPossibleRegion().GetSize();
   for (unsigned int c = 0; c < numComponentsToOutput; ++c) {
     const auto& component = m_EigenImageMatrix.col(c);
     for (unsigned int p = 0; p < m_EigenImageMatrix.rows(); ++p) {
-      outputData[p * numComponentsToOutput + c] = component(p);
+      const auto& index = m_ValidIndices[p];
+      const size_t offset = index[0] + size[0] * (index[1] + size[1] * index[2]);
+      outputData[offset * numComponentsToOutput + c] = component(p);
     }
   }
   
