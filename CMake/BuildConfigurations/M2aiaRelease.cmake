@@ -30,6 +30,7 @@ set(MITK_CONFIG_PLUGINS
   org.mitk.gui.qt.m2.ImzMLExport
   org.mitk.gui.qt.m2.reconstruction3D
   org.mitk.gui.qt.m2.position
+  org.mitk.gui.qt.m2.plot
   org.mitk.gui.qt.m2.registration
   org.mitk.gui.qt.matchpoint.evaluator
   # org.mitk.gui.qt.dicombrowser
@@ -38,6 +39,13 @@ set(MITK_CONFIG_PLUGINS
 
 set(MITK_VTK_DEBUG_LEAKS OFF CACHE BOOL "Enable VTK Debug Leaks" FORCE)
 set(MITK_BUILD_MatchPoint ON CACHE BOOL "Enable MatchPoint Leaks" FORCE)
+
+# Skip the MITK core modules and plug-ins M2aia does not use. See
+# ../Whitelists/M2aia.cmake for the exclusion lists. FORCE is required because
+# mitkFunctionCreateWhitelistPaths()/mitkFunctionFindWhitelists() create these
+# cache entries right after this build configuration is read.
+set(MITK_WHITELISTS_INTERNAL_PATH "${CMAKE_CURRENT_LIST_DIR}/../Whitelists" CACHE PATH "" FORCE)
+set(MITK_WHITELIST "M2aia" CACHE STRING "" FORCE)
 
 find_package(Doxygen REQUIRED)
 
