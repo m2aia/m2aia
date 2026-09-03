@@ -16,42 +16,43 @@ See LICENSE.txt for details.
 #pragma once
 
 #include <M2aiaDimensionReductionExports.h>
-// #include <eigen3/Eigen/Dense>
-#include <itkeigen/Eigen/Dense>
-#include <m2ImzMLSpectrumImage.h>
-#include <m2MassSpecVisualizationFilter.h>
-#include <mitkImage.h>
-#include <mitkImageToImageFilter.h>
-#include <vector>
+#include <m2EmbeddingFilterBase.h>
 
 namespace m2
 {
-  class M2AIADIMENSIONREDUCTION_EXPORT PcaImageFilter : public m2::MassSpecVisualizationFilter
+  /** Principal component analysis of a m2::SpectralFeatureMatrix.
+
+      The embedding holds the leading components of the decomposition, one column each, and the
+      loadings say how much every peak contributes to them. Only the components that are asked for
+      are computed; see m2::TruncatedSvd for what that saves on a feature matrix. */
+  class M2AIADIMENSIONREDUCTION_EXPORT PcaImageFilter : public m2::EmbeddingFilterBase
   {
   public:
-    mitkClassMacro(PcaImageFilter, MassSpecVisualizationFilter);
+    mitkClassMacro(PcaImageFilter, m2::EmbeddingFilterBase);
     itkFactorylessNewMacro(Self);
     itkCloneMacro(Self);
-    void initMatrix();
-    Eigen::MatrixXf GetEigenImageMatrix();
-    Eigen::VectorXf GetMeanImage();
-    Eigen::MatrixXf GetLoadings();
+
+    std::string GetMethodName() const override { return "PCA"; }
+
+    /** Computes every component instead of only the ones that are asked for. Slower, and only
+        worth it to check the approximation the randomized decomposition makes. */
+    itkSetMacro(ExactDecomposition, bool);
+    itkGetMacro(ExactDecomposition, bool);
+
+    /** The value subtracted from every pixel before the decomposition. */
+    const Eigen::VectorXf &GetMeanImage() const { return m_MeanImage; }
+
+    /** The singular values of the components that were kept. */
+    const Eigen::VectorXf &GetSingularValues() const { return m_SingularValues; }
 
   protected:
-    Eigen::MatrixXf m_DataMatrix;
-    Eigen::MatrixXf m_EigenImageMatrix;
-    Eigen::VectorXf m_MeanImage;
-    Eigen::MatrixXf m_Loadings;
-    PcaImageFilter()
-    {
-      OutputImageType::Pointer output0 = static_cast<OutputImageType *>(this->MakeOutput(0).GetPointer());
-      // OutputImageType::Pointer output1 = static_cast<OutputImageType *>(this->MakeOutput(1).GetPointer());
-      Superclass::SetNumberOfRequiredOutputs(1);
-      Superclass::SetNthOutput(0, output0.GetPointer());
-      // Superclass::SetNthOutput(1, output1.GetPointer());
-    };
-    void GenerateData() override;
+    PcaImageFilter() = default;
+    ~PcaImageFilter() override = default;
 
-  private:
+    void ComputeEmbedding() override;
+
+    Eigen::VectorXf m_MeanImage;
+    Eigen::VectorXf m_SingularValues;
+    bool m_ExactDecomposition = false;
   };
 } // namespace m2

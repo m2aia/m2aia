@@ -19,6 +19,10 @@ See LICENSE.txt for details.
 #include <mitkDataNode.h>
 #include <mitkProperties.h>
 
+#include <map>
+#include <string>
+#include <vector>
+
 namespace m2
 {
 
@@ -89,6 +93,24 @@ namespace m2
      * Default:0
      */
     unsigned int sourceId = 0;
+
+    /**
+     * Named values attached to this centroid by an analysis: the loading of a component, a score,
+     * a p-value. Several analyses can describe the same centroid side by side, which is what the
+     * feature list view shows as one column per name. The names are registered by the
+     * m2::IntervalVector holding this interval, see m2::IntervalVector::SetFeature.
+     */
+    std::map<std::string, double> features;
+
+    bool HasFeature(const std::string &name) const { return features.find(name) != features.end(); }
+
+    double GetFeature(const std::string &name, double fallback = 0.0) const
+    {
+      const auto it = features.find(name);
+      return it == features.end() ? fallback : it->second;
+    }
+
+    void SetFeature(const std::string &name, double value) { features[name] = value; }
 
     Interval(unsigned int source = 0) : sourceId(source) {}
 
@@ -184,6 +206,36 @@ namespace m2
 
     std::vector<Interval> &GetIntervals() { return m_Data; }
     const std::vector<Interval> &GetIntervals() const { return m_Data; }
+
+    /**
+     * @brief The names of the features carried by the intervals, in the order they were attached.
+     *
+     * A feature is one value per centroid produced by some analysis. Keeping the names here rather
+     * than deriving them from the intervals keeps the order stable and lets a feature exist even
+     * when some intervals do not carry a value for it.
+     */
+    const std::vector<std::string> &GetFeatureNames() const { return m_FeatureNames; }
+
+    /**
+     * @brief Attaches one value per interval under the given name, replacing a feature of the same
+     * name. The number of values has to match the number of intervals; nothing is changed and
+     * false is returned otherwise.
+     */
+    bool SetFeature(const std::string &name, const std::vector<double> &values);
+
+    /**
+     * @brief The values of the named feature, one per interval. Intervals that do not carry the
+     * feature get the fallback. Empty if the feature does not exist.
+     */
+    std::vector<double> GetFeature(const std::string &name, double fallback = 0.0) const;
+
+    bool HasFeature(const std::string &name) const;
+
+    /** @brief Removes the feature from the vector and from every interval. */
+    void RemoveFeature(const std::string &name);
+
+    /** @brief Removes every feature. */
+    void ClearFeatures();
     void SetType(SpectrumFormat type)
     {
       m_Type = type;
@@ -242,6 +294,7 @@ namespace m2
 
   private:
     std::vector<Interval> m_Data;
+    std::vector<std::string> m_FeatureNames;
     std::string m_Info = "Not Set!";
     SpectrumFormat m_Type = SpectrumFormat::Centroid;
 

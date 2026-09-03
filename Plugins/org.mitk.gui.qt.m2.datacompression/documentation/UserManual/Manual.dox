@@ -21,11 +21,72 @@ PCA: Principal Component Analysis (PCA) is a widely used technique for dimension
 
 t-SNE: t-Distributed Stochastic Neighbor Embedding (t-SNE) is a nonlinear dimensionality reduction technique that aims to preserve the local structure of the data. The user can specify the parameters as perplexity, Theta, shrink factor, and number of iterations. A PCA image is used as an input for t-SNE to reduce the runtime.
 
+NMF: Non-negative Matrix Factorization approximates the data by a product of two non-negative factors, one giving each component a distribution over the image and one giving it a spectrum. Because nothing may become negative the components add up instead of cancelling out, so every one of them reads as a spectral signature rather than as a direction of variance. The user can specify the number of components, the number of iterations and the tolerance at which the factorization stops early.
+
+ICA: Independent Component Analysis separates the data into statistically independent components using the FastICA fixed point algorithm. Where PCA looks for the directions of the largest variance, ICA looks for the directions that are least Gaussian, which separates signals that overlap in the image but do not depend on each other. The components come out unordered, so there is no first or second component as there is with PCA. The user can specify the number of components, the number of iterations and the tolerance.
+
+PLS-DA: Partial Least Squares Discriminant Analysis is the only supervised method of this view. It is told which class every pixel belongs to and looks for the components that separate those classes, rather than the ones that carry the most variance. Where PCA answers what varies most in an image, PLS-DA answers which peaks tell the marked regions apart, and its component loadings are the ranked answer to that question. See the section on classes below for how they are selected. The user can specify the number of components and whether the peaks are scaled to unit variance first, which lets a weak peak separate the classes as well as a strong one.
+
 UMAP: is implemented as third-party plugin view (org.mitk.gui.qt.m2.docker.umap) and requires access to local Docker installation. 
 
 Spatial compression methods:
 
-k-means: k-means clustering is an unsupervised learning algorithm that partitions the data into k clusters based on the similarity of the data points. The user can specify the number of clusters to use in the compression.
+k-means: k-means clustering is an unsupervised learning algorithm that partitions the data into k clusters based on the similarity of the data points. The user can specify the number of clusters to use in the compression. All selected images are clustered together, so that a cluster means the same thing in each of them. The result is a segmentation whose labels can be edited afterwards with the segmentation tools.
 
+\section m2_DataCompression_Mask Restricting the computation to a region
+
+In the "Mask selection" one or more segmentations can be selected, and the "Label" box chooses which of their label values takes part. A mask is paired with the image it covers; a segmentation below an image in the data hierarchy always belongs to that image. Only the pixels of the chosen label value contribute to the result, all other pixels of the result stay empty. Without a selected mask the valid spectra of the image itself are used.
+
+\section m2_DataCompression_Running Running a method
+
+A method runs in the background, so the application stays usable while it works. The progress is shown below the tabs and "Cancel" stops the run; the result of a cancelled run is discarded. While a method runs the selections and the tabs are disabled, and methods that treat every selected image on its own work through them one after another.
+
+\section m2_DataCompression_Classes Classes for the supervised method
+
+PLS-DA needs to be told which regions to tell apart, which is what the selected mask provides.
+The label value chosen in the "Label" box picks the group of the mask, and then every label value
+of that group is one class. The label value 0 is the unlabeled background and is never a class;
+pixels carrying it take no part in the computation.
+
+At least two classes are needed, so PLS-DA refuses to start when no mask is selected, when the
+selected mask does not cover the image, or when the chosen group marks fewer than two labels.
+Unlike the unsupervised methods it cannot fall back to the segmentation of the image, because that
+one marks the valid spectra rather than any classes. An image whose mask does not meet these
+conditions is left out with a message in the log; if that leaves no image at all, nothing is
+computed.
+
+\section m2_DataCompression_Loadings Component loadings
+
+PCA, NMF, ICA and PLS-DA express their components over the peaks they were computed from, so for
+every centroid it can be said how much it contributes to every component. With "Attach component
+loadings to the peak list" switched on, each run attaches one such value per centroid and
+component to the selected peak list, named after the image and the method it came from.
+
+The Feature Lists view gives every analysis a column of its own, named after the image and the
+method it came from, and draws its components in one cell as a miniature plot: one bar per
+component along a zero line, upwards for a positive loading and downwards for a negative one, as
+long as the loading is strong relative to the largest that component reaches anywhere in the
+table. Reading down such a column shows at once which centroids a component picks out and with
+which sign. Hovering a bar names the component and gives its value.
+
+Each method is drawn with colours of its own, which stay the same in every session, so a column
+can be recognised as a PCA or a PLS-DA without reading its header: PCA in red over blue, ICA in
+orange over purple, PLS-DA in magenta over teal, and NMF in green. NMF cannot produce a negative
+loading, so its bars rise from the bottom of the cell and use its whole height, while the methods
+that can go negative keep their zero line through the middle. A method that is not one of these
+gets colours derived from its name, which are at least the same every time.
+
+Because each analysis keeps its own column, its components are scaled against each other rather
+than against those of an unrelated method, and several runs on several images can be compared for
+the same centroid without the table growing a column per component. The view follows the peak list
+while it is shown, so the plot of a run appears as soon as it finishes. t-SNE and k-means do not express their result over the peaks and
+therefore have no loadings.
+
+The loadings live in memory with the peak list and are not written to file when the peak list is
+saved.
+
+\section m2_DataCompression_Export Exporting results
+
+"On save data compression image(s) as NRRD" writes every result below the selected images next to the file the image was loaded from. Results are recognised by a property that names the method that produced them, so everything this view creates is exported, whichever method it came from.
 
 */

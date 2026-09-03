@@ -15,6 +15,8 @@ See LICENSE.txt for details.
 
 #include <m2IntervalVector.h>
 
+#include <algorithm>
+
 using namespace std;
 namespace m2
 {
@@ -97,3 +99,73 @@ namespace m2
   // }
 
 } // namespace m2
+
+bool m2::IntervalVector::SetFeature(const std::string &name, const std::vector<double> &values)
+{
+  if (name.empty())
+  {
+    MITK_WARN << "A feature needs a name; nothing was attached.";
+    return false;
+  }
+
+  if (values.size() != m_Data.size())
+  {
+    MITK_WARN << "The feature [" << name << "] carries " << values.size() << " values but there are " << m_Data.size()
+              << " intervals; nothing was attached.";
+    return false;
+  }
+
+  for (size_t i = 0; i < m_Data.size(); ++i)
+    m_Data[i].SetFeature(name, values[i]);
+
+  // the name is registered once, so that attaching a feature again keeps its place in the order
+  if (std::find(m_FeatureNames.begin(), m_FeatureNames.end(), name) == m_FeatureNames.end())
+    m_FeatureNames.push_back(name);
+
+  this->Modified();
+
+  return true;
+}
+
+std::vector<double> m2::IntervalVector::GetFeature(const std::string &name, double fallback) const
+{
+  if (!this->HasFeature(name))
+    return {};
+
+  std::vector<double> values;
+  values.reserve(m_Data.size());
+  for (const auto &interval : m_Data)
+    values.push_back(interval.GetFeature(name, fallback));
+
+  return values;
+}
+
+bool m2::IntervalVector::HasFeature(const std::string &name) const
+{
+  return std::find(m_FeatureNames.begin(), m_FeatureNames.end(), name) != m_FeatureNames.end();
+}
+
+void m2::IntervalVector::RemoveFeature(const std::string &name)
+{
+  const auto it = std::find(m_FeatureNames.begin(), m_FeatureNames.end(), name);
+  if (it == m_FeatureNames.end())
+    return;
+
+  m_FeatureNames.erase(it);
+  for (auto &interval : m_Data)
+    interval.features.erase(name);
+
+  this->Modified();
+}
+
+void m2::IntervalVector::ClearFeatures()
+{
+  if (m_FeatureNames.empty())
+    return;
+
+  m_FeatureNames.clear();
+  for (auto &interval : m_Data)
+    interval.features.clear();
+
+  this->Modified();
+}

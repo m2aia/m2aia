@@ -48,6 +48,16 @@
     </layout>
    </item>
    <item>
+    <widget class="QCheckBox" name="checkPublishLoadings">
+     <property name="toolTip">
+      <string>Attaches one value per centroid and component to the selected peak list, so that the feature list view can show what every centroid contributes to every component of every run side by side. Only methods that express their components over the peaks have loadings; t-SNE and k-means do not.</string>
+     </property>
+     <property name="text">
+      <string>Attach component loadings to the peak list</string>
+     </property>
+    </widget>
+   </item>
+   <item>
     <widget class="QTabWidget" name="TabWidget">
      <property name="enabled">
       <bool>true</bool>
@@ -322,7 +332,337 @@
        </item>
       </layout>
      </widget>
+     <widget class="QWidget" name="tabNMF">
+      <attribute name="title">
+       <string>NMF</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_tabNMF">
+       <item>
+        <widget class="QLabel" name="label_tabNMF">
+         <property name="text">
+          <string>Factorize the data of each selected image into non-negative components. Unlike PCA the components add up instead of cancelling out, so each of them reads as a spectral signature with its own distribution over the image.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="gridNMF">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_nmf_components">
+           <property name="text">
+            <string>Components</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="nmf_components">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>50</number>
+           </property>
+           <property name="value">
+            <number>5</number>
+           </property>
+           <property name="toolTip">
+            <string>Number of non-negative components to factorize the data into.</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_nmf_iterations">
+           <property name="text">
+            <string>Iterations</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="nmf_iterations">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+           <property name="value">
+            <number>200</number>
+           </property>
+           <property name="toolTip">
+            <string>Upper bound on the multiplicative update steps.</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_nmf_tolerance">
+           <property name="text">
+            <string>Tolerance</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QDoubleSpinBox" name="nmf_tolerance">
+           <property name="decimals">
+            <number>6</number>
+           </property>
+           <property name="maximum">
+            <double>1.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.000100000000000</double>
+           </property>
+           <property name="value">
+            <double>0.000100000000000</double>
+           </property>
+           <property name="toolTip">
+            <string>The factorization stops early once the residual improves by less than this.</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QCommandLinkButton" name="btnRunNMF">
+         <property name="text">
+          <string>Get NMF</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_nmf">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabICA">
+      <attribute name="title">
+       <string>ICA</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_tabICA">
+       <item>
+        <widget class="QLabel" name="label_tabICA">
+         <property name="text">
+          <string>Separate the data of each selected image into statistically independent components. Where PCA looks for the directions of largest variance, ICA looks for the ones that are least Gaussian, which separates signals that overlap in the image. The components come out unordered.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="gridICA">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_ica_components">
+           <property name="text">
+            <string>Components</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="ica_components">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>50</number>
+           </property>
+           <property name="value">
+            <number>3</number>
+           </property>
+           <property name="toolTip">
+            <string>Number of independent components; this also sets how much variance the whitening keeps.</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0">
+          <widget class="QLabel" name="label_ica_iterations">
+           <property name="text">
+            <string>Iterations</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="1">
+          <widget class="QSpinBox" name="ica_iterations">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>10000</number>
+           </property>
+           <property name="value">
+            <number>200</number>
+           </property>
+           <property name="toolTip">
+            <string>Upper bound on the fixed point steps.</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="label_ica_tolerance">
+           <property name="text">
+            <string>Tolerance</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QDoubleSpinBox" name="ica_tolerance">
+           <property name="decimals">
+            <number>6</number>
+           </property>
+           <property name="maximum">
+            <double>1.000000000000000</double>
+           </property>
+           <property name="singleStep">
+            <double>0.000100000000000</double>
+           </property>
+           <property name="value">
+            <double>0.000100000000000</double>
+           </property>
+           <property name="toolTip">
+            <string>The iteration stops once no component turns by more than this.</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QCommandLinkButton" name="btnRunICA">
+         <property name="text">
+          <string>Get ICA</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_ica">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="tabPLSDA">
+      <attribute name="title">
+       <string>PLS-DA</string>
+      </attribute>
+      <layout class="QVBoxLayout" name="verticalLayout_tabPLSDA">
+       <item>
+        <widget class="QLabel" name="label_tabPLSDA">
+         <property name="text">
+          <string>Find the peaks that tell the labelled regions apart. Unlike the other methods this one is supervised: every label value of the selected mask is a class, the label value 0 is background, and at least two classes are needed. The component loadings are the ranked answer to which peaks separate the classes.</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <layout class="QGridLayout" name="gridPLSDA">
+         <item row="0" column="0">
+          <widget class="QLabel" name="label_plsda_components">
+           <property name="text">
+            <string>Components</string>
+           </property>
+          </widget>
+         </item>
+         <item row="0" column="1">
+          <widget class="QSpinBox" name="plsda_components">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>50</number>
+           </property>
+           <property name="value">
+            <number>3</number>
+           </property>
+           <property name="toolTip">
+            <string>Number of components that separate the classes. Rarely more than a few are useful.</string>
+           </property>
+          </widget>
+         </item>
+         <item row="1" column="0" colspan="2">
+          <widget class="QCheckBox" name="plsda_autoscale">
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+           <property name="toolTip">
+            <string>Divides every peak by its standard deviation, so that a weak peak can separate the classes as well as a strong one. Switching it off lets the intensity of a peak decide how much it can contribute.</string>
+           </property>
+           <property name="text">
+            <string>Auto-scale peaks to unit variance</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QCommandLinkButton" name="btnRunPLSDA">
+         <property name="text">
+          <string>Get PLS-DA</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_plsda">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+      </layout>
+     </widget>
     </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_progress">
+     <item>
+      <widget class="QLabel" name="labelMethodStatus">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="wordWrap">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnCancelMethod">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="toolTip">
+        <string>Stops the running method; the result computed so far is discarded.</string>
+       </property>
+       <property name="text">
+        <string>Cancel</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item>
     <widget class="QCommandLinkButton" name="btnSaveDataCompressionResults">

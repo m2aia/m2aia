@@ -16,112 +16,77 @@ See LICENSE.txt for details.
 
 #pragma once
 
-#include <itkObject.h>
 #include <M2aiaDimensionReductionExports.h>
-#include <m2IntervalVector.h>
-#include <mitkLabelSetImage.h>
-#include <m2ImzMLSpectrumImage.h>
+#include <m2EmbeddingFilterBase.h>
 
-
-// Eigen
-// #include <itkeigen/Eigen/Dense>
-
-namespace m2 {
-
-// Define distance metric types
-enum class DistanceMetric {
+namespace m2
+{
+  /** How the distance between a pixel and a cluster centroid is measured. */
+  enum class DistanceMetric
+  {
     EUCLIDEAN,
     CORRELATION,
     COSINE
-};
+  };
 
-// Define clustering algorithm types
-enum class KMeansVariant {
-    STANDARD,         // Traditional k-means
-    SPATIAL,          // Spatial k-means (incorporates pixel coordinates)
-};
+  /** Which features the clustering runs on. */
+  enum class KMeansVariant
+  {
+    STANDARD, // the peak intensities alone
+    SPATIAL   // the peak intensities together with the position of the pixel
+  };
 
-class M2AIADIMENSIONREDUCTION_EXPORT KMeansImageFilter : public itk::Object
-{
+  /** K-means over the pixels of a m2::SpectralFeatureMatrix.
 
-private:
-    // Input and output images
-    std::map<int, mitk::Image::Pointer> m_Outputs;
-    std::map<int, mitk::Image::Pointer> m_Inputs;
-
-    // optional mask per input; if none is set the segmentation of the input image is used
-    std::map<int, mitk::Image::Pointer> m_Masks;
-
-    // stores for each input the valid indices (masked pixels are valid)
-    std::map<int, std::vector<itk::Index<3>>> m_ValidIndicesMap;
-
-    double m_ShrinkageFactor = 0.1;
-    double m_SpatialWeight = 0.5;  // Weight for spatial component (0-1)
-    DistanceMetric m_DistanceMetric = DistanceMetric::EUCLIDEAN;
-    KMeansVariant m_KMeansVariant = KMeansVariant::STANDARD;
-
-public:
-    mitkClassMacroItkParent(KMeansImageFilter, itk::Object);
+      Unlike the embedding methods this produces a cluster assignment, so the result is published
+      as a segmentation. All images of the feature matrix are clustered together, which is what
+      makes the clusters comparable between them. */
+  class M2AIADIMENSIONREDUCTION_EXPORT KMeansImageFilter : public m2::EmbeddingFilterBase
+  {
+  public:
+    mitkClassMacro(KMeansImageFilter, m2::EmbeddingFilterBase);
     itkFactorylessNewMacro(Self);
     itkCloneMacro(Self);
-    typedef mitk::Image OutputType;
+
+    std::string GetMethodName() const override { return "KMeans"; }
+    bool ProducesLabels() const override { return true; }
 
     itkSetMacro(NumberOfClusters, unsigned int);
     itkGetMacro(NumberOfClusters, unsigned int);
-    itkSetMacro(ShrinkageFactor, double);
-    itkGetMacro(ShrinkageFactor, double);
+
     itkSetMacro(SpatialWeight, double);
     itkGetMacro(SpatialWeight, double);
-    
+
+    itkSetMacro(MaximumIterations, unsigned int);
+    itkGetMacro(MaximumIterations, unsigned int);
+
     void SetDistanceMetric(DistanceMetric metric) { m_DistanceMetric = metric; }
     DistanceMetric GetDistanceMetric() const { return m_DistanceMetric; }
-    
+
     void SetKMeansVariant(KMeansVariant variant) { m_KMeansVariant = variant; }
     KMeansVariant GetKMeansVariant() const { return m_KMeansVariant; }
 
-    void GenerateData();
-    
-    void SetInput(m2::SpectrumImage::Pointer image, int idx = 0)
-    {
-        m_Inputs[idx] = image;
-    }
+    /** The centroids of the last run, restricted to their spectral part. */
+    const std::vector<Eigen::VectorXd> &GetCentroids() const { return m_Centroids; }
 
-    /** Restricts the input with the given id to the non-zero pixels of the mask.
-        Without a mask the segmentation of the input image is used. */
-    void SetMaskImage(mitk::Image::Pointer mask, int idx = 0)
-    {
-        m_Masks[idx] = mask;
-    }
-    
-    void SetIntervals(std::vector<m2::Interval> intervals){
-        m_Intervals = intervals;
-    }
-    
-    mitk::Image::Pointer GetOutput(int idx)
-    {
-        if(m_Outputs.find(idx) == m_Outputs.end())
-        {
-            m_Outputs[idx] = mitk::Image::New();
-        }
-        return dynamic_cast<mitk::Image*>(m_Outputs[idx].GetPointer());
-    }
- 
-private:
+  protected:
+    KMeansImageFilter() = default;
+    ~KMeansImageFilter() override = default;
 
-    void DoSpatialKMeans(const Eigen::MatrixXd& data, 
-                        const std::vector<itk::Index<3>>& spatialCoordinates,
-                        int k, 
-                        std::vector<int>& clusterAssignments);
-    
-    /** Mask of the input with the given id, falling back to the segmentation of that input image. */
-    mitk::Image::Pointer GetMaskImage(int imageId) const;
+    void ComputeEmbedding() override;
 
-    double ComputeDistance(const Eigen::VectorXd& point1, const Eigen::VectorXd& point2) const;
-    double ComputeSpatialDistance(const itk::Index<3>& coord1, const itk::Index<3>& coord2) const;
-    
-    std::vector<m2::Interval> m_Intervals;
+  private:
+    /** Runs k-means on the peak intensities, extended by the scaled pixel position when the
+        spatial variant is selected. */
+    void DoKMeans(const Eigen::MatrixXd &data, const std::vector<itk::Index<3>> &spatialCoordinates);
+
+    double ComputeDistance(const Eigen::VectorXd &point1, const Eigen::VectorXd &point2) const;
+
     unsigned int m_NumberOfClusters = 0;
+    unsigned int m_MaximumIterations = 100;
+    double m_SpatialWeight = 0.5;
+    DistanceMetric m_DistanceMetric = DistanceMetric::EUCLIDEAN;
+    KMeansVariant m_KMeansVariant = KMeansVariant::STANDARD;
     std::vector<Eigen::VectorXd> m_Centroids;
-};
-
-} // end namespace m2
+  };
+} // namespace m2
