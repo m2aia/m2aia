@@ -5,6 +5,7 @@ set(SRC_CPP_FILES
 set(INTERNAL_CPP_FILES
   org_mitk_gui_qt_m2_featurelists_Activator.cpp
   m2FeatureListsView.cpp
+  m2LoadingsWidget.cpp
 )
 
 set(UI_FILES
@@ -14,6 +15,7 @@ set(UI_FILES
 set(MOC_H_FILES
   src/internal/org_mitk_gui_qt_m2_featurelists_Activator.h
   src/internal/m2FeatureListsView.h
+  src/internal/m2LoadingsWidget.h
 )
 
 set(CACHED_RESOURCE_FILES

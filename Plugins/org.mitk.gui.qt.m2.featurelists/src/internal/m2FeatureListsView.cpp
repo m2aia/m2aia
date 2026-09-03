@@ -15,6 +15,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 ===================================================================*/
 
 #include "m2FeatureListsView.h"
+#include "m2LoadingsWidget.h"
 
 #include <QAction>
 #include <QColorDialog>
@@ -30,8 +31,11 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkIOUtil.h>
 #include <m2UIUtils.h>
 
+#include <itkCommand.h>
 #include <itksys/Directory.hxx>
 #include <itksys/SystemTools.hxx>
+
+#include <algorithm>
 
 #include <fstream>
 #include <limits>
@@ -55,6 +59,21 @@ enum Columns
   COL_COUNT
 };
 
+namespace
+{
+  /// Labels of the columns that every interval has, in the order of the Columns enum.
+  QStringList FixedHeaderLabels()
+  {
+    return {"Node", "#", "m/z (mean)", "m/z (min)", "m/z (max)", "Intensity (mean)", "Description", "Color",
+            "CCS range"};
+  }
+} // namespace
+
+m2FeatureListsView::~m2FeatureListsView()
+{
+  DetachModifiedObservers();
+}
+
 void m2FeatureListsView::CreateQtPartControl(QWidget *parent)
 {
   auto *layout = new QVBoxLayout(parent);
@@ -66,8 +85,7 @@ void m2FeatureListsView::CreateQtPartControl(QWidget *parent)
   layout->addWidget(m_InfoLabel);
 
   m_Table = new QTableWidget(0, COL_COUNT, parent);
-  m_Table->setHorizontalHeaderLabels(
-    {"Node", "#", "m/z (mean)", "m/z (min)", "m/z (max)", "Intensity (mean)", "Description", "Color", "CCS range"});
+  m_Table->setHorizontalHeaderLabels(FixedHeaderLabels());
   m_Table->horizontalHeader()->setStretchLastSection(false);
   m_Table->horizontalHeader()->setSectionResizeMode(COL_NODE, QHeaderView::ResizeToContents);
   m_Table->horizontalHeader()->setSectionResizeMode(COL_INDEX, QHeaderView::ResizeToContents);
@@ -112,10 +130,196 @@ void m2FeatureListsView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*sou
     PopulateTable(nodes);
 }
 
+void m2FeatureListsView::NodeRemoved(const mitk::DataNode *node)
+{
+  const auto shown = std::any_of(m_DisplayedNodes.begin(),
+                                 m_DisplayedNodes.end(),
+                                 [node](const mitk::DataNode::Pointer &candidate)
+                                 { return candidate.GetPointer() == node; });
+  if (!shown)
+    return;
+
+  // the observers have to go before the node does, and the table must not keep showing its rows
+  auto remaining = m_DisplayedNodes;
+  remaining.erase(std::remove_if(remaining.begin(),
+                                 remaining.end(),
+                                 [node](const mitk::DataNode::Pointer &candidate)
+                                 { return candidate.GetPointer() == node; }),
+                  remaining.end());
+
+  PopulateTable(remaining);
+}
+
+QString m2FeatureListsView::GroupOfFeature(const QString &featureName)
+{
+  // the analyses name their features "<image>.<method>.c<number>"; everything before the
+  // component is what the column stands for. A name that does not follow that shape is its own
+  // group, so a feature from anywhere else still gets shown.
+  const auto separator = featureName.lastIndexOf(QLatin1Char('.'));
+  if (separator <= 0)
+    return featureName;
+
+  const auto component = featureName.mid(separator + 1);
+  if (component.size() < 2 || component[0] != QLatin1Char('c'))
+    return featureName;
+
+  bool isNumber = false;
+  component.mid(1).toInt(&isNumber);
+
+  return isNumber ? featureName.left(separator) : featureName;
+}
+
+QString m2FeatureListsView::MethodOfGroup(const QString &groupName)
+{
+  const auto separator = groupName.lastIndexOf(QLatin1Char('.'));
+
+  return separator < 0 ? groupName : groupName.mid(separator + 1);
+}
+
+std::vector<m2FeatureListsView::LoadingGroup> m2FeatureListsView::CollectLoadingGroups(
+  const QList<mitk::DataNode::Pointer> &nodes) const
+{
+  std::vector<LoadingGroup> groups;
+
+  const auto groupIndex = [&groups](const QString &name) -> size_t
+  {
+    for (size_t i = 0; i < groups.size(); ++i)
+      if (groups[i].name == name)
+        return i;
+
+    // the method decides the colours, so that the same method is drawn the same way everywhere
+    const auto method = MethodOfGroup(name);
+    groups.push_back({name, method, {}, {}, m2LoadingsWidget::ColorTableForMethod(method)});
+    return groups.size() - 1;
+  };
+
+  for (const auto &node : nodes)
+  {
+    if (node.IsNull())
+      continue;
+
+    auto *iv = dynamic_cast<m2::IntervalVector *>(node->GetData());
+    if (!iv)
+      continue;
+
+    // several nodes may carry the same analysis, and then they share its column
+    for (const auto &name : iv->GetFeatureNames())
+    {
+      const auto feature = QString::fromStdString(name);
+      auto &group = groups[groupIndex(GroupOfFeature(feature))];
+      if (!group.features.contains(feature))
+        group.features.append(feature);
+    }
+  }
+
+  // the scale of a component is the largest absolute value it reaches anywhere in the table
+  for (auto &group : groups)
+  {
+    group.scales.assign(static_cast<size_t>(group.features.size()), 0.0);
+
+    for (const auto &node : nodes)
+    {
+      if (node.IsNull())
+        continue;
+
+      auto *iv = dynamic_cast<m2::IntervalVector *>(node->GetData());
+      if (!iv)
+        continue;
+
+      for (const auto &interval : iv->GetIntervals())
+        for (int f = 0; f < group.features.size(); ++f)
+        {
+          const auto name = group.features[f].toStdString();
+          if (interval.HasFeature(name))
+            group.scales[static_cast<size_t>(f)] =
+              std::max(group.scales[static_cast<size_t>(f)], std::abs(interval.GetFeature(name)));
+        }
+    }
+
+    // a component that is zero everywhere would divide by zero; it simply stays flat
+    for (auto &scale : group.scales)
+      if (scale <= 0.0)
+        scale = 1.0;
+  }
+
+  return groups;
+}
+
+void m2FeatureListsView::AttachModifiedObservers()
+{
+  DetachModifiedObservers();
+
+  for (const auto &node : m_DisplayedNodes)
+  {
+    if (node.IsNull())
+      continue;
+
+    auto *iv = dynamic_cast<m2::IntervalVector *>(node->GetData());
+    if (!iv)
+      continue;
+
+    auto command = itk::SimpleMemberCommand<m2FeatureListsView>::New();
+    command->SetCallbackFunction(this, &m2FeatureListsView::OnObservedDataModified);
+    const auto tag = iv->AddObserver(itk::ModifiedEvent(), command);
+
+    // the smart pointer keeps the object alive until the observer has been removed again
+    m_ModifiedObservers.emplace_back(iv, tag);
+  }
+}
+
+void m2FeatureListsView::DetachModifiedObservers()
+{
+  for (auto &observed : m_ModifiedObservers)
+    if (observed.first.IsNotNull())
+      observed.first->RemoveObserver(observed.second);
+
+  m_ModifiedObservers.clear();
+}
+
+void m2FeatureListsView::OnObservedDataModified()
+{
+  // one analysis attaches its components one after another, so the rebuilds are collapsed into
+  // one; the change may come from any thread, so it is handed to the GUI thread
+  if (m_RebuildPending.exchange(true))
+    return;
+
+  QMetaObject::invokeMethod(this, "OnDisplayedDataModified", Qt::QueuedConnection);
+}
+
+void m2FeatureListsView::OnDisplayedDataModified()
+{
+  m_RebuildPending = false;
+
+  if (m_Populating)
+    return;
+
+  PopulateTable(m_DisplayedNodes);
+}
+
 void m2FeatureListsView::PopulateTable(const QList<mitk::DataNode::Pointer> &nodes)
 {
+  m_Populating = true;
+
+  m_DisplayedNodes = nodes;
+  // one column per analysis, each holding the components of that analysis in one cell
+  m_LoadingGroups = CollectLoadingGroups(nodes);
+
   m_Table->blockSignals(true);
+  // removing the rows also deletes the cell widgets of the previous contents
   m_Table->setRowCount(0);
+  m_Table->setColumnCount(COL_COUNT + static_cast<int>(m_LoadingGroups.size()));
+
+  QStringList headerLabels = FixedHeaderLabels();
+  for (const auto &group : m_LoadingGroups)
+    headerLabels.append(group.name);
+  m_Table->setHorizontalHeaderLabels(headerLabels);
+
+  for (size_t g = 0; g < m_LoadingGroups.size(); ++g)
+  {
+    const int column = COL_COUNT + static_cast<int>(g);
+    m_Table->horizontalHeader()->setSectionResizeMode(column, QHeaderView::ResizeToContents);
+    m_Table->setColumnHidden(column, false);
+  }
 
   int totalIntervals = 0;
 
@@ -180,6 +384,41 @@ void m2FeatureListsView::PopulateTable(const QList<mitk::DataNode::Pointer> &nod
       }
       m_Table->setItem(row, COL_COLOR, colorItem);
 
+      // the loadings of this centroid, one miniature plot per analysis
+      for (size_t g = 0; g < m_LoadingGroups.size(); ++g)
+      {
+        const auto &group = m_LoadingGroups[g];
+
+        std::vector<m2LoadingsWidget::Entry> entries;
+        entries.reserve(static_cast<size_t>(group.features.size()));
+
+        bool anyValue = false;
+        for (int f = 0; f < group.features.size(); ++f)
+        {
+          m2LoadingsWidget::Entry entry;
+          entry.name = group.features[f];
+          entry.scale = group.scales[static_cast<size_t>(f)];
+          entry.valid = interval.HasFeature(entry.name.toStdString());
+          if (entry.valid)
+          {
+            entry.value = interval.GetFeature(entry.name.toStdString());
+            anyValue = true;
+          }
+          entries.push_back(entry);
+        }
+
+        // a centroid of another node, which this analysis never described, keeps an empty cell
+        // rather than an empty plot
+        if (!anyValue)
+          continue;
+
+        auto *loadings = new m2LoadingsWidget(m_Table);
+        loadings->SetColorTable(group.colors);
+        loadings->SetEntries(std::move(entries));
+        // the table takes ownership and deletes the widget with its row
+        m_Table->setCellWidget(row, COL_COUNT + static_cast<int>(g), loadings);
+      }
+
       ++totalIntervals;
     }
   }
@@ -190,13 +429,23 @@ void m2FeatureListsView::PopulateTable(const QList<mitk::DataNode::Pointer> &nod
   {
     if (totalIntervals == 0)
       m_InfoLabel->setText("Select IntervalVector nodes in the Data Manager.");
-    else
+    else if (m_LoadingGroups.empty())
       m_InfoLabel->setText(QString("%1 interval(s) from %2 node(s).")
                              .arg(totalIntervals)
                              .arg(nodes.size()));
+    else
+      m_InfoLabel->setText(QString("%1 interval(s) from %2 node(s), loadings of %3 analysis/analyses.")
+                             .arg(totalIntervals)
+                             .arg(nodes.size())
+                             .arg(static_cast<int>(m_LoadingGroups.size())));
   }
 
   ScanFeatureNrrdFolder(nodes);
+
+  // the table follows the vectors it shows from here on
+  AttachModifiedObservers();
+
+  m_Populating = false;
 }
 
 void m2FeatureListsView::ScanFeatureNrrdFolder(const QList<mitk::DataNode::Pointer> &nodes)
@@ -444,6 +693,20 @@ void m2FeatureListsView::OnHeaderContextMenu(const QPoint &pos)
     act->setCheckable(true);
     act->setChecked(!m_Table->isColumnHidden(t.col));
     act->setData(t.col);
+  }
+
+  // the loadings columns depend on the shown data, so they are listed as they are
+  if (!m_LoadingGroups.empty())
+  {
+    menu.addSeparator();
+    for (size_t g = 0; g < m_LoadingGroups.size(); ++g)
+    {
+      const int column = COL_COUNT + static_cast<int>(g);
+      auto *act = menu.addAction(m_LoadingGroups[g].name);
+      act->setCheckable(true);
+      act->setChecked(!m_Table->isColumnHidden(column));
+      act->setData(column);
+    }
   }
 
   QAction *triggered = menu.exec(m_Table->horizontalHeader()->mapToGlobal(pos));
