@@ -1457,7 +1457,7 @@ void m2DataView::SpectrumImageNodeAdded(const mitk::DataNode *node)
       inputLocation = dataPathProp->GetValueAsString();
     
 
-    MITK_INFO << "[m2DataView::SpectrumImageNodeAdded] " << node->GetName() << " from " << inputLocation; 
+    // MITK_INFO << "[m2DataView::SpectrumImageNodeAdded] " << node->GetName() << " from " << inputLocation; 
 
     auto interactor = m2::SpectrumImageDataInteractor::New();
     interactor->LoadStateMachine("PointSet.xml");
