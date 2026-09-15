@@ -623,10 +623,10 @@ void m2::ImzMLSpectrumImageSource<MassAxisType, IntensityType>::InitializeGeomet
       MITK_WARN << "Invalid direction matrix metadata. Falling back to identity direction.";
   }
 
-  MITK_INFO << "Direction matrix:" << std::endl
-            << d[0][0] << " " << d[0][1] << " " << d[0][2] << std::endl
-            << d[1][0] << " " << d[1][1] << " " << d[1][2] << std::endl
-            << d[2][0] << " " << d[2][1] << " " << d[2][2];
+  // MITK_INFO << "Direction matrix:" << std::endl
+  //           << d[0][0] << " " << d[0][1] << " " << d[0][2] << std::endl
+  //           << d[1][0] << " " << d[1][1] << " " << d[1][2] << std::endl
+  //           << d[2][0] << " " << d[2][1] << " " << d[2][2];
 
   itkIonImage->SetSpacing(s);
   itkIonImage->SetOrigin(o);

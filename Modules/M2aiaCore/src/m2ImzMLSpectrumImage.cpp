@@ -183,7 +183,7 @@ void m2::ImzMLSpectrumImage::InitializeImageAccess()
 
 
 void m2::ImzMLSpectrumImage::InitializeNormalizationImage(m2::NormalizationStrategyType type){
-  MITK_INFO("ImzMLSpectrumImage::InitializeNormalizationImage") << "type=" << m2::to_string(type);
+  // MITK_INFO("ImzMLSpectrumImage::InitializeNormalizationImage") << "type=" << m2::to_string(type);
 
   if (m_SpectrumImageSource)
     m_SpectrumImageSource->InitializeNormalizationImage(type);

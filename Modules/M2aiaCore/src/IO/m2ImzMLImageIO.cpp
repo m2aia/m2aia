@@ -454,7 +454,7 @@ namespace m2
         verboseOutput = preferences->GetBool("m2aia.spectrumimage.verbose_output", false);
     object->SetVerboseOutput(verboseOutput);
 
-    auto filename = itksys::SystemTools::GetFilenameWithoutExtension(GetInputLocation());
+    auto filename = itksys::SystemTools::GetFilenameWithoutLastExtension(GetInputLocation());
     auto parentDir = itksys::SystemTools::GetParentDirectory(GetInputLocation());
 
 
