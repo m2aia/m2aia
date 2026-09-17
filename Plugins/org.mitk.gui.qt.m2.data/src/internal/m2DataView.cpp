@@ -40,6 +40,7 @@ See LICENSE.txt for details.
 #include <m2SpectrumImageDataInteractor.h>
 #include <m2SpectrumImageStack.h>
 #include <m2SubdivideImage2DFilter.h>
+#include <QSignalBlocker>
 #include <m2UIUtils.h>
 #include <mitkColorProperty.h>
 #include <mitkCoreServices.h>
@@ -247,9 +248,7 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
           this,
           [this](float x, float &tol)
           {
-            tol = m_Controls.spnBxTol->value();
-            if (m_Controls.rbtnTolPPM->isChecked())
-              tol = m2::PartPerMillionToFactor(tol) * x;
+            tol = GuiToTolerance().HalfWidth(x);
           });
 
   // Imaging controls
@@ -267,8 +266,16 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
           this,
           [this, preferences, UpdateNodeSettings](int)
           {
-            auto value = m_Controls.spnBxTol->value();
-            preferences->PutFloat("m2aia.signal.Tolerance", value);
+            m2::TolerancePreferences::Store(preferences, GuiToTolerance());
+            UpdateNodeSettings();
+          });
+
+  connect(m_Controls.rbtnTolPPM,
+          &QRadioButton::toggled,
+          this,
+          [this, preferences, UpdateNodeSettings](bool)
+          {
+            m2::TolerancePreferences::Store(preferences, GuiToTolerance());
             UpdateNodeSettings();
           });
 
@@ -333,7 +340,7 @@ void m2DataView::CreateQtPartControl(QWidget *parent)
           });
 
   // default values
-  m_Controls.spnBxTol->setValue(preferences->GetFloat("m2aia.signal.Tolerance", 75));
+  InitToleranceControls();
 
   m_Controls.CBNormalization->setCurrentIndex(
     preferences->GetInt("m2aia.signal.NormalizationStrategy", to_underlying(m2::NormalizationStrategyType::None)));
@@ -436,8 +443,21 @@ void m2DataView::InitToleranceControls()
 {
   auto *preferencesService = mitk::CoreServices::GetPreferencesService();
   auto *preferences = preferencesService->GetSystemPreferences();
-  auto defaultValue = preferences->GetFloat("m2aia.signal.Tolerance", 75.0);
-  m_Controls.spnBxTol->setValue(defaultValue);
+  const auto tolerance = m2::TolerancePreferences::Load(preferences);
+
+  // set value and unit together without storing the half-updated state in between
+  QSignalBlocker blockValue(m_Controls.spnBxTol);
+  QSignalBlocker blockPpm(m_Controls.rbtnTolPPM);
+  QSignalBlocker blockDa(m_Controls.rbtnTolDa);
+  m_Controls.spnBxTol->setValue(tolerance.GetValue());
+  m_Controls.rbtnTolPPM->setChecked(tolerance.GetUnit() == m2::ToleranceUnit::PPM);
+  m_Controls.rbtnTolDa->setChecked(tolerance.GetUnit() == m2::ToleranceUnit::Dalton);
+}
+
+m2::Tolerance m2DataView::GuiToTolerance() const
+{
+  const auto unit = m_Controls.rbtnTolPPM->isChecked() ? m2::ToleranceUnit::PPM : m2::ToleranceUnit::Dalton;
+  return m2::Tolerance(m_Controls.spnBxTol->value(), unit);
 }
 
 void m2DataView::InitNormalizationControls()
@@ -667,9 +687,7 @@ void m2DataView::OnIncreaseTolerance()
 void m2DataView::OnCreateNextImage()
 {
   auto center = GetCurrentMzCenter();
-  auto offset = m_Controls.spnBxTol->value();
-  if (m_Controls.rbtnTolPPM->isChecked())
-    offset = m2::PartPerMillionToFactor(offset) * .5 * center;
+  const auto offset = GuiToTolerance().HalfWidth(center);
 
   double candidate = center + offset;
 
@@ -704,9 +722,7 @@ void m2DataView::OnCreateNextImage()
 void m2DataView::OnCreatePrevImage()
 {
   auto center = GetCurrentMzCenter();
-  auto offset = m_Controls.spnBxTol->value();
-  if (m_Controls.rbtnTolPPM->isChecked())
-    offset = m2::PartPerMillionToFactor(offset) * .5 * center;
+  const auto offset = GuiToTolerance().HalfWidth(center);
 
   double candidate = center - offset;
 
@@ -744,9 +760,7 @@ void m2DataView::OnCreateNextPeakImage()
   auto processableNodes = GetDataStorage()->GetSubset(predicate)->CastToSTLConstContainer();
 
   auto center = GetCurrentMzCenter();
-  auto tolerance = m_Controls.spnBxTol->value();
-  if (m_Controls.rbtnTolPPM->isChecked())
-    tolerance = m2::PartPerMillionToFactor(tolerance) * .5 * center;
+  const auto tolerance = GuiToTolerance().HalfWidth(center);
 
   // Helper: collect the nearest peak strictly beyond 'threshold' across all centroid vectors.
   const auto collectNext = [&processableNodes](double threshold) -> std::vector<m2::Interval>
@@ -801,9 +815,7 @@ void m2DataView::OnCreatePrevPeakImage()
   auto processableNodes = GetDataStorage()->GetSubset(predicate)->CastToSTLConstContainer();
 
   auto center = GetCurrentMzCenter();
-  auto tolerance = m_Controls.spnBxTol->value();
-  if (m_Controls.rbtnTolPPM->isChecked())
-    tolerance = m2::PartPerMillionToFactor(tolerance) * .5 * center;
+  const auto tolerance = GuiToTolerance().HalfWidth(center);
 
   // Helper: collect the nearest peak strictly before 'threshold' across all centroid vectors.
   const auto collectPrev = [&processableNodes](double threshold) -> std::vector<m2::Interval>
@@ -876,7 +888,7 @@ void m2DataView::ApplySettingsToImage(m2::SpectrumImage *data)
 
     data->SetSmoothingHalfWindowSize(m_Controls.spnBxSmoothing->value());
     data->SetBaseLineCorrectionHalfWindowSize(m_Controls.spnBxBaseline->value());
-    data->SetUseToleranceInPPM(m_Controls.rbtnTolPPM->isChecked());
+    data->SetTolerance(GuiToTolerance());
 
     // MIR-specific settings – only applied when the data is a SpectrumContainerImage
     // in MIR modality.  Other image types ignore these controls.
@@ -897,9 +909,7 @@ void m2DataView::OnGenerateImageData(mitk::DataNode::Pointer node,
   // tol < 0 indicates "use gui tol"
   if (xRangeTol < 0)
   {
-    xRangeTol = Controls()->spnBxTol->value();
-    bool isPpm = Controls()->rbtnTolPPM->isChecked();
-    xRangeTol = isPpm ? m2::PartPerMillionToFactor(xRangeTol) * xRangeCenter : xRangeTol;
+    xRangeTol = GuiToTolerance().HalfWidth(xRangeCenter);
   }
 
   if (emitRangeChanged)
@@ -1006,9 +1016,7 @@ void m2DataView::OnGenerateImageData(qreal xRangeCenter, qreal xRangeTol)
 
   if (xRangeTol < 0)
   {
-    xRangeTol = Controls()->spnBxTol->value();
-    bool isPpm = Controls()->rbtnTolPPM->isChecked();
-    xRangeTol = isPpm ? m2::PartPerMillionToFactor(xRangeTol) * xRangeCenter : xRangeTol;
+    xRangeTol = GuiToTolerance().HalfWidth(xRangeCenter);
   }
 
   emit m2::UIUtils::Instance() -> RangeChanged(xRangeCenter, xRangeTol);
@@ -1111,7 +1119,7 @@ void m2DataView::OnSelectionChanged(berry::IWorkbenchPart::Pointer /*part*/,
     auto node = nodes.front();
     if (auto image = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
-      QString labelText = str(boost::format("%.2f +/- %.2f Da") % image->GetCurrentX() % image->GetTolerance()).c_str();
+      QString labelText = str(boost::format("%.2f +/- %.2f Da") % image->GetCurrentX() % image->ApplyTolerance(image->GetCurrentX())).c_str();
 
       labelText += "\n";
       if (nodes.size() == 1)

@@ -22,6 +22,7 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkTextAnnotation2D.h>
 #include <mitkColorBarAnnotation.h>
 
+#include <m2Tolerance.h>
 #include <m2UIUtils.h>
 
 // #include <QThreadPool>
@@ -115,6 +116,7 @@ public slots:
   m2::ImageNormalizationStrategyType GuiToImageNormalizationStrategyType();
   m2::ImageSmoothingStrategyType GuiToImageSmoothingStrategyType();
   m2::MIRDerivativeType            GuiToMIRDerivativeType();
+  m2::Tolerance GuiToTolerance() const;
   
 
 signals:
