@@ -16,10 +16,13 @@ See LICENSE.txt for details.
 ===================================================================*/
 
 #pragma once
+#include <algorithm>
 #include <cassert>
 #include <functional>
 #include <thread>
 #include <vector>
+
+#include <mitkExceptionMacro.h>
 
 namespace m2
 {
@@ -30,34 +33,32 @@ namespace m2
       unsigned int T,
       const std::function<void(unsigned int threadId, unsigned int startIdx, unsigned int endIdx)> &worker)
     {
-      std::vector<std::thread> threads;
-      threads.clear();
-      unsigned int n = N / T;
-
+      // Validate before dividing (T == 0 used to be a division by zero).
       if (N < 1)
         mitkThrow() << "The number of input unit is < 1!";
 
       if (T < 1)
         mitkThrow() << "The number of threads is < 1!";
 
-      if (n == 0)
-      { // recursively reduce threads to get non-zero n
-        Map(N, T / 2, worker);
-      }
+      // Never start more workers than items: every worker gets a non-empty range
+      // and each index in [0, N) is handed to exactly one worker.
+      const unsigned int workers = static_cast<unsigned int>(std::min<unsigned long int>(N, T));
+      const unsigned long int n = N / workers; // >= 1
+      const unsigned long int r = N % workers;
 
       // start the workers
-      unsigned int r = N % T;
-      for (unsigned int t = 0; t < T; ++t)
+      std::vector<std::thread> threads;
+      threads.reserve(workers);
+      for (unsigned int t = 0; t < workers; ++t)
       {
-        if (t != (T - 1))
-          threads.emplace_back(std::thread(worker, t, t * n, (t + 1) * n));
-        else
-          threads.emplace_back(std::thread(worker, t, t * n, (t + 1) * n + r));
+        const unsigned long int start = t * n;
+        const unsigned long int end = (t + 1 == workers) ? (t + 1) * n + r : (t + 1) * n;
+        threads.emplace_back(worker, t, static_cast<unsigned int>(start), static_cast<unsigned int>(end));
       }
 
       // wait until the work is done
-      for (auto &t : threads)
-        t.join();
+      for (auto &thread : threads)
+        thread.join();
     }
 
     template <class ElementType, class BinaryReduceOperationFunctionType, class UnaryFinalizeOperationFunctionType>
