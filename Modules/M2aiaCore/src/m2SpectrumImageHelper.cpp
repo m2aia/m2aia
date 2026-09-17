@@ -98,8 +98,7 @@ std::vector<float> m2::SpectrumImageHelper::GetIntensityData(
   values.reserve(N * intervals.size());
   auto inserter = back_inserter(values);
   MITK_INFO << "Generate intensity values for #intervals (" << intervals.size()
-            << ") using interval centers and a tolerance of " << image->GetTolerance()
-            << " isUsingPPM=" << (image->GetUseToleranceInPPM() ? "True" : "False");
+            << ") using interval centers and a tolerance of " << m2::ToString(image->GetTolerance());
   for (const auto &p : intervals)
   {
     image->GetImage(p.x.mean(), image->ApplyTolerance(p.x.mean()), maskImage, tmpImage);

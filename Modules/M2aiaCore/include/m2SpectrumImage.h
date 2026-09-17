@@ -21,6 +21,7 @@ See LICENSE.txt for details.
 #include <m2ElxRegistrationHelper.h>
 #include <m2ISpectrumImageDataAccess.h>
 #include <m2SpectrumInfo.h>
+#include <m2Tolerance.h>
 #include <mitkImage.h>
 #include <mitkProperties.h>
 #include <random>
@@ -74,13 +75,18 @@ namespace m2
     itkSetMacro(SmoothingHalfWindowSize, unsigned int);
     itkGetConstReferenceMacro(SmoothingHalfWindowSize, unsigned int);
 
-    itkSetMacro(Tolerance, double);
-    itkGetConstReferenceMacro(Tolerance, double);
+    /// @brief Tolerance used by ApplyTolerance, e.g. m2::Tolerance::PPM(10) or m2::Tolerance::Dalton(0.01).
+    void SetTolerance(const m2::Tolerance &tolerance)
+    {
+      if (m_Tolerance != tolerance)
+      {
+        m_Tolerance = tolerance;
+        this->Modified();
+      }
+    }
+    const m2::Tolerance &GetTolerance() const { return m_Tolerance; }
 
     itkGetConstReferenceMacro(CurrentX, double);
-
-    itkSetMacro(UseToleranceInPPM, bool);
-    itkGetConstReferenceMacro(UseToleranceInPPM, bool);
 
     itkSetMacro(VerboseOutput, bool);
     itkGetConstReferenceMacro(VerboseOutput, bool);
@@ -189,6 +195,7 @@ namespace m2
 
     inline void SaveModeOn() const { this->m_InSaveMode = true; }
     inline void SaveModeOff() const { this->m_InSaveMode = false; }
+    /// @brief Absolute half-width of the tolerance window around xValue.
     double ApplyTolerance(double xValue) const;
 
     void SetElxRegistrationHelper(const std::shared_ptr<m2::ElxRegistrationHelper> &d) { m_ElxRegistrationHelper = d; }
@@ -199,13 +206,10 @@ namespace m2
 
   protected:
     bool mutable m_InSaveMode = false;
-    double m_Tolerance = 10;
+    m2::Tolerance m_Tolerance = m2::Tolerance::PPM(10);
     double m_BinningTolerance = 50;
     int m_NumberOfBins = 2000;
     double mutable m_CurrentX = -1;
-
-    /// @brief If true -
-    bool m_UseToleranceInPPM = true;
 
     /// @brief If true - verbose output is enabled for spectrum image handling
     bool m_VerboseOutput = true;

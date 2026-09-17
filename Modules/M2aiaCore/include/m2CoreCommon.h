@@ -171,7 +171,7 @@ namespace m2
   }
   inline double PartPerMillionToFactor(double x)
   {
-    return x * 10e-6;
+    return x * 1e-6;
   }
 
   //////////////////////////////////////////////////////////////////////

@@ -35,10 +35,7 @@ namespace m2
 
 double m2::SpectrumImage::ApplyTolerance(double xValue) const
 {
-  if (this->GetUseToleranceInPPM())
-    return m2::PartPerMillionToFactor(this->GetTolerance()) * xValue;
-  else
-    return this->GetTolerance();
+  return m_Tolerance.HalfWidth(xValue);
 }
 
 mitk::Image::Pointer m2::SpectrumImage::GetNormalizationImage()
