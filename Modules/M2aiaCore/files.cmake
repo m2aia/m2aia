@@ -1,5 +1,6 @@
 set(H_FILES 
   include/m2CoreCommon.h
+  include/m2Tolerance.h
   include/m2Process.hpp 
   include/m2SpectrumImageHelper.h
   include/m2SpectrumImageStack.h
@@ -46,6 +47,7 @@ set(H_FILES
 set(CPP_FILES
   m2CoreCommon.cpp
   m2SpectrumImage.cpp
+  m2Tolerance.cpp
   m2SpectrumImageHelper.cpp
   m2SpectrumImageStack.cpp
   m2CoreObjectFactory.cpp 

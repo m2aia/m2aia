@@ -119,14 +119,29 @@ extern "C"
     return xAxis.size();
   }
 
-  M2AIACORE_EXPORT float GetTolerance(m2::sys::ImageHandle *handle)
+  // unit: 0 = Da, 1 = ppm (m2::ToleranceUnit)
+  M2AIACORE_EXPORT double GetToleranceValue(m2::sys::ImageHandle *handle)
   {
-    return handle->Image->GetTolerance();
+    return handle->Image->GetTolerance().GetValue();
   }
 
-  M2AIACORE_EXPORT void SetTolerance(m2::sys::ImageHandle *handle, float tol)
+  M2AIACORE_EXPORT unsigned int GetToleranceUnit(m2::sys::ImageHandle *handle)
   {
-    handle->Image->SetTolerance(tol);
+    return static_cast<unsigned int>(handle->Image->GetTolerance().GetUnit());
+  }
+
+  // Returns false (and leaves the tolerance unchanged) if value or unit is invalid.
+  M2AIACORE_EXPORT bool SetToleranceWithUnit(m2::sys::ImageHandle *handle, double value, unsigned int unit)
+  {
+    try
+    {
+      handle->Image->SetTolerance(m2::Tolerance(value, static_cast<m2::ToleranceUnit>(unit)));
+      return true;
+    }
+    catch (const mitk::Exception &)
+    {
+      return false;
+    }
   }
 
   M2AIACORE_EXPORT unsigned int GetYDataTypeSizeInBytes(m2::sys::ImageHandle *handle)
