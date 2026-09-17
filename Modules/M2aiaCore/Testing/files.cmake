@@ -6,4 +6,5 @@ set(MODULE_TESTS
   m2SignalGroupBinningTest.cpp
   m2BaselineTest.cpp
   m2ProcessMapTest.cpp
+  m2ToleranceTest.cpp
 )
