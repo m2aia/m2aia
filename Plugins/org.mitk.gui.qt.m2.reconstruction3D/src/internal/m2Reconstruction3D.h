@@ -72,12 +72,17 @@ protected:
 
   DataTuple GetImageDataById(unsigned int id, QListWidget *listWidget);
 
-  std::shared_ptr<m2::ElxRegistrationHelper> RegistrationStep(unsigned int fixedId,
-                                                                      QListWidget *fixedSource,
-                                                                      std::shared_ptr<m2::ElxRegistrationHelper> fixedTransformer,
-                                                                      unsigned int movingId,
-                                                                      QListWidget *movingSource);
+  // Runs in the worker thread: must not access any widget or member state.
+  static std::shared_ptr<m2::ElxRegistrationHelper> RegistrationStep(
+    const DataTuple &fixedData,
+    std::shared_ptr<m2::ElxRegistrationHelper> fixedTransformer,
+    const DataTuple &movingData,
+    const std::vector<std::string> &parameters,
+    m2::NormalizationStrategyType normType);
   std::vector<std::string> GetParameters();
+
+  /// @brief Clears the image lists and references and re-enables the controls after a reconstruction run.
+  void ResetToInitialState();
 
   QListWidget *m_List1, *m_List2;
 

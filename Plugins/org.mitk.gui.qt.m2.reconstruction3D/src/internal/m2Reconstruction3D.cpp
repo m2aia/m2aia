@@ -154,21 +154,14 @@ m2Reconstruction3D::DataTuple m2Reconstruction3D::GetImageDataById(unsigned int 
 }
 
 std::shared_ptr<m2::ElxRegistrationHelper> m2Reconstruction3D::RegistrationStep(
-  unsigned int fixedId,
-  QListWidget *fixedSource,
+  const DataTuple &fixedData,
   std::shared_ptr<m2::ElxRegistrationHelper> fixedTransformer,
-  unsigned int movingId,
-  QListWidget *movingSource)
+  const DataTuple &movingData,
+  const std::vector<std::string> &parameters,
+  m2::NormalizationStrategyType normType)
 {
-  auto fixedData = GetImageDataById(fixedId, fixedSource);
-  auto movingData = GetImageDataById(movingId, movingSource);
-
   mitk::Image::Pointer fixedImage = fixedData.image;
   mitk::Image::Pointer movingImage = movingData.image;
-  // Use the current combobox entry and its user data to determine NormalizationType
-  int index = m_Controls.imageTypeSelection->currentIndex();
-  QVariant userData = m_Controls.imageTypeSelection->itemData(index);
-  m2::NormalizationStrategyType normType = static_cast<m2::NormalizationStrategyType>(userData.toInt());
 
   if (normType != m2::NormalizationStrategyType::None)
   {
@@ -182,8 +175,6 @@ std::shared_ptr<m2::ElxRegistrationHelper> m2Reconstruction3D::RegistrationStep(
   // check if a transformer exist for fixed image and apply
   if (fixedTransformer && !fixedTransformer->GetTransformation().empty())
     fixedImage = fixedTransformer->WarpImage(fixedImage);
-
-  std::vector<std::string> parameters = GetParameters();
 
   // start of the registration procedure
   auto elxHelper = std::make_shared<m2::ElxRegistrationHelper>();
@@ -210,6 +201,9 @@ std::vector<std::string> m2Reconstruction3D::GetParameters()
 
 void m2Reconstruction3D::OnStartStacking()
 {
+  if (m_ReconstructionFutureWatcher.isRunning())
+    return;
+
   // check input data
   const auto numItems = m_List1->count();
   const bool doMultiModalImageRegistration = m_List1->count() == m_List2->count();
@@ -248,6 +242,8 @@ void m2Reconstruction3D::OnStartStacking()
   // prepare stacks
   auto spectrumImageStack1 = m2::SpectrumImageStack::New(stackSize, spacingZ);
   m2::SpectrumImageStack::Pointer spectrumImageStack2;
+  if (doMultiModalImageRegistration)
+    spectrumImageStack2 = m2::SpectrumImageStack::New(stackSize, spacingZ);
   /*
    * Two modalities
    * M2 is optional
@@ -266,8 +262,27 @@ void m2Reconstruction3D::OnStartStacking()
    * M2-W1 order: 2-2 1-1 0-0 3-3 4-4 5-5 --> W2
    */
 
+  // collect all inputs on the GUI thread, the worker must not access widgets or members
+  std::vector<DataTuple> slices1, slices2;
+  for (int i = 0; i < numItems; ++i)
+  {
+    slices1.push_back(GetImageDataById(i, m_List1));
+    if (doMultiModalImageRegistration)
+      slices2.push_back(GetImageDataById(i, m_List2));
+  }
+  const auto parameters = GetParameters();
+  const auto normType =
+    static_cast<m2::NormalizationStrategyType>(m_Controls.imageTypeSelection->currentData().toInt());
+  const bool UseSubsequentOrdering = !m_Controls.chkBxCoRegistrationToSelected->isChecked();
+  const int currentRow = m_List1->currentRow() < 0 ? numItems / 2 : m_List1->currentRow();
+
+  // set by the worker if the reconstruction fails
+  auto errorMessage = std::make_shared<std::string>();
+
   // prepare workbench
   mitk::ProgressBar::GetInstance()->AddStepsToDo(numItems - 1);
+  m_Controls.btnStartStacking->setEnabled(false);
+  m_Controls.btnUpdateList->setEnabled(false);
 
   // disconnect all signals
   disconnect(&m_ReconstructionFutureWatcher, &QFutureWatcher<void>::finished, nullptr, nullptr);
@@ -277,16 +292,19 @@ void m2Reconstruction3D::OnStartStacking()
   connect(&m_ReconstructionFutureWatcher,
           &QFutureWatcher<void>::finished,
           this,
-          [spacingZ,
-           stackSize,
-           doMultiModalImageRegistration,
-           stackNames,
-           spectrumImageStack1,
-           spectrumImageStack2,
-           this]() mutable
+          [stackNames, spectrumImageStack1, spectrumImageStack2, errorMessage, this]()
           {
-            QMessageBox::information(m_Parent, "Reconstruction Complete", "Reconstruction complete!");
             mitk::ProgressBar::GetInstance()->Reset();
+            ResetToInitialState();
+
+            // the stacks are only initialized if the worker ran through
+            if (!errorMessage->empty())
+            {
+              QMessageBox::critical(m_Parent, "Reconstruction failed", QString::fromStdString(*errorMessage));
+              return;
+            }
+
+            QMessageBox::information(m_Parent, "Reconstruction Complete", "Reconstruction complete!");
 
             auto node = mitk::DataNode::New();
             node->SetData(spectrumImageStack1);
@@ -306,12 +324,8 @@ void m2Reconstruction3D::OnStartStacking()
             //   }
             // }
 
-            if (doMultiModalImageRegistration)
+            if (spectrumImageStack2)
             {
-              spectrumImageStack2 = m2::SpectrumImageStack::New(stackSize, spacingZ);
-              spectrumImageStack2->InitializeProcessor();
-              spectrumImageStack2->InitializeGeometry();
-
               node = mitk::DataNode::New();
               node->SetData(spectrumImageStack2);
               node->SetName(stackNames[1] + "(2)");
@@ -338,90 +352,98 @@ void m2Reconstruction3D::OnStartStacking()
           [&](int) { mitk::ProgressBar::GetInstance()->Progress(); });
 
   m_ReconstructionFutureWatcher.setFuture(QtConcurrent::run(
-    [stackNames, spectrumImageStack1, spectrumImageStack2, numItems, doMultiModalImageRegistration, this]()
+    [slices1,
+     slices2,
+     parameters,
+     normType,
+     UseSubsequentOrdering,
+     currentRow,
+     numItems,
+     spectrumImageStack1,
+     spectrumImageStack2,
+     errorMessage]()
     {
-      // int progress = 0;
-
-      const bool UseSubsequentOrdering = !m_Controls.chkBxCoRegistrationToSelected->isChecked();
-      const auto currentRow = m_List1->currentRow() < 0 ? numItems / 2 : m_List1->currentRow();
-
-      // Initialize by fixed image of stack 1
+      try
       {
-        auto M1 = GetImageDataById(currentRow, m_List1);
-        auto elxHelper = std::make_shared<m2::ElxRegistrationHelper>();
-        elxHelper->SetImageData(M1.image, M1.image);
-        elxHelper->SetRegistrationParameters({});
-        spectrumImageStack1->Insert(currentRow, elxHelper);
-        // futureInterface.setProgressValue(++progress);
-      }
-
-      // Initialize stack 2
-      if (doMultiModalImageRegistration)
-      {
-        auto elxHelper = RegistrationStep(currentRow, m_List1, nullptr, currentRow, m_List2);
-        spectrumImageStack2->Insert(currentRow, elxHelper);
-        // futureInterface.setProgressValue(++progress);
-      }
-
-      // QFutureWatcher<void> watcher0;
-      // watcher0.setFuture(
-      // auto td0 = QtConcurrent::run(
-      // [&]()
-      // {
-
-      for (int movingId = currentRow - 1; movingId >= 0; --movingId)
-      {
-        // stack 1
-        int fixedId = UseSubsequentOrdering ? movingId + 1 : currentRow;
-        auto fixedTransformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
-        auto elxHelper = RegistrationStep(fixedId, m_List1, fixedTransformer, movingId, m_List1);
-        spectrumImageStack1->Insert(movingId, elxHelper);
-
-        // stack 2
-        if (doMultiModalImageRegistration)
+        // Initialize by fixed image of stack 1
         {
-          elxHelper = RegistrationStep(movingId, m_List1, elxHelper, movingId, m_List2);
+          const auto &M1 = slices1[currentRow];
+          auto elxHelper = std::make_shared<m2::ElxRegistrationHelper>();
+          elxHelper->SetImageData(M1.image, M1.image);
+          elxHelper->SetRegistrationParameters({});
+          spectrumImageStack1->Insert(currentRow, elxHelper);
+        }
 
-          spectrumImageStack2->Insert(movingId, elxHelper);
+        // Initialize stack 2
+        if (spectrumImageStack2)
+        {
+          auto elxHelper = RegistrationStep(slices1[currentRow], nullptr, slices2[currentRow], parameters, normType);
+          spectrumImageStack2->Insert(currentRow, elxHelper);
+        }
+
+        for (int movingId = currentRow - 1; movingId >= 0; --movingId)
+        {
+          // stack 1
+          int fixedId = UseSubsequentOrdering ? movingId + 1 : currentRow;
+          auto fixedTransformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
+          auto elxHelper =
+            RegistrationStep(slices1[fixedId], fixedTransformer, slices1[movingId], parameters, normType);
+          spectrumImageStack1->Insert(movingId, elxHelper);
+
+          // stack 2
+          if (spectrumImageStack2)
+          {
+            elxHelper = RegistrationStep(slices1[movingId], elxHelper, slices2[movingId], parameters, normType);
+            spectrumImageStack2->Insert(movingId, elxHelper);
+          }
+        }
+
+        for (int movingId = currentRow + 1; movingId < numItems; ++movingId)
+        {
+          // stack 1
+          int fixedId = UseSubsequentOrdering ? movingId - 1 : currentRow;
+          auto fixedTransformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
+          auto elxHelper =
+            RegistrationStep(slices1[fixedId], fixedTransformer, slices1[movingId], parameters, normType);
+          spectrumImageStack1->Insert(movingId, elxHelper);
+
+          // stack 2
+          if (spectrumImageStack2)
+          {
+            elxHelper = RegistrationStep(slices1[movingId], elxHelper, slices2[movingId], parameters, normType);
+            spectrumImageStack2->Insert(movingId, elxHelper);
+          }
+        }
+
+        spectrumImageStack1->InitializeProcessor();
+        spectrumImageStack1->InitializeGeometry();
+
+        if (spectrumImageStack2)
+        {
+          spectrumImageStack2->InitializeProcessor();
+          spectrumImageStack2->InitializeGeometry();
         }
       }
-      // });
-
-      // auto td1 = QtConcurrent::run(
-      // [&]()
-      //     {
-      for (int movingId = currentRow + 1; movingId < numItems; ++movingId)
+      catch (const std::exception &e)
       {
-        // stack 1
-        int fixedId = UseSubsequentOrdering ? movingId - 1 : currentRow;
-        auto fixedTransformer = spectrumImageStack1->GetSliceTransformers().at(fixedId);
-        auto elxHelper = RegistrationStep(fixedId, m_List1, fixedTransformer, movingId, m_List1);
-        spectrumImageStack1->Insert(movingId, elxHelper);
-
-        // stack 2
-        if (doMultiModalImageRegistration)
-        {
-          elxHelper = RegistrationStep(movingId, m_List1, elxHelper, movingId, m_List2);
-          spectrumImageStack2->Insert(movingId, elxHelper);
-        }
+        *errorMessage = e.what();
+        MITK_ERROR << "3D reconstruction failed: " << e.what();
       }
-      // }
-      // );
-
-      // td0.waitForFinished();
-      // td1.waitForFinished();
-
-      spectrumImageStack1->InitializeProcessor();
-      spectrumImageStack1->InitializeGeometry();
-
-      if (doMultiModalImageRegistration)
+      catch (...)
       {
-        spectrumImageStack2->InitializeProcessor();
-        spectrumImageStack2->InitializeGeometry();
+        *errorMessage = "Unknown error during 3D reconstruction.";
+        MITK_ERROR << *errorMessage;
       }
-
-      // futureInterface.reportFinished();
     }));
+}
+
+void m2Reconstruction3D::ResetToInitialState()
+{
+  m_List1->clear();
+  m_List2->clear();
+  m_referenceMap.clear();
+  m_Controls.btnStartStacking->setEnabled(true);
+  m_Controls.btnUpdateList->setEnabled(true);
 }
 
 void m2Reconstruction3D::OnUpdateList()
@@ -436,6 +458,9 @@ void m2Reconstruction3D::OnUpdateList()
   for (mitk::DataNode::Pointer node : *all)
   {
     if (node.IsNull())
+      continue;
+    // results of previous reconstructions are no input slices
+    if (dynamic_cast<m2::SpectrumImageStack *>(node->GetData()))
       continue;
     if (auto data = dynamic_cast<m2::SpectrumImage *>(node->GetData()))
     {
