@@ -1,0 +1,143 @@
+/**
+\page org_mitk_views_m2_plot M2aia Plot View
+
+\tableofcontents
+
+\section m2plot_overview Overview
+
+The <b>Plot View</b> draws the result of a dimensionality reduction as an interactive point
+cloud, in two or three dimensions. A reduction produces two things that belong together but do
+not live in the same data: an <b>embedding</b>, one point per pixel, and <b>loadings</b>, one
+value per centroid and component. The view plots either of them, so a PCA can be read as the
+score plot of its pixels and as the loading plot of its peaks without leaving the view.
+
+A reduction computed over more than one image publishes one embedding per image in the same
+component space. Selecting all of them draws them in one cloud, which is what says whether the
+images share that space or sit apart in it - a batch effect is a cloud that separates by image
+rather than by tissue.
+
+Open it via <em>Window &rarr; Show View &rarr; Spectral Imaging &rarr; Plot</em>.
+
+\section m2plot_input Selecting the input
+
+Five selections feed the view. None of them is mandatory on its own; which ones matter depends
+on what is being shown. All but the centroid list take several nodes at once.
+
+- <b>Embedding images</b> - any image with more than one component, such as the results the
+  Data Compression view publishes as a child of the source image (PCA, t-SNE, NMF, ICA, PLS-DA),
+  or any other multi component result computed for it or read from file. One component is one
+  axis of the plot. Selecting several draws them in one cloud; that is what a combined reduction
+  is looked at with. Embeddings that do not carry the same number of components are plotted over
+  the components they have in common, and a warning is written to the log.
+- <b>Masks</b> - a segmentation per embedding. Its group 0 is read, as everywhere else in
+  M²aia: the valid spectra of an image, or the clusters of a clustering. It is what colours the
+  points by label, which is how one sees whether the classes a segmentation names separate in the
+  embedding at all. Labels of different masks that carry the same name share one entry of the
+  legend, so the same class of two images is one colour.
+- <b>RGB images</b> - an image per embedding whose colour every point takes. This is what a
+  three component image is for: read as an RGB image, it puts the colours of the render window
+  and the colours of the plot into the same terms. It does not have to be made of bytes - a three
+  component image of any type is stretched onto the same range per channel, over all embeddings
+  together, so one value is one colour throughout the cloud.
+- <b>Intensity images</b> - a single channel image per embedding: an ion image, or one of the
+  similarity maps the Embedding Search view computes (cosine, Manhattan, …). It does not colour
+  the cloud, it lights it: every point keeps the colour its clustering or its RGB image gives it
+  and is dimmed and drained of colour by the value this image holds for its pixel, so the points
+  that answer a query stand out of a cloud that still shows what its regions are. The plot follows the images, so a
+  map computed while the plot is open recolours the cloud at once.
+
+Each of the three companion selections is matched to the embeddings rather than assigned by hand:
+an embedding takes the entry whose grid it shares and, where several of them fit, the one that was
+computed from the same image. Describing a combined embedding is therefore a matter of selecting
+the mask of every image it was computed from, in any order. Colouring by the RGB image or dimming
+by the intensity image is only offered once <em>every</em> embedding has one, because a colouring
+half the cloud has no answer for would say more about which images were described than about the
+points.
+- <b>Centroids with loadings</b> - a centroid list an analysis has attached loadings to. The Data
+  Compression view attaches them when <em>Attach component loadings to the peak list</em> is
+  checked; they are stored as features named <tt>&lt;image&gt;.&lt;method&gt;.c&lt;component&gt;</tt>.
+  Lists without loadings are not offered, because there would be nothing to place their points by.
+
+\section m2plot_points Choosing what is plotted
+
+<b>Show</b> switches between the two clouds:
+
+- <b>Embedding (pixels)</b> - one point per pixel of the embedding images. Pixels that stayed zero
+  in every component never took part in the reduction and are left out, so the background does
+  not pile up on the origin. <em>Only pixels inside the mask</em> additionally drops every pixel
+  the mask leaves unlabelled.
+- <b>Loadings (centroids)</b> - one point per centroid of the peak list, placed by its loadings.
+  A centroid list can carry the loadings of several runs and methods side by side; the
+  <b>Analysis</b> box picks the one that is drawn.
+
+<b>X axis</b>, <b>Y axis</b> and <b>Z axis</b> put any component on any axis. Leaving the Z axis
+at <em>&mdash;</em> draws the cloud in the plane, with a parallel projection and the camera
+fixed, so it behaves like an ordinary scatter plot; choosing a third component turns it into a
+cloud in space that the left mouse button orbits.
+
+<b>Max. points</b> caps how many points are drawn. When the data offers more, an evenly spread
+sample of that size is taken, always the same one for the same data, so a large dataset stays
+interactive. The cap is shared out over all selected embeddings in proportion to what each of them
+offers, so no image crowds the others out. The line under the controls says how many points are
+drawn, from how many images, and how many were available.
+
+\section m2plot_appearance Colours and interaction
+
+<b>Colour by</b> decides what the colour of a point means:
+
+- <b>Image</b> - which of the selected embeddings the point came from, in the colour and under
+  the name of its node. Only offered while more than one is drawn, and then the colouring the view
+  starts with: whether the clouds of two images lie on top of each other or beside each other is
+  the first thing to read off a combined embedding.
+- <b>RGB image</b> - the colour the RGB image of its embedding gives the pixel, taken as it is.
+  Only offered while every embedding has a fitting image.
+- <b>Pixel position (RGB)</b> - where the pixel lies in the image, with the three axes on the
+  three colour channels. Reading it against the shape of the cloud shows how much of the
+  embedding is spatial: neighbouring pixels landing next to each other means the reduction has
+  kept the tissue together, while an even wash of colour means it has not. An axis of no extent -
+  the third one of a single slice - stays dark.
+- <b>Mask label</b> - the label the mask of its embedding gives the pixel, drawn in the colour and
+  under the name the segmentation itself carries. Only offered while at least one fitting mask is
+  selected; pixels of an embedding without one are drawn as unlabelled.
+- <b>m/z</b> - the position of the centroid, in the loading plot.
+- <b>Component n</b> - the value of that component, on a continuous ramp. Putting a component on
+  the colour rather than on an axis is how a fourth dimension is read off a three dimensional
+  plot.
+- <b>Nothing</b> - one colour for every point.
+
+<b>Brightness from intensity image</b> switches the highlighting on and off. A point it does not
+answer for loses its light <em>and</em> its colour: it is both darkened and drained towards grey,
+keeping about a third of its chroma, so the points a query does answer for are the only saturated
+colours in the plot while the cloud around them still shows where its regions are.
+
+Two numbers say how hard that is applied. <b>Emphasis</b> bends the ramp: at one a point is dimmed
+in proportion to its value, and the higher it goes the closer to the top of the range a point has
+to be to stay bright. <b>Darkest</b> says how much a point of the lowest intensity keeps: zero
+fades it into the background, one leaves every point at full brightness and switches the effect
+off.
+
+The ramp is stretched over the 2nd to the 98th percentile of the values rather than over their
+extremes, and anything beyond is clamped. This is what makes the highlighting visible on maps that
+are not spread evenly: the values of a cosine similarity sit between 0.8 and 1.0, so a single
+outlying pixel used to compress every real difference into the top tenth of the scale and the
+cloud came out uniformly bright. The range runs over all embeddings together, so what the maps of
+two images say stays comparable. The scalar bar keeps naming what the colours mean while they are
+dimmed.
+
+The mouse orbits (three dimensions only), pans and zooms the cloud; <b>Reset view</b> frames it
+again. A click that is not a drag picks the point under the cursor and describes it below the
+controls: a pixel by its image, its index and its label, a centroid by its m/z and its
+annotation, both together with their coordinates on the current axes.
+
+\section m2plot_notes Notes
+
+- A mask or an RGB image whose grid differs from the embedding it would describe is ignored
+  rather than used; colouring points by whatever happens to lie at the same offset in another
+  image would be misleading. A warning is written to the log in that case, naming the embedding
+  that was left without one.
+- Changing an axis, the colour, the brightness or the point size does not read the image again;
+  only changing a selection, the mask restriction or the point cap does. The intensity image is
+  the exception: it is read again whenever it changes, which is what lets a similarity map appear
+  in the plot as soon as the Embedding Search view has computed it.
+
+*/

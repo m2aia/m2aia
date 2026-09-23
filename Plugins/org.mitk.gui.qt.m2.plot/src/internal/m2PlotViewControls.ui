@@ -1,0 +1,372 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>m2PlotViewControls</class>
+ <widget class="QWidget" name="m2PlotViewControls">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>900</width>
+    <height>640</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Plot</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin"><number>2</number></property>
+   <property name="topMargin"><number>2</number></property>
+   <property name="rightMargin"><number>2</number></property>
+   <property name="bottomMargin"><number>2</number></property>
+   <item>
+    <widget class="QSplitter" name="splitter">
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="childrenCollapsible">
+      <bool>true</bool>
+     </property>
+     <widget class="QScrollArea" name="controlsArea">
+      <property name="minimumSize">
+       <size><width>260</width><height>0</height></size>
+      </property>
+      <property name="widgetResizable">
+       <bool>true</bool>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <widget class="QWidget" name="controlsPanel">
+       <property name="geometry">
+        <rect><x>0</x><y>0</y><width>300</width><height>620</height></rect>
+       </property>
+       <layout class="QVBoxLayout" name="controlsLayout">
+        <item>
+         <widget class="QGroupBox" name="groupData">
+          <property name="title">
+           <string>Data</string>
+          </property>
+          <layout class="QVBoxLayout" name="dataLayout">
+           <item>
+            <widget class="QLabel" name="labelEmbedding">
+             <property name="text">
+              <string>Embedding images</string>
+             </property>
+             <property name="toolTip">
+              <string>One or more multi component images. Selecting the embeddings of a combined reduction - one per image, in the same component space - draws them in one cloud.</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QmitkMultiNodeSelectionWidget" name="embeddingSelection" native="true"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelMask">
+             <property name="text">
+              <string>Masks</string>
+             </property>
+             <property name="toolTip">
+              <string>A segmentation per embedding. Every embedding is paired with the one that covers its grid and was computed from the same image.</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QmitkMultiNodeSelectionWidget" name="maskSelection" native="true"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelRgb">
+             <property name="text">
+              <string>RGB images</string>
+             </property>
+             <property name="toolTip">
+              <string>One image per embedding, on its grid, whose colour every point takes - such as the RGB rendering a three component UMAP is published as. The colouring is only offered once every embedding has one.</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QmitkMultiNodeSelectionWidget" name="rgbSelection" native="true"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelIntensity">
+             <property name="text">
+              <string>Intensity images</string>
+             </property>
+             <property name="toolTip">
+              <string>One single channel image per embedding, on its grid, whose value every point is dimmed by - such as an ion image or a similarity map of the Embedding Search view. The plot follows them: a new map colours the cloud as soon as it is computed.</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QmitkMultiNodeSelectionWidget" name="intensitySelection" native="true"/>
+           </item>
+           <item>
+            <widget class="QLabel" name="labelCentroids">
+             <property name="text">
+              <string>Centroids with loadings</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QmitkSingleNodeSelectionWidget" name="centroidSelection" native="true"/>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupPoints">
+          <property name="title">
+           <string>Points</string>
+          </property>
+          <layout class="QVBoxLayout" name="pointsLayout">
+           <item>
+            <layout class="QFormLayout" name="pointsFormLayout">
+             <item row="0" column="0">
+              <widget class="QLabel" name="labelSource">
+               <property name="text">
+                <string>Show</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="boxSource">
+               <property name="toolTip">
+                <string>Whether a point is a pixel of the embedding image, placed by its components, or a centroid of the peak list, placed by its loadings.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="labelAnalysis">
+               <property name="text">
+                <string>Analysis</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QComboBox" name="boxAnalysis">
+               <property name="toolTip">
+                <string>The analysis whose loadings are plotted. A centroid list can carry the loadings of several runs and methods side by side.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="labelAxisX">
+               <property name="text">
+                <string>X axis</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QComboBox" name="boxAxisX"/>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="labelAxisY">
+               <property name="text">
+                <string>Y axis</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QComboBox" name="boxAxisY"/>
+             </item>
+             <item row="4" column="0">
+              <widget class="QLabel" name="labelAxisZ">
+               <property name="text">
+                <string>Z axis</string>
+               </property>
+              </widget>
+             </item>
+             <item row="4" column="1">
+              <widget class="QComboBox" name="boxAxisZ">
+               <property name="toolTip">
+                <string>Without a third component the cloud is drawn in the plane, with a parallel projection and the camera fixed; with one it can be turned.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="0">
+              <widget class="QLabel" name="labelMaxPoints">
+               <property name="text">
+                <string>Max. points</string>
+               </property>
+              </widget>
+             </item>
+             <item row="5" column="1">
+              <widget class="QSpinBox" name="spinMaxPoints">
+               <property name="toolTip">
+                <string>An evenly spread sample of this size is drawn when the data offers more points, so that the plot stays interactive on a large image.</string>
+               </property>
+               <property name="minimum"><number>1000</number></property>
+               <property name="maximum"><number>5000000</number></property>
+               <property name="singleStep"><number>10000</number></property>
+               <property name="value"><number>150000</number></property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkRestrictToMask">
+             <property name="toolTip">
+              <string>Draws only the pixels the mask labels. Without it every pixel the reduction touched is drawn and the unlabelled ones are shown as such.</string>
+             </property>
+             <property name="text">
+              <string>Only pixels inside the mask</string>
+             </property>
+             <property name="checked"><bool>true</bool></property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QGroupBox" name="groupAppearance">
+          <property name="title">
+           <string>Appearance</string>
+          </property>
+          <layout class="QVBoxLayout" name="appearanceLayout">
+           <item>
+            <layout class="QFormLayout" name="appearanceFormLayout">
+             <item row="0" column="0">
+              <widget class="QLabel" name="labelColor">
+               <property name="text">
+                <string>Colour by</string>
+               </property>
+              </widget>
+             </item>
+             <item row="0" column="1">
+              <widget class="QComboBox" name="boxColor">
+               <property name="toolTip">
+                <string>What the colour of a point means: which image it came from, the label its mask gives it, one of the components, or the m/z of a centroid.</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0">
+              <widget class="QLabel" name="labelPointSize">
+               <property name="text">
+                <string>Point size</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="1">
+              <widget class="QSpinBox" name="spinPointSize">
+               <property name="minimum"><number>1</number></property>
+               <property name="maximum"><number>20</number></property>
+               <property name="value"><number>3</number></property>
+              </widget>
+             </item>
+             <item row="2" column="0">
+              <widget class="QLabel" name="labelEmphasis">
+               <property name="text">
+                <string>Emphasis</string>
+               </property>
+              </widget>
+             </item>
+             <item row="2" column="1">
+              <widget class="QDoubleSpinBox" name="spinEmphasis">
+               <property name="toolTip">
+                <string>How steeply a point falls off as its intensity drops. One dims in proportion to the value; higher values require a point to be near the top of the range to stay bright, so a query is answered by a few points standing out of a dark cloud rather than by one side of it being slightly brighter.</string>
+               </property>
+               <property name="minimum"><double>1.000000000000000</double></property>
+               <property name="maximum"><double>10.000000000000000</double></property>
+               <property name="singleStep"><double>0.500000000000000</double></property>
+               <property name="decimals"><number>1</number></property>
+               <property name="value"><double>3.000000000000000</double></property>
+              </widget>
+             </item>
+             <item row="3" column="0">
+              <widget class="QLabel" name="labelBrightnessFloor">
+               <property name="text">
+                <string>Darkest</string>
+               </property>
+              </widget>
+             </item>
+             <item row="3" column="1">
+              <widget class="QDoubleSpinBox" name="spinBrightnessFloor">
+               <property name="toolTip">
+                <string>How much of its colour a point of the lowest intensity keeps. Zero fades it into the background, one switches the dimming off while leaving the colours as they are.</string>
+               </property>
+               <property name="minimum"><double>0.000000000000000</double></property>
+               <property name="maximum"><double>1.000000000000000</double></property>
+               <property name="singleStep"><double>0.050000000000000</double></property>
+               <property name="value"><double>0.050000000000000</double></property>
+              </widget>
+             </item>
+            </layout>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="checkIntensityBrightness">
+             <property name="toolTip">
+              <string>Dims and drains the colour of every point by the value the intensity image gives it, on top of whatever the colour means. A similarity map then lights up the pixels that answer the query while the cloud keeps showing its clusters.</string>
+             </property>
+             <property name="text">
+              <string>Brightness from intensity image</string>
+             </property>
+             <property name="checked"><bool>true</bool></property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="btnResetCamera">
+             <property name="text">
+              <string>Reset view</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelStatus">
+          <property name="text">
+           <string>No points.</string>
+          </property>
+          <property name="wordWrap"><bool>true</bool></property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLabel" name="labelInfo">
+          <property name="text">
+           <string>Click a point to describe it.</string>
+          </property>
+          <property name="wordWrap"><bool>true</bool></property>
+          <property name="textInteractionFlags">
+           <set>Qt::TextSelectableByMouse</set>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="controlsSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size><width>20</width><height>10</height></size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </widget>
+     </widget>
+     <widget class="QWidget" name="plotContainer" native="true">
+      <property name="minimumSize">
+       <size><width>240</width><height>200</height></size>
+      </property>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QmitkSingleNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">QmitkSingleNodeSelectionWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QmitkMultiNodeSelectionWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">QmitkMultiNodeSelectionWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

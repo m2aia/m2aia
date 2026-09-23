@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin>
+
+  <extension point="org.blueberry.ui.views">
+    <view id="org.mitk.views.m2.plot"
+          name="Plot"
+          category="Spectral Imaging"
+          class="m2PlotView"
+          icon="resources/icon_plot.svg" />
+  </extension>
+
+  <extension point="org.blueberry.ui.keywords">
+    <keyword id="org.mitk.views.m2Plot.ViewKeyword" label="Point Cloud" />
+    <keyword id="org.mitk.views.m2Plot.ViewKeyword" label="Embedding" />
+    <keyword id="org.mitk.views.m2Plot.ViewKeyword" label="PCA" />
+    <keyword id="org.mitk.views.m2Plot.ViewKeyword" label="Loadings" />
+    <keyword id="org.mitk.views.m2Plot.ViewKeyword" label="Scatter" />
+  </extension>
+
+</plugin>

@@ -3,6 +3,7 @@ org.mitk.gui.qt.m2.common:ON
 org.mitk.gui.qt.m2.application:ON
 org.mitk.gui.qt.m2.data:ON
 org.mitk.gui.qt.m2.spectrum:ON
+org.mitk.gui.qt.m2.plot:ON
 org.mitk.gui.qt.m2.datacompression:ON
 org.mitk.gui.qt.m2.peakpicking:ON
 org.mitk.gui.qt.m2.featurelists:ON
