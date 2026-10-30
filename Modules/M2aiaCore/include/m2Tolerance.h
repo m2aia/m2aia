@@ -91,7 +91,7 @@ namespace m2
     /// with a conversion factor of 1e-5 instead of 1e-6, so a stored value v meant 10 * v ppm.
     constexpr const char *LegacyKey = "m2aia.signal.Tolerance";
 
-    inline Tolerance Default() { return Tolerance::PPM(75); }
+    inline Tolerance Default() { return Tolerance::PPM(5); }
 
     /// @brief Read the tolerance from the preferences. A legacy value is converted once so that the
     /// effective window stays the same, written to the new keys and removed.

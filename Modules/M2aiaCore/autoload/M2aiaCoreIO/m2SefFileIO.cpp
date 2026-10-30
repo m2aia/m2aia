@@ -21,6 +21,17 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 
 #include <fstream>
 
+namespace
+{
+  // true if the first non-whitespace character of the file opens a JSON object
+  bool StartsWithJsonObject(const std::string &path)
+  {
+    std::ifstream in(path);
+    char c;
+    return (in >> c) && c == '{';
+  }
+} // namespace
+
 namespace m2
 {
 
@@ -37,7 +48,8 @@ namespace m2
   {
     if (AbstractFileIO::GetReaderConfidenceLevel() == Unsupported)
       return Unsupported;
-    return Supported;
+    // .centroids is shared with the comma separated IntervalVectorIO; claim JSON content only
+    return StartsWithJsonObject(this->GetInputLocation()) ? Supported : Unsupported;
   }
 
   // ---------------------------------------------------------------------------

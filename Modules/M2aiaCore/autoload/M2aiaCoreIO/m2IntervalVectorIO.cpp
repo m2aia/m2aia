@@ -18,7 +18,21 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkIOUtil.h>
 #include <mitkLocaleSwitch.h>
 #include <itksys/SystemTools.hxx>
+#include <fstream>
+#include <iomanip>
+#include <limits>
 #include <boost/algorithm/string/join.hpp>
+
+namespace
+{
+  // true if the first non-whitespace character of the file opens a JSON object
+  bool StartsWithJsonObject(const std::string &path)
+  {
+    std::ifstream in(path);
+    char c;
+    return (in >> c) && c == '{';
+  }
+} // namespace
 
 namespace m2
 {
@@ -61,16 +75,11 @@ namespace m2
     //   position[2] = prop->GetValueAsString();
 
     // file << "[spectrum position] " << boost::algorithm::join(position, " ") << "\n"; 
+    // enough digits that every value reads back as the same double
+    file << std::setprecision(std::numeric_limits<double>::max_digits10);
     file << "center,max,min,mean\n";
-    const auto intervals = input->GetIntervals();
-    for(size_t i = 0 ; i < intervals.size(); ++i){
-      if(i==0)
-        file << intervals[i].x.max()+0.005 << "," << intervals[i].y.max() << "," << intervals[i].y.min() << "," << intervals[i].y.mean() << "\n";
-      else if(i == intervals.size() -1)
-        file << intervals[i].x.min()-0.005 << "," << intervals[i].y.max() << "," << intervals[i].y.min() << "," << intervals[i].y.mean() << "\n";
-      else
-        file << intervals[i].x.mean() << "," << intervals[i].y.max() << "," << intervals[i].y.min() << "," << intervals[i].y.mean() << "\n";
-    }
+    for (const auto &i : input->GetIntervals())
+      file << i.x.mean() << "," << i.y.max() << "," << i.y.min() << "," << i.y.mean() << "\n";
 
     file.close();
   } // namespace mitk
@@ -79,7 +88,8 @@ namespace m2
   {
     if (AbstractFileIO::GetReaderConfidenceLevel() == Unsupported)
       return Unsupported;
-    return Supported;
+    // .centroids is shared with SefFileIO, which writes JSON; leave JSON content to it
+    return StartsWithJsonObject(this->GetInputLocation()) ? Unsupported : Supported;
   }
 
   std::vector<mitk::BaseData::Pointer> IntervalVectorIO::DoRead()

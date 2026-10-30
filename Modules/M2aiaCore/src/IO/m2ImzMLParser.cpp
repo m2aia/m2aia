@@ -283,12 +283,20 @@ void m2::ImzMLParser::ReadImageMetaData(m2::ImzMLSpectrumImage::Pointer data)
       ValueToProperty(line, std::bind(m2::MicroMeterToMilliMeter, std::bind(stol, _1)));
     }; //, "[IMS:1000054] absolute position offset y"s
 
-    // // Not supported by IMS obo
-    // accession_map["IMS:X3"] = accession_map["M2:0000003"] = [&](const std::string &line) { // absolute position
-    // offset y
-    //   attributeValue(line, "value", value);
-    //   data->SetPropertyValue<double>("absolute position offset z", m2::MicroMeterToMilliMeter(std::stol(value)));
-    // };
+    // Not supported by IMS obo.
+    // Stored without accession prefix: the geometry reads "absolute position offset z".
+    accession_map["IMS:1000055"] = [&](const std::string &line)
+    {
+      try
+      {
+        attributeValue(line, "value", value);
+        data->SetPropertyValue<double>("absolute position offset z", m2::MicroMeterToMilliMeter(std::stod(value)));
+      }
+      catch (std::exception &)
+      {
+        MITK_INFO << "Check this line of your imzML file:\n" << line << "\nPossible incorrect imzML detected!";
+      }
+    };
 
     // origin size z
     // scanSettings

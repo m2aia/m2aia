@@ -18,6 +18,8 @@ See LICENSE.txt or https://www.github.com/jtfcordes/m2aia for details.
 #include <mitkIOUtil.h>
 #include <mitkLocaleSwitch.h>
 #include <itksys/SystemTools.hxx>
+#include <iomanip>
+#include <limits>
 #include <boost/algorithm/string/join.hpp>
 #include <fstream>
 #include <sstream>
@@ -135,16 +137,11 @@ namespace m2
     // Check if input is IntervalVector (fallback to existing implementation)
     else if (const auto *intervalVector = dynamic_cast<const m2::IntervalVector *>(this->GetInput()))
     {
+      // enough digits that every value reads back as the same double
+      file << std::setprecision(std::numeric_limits<double>::max_digits10);
       file << "center,max,min,mean\n";
-      const auto intervals = intervalVector->GetIntervals();
-      for(size_t i = 0 ; i < intervals.size(); ++i){
-        if(i==0)
-          file << intervals[i].x.max()+0.005 << "," << intervals[i].y.max() << "," << intervals[i].y.min() << "," << intervals[i].y.mean() << "\n";
-        else if(i == intervals.size() -1)
-          file << intervals[i].x.min()-0.005 << "," << intervals[i].y.max() << "," << intervals[i].y.min() << "," << intervals[i].y.mean() << "\n";
-        else
-          file << intervals[i].x.mean() << "," << intervals[i].y.max() << "," << intervals[i].y.min() << "," << intervals[i].y.mean() << "\n";
-      }
+      for (const auto &i : intervalVector->GetIntervals())
+        file << i.x.mean() << "," << i.y.max() << "," << i.y.min() << "," << i.y.mean() << "\n";
     }
 
     file.close();
