@@ -7,4 +7,5 @@ set(MODULE_TESTS
   m2BaselineTest.cpp
   m2ProcessMapTest.cpp
   m2ToleranceTest.cpp
+  m2IntervalVectorIOTest.cpp
 )
